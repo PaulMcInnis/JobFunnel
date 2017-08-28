@@ -44,11 +44,16 @@ try:
         try:
             with open(FILTERLIST_FILEPATH) as filter_file:
                 existing_filter_list = json.load(filter_file)
-            print ('adding user changes to existing existing ' + FILTERLIST_FILEPATH)
-            filter_list = new_filter_list + existing_filter_list
+            # make a list that only adds new entries
+            new_filter_entries = []
+            for jobid in new_filter_list:
+                if jobid not in existing_filter_list:
+                    new_filter_entries.append(jobid)
+            filter_list = new_filter_entries + existing_filter_list
+            print ('appended ' + str(len(new_filter_entries)) + ' jobids to ' + FILTERLIST_FILEPATH)
 
         except FileNotFoundError:
-            print ('adding user changes as new ' + FILTERLIST_FILEPATH)
+            print ('no ' + FILTERLIST_FILEPATH + ' filter found, appended ' + str(len(new_filter_entries)) + ' jobids to ' + FILTERLIST_FILEPATH)
             filter_list = new_filter_list
 
         # write out the complete list with any additions from the masterlist
@@ -64,12 +69,13 @@ try:
     with open(FILTERLIST_FILEPATH) as filter_file:
         json_filter_list = json.load(filter_file)
     # pop jobs out of the dailyjobdict that are on the filterlist
+    # @TODO pop jobs that are expired 'no longer available'
     for jobid in json_filter_list:
         dailyjobdict.pop(jobid, None)
-        print ('job: ' + jobid + ' in filterlist.json, not added to masterlist')
+        #print ('job: ' + jobid + ' in filterlist.json, not added to masterlist')
 
 except FileNotFoundError:
-    print ('filterlist.json not found')
+    print ('filterlist.json not found, no filtration')
 
 #NOTE: NO STATE=FILTERED JOBS SHOULD BE POSSIBLE PAST THIS POINT
 
@@ -88,15 +94,21 @@ try:
         # make a copy for output
         output_job_dict = dailyjobdict[jobid]
         # preserve existing state in output (may be user-set in masterlist excel)
-        existingstate = masterlist[jobid]['state']
-        output_job_dict.update({'state' : existingstate})
-        print ('existing job ' +jobid + ' already in masterlist, state preserved')
+        try:
+            existingstate = masterlist[jobid]['state']
+            output_job_dict.update({'state' : existingstate})
+            #print ('existing job ' +jobid + ' already in masterlist, state preserved')
+        except KeyError:
+            print ('unable to open masterlist jobid ' + jobid)
 
         # make sure new jobs have correct state
-        if jobid not in masterlist_ids:
+        if jobid not in masterlist_ids and jobid not in filter_list:
             print ('job ' + jobid + ' IS NEW')
             # change state to new
             output_job_dict.update({'state' : 'new'})
+
+        # make the url clickable in excel
+        output_job_dict.update({'link': '=HYPERLINK("' + str(output_job_dict['link']) + '")'})
 
         # add current job to output
         newmasterlist_dict.update({jobid : output_job_dict})
