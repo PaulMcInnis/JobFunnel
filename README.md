@@ -10,7 +10,7 @@ Easily automated tool for scraping job postings to ```.xlsx``` using ```python3`
 The ```jobs_masterlist.xslx``` is what should be reviewed by the user, setting jobs to appropriate states, for example ```applied```. To update active filters and to see any ```new``` jobs going forwards, just run ```runonce.sh```, and review the spreadsheet, sorting by ```new``` state jobs.
 
 The resulting spreadsheet looks like this:
-![alt text](https://github.com/PaulMcInnis/JobPy/demo.png "JobPy's masterlist.xlsx")
+![masterlist.xslx](https://github.com/PaulMcInnis/JobPy/blob/master/demo.png "masterlist.xlsx")
 
 ### Notes
 * links are clickable in the excel output
