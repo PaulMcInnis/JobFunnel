@@ -8,15 +8,24 @@ import yaml
 import re
 import pandas as pd
 from datetime import date
+import logging
 
 JOB = "Engineer"
 REGION = "Waterloo%2C+ON&radius=25"
 URL_BASE = 'http://www.indeed.ca'
 RESULTS_PER_PAGE = 50 # max seems to be 50 per page load
 BS4_PARSER = 'lxml'
+LOG_FILEPATH = 'jobpy.log'
 
 # current date
 date_text = date.today().strftime("%Y-%m-%d")
+
+# pickle file location
+pickle_filepath = 'jobs_' + date_text + '.pkl'
+
+# setup logging
+logging.basicConfig(filename=LOG_FILEPATH,level=logging.INFO)
+logging.info('jobpy indeed_topickle running @ : ' + date_text)
 
 # custom exception indicating possible regex issues (need to update?)
 class IDSearchException(Exception):
@@ -35,7 +44,7 @@ num_results = int(re.sub("[^0-9]","", num_results))
 
 # find total number of pages @TODO implement a logger
 num_pages = int(numpy.ceil(num_results/RESULTS_PER_PAGE))
-print('Found ' + str(num_results) + ' results over ' + str(num_pages) + ' pages '
+logging.info ('Found ' + str(num_results) + ' results over ' + str(num_pages) + ' pages '
                + str(RESULTS_PER_PAGE) + ' listings/page) \n')
 
 # generate the page urls, save as a list
@@ -47,7 +56,7 @@ for page in range(0, num_pages):
 # scrape soups of all listed jobs pages
 list_of_job_soups_by_page = []
 for page in range(len(list_of_page_urls)):
-    print('getting page ' + str(page) + ': ' + list_of_page_urls[page])
+    logging.info ('getting page ' + str(page) + ': ' + list_of_page_urls[page])
     html_page = requests.get(list_of_page_urls[page])
     soup_page = bs4.BeautifulSoup(html_page.text, BS4_PARSER)
     # process page's soup to obtain list of all jobs only
@@ -75,7 +84,9 @@ for job in list_of_job_soups:
         job_key = re.findall('id=\"sj_(.*)\" onclick', str(stt))[0]
         link = URL_BASE + '/viewjob?jk=' + job_key
     except IndexError:
-        raise IDSearchException('unable to extract job id from posting ' + company + ' ' + title)
+        error_text = 'unable to extract job id from posting ' + company + ' ' + title
+        logging.error(error_text)
+        raise IDSearchException(error_text)
     #add extra salary info if listed
     if salary_result:
         salary = salary_result.text.strip()
@@ -89,5 +100,7 @@ for job in list_of_job_soups:
 
 
 # save the resulting jobs dict as a pickle file
-with open('jobs_' + date_text + '.pkl', 'wb') as pickle_file:
+with open(pickle_filepath, 'wb') as pickle_file:
     pickle.dump(dict_of_job_dicts, pickle_file)
+
+logging.info('pickle file successfully dumped to ' + pickle_filepath)
