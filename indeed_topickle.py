@@ -16,6 +16,7 @@ URL_BASE = 'http://www.indeed.ca'
 RESULTS_PER_PAGE = 50 # max seems to be 50 per page load
 BS4_PARSER = 'lxml'
 LOG_FILEPATH = 'jobpy.log'
+FILTER_SETTING = '&filter=0' # removes the filter for "similar results" to get all jobs
 
 # current date
 date_text = date.today().strftime("%Y-%m-%d")
@@ -32,7 +33,7 @@ class IDSearchException(Exception):
     pass
 
 # search url, 50 results per page
-url_search = URL_BASE + '/jobs?q=' + JOB + '&l=' + REGION + '&limit=' + str(RESULTS_PER_PAGE)
+url_search = URL_BASE + '/jobs?q=' + JOB + '&l=' + REGION + '&limit=' + str(RESULTS_PER_PAGE) + FILTER_SETTING
 
 # get the HTML data, initialize bs4 with lxml
 request_HTML = requests.get(url_search)
