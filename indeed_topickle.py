@@ -17,6 +17,7 @@ RESULTS_PER_PAGE = 50 # max seems to be 50 per page load
 BS4_PARSER = 'lxml'
 LOG_FILEPATH = 'jobpy.log'
 FILTER_SETTING = '&filter=0' # removes the filter for "similar results" to get all jobs
+ONLY_NEW = False # set to True if running nightly to prevent adding old jobs who's id's have changed
 
 # current date
 date_text = date.today().strftime("%Y-%m-%d")
@@ -70,13 +71,19 @@ list_of_job_soups = sum(list_of_job_soups_by_page, [])
 # make a dict of job postings
 dict_of_job_dicts =  {}
 for job in list_of_job_soups:
-    #@TODO filter out sponsored listings on line 45?
+
+    skip_job = False
     # find the relevant listing data
+    # if it's been posted days ago don't set it to new!!
+    information = job.find("div", class_="result-link-bar")
+    if (len(re.findall(r'days ago', str(information))) > 0): skip_job = True
+
     title = job.find('a', attrs={'data-tn-element': "jobTitle"}).text.strip()
     company = job.find('span', attrs={"itemprop":"name"}).text.strip()
     salary_result = job.find('nobr')
     location = job.find('span', {'class': 'location'}).text.strip()
     description = job.find_all('div')[0].text.strip()
+
     #@TODO try and get the date posted into a good format
     # make a unique key with save job URL
     try:
@@ -92,7 +99,12 @@ for job in list_of_job_soups:
     if salary_result:
         salary = salary_result.text.strip()
     # append data as a dict to dict of jobs
-    job_dict = {'title' : title, 'job' : company, 'location' : location, 'description' : description, 'link' : link, 'state' : 'daily', 'date' : date_text}
+    if skip_job:
+        state = 'filtered'
+    else:
+        state = 'daily'
+
+    job_dict = {'title' : title, 'job' : company, 'location' : location, 'description' : description, 'link' : link, 'state' : state, 'date' : date_text}
     #append salary if it exists
     if salary_result:
         job_dict.update({'salary' : salary})

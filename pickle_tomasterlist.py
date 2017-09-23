@@ -61,27 +61,29 @@ try:
     # identify the new job id's not already in master list or in filterlist
     # currently dailyjob dict has nothing from filterlist in it but has jobs already in masterlist
     for jobid in dailyjobdict:
-        # make a copy for output
-        output_job_dict = dailyjobdict[jobid]
-        # preserve existing state in output (may be user-set in masterlist excel)
-        try:
-            existingstate = masterlist[jobid]['state']
-            output_job_dict.update({'state' : existingstate})
-            #print ('existing job ' +jobid + ' already in masterlist, state preserved')
-        except KeyError:
-            logging.debug ('jobid ' + jobid + ' not in existing masterlist')
+        # catch daily only mode
+        if dailyjobdict[jobid]['state'] != 'filtered':
+            # make a copy for output
+            output_job_dict = dailyjobdict[jobid]
+            # preserve existing state in output (may be user-set in masterlist excel)
+            try:
+                existingstate = masterlist[jobid]['state']
+                output_job_dict.update({'state' : existingstate})
+                #print ('existing job ' +jobid + ' already in masterlist, state preserved')
+            except KeyError:
+                logging.debug ('jobid ' + jobid + ' not in existing masterlist')
 
-        # make sure new jobs have correct state
-        if jobid not in masterlist_ids and jobid not in json_filter_list:
-            # change state to new
-            output_job_dict.update({'state' : 'new'})
-            logging.info ('job ' + jobid + ' has been added to the masterlist')
+            # make sure new jobs have correct state
+            if jobid not in masterlist_ids and jobid not in json_filter_list:
+                # change state to new
+                output_job_dict.update({'state' : 'new'})
+                logging.info ('job ' + jobid + ' has been added to the masterlist')
 
-        # make the url clickable in excel
-        output_job_dict.update({'link': '=HYPERLINK("' + str(output_job_dict['link']) + '")'})
+            # make the url clickable in excel
+            output_job_dict.update({'link': '=HYPERLINK("' + str(output_job_dict['link']) + '")'})
 
-        # add current job to output
-        newmasterlist_dict.update({jobid : output_job_dict})
+            # add current job to output
+            newmasterlist_dict.update({jobid : output_job_dict})
 
     # save the output to excel again
     #save a XLSX 2010 of jobs dict transposed (vertically)
