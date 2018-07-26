@@ -1,0 +1,11 @@
+{
+    "region"    :   {
+                        "domain" : "ca",
+                        "city": "waterloo",
+                        "province" : "ON",
+                        "radius" : 25,
+                    },
+    "search"    :   [
+                        "engineer",
+                    ],
+}
