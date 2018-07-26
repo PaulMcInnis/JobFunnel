@@ -6,10 +6,14 @@ import pickle
 import json
 import logging
 import argparse
-import pdb; pdb.set_trace()
+import requests
+import bs4
+import lxml
+import re
+import numpy as np
 import pandas as pd
 from datetime import date
-from config import default_args
+from config.settings import default_args
 
 class jobpy(object):
 
@@ -82,7 +86,7 @@ class jobpy(object):
                     logging.info ('appended {0} jobids to {1}'.format(
                         len(new_filter_entries), self.filterlist))
 
-                except FileNotFoundError:
+                except IOError:
                     # assume that this is a fresh filter list
                     # @TODO some sort of prompt?
                     filter_list = new_filter_list
@@ -98,7 +102,7 @@ class jobpy(object):
                                       ensure_ascii=False)
                     outfile.write(self.encoding(str_))
 
-        except FileNotFoundError:
+        except IOError:
             logging.error ("no master-list detected to load filters from,"
                            " no changes to filter-list made")
 
@@ -131,7 +135,7 @@ class jobpy(object):
         num_results = int(re.sub("[^0-9]","", num_results))
 
         # find total number of pages @TODO implement a logger
-        num_pages = int(numpy.ceil(num_results/self.results_per_page))
+        num_pages = int(np.ceil(num_results/self.results_per_page))
         logging.info ('Found {0} results over {1} pages ({2}/page)\n'.format(
             num_results, num_pages, self.results_per_page))
 
@@ -173,12 +177,16 @@ class jobpy(object):
                 state = 'daily'
 
             # scrape the actual posting data
-            title = job.find('a',
-                attrs={'data-tn-element': "jobTitle"}).text.strip()
-            company = job.find('span', attrs={"itemprop":"name"}).text.strip()
-            salary_result = job.find('nobr')
-            location = job.find('span', {'class': 'location'}).text.strip()
-            description = job.find_all('div')[0].text.strip()
+            try:
+                title = job.find('a',
+                    attrs={'data-tn-element': "jobTitle"}).text.strip()
+                company = job.find('span', attrs={"itemprop":"name"}).text.strip()
+                salary_result = job.find('nobr')
+                location = job.find('span', {'class': 'location'}).text.strip()
+                description = job.find_all('div')[0].text.strip()
+            except AttributeError as e:
+                logging.error("regex failure! " + e)
+                import pdb; pdb.set_trace() # regex failed
             #@TODO try and get the date posted into a good format
 
             # custom exception to indicate possible regex issues
@@ -229,9 +237,9 @@ class jobpy(object):
             pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
             with open(pickle_filepath, 'rb') as pickle_file:
                 dailyjobdict = pickle.load(pickle_file)
-        except FileNotFoundError:
+        except IOError:
             logging.error(pickle_filepath + ' not found!')
-            raise FileNotFoundError
+            raise IOError
 
         # load the filterlist if it exists, and apply it to remove any filtered jobs
         try:
@@ -244,7 +252,7 @@ class jobpy(object):
                 logging.debug ('job: {0} present in filter-list, not added '
                     'to master-list'.format(jobid))
 
-        except FileNotFoundError:
+        except IOError:
             logging.warning ('filterlist.json not found!, no filtration!')
 
         try:
@@ -290,7 +298,7 @@ class jobpy(object):
             df = df.T
             df.to_excel(self.masterlist)
 
-        except FileNotFoundError:
+        except IOError:
             logging.info ('no masterlist detected, adding all'
                 ' daily jobs to {0}'.format(self.masterlist))
 
@@ -302,19 +310,19 @@ class jobpy(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', dest='masterlist_path', action='store',
+    parser.add_argument('-m', dest='MASTERLIST_PATH', action='store',
         required=False, default=default_args['MASTERLIST_PATH'],
         help='path to a .xlsx spreadsheet file used to view and filter jobs'
              ' one will be created if one does not exist at location specified')
-    parser.add_argument('-f', dest='filterlist_path', action='store',
+    parser.add_argument('-f', dest='FILTERLIST_PATH', action='store',
         required=False, default=default_args['FILTERLIST_PATH'],
         help='path to a .json file which contains jobs rejected from the .xlsx'
              ' one will be created if one does not exist at location specified')
-    parser.add_argument('-t', dest='searchterms_path', action='store',
+    parser.add_argument('-t', dest='SEARCHTERMS_PATH', action='store',
         required=False, default=default_args['SEARCHTERMS_PATH'],
         help='path to a .json file which contains the desired search config'
              ' one will be created if one does not exist at location specified')
-    parser.add_argument('--similar', dest='similar', action='store_true',
+    parser.add_argument('--similar', dest='SIMILAR', action='store_true',
         help='set to true to get \'similar\'job listings on indeed')
 
     args = vars(parser.parse_args(sys.argv[1:]))
@@ -323,6 +331,7 @@ if __name__ == "__main__":
     args.update({'LOG_PATH'         : default_args['LOG_PATH'],
                  'BS4_PARSER'       : default_args['BS4_PARSER'],
                  'RESULTS_PER_PAGE' : default_args['RESULTS_PER_PAGE'],
+                 'LOG_LEVEL'        : default_args['LOG_LEVEL'],
                  })
 
     # init class
