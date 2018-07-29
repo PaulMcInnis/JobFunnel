@@ -35,8 +35,12 @@ class jobpy(object):
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
 
-        # search term configuration data #@TODO support python3 encoding
+        # search term configuration data
         self.search_terms = json.load(open(args['SEARCHTERMS_PATH'], 'rb'))
+
+        # set the search keywords if provided one
+        if args['KEYWORDS']:
+            self.search_terms['keywords'] = args['KEYWORDS']
 
         # logging
         logging.basicConfig(filename=args['LOG_PATH'], level=args['LOG_LEVEL'])
@@ -114,22 +118,29 @@ class jobpy(object):
 
     def scrape_indeed_to_pickle(self):
         ## scrape a page of indeed results to a pickle
-        # init http strings
-        search_string = "{0}%2C+{1}&radius={2}".format(
+        # setup logging
+        logging.basicConfig(filename=self.logfile,level=logging.INFO)
+        logging.info('jobpy indeed_topickle running @ : ' + self.date_string)
+
+        # init http strings for the job search
+        location_string = "{0}%2C+{1}&radius={2}".format(
             self.search_terms['region']['city'],
             self.search_terms['region']['province'],
             self.search_terms['region']['radius'],
         )
         url_base = 'http://www.indeed.{0}'.format(
             self.search_terms['region']['domain'])
-
-        # setup logging
-        logging.basicConfig(filename=self.logfile,level=logging.INFO)
-        logging.info('jobpy indeed_topickle running @ : ' + self.date_string)
+        search_string = ''
+        for i, s in enumerate(self.search_terms['keywords']):
+            if i > 0:
+                search_string += '+' + s
+            else:
+                search_string += s
+        logging.info('jobpy search_string = ' + search_string)
 
         # search url, 50 results per page #@TODO support more than 1 search term
         url_search = '{0}/jobs?q={1}&l={2}&limit={3}&filter={4}'.format(
-            url_base, self.search_terms['search'], search_string,
+            url_base, search_string, location_string,
             self.results_per_page, int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
@@ -245,7 +256,7 @@ class jobpy(object):
         if self.daily_scrape_dict:
             dailyjobdict = self.daily_scrape_dict
         else:
-            # open the daily pickle file --> dict if it exists
+            # try to open the daily pickle file --> dict if it exists
             try:
                 pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
                 with open(pickle_filepath, 'rb') as pickle_file:
