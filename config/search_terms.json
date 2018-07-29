@@ -1,0 +1,9 @@
+{
+    "region": {
+        "province": "ON",
+        "city": "waterloo",
+        "domain": "ca",
+        "radius": 25
+    },
+    "keywords": ["engineer", "AI"]
+}
