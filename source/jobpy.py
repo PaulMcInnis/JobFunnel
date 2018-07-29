@@ -129,7 +129,7 @@ class jobpy(object):
 
         # search url, 50 results per page #@TODO support more than 1 search term
         url_search = '{0}/jobs?q={1}&l={2}&limit={3}&filter={4}'.format(
-            url_base, self.search_terms['search'][0], search_string,
+            url_base, self.search_terms['search'], search_string,
             self.results_per_page, int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
