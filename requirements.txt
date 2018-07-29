@@ -5,6 +5,7 @@ chardet==3.0.4
 idna==2.7
 lxml==4.2.3
 numpy==1.15.0
+openpyxl==2.5.4
 pandas==0.23.3
 python-dateutil==2.7.3
 pytz==2018.5

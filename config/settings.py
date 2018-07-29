@@ -12,5 +12,5 @@ default_args = {
     # other config
     'BS4_PARSER' : 'lxml',
     'RESULTS_PER_PAGE' : 50,
+    'DATA_PATH' : os.path.join('data', 'scraped')
 }
-

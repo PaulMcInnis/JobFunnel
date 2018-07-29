@@ -1,19 +1,19 @@
 ## Paul McInnis 2018
 ## scrapes data off indeed.ca, pickles it, and applies search filters
 
-import sys
 import pickle
 import json
 import logging
-import argparse
 import requests
 import bs4
 import lxml
 import re
+import os
 import numpy as np
 import pandas as pd
+import openpyxl
 from datetime import date
-from config.settings import default_args
+
 
 class jobpy(object):
 
@@ -24,11 +24,13 @@ class jobpy(object):
         self.masterlist = args['MASTERLIST_PATH']
         self.filterlist = args['FILTERLIST_PATH']
         self.logfile = args['LOG_PATH']
+        self.pickles_dir = args['DATA_PATH']
 
         # other inits
         self.similar_results = args['SIMILAR']
         self.bs4_parser = args['BS4_PARSER']
         self.results_per_page = args['RESULTS_PER_PAGE']
+        self.daily_scrape_dict = None
 
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
@@ -39,6 +41,10 @@ class jobpy(object):
         # logging
         logging.basicConfig(filename=args['LOG_PATH'], level=args['LOG_LEVEL'])
         logging.info('jobpy initialized at {0}'.format(self.date_string))
+
+        # create dirs
+        if not os.path.exists('data'): os.makedirs('data')
+        if not os.path.exists(args['DATA_PATH']): os.makedirs(args['DATA_PATH'])
 
         # handle Python 2 & 3 Unicode formatting
         try:
@@ -94,7 +100,7 @@ class jobpy(object):
                         len(filter_list), self.filterlist))
 
                 # write out the complete list with any additions from the masterlist
-                with io.open(self.filterlist, 'w', encoding='utf8') as outfile:
+                with open(self.filterlist, 'w', encoding='utf8') as outfile:
                     str_ = json.dumps(filter_list,
                                       indent=4,
                                       sort_keys=True,
@@ -136,7 +142,7 @@ class jobpy(object):
 
         # find total number of pages @TODO implement a logger
         num_pages = int(np.ceil(num_results/self.results_per_page))
-        logging.info ('Found {0} results over {1} pages ({2}/page)\n'.format(
+        logging.info ('Found {0} results over {1} pages ({2}/page)'.format(
             num_results, num_pages, self.results_per_page))
 
         # generate the page urls, save as a list
@@ -180,13 +186,14 @@ class jobpy(object):
             try:
                 title = job.find('a',
                     attrs={'data-tn-element': "jobTitle"}).text.strip()
-                company = job.find('span', attrs={"itemprop":"name"}).text.strip()
+                company = job.find('span', attrs={"class":"company"}).text.strip()
                 salary_result = job.find('nobr')
                 location = job.find('span', {'class': 'location'}).text.strip()
                 description = job.find_all('div')[0].text.strip()
             except AttributeError as e:
-                logging.error("regex failure! " + e)
-                import pdb; pdb.set_trace() # regex failed
+                logging.error("regex failure! " + str(e))
+                #import pdb; pdb.set_trace() # regex failed
+                raise e
             #@TODO try and get the date posted into a good format
 
             # custom exception to indicate possible regex issues
@@ -213,7 +220,7 @@ class jobpy(object):
                         'description'   : description,
                         'link'          : link,
                         'state'         : state,
-                        'date'          : date_string}
+                        'date'          : self.date_string}
 
             # append salary if it exists
             if salary_result: job_dict.update(
@@ -223,23 +230,29 @@ class jobpy(object):
             dict_of_job_dicts.update({str(job_key) : job_dict})
 
         # save the resulting jobs dict as a pickle file
-        pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
+        pickle_filepath = os.path.join(self.pickles_dir,
+            'jobs_{0}.pkl'.format(self.date_string))
         with open(pickle_filepath, 'wb') as pickle_file:
             pickle.dump(dict_of_job_dicts, pickle_file)
+        self.daily_scrape_dict = dict_of_job_dicts
 
         logging.info('pickle file successfully dumped to ' + pickle_filepath)
 
 
     def pickle_to_masterlist(self):
         ## use the scraped job listings to update the master spreadsheet
-        # open the daily pickle file --> dict if it exists
-        try:
-            pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
-            with open(pickle_filepath, 'rb') as pickle_file:
-                dailyjobdict = pickle.load(pickle_file)
-        except IOError:
-            logging.error(pickle_filepath + ' not found!')
-            raise IOError
+        # try to load it from set var first:
+        if self.daily_scrape_dict:
+            dailyjobdict = self.daily_scrape_dict
+        else:
+            # open the daily pickle file --> dict if it exists
+            try:
+                pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
+                with open(pickle_filepath, 'rb') as pickle_file:
+                    dailyjobdict = pickle.load(pickle_file)
+            except IOError:
+                logging.error(pickle_filepath + ' not found!')
+                raise IOError
 
         # load the filterlist if it exists, and apply it to remove any filtered jobs
         try:
@@ -306,40 +319,3 @@ class jobpy(object):
             df = pd.DataFrame(dailyjobdict)
             df = df.T
             df.to_excel(self.masterlist)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m', dest='MASTERLIST_PATH', action='store',
-        required=False, default=default_args['MASTERLIST_PATH'],
-        help='path to a .xlsx spreadsheet file used to view and filter jobs'
-             ' one will be created if one does not exist at location specified')
-    parser.add_argument('-f', dest='FILTERLIST_PATH', action='store',
-        required=False, default=default_args['FILTERLIST_PATH'],
-        help='path to a .json file which contains jobs rejected from the .xlsx'
-             ' one will be created if one does not exist at location specified')
-    parser.add_argument('-t', dest='SEARCHTERMS_PATH', action='store',
-        required=False, default=default_args['SEARCHTERMS_PATH'],
-        help='path to a .json file which contains the desired search config'
-             ' one will be created if one does not exist at location specified')
-    parser.add_argument('--similar', dest='SIMILAR', action='store_true',
-        help='set to true to get \'similar\'job listings on indeed')
-
-    args = vars(parser.parse_args(sys.argv[1:]))
-
-    # some more defaults not set by argparse rn:
-    args.update({'LOG_PATH'         : default_args['LOG_PATH'],
-                 'BS4_PARSER'       : default_args['BS4_PARSER'],
-                 'RESULTS_PER_PAGE' : default_args['RESULTS_PER_PAGE'],
-                 'LOG_LEVEL'        : default_args['LOG_LEVEL'],
-                 })
-
-    # init class
-    jobpy_interface = jobpy(args)
-
-    # parse the xslx to filter list, scrape new listings & add to master xslx
-    jobpy_interface.masterlist_to_filterjson()
-    jobpy_interface.scrape_indeed_to_pickle()
-    jobpy_interface.pickle_tomasterlist()
-
-    print "done"
