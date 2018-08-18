@@ -24,9 +24,6 @@ if __name__ == "__main__":
     # parse
     args = vars(parser.parse_args(sys.argv[1:]))
 
-    # assertions for usage
-    assert(not args['NO_SCRAPE'] and args['KEYWORDS']), "must scrape new results"
-
     # some more defaults not set by argparse rn:
     args.update({'FILTERLIST_PATH'  : default_args['FILTERLIST_PATH'],
                  'LOG_PATH'         : default_args['LOG_PATH'],
