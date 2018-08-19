@@ -15,6 +15,7 @@ if __name__ == "__main__":
              ' default location is ' + default_args['MASTERLIST_PATH'])
     parser.add_argument('-kw', dest='KEYWORDS', nargs='*', required=False,
         help='list of keywords to use in the job search. ex: Engineer, AI'
+             '. Warning! all search results will be saved into .csv! '
              'Default is loaded from ' + default_args['SEARCHTERMS_PATH'])
     parser.add_argument('--similar', dest='SIMILAR', action='store_true',
         help='pass to get \'similar\'job listings to search on indeed')
@@ -26,6 +27,7 @@ if __name__ == "__main__":
 
     # some more defaults not set by argparse rn:
     args.update({'FILTERLIST_PATH'  : default_args['FILTERLIST_PATH'],
+                 'BLACKLIST_PATH'   : default_args['BLACKLIST_PATH'],
                  'LOG_PATH'         : default_args['LOG_PATH'],
                  'BS4_PARSER'       : default_args['BS4_PARSER'],
                  'RESULTS_PER_PAGE' : default_args['RESULTS_PER_PAGE'],
