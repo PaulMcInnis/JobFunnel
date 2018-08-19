@@ -9,10 +9,10 @@ import bs4
 import lxml
 import re
 import os
-import numpy as np
-import pandas as pd
-import openpyxl
-from datetime import date
+import csv
+from math import ceil
+from datetime import date, datetime, timedelta
+from config.settings import MASTERLIST_HEADER
 
 
 class jobpy(object):
@@ -56,22 +56,34 @@ class jobpy(object):
         except NameError: # @TODO use sys.version_info instead
             self.encoding = str
 
+    def read_csv(self, path, key_by_id=True):
+        ## reads csv passed in as path
+        with open(path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            if key_by_id:
+                return dict([(j['id'] , j) for j in reader])
+            else:
+                return [row for row in reader]
+
+    def write_csv(self, data, path, fieldnames=MASTERLIST_HEADER):
+        ## writes data [dict(),..] to a csv at path
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(data[row])
 
     def masterlist_to_filterjson(self):
         ## parse master .xlsx file into an update for the filter-list .json file
-        # @TODO return changes?
 
         filter_list = []
         try:
-            # read the master-list
-            df = pd.read_excel(self.masterlist).T
-
-            # add jobs user set state='filtered' to the filter-list json
+            # add jobs the user wants to filter away
             new_filter_list = []
-            for job in df:
+            for job in self.read_csv(self.masterlist, key_by_id=False):
                 try:
-                    if (df[job]['state'] == 'filtered'):
-                        new_filter_list.append(df[job].name)
+                    if (job['status'] == 'archive'):
+                        new_filter_list.append(job['id'])
                 except TypeError:
                     logging.warning ('job={0} appears malformed!'
                         'unable to add to filter list!'.format(job))
@@ -98,7 +110,6 @@ class jobpy(object):
 
                 except IOError:
                     # assume that this is a fresh filter list
-                    # @TODO some sort of prompt?
                     filter_list = new_filter_list
                     logging.info ('appended {0} jobids to {1}'.format(
                         len(filter_list), self.filterlist))
@@ -113,7 +124,7 @@ class jobpy(object):
                     outfile.write(self.encoding(str_))
 
         except IOError:
-            logging.error ("no master-list detected to load filters from,"
+            logging.error ("no master-list detected to load filters from," \
                            " no changes to filter-list made")
 
     def scrape_indeed_to_pickle(self):
@@ -122,132 +133,83 @@ class jobpy(object):
         logging.basicConfig(filename=self.logfile,level=logging.INFO)
         logging.info('jobpy indeed_topickle running @ : ' + self.date_string)
 
-        # init http strings for the job search
-        location_string = "{0}%2C+{1}&radius={2}".format(
-            self.search_terms['region']['city'],
-            self.search_terms['region']['province'],
-            self.search_terms['region']['radius'],
-        )
-        url_base = 'http://www.indeed.{0}'.format(
-            self.search_terms['region']['domain'])
-        search_string = ''
+        # form the query string
         for i, s in enumerate(self.search_terms['keywords']):
-            if i > 0:
-                search_string += '+' + s
-            else:
-                search_string += s
-        logging.info('jobpy search_string = ' + search_string)
+            if i == 0: query = s
+            else: query += '+' + s
+        logging.info('query string = ' + query)
 
-        # search url, 50 results per page #@TODO support more than 1 search term
-        url_search = '{0}/jobs?q={1}&l={2}&limit={3}&filter={4}'.format(
-            url_base, search_string, location_string,
-            self.results_per_page, int(self.similar_results))
+        # build the job search URL
+        search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
+                 '&limit={5}&filter={6}'.format(
+                    self.search_terms['region']['domain'],
+                    query, self.search_terms['region']['city'],
+                    self.search_terms['region']['province'],
+                    self.search_terms['region']['radius'],
+                    self.results_per_page, int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(url_search)
+        request_HTML = requests.get(search)
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
-        # find total number of results @TODO make cleaner`
-        num_results = soup_base.find(id = 'searchCount').contents[0].split()[-1]
-        num_results = int(re.sub("[^0-9]","", num_results))
+        # scrape total number of results, and calculate the # pages needed
+        num_results = soup_base.find(id = 'searchCount').contents[0].strip()
+        num_results = int(re.sub(".*of[^0-9]","", num_results))
+        logging.info ('Found {0} results)'.format(num_results))
 
-        # find total number of pages @TODO implement a logger
-        num_pages = int(np.ceil(num_results/self.results_per_page))
-        logging.info ('Found {0} results over {1} pages ({2}/page)'.format(
-            num_results, num_pages, self.results_per_page))
+        # scrape soups for all the pages containing jobs it found
+        list_of_job_soups = []
+        for page in range(0, int(ceil(num_results/self.results_per_page))):
+            page_url = '{0}&start={1}'.format(search, int(page*self.results_per_page))
+            logging.info ('getting page {0} : {1}'.format(page, page_url))
+            jobs = bs4.BeautifulSoup(requests.get(page_url).text,
+                            self.bs4_parser).find_all('div',
+                            attrs={'data-tn-component': 'organicJob'})
+            list_of_job_soups.extend(jobs)
 
-        # generate the page urls, save as a list
-        list_of_page_urls = []
-        for page in range(0, num_pages):
-            url_page = '{0}&start={1}'.format(
-                url_search, page*self.results_per_page)
-            list_of_page_urls.append(url_page)
+        # make a dict of job postings from the listing briefs
+        jobs =  {}
+        for s in list_of_job_soups:
+            # init dict to store scraped data
+            job = dict([(k,'') for k in MASTERLIST_HEADER])
 
-        # scrape soups of all listed jobs pages
-        list_of_job_soups_by_page = []
-        for page in range(len(list_of_page_urls)):
-            # log current scraped page
-            logging.info ('getting page {0} : {1}'.format(
-                page, list_of_page_urls[page]))
+            # scrape the post data
+            job['status'] = 'new'
+            job['title'] = s.find('a', attrs={'data-tn-element': "jobTitle"}).text.strip()
+            job['company'] = s.find('span', attrs={"class":"company"}).text.strip()
+            job['blurb'] = s.find('span',{'class': 'summary'}).text.strip()
+            job['location'] = s.find('span',{'class': 'location'}).text.strip()
+            s.find('span', attrs={'result-link-bar' : 'date'})
+            job['id'] = re.findall(r'id=\"sj_(.*)\" onclick',
+                str(s.find_all('a', { "class" : "sl resultLink save-job-link "})))[0]
+            job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
+                           self.search_terms['region']['domain'], job['id'])
 
-            # init a bs4 object containing the page
-            html_page = requests.get(list_of_page_urls[page])
-            soup_page = bs4.BeautifulSoup(html_page.text, self.bs4_parser)
-
-            # process page's soup to obtain list of all jobs only
-            jobs_page = soup_page.find_all('div',
-                attrs={'data-tn-component': 'organicJob'})
-            list_of_job_soups_by_page.append(jobs_page)
-
-        # flatten the 2D list so that each list item is a separate job
-        list_of_job_soups = sum(list_of_job_soups_by_page, [])
-
-        # make a dict of job postings from the listings
-        dict_of_job_dicts =  {}
-        for job in list_of_job_soups:
-
-            # if it's been posted days ago don't set it to new!!
-            information = job.find("div", class_="result-link-bar")
-            if (len(re.findall(r'days ago', str(information))) > 0):
-                state = 'filtered'
-            else:
-                state = 'daily'
-
-            # scrape the actual posting data
+            # calculate the date from relative post age
+            link_bar_text = str(s.find("div", class_="result-link-bar"))
             try:
-                title = job.find('a',
-                    attrs={'data-tn-element': "jobTitle"}).text.strip()
-                company = job.find('span', attrs={"class":"company"}).text.strip()
-                salary_result = job.find('nobr')
-                location = job.find('span', {'class': 'location'}).text.strip()
-                description = job.find_all('div')[0].text.strip()
-            except AttributeError as e:
-                logging.error("regex failure! " + str(e))
-                #import pdb; pdb.set_trace() # regex failed
-                raise e
-            #@TODO try and get the date posted into a good format
-
-            # custom exception to indicate possible regex issues
-            class IDSearchException(Exception):
-                pass
-
-            # make a unique job id key with the 'save job' URL
-            try:
-                # get savejob link sl resultLink save-job-link
-                stt = job.find_all('a',
-                    { "class" : "sl resultLink save-job-link "})
-                job_key = re.findall('id=\"sj_(.*)\" onclick', str(stt))[0]
-                link = '{0}/viewjob?jk={1}'.format(url_base, job_key)
+                days_ago = re.findall(r'(\d+).*day.*ago', link_bar_text)[0]
+                post_date = datetime.now() - timedelta(days=int(days_ago))
             except IndexError:
-                error_text = 'regex issue! unable to scrape job id from' \
-                    ' posting {0} {1}'.format(company, title)
-                logging.error(error_text)
-                raise IDSearchException(error_text)
+                # it's probably not days old
+                try:
+                    hours_ago = re.findall(r'(\d+).*hour.*ago', link_bar_text)[0]
+                    post_date = datetime.now() - timedelta(hours=int(hours_ago))
+                except:
+                    post_date = datetime(1970,1,1)
+                    logging.error('unknown date for job {0}'.format(job['id']))
+            job['date'] = post_date.strftime('%d, %b %Y')
 
-            # append data to running dict() of all scraped jobs
-            job_dict = {'title'         : title,
-                        'job'           : company,
-                        'location'      : location,
-                        'description'   : description,
-                        'link'          : link,
-                        'state'         : state,
-                        'date'          : self.date_string}
+            # key by id
+            jobs.update({str(job['id']) : job})
 
-            # append salary if it exists
-            if salary_result: job_dict.update(
-                {'salary' : salary_result.text.strip()})
-
-            # add the job to the dict
-            dict_of_job_dicts.update({str(job_key) : job_dict})
+        # set the current dict
+        self.daily_scrape_dict = jobs
 
         # save the resulting jobs dict as a pickle file
-        pickle_filepath = os.path.join(self.pickles_dir,
-            'jobs_{0}.pkl'.format(self.date_string))
-        with open(pickle_filepath, 'wb') as pickle_file:
-            pickle.dump(dict_of_job_dicts, pickle_file)
-        self.daily_scrape_dict = dict_of_job_dicts
-
-        logging.info('pickle file successfully dumped to ' + pickle_filepath)
+        pickle_name = 'jobs_{0}.pkl'.format(self.date_string)
+        pickle.dump(jobs, open(os.path.join(self.pickles_dir,pickle_name), 'wb'))
+        logging.info('pickle file successfully dumped to ' + pickle_name)
 
 
     def pickle_to_masterlist(self):
@@ -258,12 +220,13 @@ class jobpy(object):
         else:
             # try to open the daily pickle file --> dict if it exists
             try:
-                pickle_filepath = 'jobs_{0}.pkl'.format(self.date_string)
+                pickle_filepath = os.path.join('data', 'scraped', 'jobs_{0}.pkl'.format(
+                    self.date_string))
                 with open(pickle_filepath, 'rb') as pickle_file:
                     dailyjobdict = pickle.load(pickle_file)
-            except IOError:
+            except FileNotFoundError as e:
                 logging.error(pickle_filepath + ' not found!')
-                raise IOError
+                raise e
 
         # load the filterlist if it exists, and apply it to remove any filtered jobs
         try:
@@ -275,58 +238,40 @@ class jobpy(object):
                 dailyjobdict.pop(jobid, None)
                 logging.debug ('job: {0} present in filter-list, not added '
                     'to master-list'.format(jobid))
-
-        except IOError:
+        except FileNotFoundError:
             logging.warning ('filterlist.json not found!, no filtration!')
+            json_filter_list = []
 
         try:
-            # open master list if it exists
-            masterlist = pd.read_excel(self.masterlist)
-            masterlist = masterlist.T
-
-            # add master list id's to a list, init updated master-list
-            masterlist_ids = masterlist.columns.tolist()
+            # open master list if it exists & init updated master-list
+            masterlist = self.read_csv(self.masterlist)
             newmasterlist_dict = {}
 
             # identify the new job id's not in master list or in filter-list
             for jobid in dailyjobdict:
+                job = dailyjobdict[jobid]
                 # catch daily only jobs
-                if dailyjobdict[jobid]['state'] != 'filtered':
+                if job['status'] != 'filtered':
                     # preserve user state
-                    output_job_dict = dailyjobdict[jobid]
                     try:
-                        existingstate = masterlist[jobid]['state']
-                        output_job_dict.update({'state' : existingstate})
+                        job['status'] = masterlist[jobid]['status']
                     except KeyError:
-                        logging.debug('jobid {0} not in master-list'.format(
-                            jobid))
+                        logging.debug('jobid {0} not in master-list'.format(jobid))
 
                     # make sure new jobs have correct state
-                    if jobid not in masterlist_ids and \
-                       jobid not in json_filter_list:
+                    if jobid not in masterlist and jobid not in json_filter_list:
                         # change state to new
-                        output_job_dict.update({'state' : 'new'})
-                        logging.info ('job : {0} has been added to the '
-                            'masterlist'.format(jobid))
-
-                    # make the url clickable in excel
-                    output_job_dict.update({'link': '=HYPERLINK("{0}")'.format(
-                        output_job_dict['link'])})
+                        job['status'] = 'new'
+                        logging.info ('job : {0} added to masterlist'.format(jobid))
 
                     # add current job to output
-                    newmasterlist_dict.update({jobid : output_job_dict})
+                    newmasterlist_dict.update({jobid : job})
+            # save
+            self.write_csv(data=newmasterlist_dict, path=self.masterlist)
 
-            # save the output to excel again
-            #save a XLSX 2010 of jobs dict() transposed (vertically)
-            df = pd.DataFrame(newmasterlist_dict)
-            df = df.T
-            df.to_excel(self.masterlist)
-
-        except IOError:
+        except FileNotFoundError:
             logging.info ('no masterlist detected, adding all'
                 ' daily jobs to {0}'.format(self.masterlist))
 
             # dump the results into the out folder as the master-list
-            df = pd.DataFrame(dailyjobdict)
-            df = df.T
-            df.to_excel(self.masterlist)
+            self.write_csv(data=dailyjobdict, path=self.masterlist)

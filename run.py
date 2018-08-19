@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # parse the xslx to filter list, scrape new listings & add to master xslx
     jobpy_interface.masterlist_to_filterjson()
-    jobpy_interface.scrape_indeed_to_pickle()
+    if not args['NO_SCRAPE'] : jobpy_interface.scrape_indeed_to_pickle()
     jobpy_interface.pickle_to_masterlist()
 
-    print ("done.\nsee un-reviewed jobs in " + args['MASTERLIST_PATH'])
+    print ("done.\nsee un-archived jobs in " + args['MASTERLIST_PATH'])
