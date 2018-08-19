@@ -20,9 +20,9 @@ The spreadsheet for managing your job search:
 
 #### Usage Notes
 * note that any custom states (i.e `applied`) are preserved in the spreadsheet
-* to update active filters and to see any `new` jobs going forwards, just `python3 run.py` again, and review the spreadsheet, reviewing `new` jobs
+* to update active filters and to see any `new` jobs going forwards, just `python3 run.py` again, and review .csv
 * currently JobPy works best if you stick to a single job search
 * if a job that exists in your .csv disappears from the search results, it's `status` will be set to `expired`
-* by adding job undesired i.e. consulting companies to the `config/blacklist.json`, you can exclude them from results
+* by adding undesired companies, i.e. job consulting companies, to the `config/blacklist.json`, you can exclude them from results
 * system is easily automated to run nightly with crontab
 
