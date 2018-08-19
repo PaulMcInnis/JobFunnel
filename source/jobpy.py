@@ -80,10 +80,10 @@ class jobpy(object):
         try:
             # add jobs the user wants to filter away
             new_filter_list = []
-            for job in self.read_csv(self.masterlist):
+            for job in self.read_csv(self.masterlist, key_by_id=False):
                 try:
                     if (job['status'] == 'archive'):
-                        new_filter_list.append(job.name)
+                        new_filter_list.append(job['id'])
                 except TypeError:
                     logging.warning ('job={0} appears malformed!'
                         'unable to add to filter list!'.format(job))
