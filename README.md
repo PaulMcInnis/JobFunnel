@@ -18,9 +18,9 @@ The spreadsheet for managing your job search:
 1. Review jobs in `jobs_masterlist.csv`, set any undesired jobs `status` to `archive`, these jobs will be removed from .csv next time you run `run.py`
 1. If you get an `interview`/`offer` or are `rejected`, update the job `status`, note that `rejected` jobs will be filtered out and will disappear from the output .csv
 
-#### Usage Notes
+### Usage Notes
 * note that any custom states (i.e `applied`) are preserved in the spreadsheet
-* to update active filters and to see any `new` jobs going forwards, just `python3 run.py` again, and review the spreadsheet, reviewing `new` jobs
+* to update active filters and to see any `new` jobs going forwards, just `python3 run.py` again, and review .csv
 * you can keep multiple search results across multiple .csv files: i.e: `python3 run.py -kw Python -o data/python_masterlist.csv` for python jobs, and `python3 run.py -kw AI Machine Learning -o data/ML_masterlist.csv` for ML jobs
 * by adding job undesired i.e. consulting companies to the `config/blacklist.json`, you can exclude them from results
 * system is easily automated to run nightly with crontab
