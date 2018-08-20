@@ -232,6 +232,7 @@ class jobpy(object):
                     if self.daily_scrape_dict[jobid]['status'] != 'archive':
                         self.daily_scrape_dict[jobid]['status'] = masterlist[jobid]['status']
                 else:
+                    logging.info ('job {0} missing from search results'.format(jobid))
                     # assume job in the masterlist not in search results = expired
                     #self.daily_scrape_dict[jobid]['status'] = 'expired'
                     # @TODO it seems that sponsored jobs change, and this affects status
