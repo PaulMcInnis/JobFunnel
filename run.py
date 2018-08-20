@@ -8,7 +8,7 @@ from source.jobpy import jobpy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', dest='MASTERLIST_PATH', action='store',
+    parser.add_argument('-o', dest='MASTERLIST_PATH', action='store',
         required=False, default=default_args['MASTERLIST_PATH'],
         help='path to a .csv spreadsheet file used to view and filter jobs'
              ' one will be created if one does not exist at location specified'

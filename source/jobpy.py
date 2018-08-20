@@ -109,7 +109,6 @@ class jobpy(object):
         for i, s in enumerate(self.search_terms['keywords']):
             if i == 0: query = s
             else: query += '+' + s
-        logging.info('query string = ' + query)
 
         # build the job search URL
         search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
@@ -127,7 +126,7 @@ class jobpy(object):
         # scrape total number of results, and calculate the # pages needed
         num_results = soup_base.find(id = 'searchCount').contents[0].strip()
         num_results = int(re.sub(".*of[^0-9]","", num_results))
-        logging.info('Found {0} results)'.format(num_results))
+        logging.info('Found {0} results for query={1}'.format(num_results, query))
 
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
@@ -234,7 +233,8 @@ class jobpy(object):
                         self.daily_scrape_dict[jobid]['status'] = masterlist[jobid]['status']
                 else:
                     # assume job in the masterlist not in search results = expired
-                    self.daily_scrape_dict[jobid]['status'] = 'expired'
+                    #self.daily_scrape_dict[jobid]['status'] = 'expired'
+                    # @TODO it seems that sponsored jobs change, and this affects status
             # save
             self.write_csv(data=self.daily_scrape_dict, path=self.masterlist)
 
