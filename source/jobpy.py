@@ -10,15 +10,15 @@ import lxml
 import re
 import os
 import csv
+import string
 from math import ceil
 from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from config.settings import MASTERLIST_HEADER
 
 
 class jobpy(object):
-
-    """class to scrape data off of indeed.ca, with csv-based I/O"""
-
+    """class to scrape data off of indeed.ca and monster.ca, with csv-based I/O"""
     def __init__(self, args):
         # paths
         self.masterlist = args['MASTERLIST_PATH']
@@ -114,18 +114,29 @@ class jobpy(object):
         search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
                  '&limit={5}&filter={6}'.format(
                     self.search_terms['region']['domain'],
-                    query, self.search_terms['region']['city'],
+                    query,
+                    self.search_terms['region']['city'],
                     self.search_terms['region']['province'],
                     self.search_terms['region']['radius'],
-                    self.results_per_page, int(self.similar_results))
+                    self.results_per_page,
+                    int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
         request_HTML = requests.get(search)
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
-        num_results = soup_base.find(id = 'searchCount').contents[0].strip()
-        num_results = int(re.sub(".*of[^0-9]","", num_results))
+        str_results = soup_base.find(id = 'searchCount').contents[0].strip()
+        try:
+            # depreciated since last update
+            str_results = int(re.sub(".*of[^0-9]","", str_results))
+            num_results = int(results)
+        except ValueError:
+            # the lastest and greatest
+            str_results = re.sub(".*of ", "", str_results)
+            str_results = re.sub(",", "", str_results)
+            str_results = re.sub("jobs.*", "", str_results)
+            num_results = int(str_results)  
         logging.info('Found {0} results for query={1}'.format(num_results, query))
 
         # scrape soups for all the pages containing jobs it found
@@ -145,30 +156,65 @@ class jobpy(object):
             job = dict([(k,'') for k in MASTERLIST_HEADER])
 
             # scrape the post data
-            job['status'] = 'new'
-            job['title'] = s.find('a', attrs={'data-tn-element': "jobTitle"}).text.strip()
-            job['company'] = s.find('span', attrs={"class":"company"}).text.strip()
-            job['blurb'] = s.find('span',{'class': 'summary'}).text.strip()
-            job['location'] = s.find('span',{'class': 'location'}).text.strip()
-            s.find('span', attrs={'result-link-bar' : 'date'})
-            job['id'] = re.findall(r'id=\"sj_(.*)\" onclick',
-                str(s.find_all('a', { "class" : "sl resultLink save-job-link "})))[0]
-            job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
-                           self.search_terms['region']['domain'], job['id'])
+            job['status']   = 'new'
+            try:
+                # jobs should at minimum have a title, company and location
+                job['title']    = s.find('a', attrs={'data-tn-element':'jobTitle'}).text.strip()
+                job['company']  = s.find('span', attrs={'class':'company'}).text.strip()
+                job['location'] = s.find('span', attrs={'class':'location'}).text.strip()
+            except AttributeError:
+                continue
+
+            try:
+                job['blurb']    = s.find('div', attrs={'class':'summary'}).text.strip()
+                # filter all of the weird characters some job postings have...
+                printable = set(string.printable)
+                job['blurb']    = filter(lambda x: x in printable, job['blurb'])
+                job['blurb']    = ''.join(job['blurb'])
+            except AttributeError:
+                job['blurb']    = ""
+
+            try:
+                job['date']     = s.find('span', attrs={'class':'date'}).text.strip()
+            except AttributeError:
+                job['date']     = ""
+
+            try:
+                # sometimes the sl_resultLink_save-job-link class includes a space
+                job['id']       = re.findall(r'id=\"sj_[a-zA-Z0-9]*\"', str(s.find_all('a', attrs={'class':'sl resultLink save-job-link '})[0]))[0]
+                job['link']     = 'http://www.indeed.{0}/viewjob?jk={1}'.format(self.search_terms['region']['domain'], job['id'])
+            except (AttributeError, IndexError):
+                try:
+                    job['id']   = re.findall(r'id=\"sj_[a-zA-Z0-9]*\"', str(s.find_all('a', attrs={'class': 'sl resultLink save-job-link'})[0]))[0]
+                    job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(self.search_terms['region']['domain'], job['id'])
+                except (AttributeError, IndexError):
+                    job['id']       = ""
+                    job['link']     = ""
 
             # calculate the date from relative post age
-            link_bar_text = str(s.find("div", class_="result-link-bar"))
             try:
-                days_ago = re.findall(r'(\d+).*day.*ago', link_bar_text)[0]
-                post_date = datetime.now() - timedelta(days=int(days_ago))
+                # hours old
+                hours_ago = re.findall(r'(\d+)[0-9]*.*hour.*ago', job['date'])[0]
+                post_date = datetime.now() - timedelta(hours=int(hours_ago))
             except IndexError:
-                # it's probably not days old
+                # days old
                 try:
-                    hours_ago = re.findall(r'(\d+).*hour.*ago', link_bar_text)[0]
-                    post_date = datetime.now() - timedelta(hours=int(hours_ago))
-                except:
-                    post_date = datetime(1970,1,1)
-                    logging.error('unknown date for job {0}'.format(job['id']))
+                    days_ago = re.findall(r'(\d+)[0-9]*.*day.*ago', job['date'])[0]
+                    post_date = datetime.now() - timedelta(days=int(days_ago))
+                except IndexError:
+                    # months old
+                    try:
+                        months_ago = re.findall(r'(\d+)[0-9]*.*month.*ago', job['date'])[0]
+                        post_date = datetime.now() - relativedelta(months=int(months_ago))
+                    except IndexError:
+                        # years old
+                        try:
+                            years_ago = re.findall(r'(\d+)[0-9]*.*year.*ago', job['date'])[0]
+                            post_date = datetime.now() - relativedelta(years=int(years_ago))
+                        except:
+                            # must be from the 1970's
+                            post_date = datetime(1970,1,1)
+                            logging.error('unknown date for job {0}'.format(job['id']))
             job['date'] = post_date.strftime('%d, %b %Y')
 
             # key by id
@@ -176,8 +222,7 @@ class jobpy(object):
 
         # save the resulting jobs dict as a pickle file
         pickle_name = 'jobs_{0}.pkl'.format(self.date_string)
-        pickle.dump(self.daily_scrape_dict,
-                    open(os.path.join(self.pickles_dir,pickle_name), 'wb'))
+        pickle.dump(self.daily_scrape_dict, open(os.path.join(self.pickles_dir,pickle_name), 'wb'))
         logging.info('pickle file successfully dumped to ' + pickle_name)
 
 
