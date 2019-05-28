@@ -126,17 +126,17 @@ class jobpy(object):
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
-        str_results = soup_base.find(id='searchCount').contents[0].strip()
+        num_results = soup_base.find(id='searchCount').contents[0].strip()
         try:
             # depreciated since last update
-            str_results = int(re.sub(".*of[^0-9]", "", str_results))
-            num_results = int(results)
+            num_results = int(re.sub(".*of[^0-9]", "", num_results))
+            num_results = int(num_results)
         except ValueError:
             # the lastest and greatest
-            str_results = re.sub(".*of ", "", str_results)
-            str_results = re.sub(",", "", str_results)
-            str_results = re.sub("jobs.*", "", str_results)
-            num_results = int(str_results)  
+            num_results = re.sub(".*of ", "", num_results)
+            num_results = re.sub(",", "", num_results)
+            num_results = re.sub("jobs.*", "", num_results)
+            num_results = int(num_results)  
         logging.info('Found {0} results for query={1}'.format(num_results, query))
 
         # scrape soups for all the pages containing jobs it found
