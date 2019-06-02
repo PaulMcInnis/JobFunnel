@@ -10,7 +10,7 @@ from datetime import date
 from config.settings import MASTERLIST_HEADER
 
 class jobpy(object):
-    """class to scrape data off of indeed.ca and monster.ca, with csv-based I/O"""
+    """class that writes pickles to masterlist and applys search filters"""
     def __init__(self, args):
         # paths
         self.masterlist = args['MASTERLIST_PATH']
