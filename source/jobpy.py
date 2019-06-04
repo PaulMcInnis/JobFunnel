@@ -1,24 +1,16 @@
 ## Paul McInnis 2018
-## scrapes data off indeed.ca, pickles it, and applies search filters
+## writes pickles to masterlist and applies search filters
 
 import pickle
 import json
 import logging
-import requests
-import bs4
-import lxml
-import re
 import os
 import csv
-import string
-from math import ceil
-from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date
 from config.settings import MASTERLIST_HEADER
 
-
 class jobpy(object):
-    """class to scrape data off of indeed.ca, with csv-based I/O"""
+    """class that writes pickles to masterlist and applys search filters"""
     def __init__(self, args):
         # paths
         self.masterlist = args['MASTERLIST_PATH']
@@ -30,7 +22,6 @@ class jobpy(object):
         # other inits
         self.similar_results = args['SIMILAR']
         self.bs4_parser = args['BS4_PARSER']
-        self.results_per_page = args['RESULTS_PER_PAGE']
         self.daily_scrape_dict = None
 
         # date string for pickle files
@@ -100,152 +91,6 @@ class jobpy(object):
                 outfile.write(self.encoding(str_))
         else:
             logging.warning ("no master-list detected, cannot update filter-list")
-
-    def scrape_indeed_to_pickle(self):
-        ## scrape a page of indeed results to a pickle
-        logging.info('jobpy indeed_topickle running @ : ' + self.date_string)
-
-        # form the query string
-        for i, s in enumerate(self.search_terms['keywords']):
-            if i == 0: query = s
-            else: query += '+' + s
-
-        # build the job search URL
-        search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
-                 '&limit={5}&filter={6}'.format(
-            self.search_terms['region']['domain'],
-            query,
-            self.search_terms['region']['city'],
-            self.search_terms['region']['province'],
-            self.search_terms['region']['radius'],
-            self.results_per_page,
-            int(self.similar_results))
-
-        # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(search)
-        soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
-
-        # scrape total number of results, and calculate the # pages needed
-        num_results = soup_base.find(id='searchCount').contents[0].strip()
-        try:
-            # depreciated since last update
-            num_results = int(re.sub(".*of[^0-9]", "", num_results))
-            num_results = int(num_results)
-        except ValueError:
-            # the lastest and greatest
-            num_results = re.sub(".*of ", "", num_results)
-            num_results = re.sub(",", "", num_results)
-            num_results = re.sub("jobs.*", "", num_results)
-            num_results = int(num_results)  
-        logging.info('Found {0} results for query={1}'.format(num_results, query))
-
-        # scrape soups for all the pages containing jobs it found
-        list_of_job_soups = []
-        for page in range(0, int(ceil(num_results/self.results_per_page))):
-            page_url = '{0}&start={1}'.format(search, int(page*self.results_per_page))
-            logging.info ('getting page {0} : {1}'.format(page, page_url))
-            jobs = bs4.BeautifulSoup(requests.get(page_url).text,
-                            self.bs4_parser).find_all('div',
-                            attrs={'data-tn-component': 'organicJob'})
-            list_of_job_soups.extend(jobs)
-
-        # make a dict of job postings from the listing briefs
-        self.daily_scrape_dict =  {}
-        for s in list_of_job_soups:
-            # init dict to store scraped data
-            job = dict([(k,'') for k in MASTERLIST_HEADER])
-
-            # scrape the post data
-            job['status'] = 'new'
-            try:
-                # jobs should at minimum have a title, company and location
-                job['title'] = s.find('a', attrs={
-                    'data-tn-element': 'jobTitle'}).text.strip()
-                job['company'] = s.find('span',
-                                        attrs={'class': 'company'}).text.strip()
-                job['location'] = s.find('span', attrs={
-                    'class': 'location'}).text.strip()
-            except AttributeError:
-                continue
-
-            try:
-                job['blurb'] = s.find('div',
-                                      attrs={'class': 'summary'}).text.strip()
-                # filter all of the weird characters some job postings have...
-                printable = set(string.printable)
-                job['blurb'] = filter(lambda x: x in printable, job['blurb'])
-                job['blurb'] = ''.join(job['blurb'])
-            except AttributeError:
-                job['blurb'] = ""
-
-            try:
-                job['date'] = s.find('span',
-                                     attrs={'class': 'date'}).text.strip()
-            except AttributeError:
-                job['date'] = ""
-
-            try:
-                # sometimes the sl_resultLink_save-job-link class includes a space
-                job['id'] = re.findall(r'id=\"sj_[a-zA-Z0-9]*\"', str(
-                    s.find_all('a',
-                               attrs={'class': 'sl resultLink save-job-link '})[
-                        0]))[0]
-                job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
-                    self.search_terms['region']['domain'], job['id'])
-            except (AttributeError, IndexError):
-                try:
-                    job['id'] = re.findall(r'id=\"sj_[a-zA-Z0-9]*\"', str(
-                        s.find_all('a', attrs={
-                            'class': 'sl resultLink save-job-link'})[0]))[0]
-                    job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
-                        self.search_terms['region']['domain'], job['id'])
-                except (AttributeError, IndexError):
-                    job['id'] = ""
-                    job['link'] = ""
-
-            # calculate the date from relative post age
-            try:
-                # hours old
-                hours_ago = re.findall(r'(\d+)[0-9]*.*hour.*ago', job['date'])[
-                    0]
-                post_date = datetime.now() - timedelta(hours=int(hours_ago))
-            except IndexError:
-                # days old
-                try:
-                    days_ago = \
-                    re.findall(r'(\d+)[0-9]*.*day.*ago', job['date'])[0]
-                    post_date = datetime.now() - timedelta(days=int(days_ago))
-                except IndexError:
-                    # months old
-                    try:
-                        months_ago = \
-                        re.findall(r'(\d+)[0-9]*.*month.*ago', job['date'])[0]
-                        post_date = datetime.now() - relativedelta(
-                            months=int(months_ago))
-                    except IndexError:
-                        # years old
-                        try:
-                            years_ago = \
-                            re.findall(r'(\d+)[0-9]*.*year.*ago', job['date'])[
-                                0]
-                            post_date = datetime.now() - relativedelta(
-                                years=int(years_ago))
-                        except:
-                            # must be from the 1970's
-                            post_date = datetime(1970, 1, 1)
-                            logging.error(
-                                'unknown date for job {0}'.format(job['id']))
-            job['date'] = post_date.strftime('%d, %b %Y')
-
-            # key by id
-            self.daily_scrape_dict[str(job['id'])] = job
-
-        # save the resulting jobs dict as a pickle file
-        pickle_name = 'jobs_{0}.pkl'.format(self.date_string)
-        pickle.dump(self.daily_scrape_dict,
-                    open(os.path.join(self.pickles_dir, pickle_name), 'wb'))
-        logging.info('pickle file successfully dumped to ' + pickle_name)
-
 
     def pickle_to_masterlist(self):
         ## use the scraped job listings to update the master spreadsheet

@@ -12,7 +12,6 @@ default_args = {
     'LOG_LEVEL' : logging.INFO,
     # other config
     'BS4_PARSER' : 'lxml',
-    'RESULTS_PER_PAGE' : 50, # appears to be the maximum allowed by indeed.ca
     'DATA_PATH' : os.path.join('data', 'scraped')
 }
 

@@ -2,10 +2,11 @@
 
 Easily automated tool for scraping job postings to `.csv` using `python3` and `beautifulsoup4`
 
-### Benefits over indeed.ca
+### Benefits over indeed.ca and monster.ca
 * never see the same job twice!
 * browse all search results at once, in an easy to read/sort spreadsheet
 * keep track of all explicitly new job postings in your area
+* see jobs from multiple job search sites all in one place
 
 The spreadsheet for managing your job search:
 
@@ -24,4 +25,3 @@ The spreadsheet for managing your job search:
 * you can keep multiple search results across multiple .csv files: i.e: `python3 run.py -kw Python -o data/python_masterlist.csv` for python jobs, and `python3 run.py -kw AI Machine Learning -o data/ML_masterlist.csv` for ML jobs
 * by adding job undesired i.e. consulting companies to the `config/blacklist.json`, you can exclude them from results
 * system is easily automated to run nightly with crontab
-
