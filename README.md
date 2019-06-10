@@ -2,7 +2,7 @@
 
 Easily automated tool for scraping job postings to `.csv` using `python3` and `beautifulsoup4`
 
-### Benefits over indeed.ca and monster.ca
+### Benefits over job search sites
 * never see the same job twice!
 * browse all search results at once, in an easy to read/sort spreadsheet
 * keep track of all explicitly new job postings in your area

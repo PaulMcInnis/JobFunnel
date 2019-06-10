@@ -103,7 +103,17 @@ def scrape_monster_to_pickle(jobpy_obj):
                 job['id'] = ''
                 job['link'] = ''
 
-            # @TODO traverse the job link to extract the blurb
+            # traverse the job link to extract the blurb
+            search = job['link']
+            request_HTML = requests.get(search)
+            job_link_soup = bs4.BeautifulSoup(request_HTML.text,
+                                              jobpy_obj.bs4_parser)
+
+            try:
+                job['blurb'] = job_link_soup.find(
+                    id='JobDescription').text.strip()
+            except AttributeError:
+                job['blurb'] = ''
 
             filter_non_printables(job)
             post_date_from_relative_post_age(job)

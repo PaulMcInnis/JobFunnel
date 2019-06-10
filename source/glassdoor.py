@@ -179,11 +179,26 @@ def scrape_glassdoor_to_pickle(jobpy_obj):
                 job['id'] = ''
                 job['link'] = ''
 
-            # @TODO traverse the job link to extract the blurb and date
+            # traverse the job link to extract the blurb and date
+            search = job['link']
+            request_HTML = requests.post(search, headers=location_headers)
+            job_link_soup = bs4.BeautifulSoup(request_HTML.text,
+                                              jobpy_obj.bs4_parser)
+
+            try:
+                job['blurb'] = job_link_soup.find(
+                    id='JobDescriptionContainer').text.strip()
+            except AttributeError:
+                job['blurb'] = ''
+
+            try:
+                job['date'] = job_link_soup.find('span', attrs={'class',
+                                                                'minor nowrap'}).text.strip()
+            except AttributeError:
+                job['date'] = ''
 
             filter_non_printables(job)
-            # TODO enable post_date_from_relative_post_age
-            # post_date_from_relative_post_age(job)
+            post_date_from_relative_post_age(job)
 
             # key by id
             jobpy_obj.daily_scrape_dict[str(job['id'])] = job
