@@ -4,20 +4,22 @@ import pickle
 import logging
 import requests
 import bs4
-import lxml
 import re
 import os
-import string
+import sys
 from math import ceil
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 from config.settings import MASTERLIST_HEADER
+from tools.tools import filter_non_printables
+from tools.tools import post_date_from_relative_post_age
+
+sys.path.append('../')
 
 # the maximum monster search results per page
 monster_max_results_per_page = 25
 
 
 def scrape_monster_to_pickle(jobpy_obj):
+    """function that scrapes job posting from monster and pickles it"""
     try:
         ## scrape a page of monster results to a pickle
         logging.info(
@@ -101,41 +103,10 @@ def scrape_monster_to_pickle(jobpy_obj):
                 job['id'] = ''
                 job['link'] = ''
 
-            # calculate the date from relative post age
-            try:
-                # hours old
-                hours_ago = re.findall(r'(\d+)[0-9]*.*hour.*ago', job['date'])[
-                    0]
-                post_date = datetime.now() - timedelta(hours=int(hours_ago))
-            except IndexError:
-                # days old
-                try:
-                    days_ago = \
-                        re.findall(r'(\d+)[0-9]*.*day.*ago', job['date'])[0]
-                    post_date = datetime.now() - timedelta(days=int(days_ago))
-                except IndexError:
-                    # months old
-                    try:
-                        months_ago = \
-                            re.findall(r'(\d+)[0-9]*.*month.*ago', job['date'])[
-                                0]
-                        post_date = datetime.now() - relativedelta(
-                            months=int(months_ago))
-                    except IndexError:
-                        # years old
-                        try:
-                            years_ago = \
-                                re.findall(r'(\d+)[0-9]*.*year.*ago',
-                                           job['date'])[
-                                    0]
-                            post_date = datetime.now() - relativedelta(
-                                years=int(years_ago))
-                        except:
-                            # must be from the 1970's
-                            post_date = datetime(1970, 1, 1)
-                            logging.error(
-                                'unknown date for job {0}'.format(job['id']))
-            job['date'] = post_date.strftime('%d, %b %Y')
+            # @TODO traverse the job link to extract the blurb
+
+            filter_non_printables(job)
+            post_date_from_relative_post_age(job)
 
             # key by id
             jobpy_obj.daily_scrape_dict[str(job['id'])] = job
@@ -147,6 +118,6 @@ def scrape_monster_to_pickle(jobpy_obj):
                          'wb'))
         logging.info(
             'monster pickle file successfully dumped to ' + pickle_name)
-    except error as e:
+    except Exception as e:
         logging.info('scrape monster to pickle failed @ : ' + str(e))
         pass

@@ -59,7 +59,7 @@ class jobpy(object):
 
     def write_csv(self, data, path, fieldnames=MASTERLIST_HEADER):
         ## writes data [dict(),..] to a csv at path
-        with open(path, 'w') as csvfile:
+        with open(path, 'w', encoding='utf8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for row in data:

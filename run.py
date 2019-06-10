@@ -7,6 +7,7 @@ from config.settings import default_args
 from source.jobpy import jobpy
 from source.indeed import scrape_indeed_to_pickle
 from source.monster import scrape_monster_to_pickle
+from source.glassdoor import scrape_glassdoor_to_pickle
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         jobpy_obj.daily_scrape_dict = {}
         scrape_indeed_to_pickle(jobpy_obj)
         scrape_monster_to_pickle(jobpy_obj)
+        scrape_glassdoor_to_pickle(jobpy_obj)
     jobpy_obj.pickle_to_masterlist()
 
     print ("done.\nsee un-archived jobs in " + args['MASTERLIST_PATH'])
