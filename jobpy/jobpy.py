@@ -7,7 +7,8 @@ import logging
 import os
 import csv
 from datetime import date
-from config.settings import MASTERLIST_HEADER
+
+from .config.settings import MASTERLIST_HEADER
 
 class jobpy(object):
     """class that writes pickles to masterlist and applys search filters"""

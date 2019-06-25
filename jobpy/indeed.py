@@ -8,9 +8,10 @@ import re
 import os
 import sys
 from math import ceil
-from config.settings import MASTERLIST_HEADER
-from tools.tools import filter_non_printables
-from tools.tools import post_date_from_relative_post_age
+
+from .config.settings import MASTERLIST_HEADER
+from .tools.tools import filter_non_printables
+from .tools.tools import post_date_from_relative_post_age
 
 sys.path.append('../')
 
