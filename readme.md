@@ -22,9 +22,9 @@ jobpy --help
 
 ### Using JobPy
 
-1. Set your job search preferences in `config/search_terms.json` (or use `-kw`)
+1. Set your job search preferences in `jobpy/config/search_terms.json` (or use `-kw`)
 1. Run `jobpy` to scrape all-available job listings
-1. Review jobs in `jobs_masterlist.csv`, set any undesired jobs `status` to `archive`, these jobs will be removed from .csv next time you run `jobpy`
+1. Review jobs in `jobs_masterlist.csv`, set any undesired jobs `status` to `archive`, these jobs will be removed from `.csv` next time you run `jobpy`
 1. If you get an `interview`/`offer` or are `rejected`, update the job `status`, note that `rejected` jobs will be filtered out and will disappear from the output `.csv`
 
 ### Usage Notes
