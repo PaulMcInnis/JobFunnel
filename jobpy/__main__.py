@@ -6,12 +6,12 @@ Scrapes data off several listings, pickles it, and applies search filters.
 import argparse
 
 from .config.settings import default_args
-from .jobpy import jobpy
+from .jobpy import JobPy
 
 # TODO: should indeed, monster, and glassdoor be subclasses of some basic class?
-from .indeed import scrape_indeed_to_pickle
-from .monster import scrape_monster_to_pickle
-from .glassdoor import scrape_glassdoor_to_pickle
+from .indeed import Indeed
+from .monster import Monster
+from .glassdoor import GlassDoor
 
 def parse_args():
     """Parse the command line arguments.
@@ -63,19 +63,34 @@ def main():
                  'SEARCHTERMS_PATH' : default_args['SEARCHTERMS_PATH'],
                  })
 
-    # init class
-    jobpy_obj = jobpy(args)
+    # init class + logging
+    jp = JobPy(args)
+    jp.init_logging()
 
-    # parse the xslx to filter list, scrape new listings & add to master xslx
-    jobpy_obj.masterlist_to_filterjson()
-    if not args['NO_SCRAPE'] :
-        jobpy_obj.daily_scrape_dict = {}
-        scrape_indeed_to_pickle(jobpy_obj)
-        scrape_monster_to_pickle(jobpy_obj)
-        scrape_glassdoor_to_pickle(jobpy_obj)
-    jobpy_obj.pickle_to_masterlist()
+    # parse the masterlist_path to update filter list
+    jp.masterlist_to_filterjson()
 
-    print ("done.\nsee un-archived jobs in " + args['MASTERLIST_PATH'])
+    # get jobs by either scraping jobs or loading today's dumped pickle
+    if args['NO_SCRAPE']:
+        jp.load_pickle()
+    else:
+        # @TODO pass more data via JobPy init args
+        for provider in (Indeed(args), Monster(args), GlassDoor(args)):
+            try:
+                provider.scrape()
+                jp.scrape_data.update(provider.scrape_data)
+            except Exception as e:
+                jp.logger.error('failed to scrape {}: {}'.format(
+                    provider.__class__.__name__, str(e)))
+
+        # dump scraped data to pickle
+        jp.dump_pickle()
+
+    # filter scraped data and dump to the masterlist file
+    jp.filter_and_update_masterlist()
+
+    # done!
+    jp.logger.info("done. see un-archived jobs in " + args['MASTERLIST_PATH'])
 
 if __name__ == '__main__':
     main()
