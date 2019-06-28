@@ -56,7 +56,7 @@ class Monster(JobPy):
 
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
-        pages = int(ceil(num_results / self.results_per_page))
+        pages = int(ceil(num_results / self.max_results_per_page))
         page_url = '{0}&start={1}'.format(search, pages)
         logging.info(
             'getting monster pages 1 to {0} : {1}'.format(pages, page_url))

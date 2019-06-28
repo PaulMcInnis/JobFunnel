@@ -19,7 +19,7 @@ class GlassDoor(JobPy):
         super().__init__(args)
         self.max_results_per_page = 30
 
-    def convert_glassdoor_radius(radius):
+    def convert_glassdoor_radius(self, radius):
         """function that quantizes the user input radius to a valid
            radius value: 10, 20, 30, 50 and 100 kilometers"""
 
