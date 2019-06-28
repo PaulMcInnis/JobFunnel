@@ -16,7 +16,8 @@ The spreadsheet for managing your job search:
 ### Installing JobPy
 
 ```
-pip install https://github.com/PaulMcInnis/JobPy.git
+git clone https://github.com/PaulMcInnis/JobPy.git
+pip install -e JobPy
 jobpy --help
 ```
 
