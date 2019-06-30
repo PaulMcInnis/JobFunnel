@@ -167,8 +167,11 @@ class GlassDoor(JobPy):
             # no blurb is available in glassdoor job soups
             job['blurb'] = ''
 
-            # no date is available in glassdoor job soups
-            job['date'] = ''
+            try:
+                job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
+                    'span', attrs={'class', 'jobLabel nowrap'}).text.strip()
+            except AttributeError:
+                job['date'] = ''
 
             try:
                 job['id'] = s.get('data-id')
@@ -180,7 +183,7 @@ class GlassDoor(JobPy):
                 job['id'] = ''
                 job['link'] = ''
 
-            # traverse the job link to extract the blurb and date
+            # traverse the job link to extract the blurb
             search = job['link']
             logging.info(
                 'getting glassdoor search: {}'.format(search))
@@ -193,12 +196,6 @@ class GlassDoor(JobPy):
                     id='JobDescriptionContainer').text.strip()
             except AttributeError:
                 job['blurb'] = ''
-
-            try:
-                job['date'] = job_link_soup.find(
-                    'span', attrs={'class', 'minor nowrap'}).text.strip()
-            except AttributeError:
-                job['date'] = ''
 
             filter_non_printables(job)
             post_date_from_relative_post_age(job)

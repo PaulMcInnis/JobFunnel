@@ -23,6 +23,8 @@ def post_date_from_relative_post_age(job):
     if not job['date']:
         return job['date']
 
+    post_date = None
+
     # try known phrases like 7 hours ago or 3 days ago
     try:
         # hours old
@@ -53,18 +55,27 @@ def post_date_from_relative_post_age(job):
                     post_date = datetime.now() - relativedelta(
                         years=int(years_ago))
                 except:
-                    # must be from the 1970's
-                    post_date = datetime(1970, 1, 1)
-                    logging.error(
-                        'unknown date for job {0}'.format(job['id']))
+                    pass
 
     # try phrases like today or yesterday
-    if re.findall(r'[tT]oday', job['date']):
+    if re.findall(r'[tT]oday', job['date']) and not post_date:
         # today
         post_date = datetime.now()
     elif re.findall(r'[yY]esterday', job['date']):
         # yesterday
         post_date = datetime.now() - timedelta(days=int(1))
+
+    # try phrases like 1 d or 2 d or 30d+
+    if re.findall(r'[0-9]* *d.*', job['date']) and not post_date:
+        # some time in the past
+        post_date = datetime.now() - timedelta(
+            int(re.sub('d.*', '', job['date'])))
+
+    if not post_date:
+        # must be from the 1970's
+        post_date = datetime(1970, 1, 1)
+        logging.error(
+            'unknown date for job {0}'.format(job['id']))
 
     job['date'] = post_date.strftime('%d, %b %Y')
     return job['date']
