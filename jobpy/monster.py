@@ -104,6 +104,8 @@ class Monster(JobPy):
 
             # traverse the job link to extract the blurb
             search = job['link']
+            logging.info(
+                'getting monster search: {}'.format(search))
             request_HTML = requests.get(search)
             job_link_soup = bs4.BeautifulSoup(
                 request_HTML.text, self.bs4_parser)

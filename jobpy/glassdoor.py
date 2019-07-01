@@ -142,7 +142,8 @@ class GlassDoor(JobPy):
                     'href'))
             logging.info(
                 'getting glassdoor next page {0} : {1}'.format(page, page_url))
-            jobs = bs4.BeautifulSoup(requests.get(page_url).text,
+            jobs = bs4.BeautifulSoup(
+                requests.post(page_url, headers=headers, data=data).text,
                 self.bs4_parser).find_all('li', attrs={'class', 'jl'})
             list_of_job_soups.extend(jobs)
 
@@ -155,12 +156,10 @@ class GlassDoor(JobPy):
             job['status'] = 'new'
             try:
                 # jobs should at minimum have a title, company and location
-                job['title'] = s.find(
-                    'div', attrs={'class', 'titleContainer'}).text.strip()
-                # @TODO if a compnay name includes a '–' it may not be detected
-                job['company'] = re.sub(' – [a-zA-Z ]*', '',
-                    str(s.find('div', attrs={'class',
-                        'flexbox empLoc'}).find('div').text.strip()))
+                job['title'] = s.find('a', attrs={'class',
+                    'jobLink jobInfoItem jobTitle'}).text.strip()
+                job['company'] = s.find('div', attrs={'class',
+                    'jobInfoItem jobEmpolyerName'}).text.strip()
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue
@@ -168,8 +167,11 @@ class GlassDoor(JobPy):
             # no blurb is available in glassdoor job soups
             job['blurb'] = ''
 
-            # no date is available in glassdoor job soups
-            job['date'] = ''
+            try:
+                job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
+                    'span', attrs={'class', 'jobLabel nowrap'}).text.strip()
+            except AttributeError:
+                job['date'] = ''
 
             try:
                 job['id'] = s.get('data-id')
@@ -181,8 +183,10 @@ class GlassDoor(JobPy):
                 job['id'] = ''
                 job['link'] = ''
 
-            # traverse the job link to extract the blurb and date
+            # traverse the job link to extract the blurb
             search = job['link']
+            logging.info(
+                'getting glassdoor search: {}'.format(search))
             request_HTML = requests.post(search, headers=location_headers)
             job_link_soup = bs4.BeautifulSoup(request_HTML.text,
                                               self.bs4_parser)
@@ -192,12 +196,6 @@ class GlassDoor(JobPy):
                     id='JobDescriptionContainer').text.strip()
             except AttributeError:
                 job['blurb'] = ''
-
-            try:
-                job['date'] = job_link_soup.find(
-                    'span', attrs={'class', 'minor nowrap'}).text.strip()
-            except AttributeError:
-                job['date'] = ''
 
             filter_non_printables(job)
             post_date_from_relative_post_age(job)
