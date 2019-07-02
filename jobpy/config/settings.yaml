@@ -1,0 +1,27 @@
+# All paths are relative to this file.
+
+# Paths.
+data_path:        'data'
+master_list_path: 'data/master_list.csv'
+
+# Filters.
+filter_list_path: 'data/filter_list.pickle'
+
+black_list:
+  - 'Infox Consulting'
+  - 'Terminal'
+
+search_terms:
+  region:
+    province: 'ON'
+    city:     'waterloo'
+    domain:   'ca'
+    radius:   25
+
+  keywords:
+    - 'Python'
+
+# Logging.
+log_path:  'data/jobpy.log'
+# Logging level options are: critical, error, warning, info, debug, notset
+log_level: 'error'
