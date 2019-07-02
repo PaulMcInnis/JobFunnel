@@ -1,5 +1,5 @@
 ## Paul McInnis 2018
-## writes pickles to masterlist_path and applies search filters
+## writes pickles to master list path and applies search filters
 
 import pickle
 import json
@@ -13,36 +13,31 @@ from datetime import date
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb', 'link', 'id']
 
 class JobPy(object):
-    """class that writes pickles to masterlist_path and applys search filters"""
+    """class that writes pickles to master list path and applies search filters"""
 
     def __init__(self, args):
         # paths
-        self.masterlist_path = args['MASTERLIST_PATH']
-        self.filterlist_path = args['FILTERLIST_PATH']
-        self.blacklist_path = args['BLACKLIST_PATH']
-        self.logfile = args['LOG_PATH']
-        self.loglevel = args['LOG_LEVEL']
-        self.pickles_dir = args['DATA_PATH']
+        self.master_list_path = args['master_list_path']
+        self.filterlist_path = args['filter_list_path']
+        self.blacklist = args['black_list']
+        self.logfile = args['log_path']
+        self.loglevel = args['log_level']
+        self.pickles_dir = args['data_path']
 
         # other inits
         self.filterlist = None
-        self.similar_results = args['SIMILAR']
-        self.bs4_parser = args['BS4_PARSER']
+        self.similar_results = args['similar']
+        self.bs4_parser = 'lxml'
         self.scrape_data = {}
 
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
 
         # search term configuration data
-        self.search_terms = json.load(open(args['SEARCHTERMS_PATH'], 'rb'))
-
-        # set the search keywords if provided one
-        if args['KEYWORDS']:
-            self.search_terms['keywords'] = args['KEYWORDS']
+        self.search_terms = args['search_terms']
 
         # create dirs
-        if not os.path.exists('data'): os.makedirs('data')
-        if not os.path.exists(args['DATA_PATH']): os.makedirs(args['DATA_PATH'])
+        if not os.path.exists(args['data_path']): os.makedirs(args['data_path'])
 
         # handle Python 2 & 3 Unicode formatting
         try:
@@ -64,8 +59,7 @@ class JobPy(object):
 
     def load_pickle(self):
         # try to load today's pickle from set var first:
-        pickle_filepath = os.path.join(
-            'data', 'scraped', 'jobs_{0}.pkl'.format(self.date_string))
+        pickle_filepath = os.path.join(args['data_path'], 'scraped', 'jobs_{0}.pkl'.format(self.date_string))
         try:
             self.scrape_data = pickle.load(open(pickle_filepath, 'rb'))
         except FileNotFoundError as e:
@@ -104,40 +98,30 @@ class JobPy(object):
         if not self.filterlist:
             if os.path.isfile(self.filterlist_path):
                 self.filterlist = json.load(open(self.filterlist_path, 'r'))
+                # pop filtered
+                n_filtered = 0
+                for jobid in self.filterlist:
+                    if jobid in self.scrape_data:
+                        self.scrape_data.pop(jobid)
+                        n_filtered += 1
+                logging.info(f'removed {n_filtered} jobs present in filter-list from master list path')
             else:
-                self.logger.warning("no jobs filtered, missing {}".format(
-                    self.filterlist_path))
-        # pop filtered
-        n_filtered = 0
-        for jobid in self.filterlist:
-            if jobid in self.scrape_data:
-                self.scrape_data.pop(jobid)
-                n_filtered += 1
-
-        logging.info('removed {0} jobs present in filter-list '
-                     'from masterlist_path'.format(n_filtered))
+                self.logger.warning(f'no jobs filtered, missing {self.filterlist_path}')
 
     def filter_companies(self):
         ## remove blacklisted companies from the scraped data
         # @TODO allow people to add companies to this via 'blacklist' status
-        try:
-            self.blacklist = json.load(open(self.blacklist_path, 'r'))
-            blacklist_ids = []
-            for jobid in self.scrape_data:
-                if self.scrape_data[jobid]['company'] in self.blacklist:
-                    blacklist_ids.append(jobid)
-            logging.info ('removed {0} jobs in black-list from '
-                          'master-list'.format(len(blacklist_ids)))
-            for jobid in blacklist_ids:
-                self.scrape_data.pop(jobid)
-        except FileNotFoundError:
-            logging.warning('no company blacklist loaded, missing {}'.format(
-                self.blacklist_path))
-            self.blacklist = []
+        blacklist_ids = []
+        for jobid in self.scrape_data:
+            if self.scrape_data[jobid]['company'] in self.blacklist:
+                blacklist_ids.append(jobid)
+        logging.info (f'removed {len(blacklist_ids)} jobs in black-list from master-list')
+        for jobid in blacklist_ids:
+            self.scrape_data.pop(jobid)
 
     def masterlist_to_filterjson(self):
         ## parse master .csv file into an update for the filter-list .json file
-        if os.path.isfile(self.masterlist_path):
+        if os.path.isfile(self.master_list_path):
             # load existing filtered jobs, if any
             if os.path.isfile(self.filterlist_path):
                 filtered_jobs = json.load(open(self.filterlist_path,'r'))
@@ -145,14 +129,14 @@ class JobPy(object):
                 filtered_jobs = {}
 
             # add jobs from csv that need to be filtered away, if any
-            for job in self.read_csv(self.masterlist_path, key_by_id=False):
+            for job in self.read_csv(self.master_list_path, key_by_id=False):
                 if job['status'] in ['archive', 'rejected']:
                     if job['id'] not in filtered_jobs:
                         logging.info('appended {} to {}'.format(
                             job['id'], self.filterlist_path))
                     filtered_jobs[job['id']] = job
 
-            # write out the complete list with any additions from the masterlist_path
+            # write out the complete list with any additions from the master list path
             with open(self.filterlist_path, 'w', encoding='utf8') as outfile:
                 str_ = json.dumps(filtered_jobs,
                                   indent=4,
@@ -179,24 +163,24 @@ class JobPy(object):
 
         try:
             # open master list if it exists & init updated master-list
-            masterlist_path = self.read_csv(self.masterlist_path)
+            master_list_path = self.read_csv(self.master_list_path)
             # identify the new job id's not in master list or in filter-list
             for jobid in self.scrape_data:
                 # preserve custom states
-                if jobid in masterlist_path:
+                if jobid in master_list_path:
                     if self.scrape_data[jobid]['status'] != 'archive':
                         self.scrape_data[jobid]['status'] = \
-                            masterlist_path[jobid]['status']
+                            master_list_path[jobid]['status']
                 else:
                     logging.info ('job {0} missing from search results'.format(
                         jobid))
             # save
-            self.write_csv(data=self.scrape_data, path=self.masterlist_path)
+            self.write_csv(data=self.scrape_data, path=self.master_list_path)
 
         except FileNotFoundError:
             # dump the results into the data folder as the master-list
             logging.info(
                 'no masterlist detected, adding {} found jobs to {}'.format(
-                    len(self.scrape_data.keys()), self.masterlist_path))
+                    len(self.scrape_data.keys()), self.master_list_path))
 
-            self.write_csv(data=self.scrape_data, path=self.masterlist_path)
+            self.write_csv(data=self.scrape_data, path=self.master_list_path)

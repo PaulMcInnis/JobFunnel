@@ -10,48 +10,33 @@ from .indeed import Indeed
 from .monster import Monster
 from .glassdoor import GlassDoor
 
+providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
+
 def main():
     """Main function.
 
     """
-    import pprint
-    pprint.pprint(parse_config())
-
-    return 0
-
-
-    """
-    args = vars(parse_args())
-
-    # some more defaults not set by argparse rn:
-    args.update({'FILTERLIST_PATH'  : default_args['FILTERLIST_PATH'],
-                 'BLACKLIST_PATH'   : default_args['BLACKLIST_PATH'],
-                 'LOG_PATH'         : default_args['LOG_PATH'],
-                 'BS4_PARSER'       : default_args['BS4_PARSER'],
-                 'LOG_LEVEL'        : default_args['LOG_LEVEL'],
-                 'DATA_PATH'        : default_args['DATA_PATH'],
-                 'SEARCHTERMS_PATH' : default_args['SEARCHTERMS_PATH'],
-                 })
+    config = parse_config()
 
     # init class + logging
-    jp = JobPy(args)
+    jp = JobPy(config)
     jp.init_logging()
 
-    # parse the masterlist_path to update filter list
+    # parse the master list path to update filter list
     jp.masterlist_to_filterjson()
 
     # get jobs by either scraping jobs or loading today's dumped pickle
-    if args['NO_SCRAPE']:
+    if config['no_scrape']:
         jp.load_pickle()
     else:
-        # @TODO pass more data via JobPy init args
-        for provider in (Indeed(args), Monster(args), GlassDoor(args)):
+        for p in config['providers']:
+            provider = providers[p](config)
+            provider_id = provider.__class__.__name__
             try:
                 provider.scrape()
                 jp.scrape_data.update(provider.scrape_data)
             except Exception as e:
-                jp.logger.error('failed to scrape {}: {}'.format(
-                    provider.__class__.__name__, str(e)))
+                jp.logger.error(f'failed to scrape {provider_id}: {str(e)}')
 
         # dump scraped data to pickle
         jp.dump_pickle()
@@ -60,8 +45,7 @@ def main():
     jp.filter_and_update_masterlist()
 
     # done!
-    jp.logger.info("done. see un-archived jobs in " + args['MASTERLIST_PATH'])
-    """
+    jp.logger.info("done. see un-archived jobs in " + config['master_list_path'])
 
 if __name__ == '__main__':
     main()

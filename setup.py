@@ -7,7 +7,8 @@ url = 'https://github.com/PaulMcInnis/JobPy'
 requires = ['beautifulsoup4>=4.6.3',
             'lxml>=4.2.4',
             'requests>=2.19.1',
-            'python-dateutil>=2.8.0']
+            'python-dateutil>=2.8.0',
+            'PyYAML>=5.1']
 
 with open('readme.md', 'r') as f:
     readme = f.read()
