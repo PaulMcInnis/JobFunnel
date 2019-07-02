@@ -7,11 +7,9 @@ import re
 import os
 from math import ceil
 
-from .jobpy import JobPy
-from .config.settings import MASTERLIST_HEADER
+from .jobpy import JobPy, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
-
 
 class GlassDoor(JobPy):
 

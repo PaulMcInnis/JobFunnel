@@ -9,7 +9,8 @@ import sys
 import csv
 from datetime import date
 
-from .config.settings import MASTERLIST_HEADER
+# csv header:
+MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb', 'link', 'id']
 
 class JobPy(object):
     """class that writes pickles to masterlist_path and applys search filters"""
