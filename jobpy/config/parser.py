@@ -22,10 +22,10 @@ def parse_cli():
         help='path to the yaml settings file')
 
     parser.add_argument('-o',
-        dest='master_list_path',
+        dest='output_path',
         action='store',
         required=False,
-        help='path to a .csv file used to view and filter jobs')
+        help='directory where the search results will be stored')
 
     parser.add_argument('-kw',
         dest='keywords',
@@ -71,27 +71,15 @@ def parse_config():
     # prepare the configuration dictionary
     config = {}
 
-    # parse the master list path
-    config['master_list_path'] = default_yaml['master_list_path']
-    if not given_yaml_path is None:
-        config['master_list_path'] = os.path.join(given_yaml_path, given_yaml['master_list_path'])
-    if not cli.master_list_path is None:
-        config['master_list_path'] = cli.master_list_path
-
     # parse the data path
-    config['data_path'] = default_yaml['data_path']
+    config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
+    config['master_list_path'] = os.path.join(default_yaml['output_path'], 'master_list.csv')
     if not given_yaml_path is None:
-        config['data_path'] = os.path.join(given_yaml_path, given_yaml['data_path'])
-
-    # parse the filter list path
-    config['filter_list_path'] = default_yaml['filter_list_path']
-    if not given_yaml_path is None:
-        config['filter_list_path'] = os.path.join(given_yaml_path, given_yaml['filter_list_path'])
-
-    # parse the blacklist
-    config['black_list'] = default_yaml['black_list']
-    if not given_yaml_path is None:
-        config['black_list'] = given_yaml['black_list']
+        config['data_path'] = os.path.join(given_yaml_path, given_yaml['output_path'], 'data')
+        config['master_list_path'] = os.path.join(given_yaml_path, given_yaml['output_path'], 'master_list.csv')
+    if not cli.output_path is None:
+        config['data_path'] = os.path.join(cli.output_path, 'data')
+        config['master_list_path'] = os.path.join(cli.output_path, 'master_list.csv')
 
     # parse the search terms
     config['search_terms'] = default_yaml['search_terms']
@@ -100,20 +88,30 @@ def parse_config():
     if not cli.keywords is None:
         config['search_terms']['keywords'] = cli.keywords
 
-    # parse the log path
-    config['log_path'] = default_yaml['log_path']
+    # parse the blacklist
+    config['black_list'] = default_yaml['black_list']
     if not given_yaml_path is None:
-        config['log_path'] = os.path.join(given_yaml_path, given_yaml['log_path'])
-
-    # parse the log level
-    config['log_level'] = log_levels[default_yaml['log_level']]
-    if not given_yaml_path is None:
-        config['log_level'] = log_levels[given_yaml['log_level']]
+        config['black_list'] = given_yaml['black_list']
 
     # parse the similar option
     config['similar'] = cli.similar
 
     # parse the no_scrape option
     config['no_scrape'] = cli.no_scrape
+
+    # parse the log level
+    config['log_level'] = log_levels[default_yaml['log_level']]
+    if not given_yaml_path is None:
+        config['log_level'] = log_levels[given_yaml['log_level']]
+
+    # define the log path
+    config['log_path'] = os.path.join(config['data_path'], 'jobpy.log')
+
+    # define the filter list path
+    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.pickle')
+
+    # normalize paths
+    for p in ['data_path', 'master_list_path', 'log_path', 'filter_list_path']:
+        config[p] = os.path.normpath(config[p])
 
     return config
