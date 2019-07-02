@@ -3,6 +3,12 @@
 # Paths.
 output_path: 'search'
 
+# Providers from which to search
+providers:
+  - 'Indeed'
+  - 'Monster'
+  - 'GlassDoor'
+
 # Filters.
 search_terms:
   region:

@@ -81,6 +81,13 @@ def parse_config():
         config['data_path'] = os.path.join(cli.output_path, 'data')
         config['master_list_path'] = os.path.join(cli.output_path, 'master_list.csv')
 
+    # parse the provider list
+    config['providers'] = default_yaml['providers']
+    if not given_yaml_path is None:
+        config['providers'] = given_yaml['providers']
+    for i, p in enumerate(config['providers']):
+        config['providers'][i] = p.lower()
+
     # parse the search terms
     config['search_terms'] = default_yaml['search_terms']
     if not given_yaml_path is None:
@@ -108,7 +115,7 @@ def parse_config():
     config['log_path'] = os.path.join(config['data_path'], 'jobpy.log')
 
     # define the filter list path
-    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.pickle')
+    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
 
     # normalize paths
     for p in ['data_path', 'master_list_path', 'log_path', 'filter_list_path']:
