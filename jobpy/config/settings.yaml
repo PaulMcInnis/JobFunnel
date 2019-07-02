@@ -3,7 +3,7 @@
 # Paths.
 output_path: 'search'
 
-# Providers from which to search
+# Providers from which to search (case insensitive)
 providers:
   - 'Indeed'
   - 'Monster'
