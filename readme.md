@@ -11,7 +11,7 @@ Automated tool for scraping job postings into a `.csv` file.
 
 The spreadsheet for managing your job search:
 
-![masterlist.csv](https://github.com/PaulMcInnis/JobPy/blob/master/demo.png "masterlist.csv")
+![masterlist.csv][masterlist]
 
 ### Installing JobPy
 
@@ -25,7 +25,9 @@ jobpy --help
 1. Set your job search preferences in the `yaml` configuration file (or use `-kw`).
 1. Run `jobpy` to scrape all-available job listings.
 1. Review jobs in the master list, set any undesired jobs `status` to `archive`, these jobs will be removed from the `.csv` next time you run `jobpy`.
-1. If you get an `interview`/`offer` or are `rejected`, update the job `status`, note that `rejected` jobs will be filtered out and will disappear from the output `.csv`.
+1. If you get an `interview`/`offer` or are `rejected`, update the job `status`.
+
+__*Note*__: `rejected` jobs will be filtered out and will disappear from the output `.csv`.
 
 ### Usage Notes
 
@@ -37,7 +39,7 @@ jobpy -kw Python -o python_search
 jobpy -kw AI Machine Learning -o ML_search
 ```
 * Filter undesired companies by providing your own `yaml` configuration and adding them to the black list (see `JobPy/jobpy/config/settings.yaml`).
-* JobPy can be easily automated to run nightly with crontab
+* JobPy can be easily automated to run nightly with [crontab][cron]
 * You can review the job list in the command line:
 ```
 column -s, -t < master_list.csv | less -#2 -N -S
@@ -45,9 +47,9 @@ column -s, -t < master_list.csv | less -#2 -N -S
 * You can run several independent job searches with a directory structure like the following:
 
 ```bash
-search_0/
+python_search/
   |_ settings.yaml
-search_1/
+ML_search/
   |_ settings.yaml
 
 for d in */ ; do
@@ -55,3 +57,8 @@ for d in */ ; do
 done
 ```
 where each `settings.yaml` file can point to it's own directory.
+
+<!-- links -->
+
+[masterlist]:https://github.com/PaulMcInnis/JobPy/blob/master/demo.png "masterlist.csv"
+[cron]:https://en.wikipedia.org/wiki/Cron
