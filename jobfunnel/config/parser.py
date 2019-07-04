@@ -48,14 +48,14 @@ def parse_cli():
     return parser.parse_args()
 
 def parse_config():
-    """Parse the JobPy configuration settings.
+    """Parse the JobFunnel configuration settings.
 
     """
-    # find the jobpy root dir
-    jobpy_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+    # find the jobfunnel root dir
+    jobfunnel_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 
     # load the default settings
-    default_yaml_path = os.path.join(jobpy_path, 'config/settings.yaml')
+    default_yaml_path = os.path.join(jobfunnel_path, 'config/settings.yaml')
     default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
 
     # parse the command line arguments
@@ -112,7 +112,7 @@ def parse_config():
         config['log_level'] = log_levels[given_yaml['log_level']]
 
     # define the log path
-    config['log_path'] = os.path.join(config['data_path'], 'jobpy.log')
+    config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
     # define the filter list path
     config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
