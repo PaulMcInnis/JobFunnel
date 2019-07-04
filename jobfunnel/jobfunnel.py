@@ -12,7 +12,7 @@ from datetime import date
 # csv header:
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb', 'link', 'id']
 
-class JobPy(object):
+class JobFunnel(object):
     """class that writes pickles to master list path and applies search filters"""
 
     def __init__(self, args):
@@ -51,7 +51,7 @@ class JobPy(object):
         self.logger.setLevel(self.loglevel)
         logging.basicConfig(filename=self.logfile, level=self.loglevel)
         logging.getLogger().addHandler(logging.StreamHandler())
-        self.logger.info('jobpy initialized at {0}'.format(self.date_string))
+        self.logger.info('jobfunnel initialized at {0}'.format(self.date_string))
 
     def scrape(self):
         """ to be implemented by child classes"""

@@ -7,11 +7,11 @@ import re
 import os
 from math import ceil
 
-from .jobpy import JobPy, MASTERLIST_HEADER
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 
-class Monster(JobPy):
+class Monster(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
@@ -21,7 +21,7 @@ class Monster(JobPy):
         """function that scrapes job posting from monster and pickles it"""
         ## scrape a page of monster results to a pickle
         logging.info(
-            'jobpy monster to pickle running @ : ' + self.date_string)
+            'jobfunnel monster to pickle running @ : ' + self.date_string)
 
         # form the query string
         for i, s in enumerate(self.search_terms['keywords']):

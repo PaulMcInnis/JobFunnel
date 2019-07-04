@@ -5,7 +5,7 @@ Scrapes data off several listings, pickles it, and applies search filters.
 """
 from .config.parser import parse_config
 
-from .jobpy import JobPy
+from .jobfunnel import JobFunnel
 from .indeed import Indeed
 from .monster import Monster
 from .glassdoor import GlassDoor
@@ -19,7 +19,7 @@ def main():
     config = parse_config()
 
     # init class + logging
-    jp = JobPy(config)
+    jp = JobFunnel(config)
     jp.init_logging()
 
     # parse the master list path to update filter list
