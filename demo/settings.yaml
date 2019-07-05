@@ -1,15 +1,13 @@
-# This is the default settings file. Do not edit.
-
 # All paths are relative to this file.
 
 # Paths.
-output_path: 'search'
+# place the search right next to this file
+output_path: './'
 
 # Providers from which to search (case insensitive)
+# use indeed only for speed
 providers:
   - 'Indeed'
-  - 'Monster'
-  - 'GlassDoor'
 
 # Filters.
 search_terms:
@@ -19,12 +17,16 @@ search_terms:
     domain:   'ca'
     radius:   25
 
+# this search is focused on programming
   keywords:
     - 'Python'
+    - 'C++'
 
+# exclude these from the search
 black_list:
   - 'Infox Consulting'
   - 'Terminal'
 
 # Logging level options are: critical, error, warning, info, debug, notset
+# show me only errors
 log_level: 'error'

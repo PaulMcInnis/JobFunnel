@@ -68,5 +68,5 @@ where each `settings.yaml` file can point to it's own directory.
 
 <!-- links -->
 
-[masterlist]:https://github.com/PaulMcInnis/JobFunnel/blob/master/demo.png "masterlist.csv"
+[masterlist]:https://github.com/PaulMcInnis/JobFunnel/blob/master/demo/demo.png "masterlist.csv"
 [cron]:https://en.wikipedia.org/wiki/Cron
