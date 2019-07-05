@@ -24,5 +24,5 @@ setup(
     license          = 'MIT License',
     python_requires  = '>=3.6.0',
     install_requires = requires,
-    packages         = find_packages(exclude=('test',)),
+    packages         = find_packages(exclude=('demo',)),
     entry_points     = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
