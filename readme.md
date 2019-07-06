@@ -13,6 +13,10 @@ The spreadsheet for managing your job search:
 
 ![masterlist.csv][masterlist]
 
+### Dependencies
+
+JobFunnel requires [Python][python] 3.6 or later. Other dependencies are listed in the `setup.py` script, and can be installed automatically with `pip` when installing JobFunnel.
+
 ### Installing JobFunnel
 
 ```
@@ -34,6 +38,7 @@ funnel --help
 1. Run `funnel` to scrape all-available job listings.
 1. Review jobs in the master list, set any undesired jobs `status` to `archive`, these jobs will be removed from the `.csv` next time you run `funnel`.
 1. If you get an `interview`/`offer` or are `rejected`, update the job `status`.
+1. Check out [demo/readme.md][demo] if you want to try the demo.
 
 __*Note*__: `rejected` jobs will be filtered out and will disappear from the output `.csv`.
 
@@ -68,5 +73,7 @@ where each `settings.yaml` file can point to it's own directory.
 
 <!-- links -->
 
-[masterlist]:https://github.com/PaulMcInnis/JobFunnel/blob/master/demo/demo.png "masterlist.csv"
+[masterlist]:demo/demo.png "masterlist.csv"
+[python]:https://www.python.org/
+[demo]:demo/readme.md
 [cron]:https://en.wikipedia.org/wiki/Cron
