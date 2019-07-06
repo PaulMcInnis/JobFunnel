@@ -6,7 +6,7 @@ import os
 import numpy as np
 import pickle
 import string
-import logger
+import logging
 
 def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
                  max_similarity: float = 0.75):
@@ -52,16 +52,8 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
             duplicate_ids.append(cur_dict.pop(query_id)['id'])
 
     # log something
-    logger.info("Kept {} unique listings and removed {} duplicate listings via "
-                "TFIDF cosine similarity".format(len(cur_dict.keys()),
-                                                 len(duplicate_ids)))
+    logging.info("found {} unique listings and {} duplicate listings "
+                 "via TFIDF cosine similarity".format(len(cur_dict.keys()),
+                                                      len(duplicate_ids)))
     return duplicate_ids
 
-# # load data
-# data_A = pickle.load(
-#     open(os.path.join('scraped', 'jobs_2019-06-28.pkl'), 'rb'))
-# data_B = pickle.load(
-#     open(os.path.join('scraped', 'jobs_2019-06-26.pkl'), 'rb'))
-
-# # vectorize text
-# remove_duplicate_listings(data_A, data_B)
