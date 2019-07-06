@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 
 def filter_non_printables(job):
-    """function that filters trolling characters in strings scraped from job postings"""
+    """function that filters trailing characters in scraped strings"""
     if not job['blurb']:
         return job['blurb']
 
