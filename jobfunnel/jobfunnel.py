@@ -8,6 +8,7 @@ import os
 import sys
 import csv
 from datetime import date
+from tools.filters import tfidf_filter
 
 # csv header:
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb', 'link', 'id']
@@ -90,7 +91,7 @@ class JobFunnel(object):
             for row in data:
                 writer.writerow(data[row])
 
-    def filter_jobs(self):
+    def filter_jobs_in_filterlist(self):
         ## load the filter-list if it exists, apply it to remove scraped jobs
         if self.scrape_data == {}:
             raise ValueError("no scraped job data to filter")
@@ -156,24 +157,29 @@ class JobFunnel(object):
             raise ValueError("No scraped jobs, cannot update masterlist")
 
         # filter out jobs we rejected / archived
-        self.filter_jobs()
+        self.filter_jobs_in_filterlist()
 
         # filter out jobs which are posted by black-listed companies
         self.filter_companies()
 
         try:
             # open master list if it exists & init updated master-list
-            master_list_path = self.read_csv(self.master_list_path)
+            master_list_data = self.read_csv(self.master_list_path)
+
             # identify the new job id's not in master list or in filter-list
             for jobid in self.scrape_data:
                 # preserve custom states
-                if jobid in master_list_path:
+                if jobid in master_list_data:
                     if self.scrape_data[jobid]['status'] != 'archive':
                         self.scrape_data[jobid]['status'] = \
-                            master_list_path[jobid]['status']
+                            master_list_data[jobid]['status']
                 else:
                     logging.info ('job {0} missing from search results'.format(
                         jobid))
+
+            # remove duplicates remaining using tfidf blurb-text similarity
+            tfidf_filter(self.scrape_data, master_list_data)
+
             # save
             self.write_csv(data=self.scrape_data, path=self.master_list_path)
 
