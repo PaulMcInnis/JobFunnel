@@ -1,10 +1,6 @@
-# JobFunnel
+![JobFunnel_Banner](images/jobfunnel_banner.png)
 
 Automated tool for scraping job postings into a `.csv` file.
-
-<p align="center">
-	<img src="images/jobfunnel.png">
-</p>
 
 ### Benefits over job search sites:
 
