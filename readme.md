@@ -1,4 +1,4 @@
-# JobFunnel
+![JobFunnel_Banner](images/jobfunnel_banner.png)
 
 Automated tool for scraping job postings into a `.csv` file.
 
