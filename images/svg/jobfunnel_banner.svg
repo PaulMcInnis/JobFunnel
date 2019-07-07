@@ -10,12 +10,12 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="468"
-   height="60"
+   width="168.79485"
+   height="58.141857"
    id="svg4684"
    version="1.1"
    inkscape:version="0.91 r13725"
-   viewBox="0 0 468 60"
+   viewBox="0 0 168.79485 58.141857"
    sodipodi:docname="jobfunnel_banner.svg">
   <defs
      id="defs4686">
@@ -50,9 +50,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="4.8"
-     inkscape:cx="52.18474"
-     inkscape:cy="19.102078"
+     inkscape:zoom="3.3941126"
+     inkscape:cx="22.136715"
+     inkscape:cy="28.182116"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -61,7 +61,11 @@
      inkscape:window-height="837"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata4689">
     <rdf:RDF>
@@ -70,14 +74,15 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      id="layer1"
      inkscape:label="Layer 1"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     transform="translate(-0.7869493,-0.77382785)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:24.04034424px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -623,7 +628,7 @@
                  id="g4559">
                 <polygon
                    style="fill:#78cdd4"
-                   points="46.75,30.411 46.75,47.333 70.25,47.333 70.25,27 "
+                   points="70.25,47.333 70.25,27 46.75,30.411 46.75,47.333 "
                    id="polygon4561" />
               </g>
               <g
@@ -641,7 +646,7 @@
                  id="g4569">
                 <polygon
                    style="fill:#78cdd4"
-                   points="26.833,47.333 43.25,47.333 43.25,30.846 26.833,33.387 "
+                   points="43.25,30.846 26.833,33.387 26.833,47.333 43.25,47.333 "
                    id="polygon4571" />
               </g>
               <g
@@ -659,7 +664,7 @@
                  id="g4579">
                 <polygon
                    style="fill:#78cdd4"
-                   points="43.25,67.185 43.25,50.833 26.833,50.833 26.833,64.666 "
+                   points="26.833,50.833 26.833,64.666 43.25,67.185 43.25,50.833 "
                    id="polygon4581" />
               </g>
               <g
@@ -677,7 +682,7 @@
                  id="g4589">
                 <polygon
                    style="fill:#78cdd4"
-                   points="70.25,50.833 46.75,50.833 46.75,67.617 70.25,71 "
+                   points="46.75,67.617 70.25,71 70.25,50.833 46.75,50.833 "
                    id="polygon4591" />
               </g>
               <g
