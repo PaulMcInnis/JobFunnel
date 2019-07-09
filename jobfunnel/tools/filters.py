@@ -8,8 +8,43 @@ import pickle
 import string
 import logging
 
-def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
-                 max_similarity: float = 0.75):
+class TextVectorizer(object):
+    """ Class to fit a TFIDF vectorizer
+        @ TODO move into a seperate file
+    """
+
+    def __init__(self, corpus: List[str]):
+        """ Init TFIDF vectorizer, only works for English"""
+        self.vectorizer = TfidfVectorizer(strip_accents='unicode',
+                                          lowercase=True,
+                                          analyzer='word')
+        if corpus:
+            self.set_corupus(corpus)
+
+    def set_corupus(self, corpus: List[str]):
+        """ Fit vectorizer to all words in entire corpus"""
+        self.vectorizer.fit(corpus)
+
+    def set_reference_words(self, reference_words: List[str]):
+        """ Set the reference for calculating similarity"""
+        self.references = self.vectorizer.transform(reference_words)
+
+    def get_cosine_similarity(self, words: List[str], identifiers: List[str]):
+        """ Get similarity (per reference item) between a list of words and
+            and return scores with identifiers
+
+            Returns:
+                { id (str): similarity_scores (List[float]) }
+        """
+
+        # calculate cosine similarity between reference and current blurbs
+        return dict(zip(identifiers,
+                        cosine_similarity(self.vectorizer.transform(words),
+                                          self.references)[:,0]))
+
+
+def similarity_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
+                      max_similarity: float = 0.75):
     """ Fit a TFIDF vectorizer to a corpus of all listing's text
 
         Args:
@@ -22,32 +57,24 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
 
         @TODO skip calculating metric for jobs which have the same job id!
     """
-    # init vectorizer
-    vectorizer = TfidfVectorizer(strip_accents='unicode',
-                                 lowercase=True,
-                                 analyzer='word')
-    # get reference words as list
+    # build corpus
+    query_words = [job['blurb'] for job in cur_dict.values()]
     reference_words = [job['blurb'] for job in prev_dict.values()]
 
-    # get query words as list
-    query_words, query_ids = [], []
+    # init a text vectorizer
+    vectorizer = TextVectorizer(query_words + reference_words)
+    vectorizer.set_reference_words(reference_words)
+
+    # calculate similarities
+    query_text, ids = [], []
     for job in cur_dict.values():
-        query_words.append(job['blurb'])
-        query_ids.append(job['id'])
-
-    # fit vectorizer to entire corpus
-    vectorizer.fit(query_words + reference_words)
-
-    # set reference tfidf for cosine similarity later
-    references = vectorizer.transform(reference_words)
-
-    # calculate cosine similarity between reference and current blurbs
-    similarities = cosine_similarity(
-        vectorizer.transform(query_words), references)
+        query_text.append(job['blurb'])
+        ids.append(job['id'])
+    similarities = vectorizer.get_cosine_similarity(query_text, identifiers=ids)
 
     # get duplicate job ids and pop them
     duplicate_ids = []
-    for sim, query_id in zip(similarities, query_ids):
+    for query_id, sim in similarities.items():
         if np.max(sim) >= max_similarity:
             duplicate_ids.append(cur_dict.pop(query_id)['id'])
 

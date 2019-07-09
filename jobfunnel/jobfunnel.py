@@ -9,7 +9,7 @@ import csv
 import random
 from datetime import date
 from typing import Dict
-from .tools.filters import tfidf_filter
+from .tools.filters import similarity_filter
 
 # setting job status to these words removes them from masterlist + adds to blacklist
 REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
@@ -201,8 +201,11 @@ class JobFunnel(object):
             self.remove_blacklisted_companies(masterlist)
 
             # update masterslist to contain only new (unqiue) listings
-            tfidf_filter(self.scrape_data, masterlist)
+            similarity_filter(self.scrape_data, masterlist)
             masterlist.update(self.scrape_data)
+
+            # calculate the similarity between desired keywords and filter text
+
 
             # save
             self.write_csv(data=masterlist, path=self.master_list_path)
