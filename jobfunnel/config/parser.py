@@ -33,6 +33,14 @@ def parse_cli():
         required=False,
         help='list of keywords to use in the job search. (i.e. Engineer, AI)')
 
+    parser.add_argument('--log_level',
+        dest='log_level',
+        type=str,
+        required=False,
+        default=None,
+        choices=['critical', 'error', 'warning', 'info', 'debug', 'notset'],
+        help='Type of logging information shown on the terminal.')
+
     parser.add_argument('--similar',
         dest='similar',
         action='store_true',
@@ -110,6 +118,8 @@ def parse_config():
     config['log_level'] = log_levels[default_yaml['log_level']]
     if not given_yaml_path is None:
         config['log_level'] = log_levels[given_yaml['log_level']]
+    if not cli.log_level is None:
+        config['log_level'] = log_levels[cli.log_level]
 
     # define the log path
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
