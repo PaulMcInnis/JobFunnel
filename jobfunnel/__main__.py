@@ -27,7 +27,7 @@ def main():
 
     # get jobs by either scraping jobs or loading today's dumped pickle
     if config['no_scrape']:
-        jp.load_pickle()
+        jp.load_pickle(config)
     else:
         for p in config['providers']:
             provider = providers[p](config)
