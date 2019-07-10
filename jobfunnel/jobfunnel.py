@@ -51,26 +51,24 @@ class JobFunnel(object):
         self.logger.setLevel(self.loglevel)
         logging.basicConfig(filename=self.logfile, level=self.loglevel)
         logging.getLogger().addHandler(logging.StreamHandler())
-        self.logger.info('jobfunnel initialized at {}'.format(self.date_string))
+        self.logger.info(f'jobfunnel initialized at {self.date_string}')
 
     def scrape(self):
         """ to be implemented by child classes"""
         raise NotImplementedError()
 
-    def load_pickle(self):
+    def load_pickle(self, args):
         # try to load today's pickle from set var first:
-        pickle_filepath = os.path.join(args['data_path'], 'scraped',
-            'jobs_{0}.pkl'.format(self.date_string))
+        pickle_filepath = os.path.join(args['data_path'], f'jobs_{self.date_string}.pkl')
         try:
             self.scrape_data = pickle.load(open(pickle_filepath, 'rb'))
         except FileNotFoundError as e:
-            logging.error('{} not found! Have you scraped any jobs '
-                          'today?'.format(pickle_filepath))
+            logging.error(f'{pickle_filepath} not found! Have you scraped any jobs today?')
             raise e
 
     def dump_pickle(self):
         """ dump a pickle of the daily scrape dict"""
-        pickle_name = 'jobs_{0}.pkl'.format(self.date_string)
+        pickle_name = f'jobs_{self.date_string}.pkl'
         pickle.dump(self.scrape_data,
                     open(os.path.join(self.pickles_dir, pickle_name), 'wb'))
 
