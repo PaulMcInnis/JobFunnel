@@ -23,7 +23,7 @@ def main():
     jp.init_logging()
 
     # parse the master list path to update filter list
-    jp.masterlist_to_filterjson()
+    jp.update_filterjson()
 
     # get jobs by either scraping jobs or loading today's dumped pickle
     if config['no_scrape']:
@@ -42,7 +42,7 @@ def main():
         jp.dump_pickle()
 
     # filter scraped data and dump to the masterlist file
-    jp.filter_and_update_masterlist()
+    jp.update_masterlist()
 
     # done!
     jp.logger.info("done. see un-archived jobs in " + config['master_list_path'])
