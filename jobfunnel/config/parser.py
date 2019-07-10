@@ -11,9 +11,10 @@ def parse_cli():
     """Parse the command line arguments.
 
     """
-    description = 'CLI options take precedence over settings in the yaml file\n' +\
-        'empty arguments are replaced by settings in the default yaml file'
-    parser = argparse.ArgumentParser(description)
+
+    parser = argparse.ArgumentParser(
+        'CLI options take precedence over settings in the yaml file'
+        'empty arguments are replaced by settings in the default yaml file')
 
     parser.add_argument('-s',
         dest='settings',
@@ -60,7 +61,8 @@ def parse_config():
 
     """
     # find the jobfunnel root dir
-    jobfunnel_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+    jobfunnel_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), '..'))
 
     # load the default settings
     default_yaml_path = os.path.join(jobfunnel_path, 'config/settings.yaml')
@@ -81,13 +83,17 @@ def parse_config():
 
     # parse the data path
     config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
-    config['master_list_path'] = os.path.join(default_yaml['output_path'], 'master_list.csv')
+    config['master_list_path'] = os.path.join(
+        default_yaml['output_path'], 'master_list.csv')
     if not given_yaml_path is None:
-        config['data_path'] = os.path.join(given_yaml_path, given_yaml['output_path'], 'data')
-        config['master_list_path'] = os.path.join(given_yaml_path, given_yaml['output_path'], 'master_list.csv')
+        config['data_path'] = os.path.join(
+            given_yaml_path, given_yaml['output_path'], 'data')
+        config['master_list_path'] = os.path.join(
+            given_yaml_path, given_yaml['output_path'], 'master_list.csv')
     if not cli.output_path is None:
         config['data_path'] = os.path.join(cli.output_path, 'data')
-        config['master_list_path'] = os.path.join(cli.output_path, 'master_list.csv')
+        config['master_list_path'] = os.path.join(
+            cli.output_path, 'master_list.csv')
 
     # parse the provider list
     config['providers'] = default_yaml['providers']
@@ -125,7 +131,8 @@ def parse_config():
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
     # define the filter list path
-    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
+    config['filter_list_path'] = os.path.join(
+        config['data_path'], 'filter_list.json')
 
     # normalize paths
     for p in ['data_path', 'master_list_path', 'log_path', 'filter_list_path']:

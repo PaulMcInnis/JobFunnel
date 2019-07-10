@@ -29,4 +29,4 @@ black_list:
 
 # Logging level options are: critical, error, warning, info, debug, notset
 # show me only errors
-log_level: 'error'
+log_level: 'info'

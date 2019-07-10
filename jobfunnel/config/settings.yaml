@@ -9,7 +9,7 @@ output_path: 'search'
 providers:
   - 'Indeed'
   - 'Monster'
-  - 'GlassDoor'
+  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -22,9 +22,9 @@ search_terms:
   keywords:
     - 'Python'
 
+# Black-listed company names
 black_list:
   - 'Infox Consulting'
-  - 'Terminal'
 
 # Logging level options are: critical, error, warning, info, debug, notset
-log_level: 'error'
+log_level: 'info'
