@@ -8,6 +8,8 @@ output_path: './'
 # use indeed only for speed
 providers:
   - 'Indeed'
+  - 'Monster'
+  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -20,7 +22,6 @@ search_terms:
 # this search is focused on programming
   keywords:
     - 'Python'
-    - 'C++'
 
 # exclude these from the search
 black_list:
