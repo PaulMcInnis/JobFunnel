@@ -15,7 +15,7 @@ The spreadsheet for managing your job search:
 
 ### Dependencies
 
-JobFunnel requires [Python][python] 3.6 or later. Other dependencies are listed in the `setup.py` script, and can be installed automatically with `pip` when installing JobFunnel.
+JobFunnel requires [Python][python] 3.6 or later. All dependencies are listed in the `Pipfile`, and can be installed automatically with `pip` when installing JobFunnel.
 
 ### Installing JobFunnel
 
