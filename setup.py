@@ -1,14 +1,16 @@
 from setuptools import setup, find_packages
-from pipenv.project import Project
-from pipenv.utils import convert_deps_to_pip
 
 from jobfunnel import __version__ as version
 
 description = 'Automated tool for scraping job postings.'
 url = 'https://github.com/PaulMcInnis/JobFunnel'
-pfile = Project(chdir=False).parsed_pipfile
-requires = convert_deps_to_pip(pfile['packages'], r=False)
-dev_requires = convert_deps_to_pip(pfile['dev-packages'], r=False)
+install_requires = ['beautifulsoup4>=4.6.3',
+            'lxml>=4.2.4',
+            'requests>=2.19.1',
+            'python-dateutil>=2.8.0',
+            'PyYAML>=5.1',
+            'scikit-learn==0.21.2',
+            ]
 
 with open('readme.md', 'r') as f:
     readme = f.read()
@@ -23,6 +25,6 @@ setup(
     url              = url,
     license          = 'MIT License',
     python_requires  = '>=3.6.0',
-    install_requires = requires,
+    install_requires = install_requires,
     packages         = find_packages(exclude=('demo',)),
     entry_points     = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
