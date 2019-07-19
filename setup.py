@@ -4,7 +4,7 @@ from jobfunnel import __version__ as version
 
 description = 'Automated tool for scraping job postings.'
 url = 'https://github.com/PaulMcInnis/JobFunnel'
-install_requires = ['beautifulsoup4>=4.6.3',
+requires = ['beautifulsoup4>=4.6.3',
             'lxml>=4.2.4',
             'requests>=2.19.1',
             'python-dateutil>=2.8.0',
@@ -25,6 +25,6 @@ setup(
     url              = url,
     license          = 'MIT License',
     python_requires  = '>=3.6.0',
-    install_requires = install_requires,
+    install_requires = requires,
     packages         = find_packages(exclude=('demo',)),
     entry_points     = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
