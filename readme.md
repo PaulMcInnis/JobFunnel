@@ -20,6 +20,7 @@ JobFunnel requires [Python][python] 3.6 or later. All dependencies are listed in
 ### Installing JobFunnel
 
 ```
+pip install pipenv
 pip install git+https://github.com/PaulMcInnis/JobFunnel.git
 funnel --help
 ```
@@ -28,6 +29,7 @@ If you want to develop JobFunnel, you may want to install it in-place:
 
 ```
 git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnel
+pip install pipenv
 pip install -e ./jobfunnel
 funnel --help
 ```
