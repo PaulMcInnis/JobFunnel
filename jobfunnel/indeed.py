@@ -4,7 +4,6 @@ import logging
 import requests
 import bs4
 import re
-import os
 from math import ceil
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -15,6 +14,7 @@ class Indeed(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
+        self.provider = 'indeed'
         self.max_results_per_page = 50
 
     def scrape(self):
@@ -86,15 +86,14 @@ class Indeed(JobFunnel):
             try:
                 job['blurb'] = s.find(
                     'div', attrs={'class': 'summary'}).text.strip()
+                filter_non_printables(job)
             except AttributeError:
                 job['blurb'] = ''
 
             try:
                 job['date'] = s.find(
-                    'span', attrs={'class': 'date'}
-
-
-                    ).text.strip()
+                    'span', attrs={'class': 'date'}).text.strip()
+                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -110,8 +109,7 @@ class Indeed(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
-            filter_non_printables(job)
-            post_date_from_relative_post_age(job)
+            job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job

@@ -4,7 +4,7 @@ import logging
 import requests
 import bs4
 import re
-import os
+from threading import Thread
 from math import ceil
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -15,7 +15,24 @@ class Monster(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
+        self.provider = 'monster'
         self.max_results_per_page = 25
+
+    def search_monster_joblink_for_blurb(self, job):
+        """function that scrapes the monster job link for the blurb"""
+        search = job['link']
+        logging.info(
+            'getting monster search: {}'.format(search))
+        request_HTML = requests.get(search)
+        job_link_soup = bs4.BeautifulSoup(
+            request_HTML.text, self.bs4_parser)
+
+        try:
+            job['blurb'] = job_link_soup.find(
+                id='JobDescription').text.strip()
+            filter_non_printables(job)
+        except AttributeError:
+            job['blurb'] = ''
 
     def scrape(self):
         """function that scrapes job posting from monster and pickles it"""
@@ -86,6 +103,7 @@ class Monster(JobFunnel):
 
             try:
                 job['date'] = s.find('time').text.strip()
+                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -100,22 +118,20 @@ class Monster(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
-            # traverse the job link to extract the blurb
-            search = job['link']
-            logging.info(
-                'getting monster search: {}'.format(search))
-            request_HTML = requests.get(search)
-            job_link_soup = bs4.BeautifulSoup(
-                request_HTML.text, self.bs4_parser)
-
-            try:
-                job['blurb'] = job_link_soup.find(
-                    id='JobDescription').text.strip()
-            except AttributeError:
-                job['blurb'] = ''
-
-            filter_non_printables(job)
-            post_date_from_relative_post_age(job)
+            job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
+        # search the job link to extract the blurb
+        scrape_data_list = [i for i in self.scrape_data.values()]
+        threads = []
+        for job in scrape_data_list:
+            if (job['provider'] == self.provider):
+                process = Thread(target=self.search_monster_joblink_for_blurb,
+                                 args=[job])
+                process.start()
+                threads.append(process)
+
+        for process in threads:
+            process.join()

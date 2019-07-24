@@ -4,8 +4,7 @@ import logging
 import requests
 import bs4
 import re
-import os
-from multiprocessing import Pool
+from threading import Thread
 from math import ceil
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -16,6 +15,7 @@ class GlassDoor(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
+        self.provider = 'glassdoor'
         self.max_results_per_page = 30
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
@@ -75,6 +75,7 @@ class GlassDoor(JobFunnel):
         return glassdoor_radius[radius]
 
     def search_glassdoor_joblink_for_blurb(self, job):
+        """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
         logging.info(
             'getting glassdoor search: {}'.format(search))
@@ -85,10 +86,9 @@ class GlassDoor(JobFunnel):
         try:
             job['blurb'] = job_link_soup.find(
                 id='JobDescriptionContainer').text.strip()
+            filter_non_printables(job)
         except AttributeError:
             job['blurb'] = ''
-
-        filter_non_printables(job)
 
 
     def scrape(self):
@@ -184,6 +184,7 @@ class GlassDoor(JobFunnel):
             try:
                 job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
                     'span', attrs={'class', 'jobLabel nowrap'}).text.strip()
+                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -197,18 +198,20 @@ class GlassDoor(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
-            post_date_from_relative_post_age(job)
+            job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job
 
         # search the job link to extract the blurb
         scrape_data_list = [i for i in self.scrape_data.values()]
-        # single process
-        # for job in scrape_data_list:
-        #     self.search_glassdoor_joblink_for_blurb(job)
-        # multiple processes
-        pool = Pool(processes=1)
-        pool.map(self.search_glassdoor_joblink_for_blurb, scrape_data_list)
-        pool.close()
-        pool.join()
+        threads = []
+        for job in scrape_data_list:
+            if (job['provider'] == self.provider):
+                process = Thread(target=self.search_glassdoor_joblink_for_blurb,
+                                 args=[job])
+                process.start()
+                threads.append(process)
+
+        for process in threads:
+            process.join()
