@@ -69,13 +69,19 @@ def post_date_from_relative_post_age(job):
     if re.findall(r'[0-9]* *d.*', job['date']) and not post_date:
         # some time in the past
         post_date = datetime.now() - timedelta(
-            int(re.sub('d.*', '', job['date'])))
+            days=int(re.sub('d.*', '', job['date'])))
+
+    # try phrases like 24 hr
+    if re.findall(r'[0-9]* *hr.*', job['date']) and not post_date:
+        # some time in the past
+        post_date = datetime.now() - timedelta(
+            hours=int(re.sub('hr.*', '', job['date'])))
 
     if not post_date:
         # must be from the 1970's
         post_date = datetime(1970, 1, 1)
         logging.error(
-            'unknown date for job {0}'.format(job['id']))
+            'unknown date for job {}'.format(job['id']))
 
     job['date'] = post_date.strftime('%d, %b %Y')
     return job['date']

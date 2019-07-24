@@ -74,6 +74,20 @@ class GlassDoor(JobFunnel):
 
         return glassdoor_radius[radius]
 
+    def search_glassdoor_page_for_job_soups(self, data, page,
+                                            soup_base, list_of_job_soups):
+        """function that scrapes the glassdoor page for a list of job soups"""
+        page_url = 'https://www.glassdoor.{0}{1}'.format(
+            self.search_terms['region']['domain'],
+            soup_base.find('li', attrs={'class', 'next'}).find('a').get(
+                'href'))
+        logging.info(
+            'getting glassdoor next page {0} : {1}'.format(page, page_url))
+        jobs = bs4.BeautifulSoup(
+            requests.post(page_url, headers=self.headers, data=data).text,
+            self.bs4_parser).find_all('li', attrs={'class', 'jl'})
+        list_of_job_soups.extend(jobs)
+
     def search_glassdoor_joblink_for_blurb(self, job):
         """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
@@ -149,17 +163,16 @@ class GlassDoor(JobFunnel):
         jobs = soup_base.find_all('li', attrs={'class', 'jl'})
         list_of_job_soups.extend(jobs)
 
+        # search the pages to extract the list of job soups
+        threads = []
         for page in range(1, pages):
-            page_url = 'https://www.glassdoor.{0}{1}'.format(
-                self.search_terms['region']['domain'],
-                soup_base.find('li', attrs={'class', 'next'}).find('a').get(
-                    'href'))
-            logging.info(
-                'getting glassdoor next page {0} : {1}'.format(page, page_url))
-            jobs = bs4.BeautifulSoup(
-                requests.post(page_url, headers=self.headers, data=data).text,
-                self.bs4_parser).find_all('li', attrs={'class', 'jl'})
-            list_of_job_soups.extend(jobs)
+            process = Thread(target=self.search_glassdoor_page_for_job_soups,
+                             args=[data, page, soup_base, list_of_job_soups])
+            process.start()
+            threads.append(process)
+
+        for process in threads:
+            process.join()
 
         # make a dict of job postings from the listing briefs
         for s in list_of_job_soups:
@@ -184,7 +197,6 @@ class GlassDoor(JobFunnel):
             try:
                 job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
                     'span', attrs={'class', 'jobLabel nowrap'}).text.strip()
-                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -199,6 +211,8 @@ class GlassDoor(JobFunnel):
                 job['link'] = ''
 
             job['provider'] = self.provider
+
+            post_date_from_relative_post_age(job)
 
             # key by id
             self.scrape_data[str(job['id'])] = job
