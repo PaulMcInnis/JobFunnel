@@ -1,4 +1,5 @@
 ![JobFunnel_Banner](images/jobfunnel_banner.png)
+![Build Status](https://travis-ci.com/studentbrad/JobFunnel.svg?branch=studentbrad%2Ftravis-ci)
 
 Automated tool for scraping job postings into a `.csv` file.
 
