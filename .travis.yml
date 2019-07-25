@@ -1,0 +1,7 @@
+language: python
+python:
+  - '3.6'
+install:
+  - 'pip install pipenv'
+  - 'pipenv sync'
+script: 'python -m jobfunnel -s demo/settings.yaml -o demo/'
