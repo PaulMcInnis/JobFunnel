@@ -100,10 +100,10 @@ class GlassDoor(JobFunnel):
         try:
             job['blurb'] = job_link_soup.find(
                 id='JobDescriptionContainer').text.strip()
-            filter_non_printables(job)
         except AttributeError:
             job['blurb'] = ''
 
+        filter_non_printables(job)
 
     def scrape(self):
         """function that scrapes job posting from glassdoor and pickles it"""

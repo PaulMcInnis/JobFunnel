@@ -30,9 +30,10 @@ class Monster(JobFunnel):
         try:
             job['blurb'] = job_link_soup.find(
                 id='JobDescription').text.strip()
-            filter_non_printables(job)
         except AttributeError:
             job['blurb'] = ''
+
+        filter_non_printables(job)
 
     def scrape(self):
         """function that scrapes job posting from monster and pickles it"""
@@ -103,7 +104,6 @@ class Monster(JobFunnel):
 
             try:
                 job['date'] = s.find('time').text.strip()
-                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -119,6 +119,8 @@ class Monster(JobFunnel):
                 job['link'] = ''
 
             job['provider'] = self.provider
+
+            post_date_from_relative_post_age(job)
 
             # key by id
             self.scrape_data[str(job['id'])] = job

@@ -101,14 +101,12 @@ class Indeed(JobFunnel):
             try:
                 job['blurb'] = s.find(
                     'div', attrs={'class': 'summary'}).text.strip()
-                filter_non_printables(job)
             except AttributeError:
                 job['blurb'] = ''
 
             try:
                 job['date'] = s.find(
                     'span', attrs={'class': 'date'}).text.strip()
-                post_date_from_relative_post_age(job)
             except AttributeError:
                 job['date'] = ''
 
@@ -125,6 +123,9 @@ class Indeed(JobFunnel):
                 job['link'] = ''
 
             job['provider'] = self.provider
+
+            filter_non_printables(job)
+            post_date_from_relative_post_age(job)
 
             # key by id
             self.scrape_data[str(job['id'])] = job
