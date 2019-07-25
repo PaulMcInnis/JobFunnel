@@ -9,13 +9,10 @@ from dateutil.relativedelta import relativedelta
 
 def filter_non_printables(job):
     """function that filters trailing characters in scraped strings"""
-    if not job['blurb']:
-        return job['blurb']
-
     # filter all of the weird characters some job postings have...
     printable = set(string.printable)
+    job['title'] = ''.join(filter(lambda x: x in printable, job['title']))
     job['blurb'] = ''.join(filter(lambda x: x in printable, job['blurb']))
-    return job['blurb']
 
 
 def post_date_from_relative_post_age(job):
