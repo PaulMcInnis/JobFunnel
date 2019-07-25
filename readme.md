@@ -1,5 +1,5 @@
-![JobFunnel_Banner](images/jobfunnel_banner.png)
-![Build Status](https://travis-ci.com/studentbrad/JobFunnel.svg?branch=studentbrad%2Ftravis-ci)
+<img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
+<img src="https://travis-ci.com/studentbrad/JobFunnel.svg?branch=studentbrad%2Ftravis-ci" alt="Build Status" />
 
 Automated tool for scraping job postings into a `.csv` file.
 
