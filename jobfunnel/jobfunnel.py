@@ -16,7 +16,7 @@ REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header:
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb',
-                     'link', 'id']
+                     'link', 'id', 'provider']
 
 class JobFunnel(object):
     """class that writes pickles to master list path and applies search filters"""

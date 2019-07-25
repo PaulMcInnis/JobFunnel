@@ -4,7 +4,7 @@ import logging
 import requests
 import bs4
 import re
-import os
+from threading import Thread
 from math import ceil
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -15,7 +15,36 @@ class GlassDoor(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
+        self.provider = 'glassdoor'
         self.max_results_per_page = 30
+        self.headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+                'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.glassdoor.{0}/'.format(
+                self.search_terms['region']['domain']),
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+                ' (KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'
+                '51.0.2704.79 Safari/537.36',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        }
+        self.location_headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
+                'image/webp,*/*;q=0.01',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.glassdoor.{0}/'.format(
+                self.search_terms['region']['domain']),
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'
+                '51.0.2704.79 Safari/537.36',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        }
 
     def convert_glassdoor_radius(self, radius):
         """function that quantizes the user input radius to a valid
@@ -45,6 +74,37 @@ class GlassDoor(JobFunnel):
 
         return glassdoor_radius[radius]
 
+    def search_glassdoor_page_for_job_soups(self, data, page,
+                                            soup_base, list_of_job_soups):
+        """function that scrapes the glassdoor page for a list of job soups"""
+        page_url = 'https://www.glassdoor.{0}{1}'.format(
+            self.search_terms['region']['domain'],
+            soup_base.find('li', attrs={'class', 'next'}).find('a').get(
+                'href'))
+        logging.info(
+            'getting glassdoor next page {0} : {1}'.format(page, page_url))
+        jobs = bs4.BeautifulSoup(
+            requests.post(page_url, headers=self.headers, data=data).text,
+            self.bs4_parser).find_all('li', attrs={'class', 'jl'})
+        list_of_job_soups.extend(jobs)
+
+    def search_glassdoor_joblink_for_blurb(self, job):
+        """function that scrapes the glassdoor job link for the blurb"""
+        search = job['link']
+        logging.info(
+            'getting glassdoor search: {}'.format(search))
+        request_HTML = requests.post(search, headers=self.location_headers)
+        job_link_soup = bs4.BeautifulSoup(request_HTML.text,
+                                          self.bs4_parser)
+
+        try:
+            job['blurb'] = job_link_soup.find(
+                id='JobDescriptionContainer').text.strip()
+        except AttributeError:
+            job['blurb'] = ''
+
+        filter_non_printables(job)
+
     def scrape(self):
         """function that scrapes job posting from glassdoor and pickles it"""
         ## scrape a page of monster results to a pickle
@@ -57,36 +117,6 @@ class GlassDoor(JobFunnel):
             else:
                 query += '-' + s
 
-        headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;'\
-                'q=0.9,image/webp,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.glassdoor.{0}/'.format(
-                self.search_terms['region']['domain']),
-            'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'\
-                ' (KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'\
-                '51.0.2704.79 Safari/537.36',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        }
-
-        location_headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'\
-                'image/webp,*/*;q=0.01',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.glassdoor.{0}/'.format(
-                self.search_terms['region']['domain']),
-            'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '\
-                '(KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'\
-                '51.0.2704.79 Safari/537.36',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        }
-
         data = {'term': self.search_terms['region']['city'],
                 'maxLocationsToReturn': 10}
 
@@ -95,7 +125,7 @@ class GlassDoor(JobFunnel):
 
         # get the location id for search location
         location_response = requests.post(location_url,
-                                          headers=location_headers,
+                                          headers=self.location_headers,
                                           data=data).json()
         place_id = location_response[0]['locationId']
         job_listing_url = 'https://www.glassdoor.{0}/Job/jobs.htm'.format(
@@ -113,7 +143,7 @@ class GlassDoor(JobFunnel):
 
         # get the HTML data, initialize bs4 with lxml
         request_HTML = requests.post(
-            job_listing_url, headers=headers, data=data)
+            job_listing_url, headers=self.headers, data=data)
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
@@ -133,17 +163,16 @@ class GlassDoor(JobFunnel):
         jobs = soup_base.find_all('li', attrs={'class', 'jl'})
         list_of_job_soups.extend(jobs)
 
+        # search the pages to extract the list of job soups
+        threads = []
         for page in range(1, pages):
-            page_url = 'https://www.glassdoor.{0}{1}'.format(
-                self.search_terms['region']['domain'],
-                soup_base.find('li', attrs={'class', 'next'}).find('a').get(
-                    'href'))
-            logging.info(
-                'getting glassdoor next page {0} : {1}'.format(page, page_url))
-            jobs = bs4.BeautifulSoup(
-                requests.post(page_url, headers=headers, data=data).text,
-                self.bs4_parser).find_all('li', attrs={'class', 'jl'})
-            list_of_job_soups.extend(jobs)
+            process = Thread(target=self.search_glassdoor_page_for_job_soups,
+                             args=[data, page, soup_base, list_of_job_soups])
+            process.start()
+            threads.append(process)
+
+        for process in threads:
+            process.join()
 
         # make a dict of job postings from the listing briefs
         for s in list_of_job_soups:
@@ -181,22 +210,22 @@ class GlassDoor(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
-            # traverse the job link to extract the blurb
-            search = job['link']
-            logging.info(
-                'getting glassdoor search: {}'.format(search))
-            request_HTML = requests.post(search, headers=location_headers)
-            job_link_soup = bs4.BeautifulSoup(request_HTML.text,
-                                              self.bs4_parser)
+            job['provider'] = self.provider
 
-            try:
-                job['blurb'] = job_link_soup.find(
-                    id='JobDescriptionContainer').text.strip()
-            except AttributeError:
-                job['blurb'] = ''
-
-            filter_non_printables(job)
             post_date_from_relative_post_age(job)
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
+        # search the job link to extract the blurb
+        scrape_data_list = [i for i in self.scrape_data.values()]
+        threads = []
+        for job in scrape_data_list:
+            if (job['provider'] == self.provider):
+                process = Thread(target=self.search_glassdoor_joblink_for_blurb,
+                                 args=[job])
+                process.start()
+                threads.append(process)
+
+        for process in threads:
+            process.join()

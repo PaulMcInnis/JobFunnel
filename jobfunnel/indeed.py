@@ -4,7 +4,7 @@ import logging
 import requests
 import bs4
 import re
-import os
+from threading import Thread
 from math import ceil
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -15,7 +15,19 @@ class Indeed(JobFunnel):
 
     def __init__(self, args):
         super().__init__(args)
+        self.provider = 'indeed'
         self.max_results_per_page = 50
+
+    def search_indeed_page_for_job_soups(self, search, page,
+                                         list_of_job_soups):
+        """function that scrapes the indeed page for a list of job soups"""
+        page_url = '{0}&start={1}'.format(
+            search, int(page * self.max_results_per_page))
+        logging.info('getting indeed page {} : {}'.format(page, page_url))
+        jobs = bs4.BeautifulSoup(
+            requests.get(page_url).text, self.bs4_parser).find_all(
+            'div', attrs={'data-tn-component': 'organicJob'})
+        list_of_job_soups.extend(jobs)
 
     def scrape(self):
         """function that scrapes job posting from indeed and pickles it"""
@@ -56,14 +68,17 @@ class Indeed(JobFunnel):
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
         pages = int(ceil(num_results / self.max_results_per_page))
+
+        # search the pages to extract the list of job soups
+        threads = []
         for page in range(0, pages):
-            page_url = '{0}&start={1}'.format(
-                search, int(page * self.max_results_per_page))
-            logging.info('getting indeed page {} : {}'.format(page, page_url))
-            jobs = bs4.BeautifulSoup(
-                requests.get(page_url).text, self.bs4_parser).find_all(
-                    'div', attrs={'data-tn-component': 'organicJob'})
-            list_of_job_soups.extend(jobs)
+            process = Thread(target=self.search_indeed_page_for_job_soups,
+                             args=[search, page, list_of_job_soups])
+            process.start()
+            threads.append(process)
+
+        for process in threads:
+            process.join()
 
         # make a dict of job postings from the listing briefs
         for s in list_of_job_soups:
@@ -91,10 +106,7 @@ class Indeed(JobFunnel):
 
             try:
                 job['date'] = s.find(
-                    'span', attrs={'class': 'date'}
-
-
-                    ).text.strip()
+                    'span', attrs={'class': 'date'}).text.strip()
             except AttributeError:
                 job['date'] = ''
 
@@ -109,6 +121,8 @@ class Indeed(JobFunnel):
             except (AttributeError, IndexError):
                 job['id'] = ''
                 job['link'] = ''
+
+            job['provider'] = self.provider
 
             filter_non_printables(job)
             post_date_from_relative_post_age(job)
