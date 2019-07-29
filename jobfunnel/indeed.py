@@ -22,6 +22,8 @@ class Indeed(JobFunnel):
                 'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.indeed.{0}/'.format(
+                self.search_terms['region']['domain']),
             'upgrade-insecure-requests': '1',
             'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
