@@ -17,6 +17,16 @@ class Indeed(JobFunnel):
         super().__init__(args)
         self.provider = 'indeed'
         self.max_results_per_page = 50
+        self.headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+                'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        }
 
     def search_indeed_page_for_job_soups(self, search, page,
                                          list_of_job_soups):
@@ -25,7 +35,8 @@ class Indeed(JobFunnel):
             search, int(page * self.max_results_per_page))
         logging.info('getting indeed page {} : {}'.format(page, page_url))
         jobs = bs4.BeautifulSoup(
-            requests.get(page_url).text, self.bs4_parser).find_all(
+            requests.get(page_url, headers=self.headers).text,
+            self.bs4_parser).find_all(
             'div', attrs={'data-tn-component': 'organicJob'})
         list_of_job_soups.extend(jobs)
 
@@ -53,7 +64,7 @@ class Indeed(JobFunnel):
             int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(search)
+        request_HTML = requests.get(search, headers=self.headers)
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed

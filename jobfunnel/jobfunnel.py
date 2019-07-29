@@ -5,11 +5,12 @@ import pickle
 import json
 import logging
 import os
-import sys
 import csv
+import random
 from datetime import date
 from typing import Dict
 from .tools.filters import tfidf_filter
+from .tools.tools import user_agent_list
 
 # setting job status to these words removes them from masterlist + adds to blacklist
 REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
@@ -35,6 +36,8 @@ class JobFunnel(object):
         self.similar_results = args['similar']
         self.bs4_parser = 'lxml'
         self.scrape_data = {}
+        self.user_agent = user_agent_list[
+            random.randint(0, len(user_agent_list))]
 
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
