@@ -17,13 +17,25 @@ class Monster(JobFunnel):
         super().__init__(args)
         self.provider = 'monster'
         self.max_results_per_page = 25
+        self.headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+                'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.monster.{0}/'.format(
+                self.search_terms['region']['domain']),
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        }
 
     def search_monster_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
         logging.info(
             'getting monster search: {}'.format(search))
-        request_HTML = requests.get(search)
+        request_HTML = requests.get(search, headers=self.headers)
         job_link_soup = bs4.BeautifulSoup(
             request_HTML.text, self.bs4_parser)
 
@@ -59,7 +71,7 @@ class Monster(JobFunnel):
             self.search_terms['region']['radius'])
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(search)
+        request_HTML = requests.get(search, headers=self.headers)
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
@@ -77,8 +89,9 @@ class Monster(JobFunnel):
         logging.info(
             'getting monster pages 1 to {0} : {1}'.format(pages, page_url))
         jobs = bs4.BeautifulSoup(
-            requests.get(page_url).text, self.bs4_parser).find_all(
-                'div', attrs={'class': 'flex-row'})
+            requests.get(page_url, headers=self.headers).text,
+            self.bs4_parser).find_all(
+            'div', attrs={'class': 'flex-row'})
         list_of_job_soups.extend(jobs)
 
         # make a dict of job postings from the listing briefs

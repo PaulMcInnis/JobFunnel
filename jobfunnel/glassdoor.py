@@ -25,9 +25,7 @@ class GlassDoor(JobFunnel):
             'referer': 'https://www.glassdoor.{0}/'.format(
                 self.search_terms['region']['domain']),
             'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-                ' (KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'
-                '51.0.2704.79 Safari/537.36',
+            'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
@@ -39,9 +37,7 @@ class GlassDoor(JobFunnel):
             'referer': 'https://www.glassdoor.{0}/'.format(
                 self.search_terms['region']['domain']),
             'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
-                '(KHTML, like Gecko) Ubuntu Chromium/51.0.2704.79 Chrome/'
-                '51.0.2704.79 Safari/537.36',
+            'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
