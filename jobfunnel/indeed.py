@@ -70,7 +70,7 @@ class Indeed(JobFunnel):
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
-        num_results = soup_base.find(id='searchCount').contents[0].strip()
+        num_results = soup_base.find(id='searchCountPages').contents[0].strip()
         num_results = re.sub('.*of ', '', num_results)
         num_results = re.sub(',', '', num_results)
         num_results = re.sub('jobs.*', '', num_results)
