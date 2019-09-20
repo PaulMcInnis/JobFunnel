@@ -34,21 +34,21 @@ drwxr-xr-x 3 username username 4096 Sep 20 11:04 hamilton
 drwxr-xr-x 3 username username 4096 Sep 20 03:02 waterloo
 ```
 
-Make a `settings.yaml` file for each folder representing a geographical region.
+Make a `settings.yaml` file for each folder representing a geographical region:
 
 ```
 total 4
 -rw-r--r-- 1 username username 689 Sep 20 11:05 settings.yaml
 ```
 
-Do a test run by executing
+Do a test run by executing:
 ```bash
 ./cronjob.sh
 ```
 
 ## Setting up Crontab
 
-To set up crontab for a sepific user run:
+To set up crontab for a specific user run:
 ```bash
 crontab -u username -e
 ```
