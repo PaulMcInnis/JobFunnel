@@ -4,4 +4,4 @@ python:
 install:
   - 'pip install pipenv'
   - 'pipenv sync'
-script: 'pipenv run python -m jobfunnel -s demo/settings.yaml -o demo/'
+script: 'python -m jobfunnel -s demo/settings.yaml -o demo/'
