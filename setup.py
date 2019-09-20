@@ -16,15 +16,16 @@ with open('readme.md', 'r') as f:
     readme = f.read()
 
 setup(
-    name             = 'JobFunnel',
-    version          = version,
-    description      = description,
-    long_description = readme,
-    author           = 'Paul McInnis, Bradley Kohler, Jose Alarcon',
-    author_email     = 'paulmcinnis99@gmail.com',
-    url              = url,
-    license          = 'MIT License',
-    python_requires  = '>=3.6.0',
-    install_requires = requires,
-    packages         = find_packages(exclude=('demo',)),
-    entry_points     = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
+    name                 = 'JobFunnel',
+    version              = version,
+    description          = description,
+    long_description     = readme,
+    author               = 'Paul McInnis, Bradley Kohler, Jose Alarcon',
+    author_email         = 'paulmcinnis99@gmail.com',
+    url                  = url,
+    license              = 'MIT License',
+    python_requires      = '>=3.6.0',
+    install_requires     = requires,
+    packages             = find_packages(exclude=('demo',)),
+    include_package_data = True,
+    entry_points         = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
