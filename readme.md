@@ -52,9 +52,9 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 * **Running Filters** <br />
   To update active filters and to see any `new` jobs going forwards, just run `funnel` again, and review the `.csv` file.
 
-* **Recovering Lost Spreadsheets** <br />
-  If ever your spreadsheet gets deleted you still have the pickle files. <br />
-  Simply run `funnel --no_scrape` to generate a new master-list.
+* **Recovering Lost Master-list** <br />
+  If ever your master-list gets deleted you still have the historic pickle files. <br />
+  Simply run `funnel --recover` to generate a new master-list.
 
 * **Managing Multiple Searches** <br />
   You can keep multiple search results across multiple `.csv` files:

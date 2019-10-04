@@ -86,11 +86,22 @@ class JobFunnel(object):
         self.logger.info(f'jobfunnel initialized at {self.date_string}')
 
     def scrape(self):
-        """ to be implemented by child classes"""
+        """function to be implemented by child classes"""
         raise NotImplementedError()
 
+    def load_pickle(self, args):
+        """function to load today's daily scrape pickle"""
+        ## only to be used in no_scrape mode
+        pickle_filepath = os.path.join(args['data_path'], f'jobs_{self.date_string}.pkl')
+        try:
+            self.scrape_data = pickle.load(open(pickle_filepath, 'rb'))
+        except FileNotFoundError as e:
+            logging.error(f'{pickle_filepath} not found! Have you scraped any jobs today?')
+            raise e
+
     def load_pickles(self, args):
-        # try to load any pickle from the data path
+        """function to load all historic daily scrape pickles"""
+        ## only to be used in recovery mode
         pickle_found = False
         pickle_path = os.path.join(args['data_path'])
         for root, dirs, files in os.walk(pickle_path):
@@ -106,7 +117,7 @@ class JobFunnel(object):
             raise e
 
     def dump_pickle(self):
-        """ dump a pickle of the daily scrape dict"""
+        """function to dump a pickle of the daily scrape dict"""
         pickle_name = f'jobs_{self.date_string}.pkl'
         pickle.dump(self.scrape_data,
                     open(os.path.join(self.pickles_dir, pickle_name), 'wb'))

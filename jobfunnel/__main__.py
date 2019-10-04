@@ -26,8 +26,10 @@ def main():
     jp.update_filterjson()
 
     # get jobs by either scraping jobs or loading dumped pickles
-    if config['no_scrape']:
+    if config['recover']:
         jp.load_pickles(config)
+    elif config['no_scrape']:
+        jp.load_pickle(config)
     else:
         for p in config['providers']:
             provider = providers[p](config)
