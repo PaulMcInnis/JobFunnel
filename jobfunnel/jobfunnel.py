@@ -5,6 +5,7 @@ import pickle
 import json
 import logging
 import os
+import re
 import csv
 import random
 from datetime import date
@@ -88,13 +89,20 @@ class JobFunnel(object):
         """ to be implemented by child classes"""
         raise NotImplementedError()
 
-    def load_pickle(self, args):
-        # try to load today's pickle from set var first:
-        pickle_filepath = os.path.join(args['data_path'], f'jobs_{self.date_string}.pkl')
-        try:
-            self.scrape_data = pickle.load(open(pickle_filepath, 'rb'))
-        except FileNotFoundError as e:
-            logging.error(f'{pickle_filepath} not found! Have you scraped any jobs today?')
+    def load_pickles(self, args):
+        # try to load any pickle from the data path
+        pickle_found = False
+        pickle_path = os.path.join(args['data_path'])
+        for root, dirs, files in os.walk(pickle_path):
+            for file in files:
+                if re.findall(r'jobs_.*', file):
+                    if not pickle_found: pickle_found = True
+                    pickle_file = file
+                    pickle_filepath = os.path.join(pickle_path, pickle_file)
+                    logging.info(f'loading pickle file: {pickle_filepath}')
+                    self.scrape_data.update(pickle.load(open(pickle_filepath, 'rb')))
+        if not pickle_found:
+            logging.error(f'no pickles found in {pickle_path}! Have you scraped any jobs?')
             raise e
 
     def dump_pickle(self):
@@ -132,8 +140,7 @@ class JobFunnel(object):
                 if jobid in data:
                     data.pop(jobid)
                     n_filtered += 1
-            logging.info(f'removed {n_filtered} jobs present in filter-list'
-                         ' from master-list')
+            logging.info(f'removed {n_filtered} jobs present in filter-list')
         else:
             self.logger.warning(
                 f'no jobs filtered, missing {self.filterlist_path}')
@@ -200,7 +207,7 @@ class JobFunnel(object):
             self.remove_jobs_in_filterlist(masterlist)
             self.remove_blacklisted_companies(masterlist)
 
-            # update masterslist to contain only new (unqiue) listings
+            # update masterlist to contain only new (unique) listings
             tfidf_filter(self.scrape_data, masterlist)
             masterlist.update(self.scrape_data)
 

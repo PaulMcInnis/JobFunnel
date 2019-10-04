@@ -52,7 +52,7 @@ def parse_cli():
         dest='no_scrape',
         action='store_true',
         default=False,
-        help='skip web-scraping and load a previously saved pickle')
+        help='skip web-scraping and load previously saved pickles')
 
     return parser.parse_args()
 
