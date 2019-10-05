@@ -25,8 +25,10 @@ def main():
     # parse the master list path to update filter list
     jp.update_filterjson()
 
-    # get jobs by either scraping jobs or loading today's dumped pickle
-    if config['no_scrape']:
+    # get jobs by either scraping jobs or loading dumped pickles
+    if config['recover']:
+        jp.load_pickles(config)
+    elif config['no_scrape']:
         jp.load_pickle(config)
     else:
         for p in config['providers']:

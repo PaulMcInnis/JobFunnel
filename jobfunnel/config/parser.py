@@ -52,7 +52,13 @@ def parse_cli():
         dest='no_scrape',
         action='store_true',
         default=False,
-        help='skip web-scraping and load a previously saved pickle')
+        help='skip web-scraping and load a previously saved daily scrape pickle')
+
+    parser.add_argument('--recover',
+        dest='recover',
+        action='store_true',
+        default=False,
+        help='recover master-list by accessing all historic scrapes pickles')
 
     return parser.parse_args()
 
@@ -119,6 +125,9 @@ def parse_config():
 
     # parse the no_scrape option
     config['no_scrape'] = cli.no_scrape
+
+    # parse the recovery option
+    config['recover'] = cli.recover
 
     # parse the log level
     config['log_level'] = log_levels[default_yaml['log_level']]
