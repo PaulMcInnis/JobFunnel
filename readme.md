@@ -1,3 +1,10 @@
+---
+### About
+
+The goal of this fork is to add some personal touches to the JobFunnel Tool and any fixes I think are essential. The fork will consist of a Master branch and a Dev branch; the former barely deviating from the upstream and the latter being my virtual laboratory. 
+
+---
+
 <img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
 <img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" />
 
