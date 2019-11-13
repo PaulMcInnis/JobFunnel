@@ -8,20 +8,22 @@ output_path: './'
 # use indeed only for speed
 providers:
   - 'Indeed'
-  - 'Monster'
-  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+#  - 'Monster'
+#  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
   region:
-    province: 'ON'
-    city:     'waterloo'
-    domain:   'ca'
+    province: 'FL'
+    city:     'Miami'
+    domain:   'com'
     radius:   25
 
 # this search is focused on programming
   keywords:
     - 'Python'
+    - 'R'
+    - 'SQL'
 
 # exclude these from the search
 black_list:

@@ -6,7 +6,7 @@ The goal of this fork is to add some personal touches to the JobFunnel Tool and 
 ---
 
 <img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
-<img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" />
+<img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" />
 
 Automated tool for scraping job postings into a `.csv` file.
 
