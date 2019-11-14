@@ -52,13 +52,20 @@ class Monster(JobFunnel):
         ## scrape a page of monster results to a pickle
         logging.info(
             'jobfunnel monster to pickle running @ : ' + self.date_string)
+        # ID regex quantifiers
+        id_regex = \
+            re.compile(
+                r'/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|(\d+)')
+        # initialize and store date quantifiers as regex objects in list.
+        date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?month'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?year'),
+                      re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
+                      re.compile(r'[yY]esterday')]
 
         # form the query string
-        for i, s in enumerate(self.search_terms['keywords']):
-            if i == 0:
-                query = s
-            else:
-                query += '-' + s
+        query = '-'.join(self.search_terms['keywords'])
 
         # build the job search URL
         search = 'https://www.monster.{0}/jobs/search/?q={1}&where={2}__2C-{3}'\
@@ -76,9 +83,10 @@ class Monster(JobFunnel):
 
         # scrape total number of results, and calculate the # pages needed
         num_results = soup_base.find('h2', 'figure').text.strip()
-        num_results = re.sub('\(', '', num_results)
-        num_results = re.sub('[a-zA-Z ]*\)', '', num_results)
-        num_results = int(num_results)
+        num_results = int(re.findall(r'(\d+)', num_results)[0])
+#        num_results = re.sub('\(', '', num_results)
+#        num_results = re.sub('[a-zA-Z ]*\)', '', num_results)
+#        num_results = int(num_results)
         logging.info(
             'Found {} monster results for query={}'.format(num_results, query))
 
@@ -119,21 +127,19 @@ class Monster(JobFunnel):
                 job['date'] = s.find('time').text.strip()
             except AttributeError:
                 job['date'] = ''
-
+            # Captures uuid or int id's, by extracting from URL instead.
             try:
-                job['id'] = str(
-                    s.find('a', attrs={'data-bypass': 'true'}).get(
-                        'data-m_impr_j_jobid'))
                 job['link'] = str(
                     s.find('a', attrs={'data-bypass': 'true'}).get(
                         'href'))
-            except (AttributeError):
+                job['id'], _ = id_regex.findall(job['link'])[0]
+            except AttributeError:
                 job['id'] = ''
                 job['link'] = ''
 
             job['provider'] = self.provider
 
-            post_date_from_relative_post_age(job)
+            post_date_from_relative_post_age(job, date_regex)
 
             # key by id
             self.scrape_data[str(job['id'])] = job

@@ -106,12 +106,16 @@ class GlassDoor(JobFunnel):
         ## scrape a page of monster results to a pickle
         logging.info('jobfunnel glassdoor to pickle running @' + self.date_string)
 
+        # initialize and store date quantifiers as regex objects in list.
+        date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?month'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?year'),
+                      re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
+                      re.compile(r'[yY]esterday')]
+
         # form the query string
-        for i, s in enumerate(self.search_terms['keywords']):
-            if i == 0:
-                query = s
-            else:
-                query += '-' + s
+        query = '-'.join(self.search_terms['keywords'])
 
         data = {'term': self.search_terms['region']['city'],
                 'maxLocationsToReturn': 10}
@@ -143,11 +147,11 @@ class GlassDoor(JobFunnel):
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
+        # Now with less regex!
         num_results = soup_base.find(
             'p', attrs={'class', 'jobsCount'}).text.strip()
-        num_results = re.sub('[a-zA-Z ]*', '', num_results)
-        num_results = re.sub(',', '', num_results)
-        num_results = int(num_results)
+        num_results = int(re.findall(r'(\d+)',
+                                     num_results.replace(',', ''))[0])
         logging.info('Found {} glassdoor results for query={}'.format(
             num_results, query))
 
@@ -208,7 +212,7 @@ class GlassDoor(JobFunnel):
 
             job['provider'] = self.provider
 
-            post_date_from_relative_post_age(job)
+            post_date_from_relative_post_age(job, date_regex)
 
             # key by id
             self.scrape_data[str(job['id'])] = job

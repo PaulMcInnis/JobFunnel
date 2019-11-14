@@ -47,12 +47,18 @@ class Indeed(JobFunnel):
         ## scrape a page of indeed results to a pickle
         logging.info('jobfunnel indeed to pickle running @ ' + self.date_string)
 
+        # ID regex quantifiers
+        id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
+        # initialize and store date quantifiers as regex objects in list.
+        date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?month'),
+                      re.compile(r'(\d+)(?:[ +]{1,3})?year'),
+                      re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
+                      re.compile(r'[yY]esterday')]
+
         # form the query string
-        for i, s in enumerate(self.search_terms['keywords']):
-            if i == 0:
-                query = s
-            else:
-                query += '+' + s
+        query = '+'.join(self.search_terms['keywords'])
 
         # build the job search URL
         search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
@@ -70,11 +76,10 @@ class Indeed(JobFunnel):
         soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
+        # Now with less regex!
         num_results = soup_base.find(id='searchCountPages').contents[0].strip()
-        num_results = re.sub('.*of ', '', num_results)
-        num_results = re.sub(',', '', num_results)
-        num_results = re.sub('jobs.*', '', num_results)
-        num_results = int(num_results)
+        num_results = int(re.findall(r'f (\d+) ',
+                                     num_results.replace(',', ''))[0])
         logging.info(
             'Found {0} indeed results for query={1}'.format(num_results, query))
 
@@ -124,11 +129,10 @@ class Indeed(JobFunnel):
                 job['date'] = ''
 
             try:
-                job['id'] = re.findall(r'id=\"sj_[a-zA-Z0-9]*\"', str(
+                # Added capture group so to only capture id once matched.
+                job['id'] = id_regex.findall(str(
                     s.find('a',
                         attrs={'class': 'sl resultLink save-job-link'})))[0]
-                job['id'] = re.sub('id=\"sj_', '', job['id'])
-                job['id'] = re.sub('\"', '', job['id'])
                 job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
                     self.search_terms['region']['domain'], job['id'])
             except (AttributeError, IndexError):
@@ -138,7 +142,7 @@ class Indeed(JobFunnel):
             job['provider'] = self.provider
 
             filter_non_printables(job)
-            post_date_from_relative_post_age(job)
+            post_date_from_relative_post_age(job, date_regex)
 
             # key by id
             self.scrape_data[str(job['id'])] = job
