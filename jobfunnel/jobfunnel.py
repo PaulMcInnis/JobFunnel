@@ -12,7 +12,8 @@ from datetime import date
 from typing import Dict
 from .tools.filters import tfidf_filter
 
-# setting job status to these words removes them from masterlist + adds to blacklist
+# setting job status to these words removes them from masterlist + adds to
+# blacklist
 REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header:
@@ -23,16 +24,26 @@ MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb',
 # https://developers.whatismybrowser.com/useragents/explore/
 user_agent_list = [
     # chrome
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 5.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 5.1; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/44.0.2403.157 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/57.0.2987.133 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/57.0.2987.133 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/55.0.2883.87 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, '
+    'like Gecko) Chrome/55.0.2883.87 Safari/537.36',
     # firefox
     'Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1)',
     'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko',
@@ -43,14 +54,18 @@ user_agent_list = [
     'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)',
     'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko',
     'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; Trident/7.0; rv:11.0) like Gecko',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; Trident/7.0; rv:11.0) like '
+    'Gecko',
     'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
     'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)',
-    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; .NET CLR 2.0.50727; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)'
+    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; .NET '
+    'CLR 2.0.50727; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)'
 ]
 
+
 class JobFunnel(object):
-    """class that writes pickles to master list path and applies search filters"""
+    """class that writes pickles to master list path and applies search
+    filters """
 
     def __init__(self, args):
         # paths
@@ -75,7 +90,8 @@ class JobFunnel(object):
         self.search_terms = args['search_terms']
 
         # create data dir
-        if not os.path.exists(args['data_path']): os.makedirs(args['data_path'])
+        if not os.path.exists(
+                args['data_path']): os.makedirs(args['data_path'])
 
     def init_logging(self):
         # initialise logging to file
@@ -92,11 +108,13 @@ class JobFunnel(object):
     def load_pickle(self, args):
         """function to load today's daily scrape pickle"""
         ## only to be used in no_scrape mode
-        pickle_filepath = os.path.join(args['data_path'], f'jobs_{self.date_string}.pkl')
+        pickle_filepath = os.path.join(args['data_path'],
+                                       f'jobs_{self.date_string}.pkl')
         try:
             self.scrape_data = pickle.load(open(pickle_filepath, 'rb'))
         except FileNotFoundError as e:
-            logging.error(f'{pickle_filepath} not found! Have you scraped any jobs today?')
+            logging.error(f'{pickle_filepath} not found! Have you scraped '
+                          f'any jobs today?')
             raise e
 
     def load_pickles(self, args):
@@ -111,9 +129,11 @@ class JobFunnel(object):
                     pickle_file = file
                     pickle_filepath = os.path.join(pickle_path, pickle_file)
                     logging.info(f'loading pickle file: {pickle_filepath}')
-                    self.scrape_data.update(pickle.load(open(pickle_filepath, 'rb')))
+                    self.scrape_data.update(
+                        pickle.load(open(pickle_filepath, 'rb')))
         if not pickle_found:
-            logging.error(f'no pickles found in {pickle_path}! Have you scraped any jobs?')
+            logging.error(f'no pickles found in {pickle_path}! Have you '
+                          f'scraped any jobs?')
             raise e
 
     def dump_pickle(self):
@@ -127,7 +147,7 @@ class JobFunnel(object):
         with open(path, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
             if key_by_id:
-                return dict([(j['id'] , j) for j in reader])
+                return dict([(j['id'], j) for j in reader])
             else:
                 return [row for row in reader]
 
@@ -164,7 +184,8 @@ class JobFunnel(object):
             if job_data['company'] in self.blacklist:
                 blacklist_ids.append(job_id)
         logging.info(
-            f'removed {len(blacklist_ids)} jobs in black-list from master-list')
+            f'removed {len(blacklist_ids)} jobs in black-list from '
+            f'master-list')
         for job_id in blacklist_ids:
             data.pop(job_id)
 
@@ -173,7 +194,7 @@ class JobFunnel(object):
         if os.path.isfile(self.master_list_path):
             # load existing filtered jobs, if any
             if os.path.isfile(self.filterlist_path):
-                filtered_jobs = json.load(open(self.filterlist_path,'r'))
+                filtered_jobs = json.load(open(self.filterlist_path, 'r'))
             else:
                 filtered_jobs = {}
 
@@ -185,7 +206,8 @@ class JobFunnel(object):
                             job['id'], self.filterlist_path))
                     filtered_jobs[job['id']] = job
 
-            # write out the complete list with any additions from the masterlist
+            # write out the complete list with any additions from the
+            # masterlist
             with open(self.filterlist_path, 'w', encoding='utf8') as outfile:
                 outfile.write(
                     json.dumps(

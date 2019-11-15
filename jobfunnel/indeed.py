@@ -11,6 +11,7 @@ from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 
+
 class Indeed(JobFunnel):
 
     def __init__(self, args):
@@ -19,7 +20,7 @@ class Indeed(JobFunnel):
         self.max_results_per_page = 50
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
-                'q=0.9,image/webp,*/*;q=0.8',
+                      'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.indeed.{0}/'.format(
@@ -45,7 +46,8 @@ class Indeed(JobFunnel):
     def scrape(self):
         """function that scrapes job posting from indeed and pickles it"""
         ## scrape a page of indeed results to a pickle
-        logging.info('jobfunnel indeed to pickle running @ ' + self.date_string)
+        logging.info(
+            'jobfunnel indeed to pickle running @ ' + self.date_string)
 
         # ID regex quantifiers
         id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
@@ -81,7 +83,8 @@ class Indeed(JobFunnel):
         num_results = int(re.findall(r'f (\d+) ',
                                      num_results.replace(',', ''))[0])
         logging.info(
-            'Found {0} indeed results for query={1}'.format(num_results, query))
+            'Found {0} indeed results for query={1}'.format(num_results,
+                                                            query))
 
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
@@ -132,7 +135,7 @@ class Indeed(JobFunnel):
                 # Added capture group so to only capture id once matched.
                 job['id'] = id_regex.findall(str(
                     s.find('a',
-                        attrs={'class': 'sl resultLink save-job-link'})))[0]
+                           attrs={'class': 'sl resultLink save-job-link'})))[0]
                 job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
                     self.search_terms['region']['domain'], job['id'])
             except (AttributeError, IndexError):

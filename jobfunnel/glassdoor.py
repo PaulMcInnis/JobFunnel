@@ -11,6 +11,7 @@ from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 
+
 class GlassDoor(JobFunnel):
 
     def __init__(self, args):
@@ -19,7 +20,7 @@ class GlassDoor(JobFunnel):
         self.max_results_per_page = 30
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
-                'q=0.9,image/webp,*/*;q=0.8',
+                      'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.glassdoor.{0}/'.format(
@@ -31,7 +32,7 @@ class GlassDoor(JobFunnel):
         }
         self.location_headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
-                'image/webp,*/*;q=0.01',
+                      'image/webp,*/*;q=0.01',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.glassdoor.{0}/'.format(
@@ -104,7 +105,8 @@ class GlassDoor(JobFunnel):
     def scrape(self):
         """function that scrapes job posting from glassdoor and pickles it"""
         ## scrape a page of monster results to a pickle
-        logging.info('jobfunnel glassdoor to pickle running @' + self.date_string)
+        logging.info(
+            'jobfunnel glassdoor to pickle running @' + self.date_string)
 
         # initialize and store date quantifiers as regex objects in list.
         date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
@@ -184,9 +186,12 @@ class GlassDoor(JobFunnel):
             try:
                 # jobs should at minimum have a title, company and location
                 job['title'] = s.find('a', attrs={'class',
-                    'jobLink jobInfoItem jobTitle'}).text.strip()
+                                                  'jobLink jobInfoItem '
+                                                  'jobTitle'}).text.strip()
                 job['company'] = s.find('div', attrs={'class',
-                    'jobInfoItem jobEmpolyerName'}).text.strip()
+                                                      'jobInfoItem '
+                                                      'jobEmpolyerName'}).\
+                    text.strip()
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue
@@ -221,9 +226,10 @@ class GlassDoor(JobFunnel):
         scrape_data_list = [i for i in self.scrape_data.values()]
         threads = []
         for job in scrape_data_list:
-            if (job['provider'] == self.provider):
-                process = Thread(target=self.search_glassdoor_joblink_for_blurb,
-                                 args=[job])
+            if job['provider'] == self.provider:
+                process = Thread(
+                    target=self.search_glassdoor_joblink_for_blurb,
+                    args=[job])
                 process.start()
                 threads.append(process)
 

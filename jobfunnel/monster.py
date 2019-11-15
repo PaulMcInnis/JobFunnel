@@ -55,7 +55,7 @@ class Monster(JobFunnel):
         # ID regex quantifiers
         id_regex = \
             re.compile(
-                r'/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|(\d+)')
+                r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
         # initialize and store date quantifiers as regex objects in list.
         date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
                       re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
@@ -132,7 +132,7 @@ class Monster(JobFunnel):
                 job['link'] = str(
                     s.find('a', attrs={'data-bypass': 'true'}).get(
                         'href'))
-                job['id'], _ = id_regex.findall(job['link'])[0]
+                job['id'] = id_regex.findall(job['link'])[0]
             except AttributeError:
                 job['id'] = ''
                 job['link'] = ''
@@ -148,7 +148,7 @@ class Monster(JobFunnel):
         scrape_data_list = [i for i in self.scrape_data.values()]
         threads = []
         for job in scrape_data_list:
-            if (job['provider'] == self.provider):
+            if job['provider'] == self.provider:
                 process = Thread(target=self.search_monster_joblink_for_blurb,
                                  args=[job])
                 process.start()

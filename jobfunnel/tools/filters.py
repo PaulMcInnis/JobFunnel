@@ -8,6 +8,7 @@ import pickle
 import string
 import logging
 
+
 def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
                  max_similarity: float = 0.75):
     """ Fit a TFIDF vectorizer to a corpus of all listing's text
@@ -15,7 +16,8 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
         Args:
             cur_dict: the existing masterlist job dict
             prev_dict: today's job scrape dict
-            max_similarity: threshold above which a blurb similarity = duplicate
+            max_similarity: threshold above which a blurb similarity =
+            duplicate
 
         Returns:
             list of duplicate job ids which were removed from cur_dict
@@ -56,4 +58,3 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
                  "via TFIDF cosine similarity".format(len(cur_dict.keys()),
                                                       len(duplicate_ids)))
     return duplicate_ids
-
