@@ -7,9 +7,9 @@ output_path: './'
 # Providers from which to search (case insensitive)
 # use indeed only for speed
 providers:
-#  - 'Indeed'
+  - 'Indeed'
   - 'Monster'
-#  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -17,12 +17,17 @@ search_terms:
     province: 'ON'
     city:     'waterloo'
     domain:   'ca'
-    radius:   25
+    radius:   10
 
 # this search is focused on programming
   keywords:
     - 'Python'
-
+## Do later, and adjust for Monster
+#  experience_level: 
+    #- 'intern' # This returns the intern job type on indeed
+    #- 'entry'
+    #- 'mid'
+    #- 'senior'
 # exclude these from the search
 black_list:
   - 'Infox Consulting'

@@ -10,6 +10,7 @@ from math import ceil
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from .tools.filters import id_filter
 
 class Monster(JobFunnel):
 
@@ -84,9 +85,6 @@ class Monster(JobFunnel):
         # scrape total number of results, and calculate the # pages needed
         num_results = soup_base.find('h2', 'figure').text.strip()
         num_results = int(re.findall(r'(\d+)', num_results)[0])
-#        num_results = re.sub('\(', '', num_results)
-#        num_results = re.sub('[a-zA-Z ]*\)', '', num_results)
-#        num_results = int(num_results)
         logging.info(
             'Found {} monster results for query={}'.format(num_results, query))
 
@@ -143,6 +141,10 @@ class Monster(JobFunnel):
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
+        # Pop duplicate job ids already in master list
+        id_filter(self.scrape_data, super().read_csv(self.master_list_path),
+                  self.provider)
 
         # search the job link to extract the blurb
         scrape_data_list = [i for i in self.scrape_data.values()]

@@ -10,6 +10,7 @@ from math import ceil
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from .tools.filters import id_filter
 
 
 class Indeed(JobFunnel):
@@ -149,3 +150,6 @@ class Indeed(JobFunnel):
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
+        id_filter(self.scrape_data, super().read_csv(self.master_list_path),
+                  self.provider)

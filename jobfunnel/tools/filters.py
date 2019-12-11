@@ -9,6 +9,30 @@ import string
 import logging
 
 
+# Filter duplicate job ids.
+def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
+    """function that filters duplicates based on job-id per site"""
+    # Get job_ids from scrape and master list by provider as lists
+    cur_job_ids, prev_job_ids = [], []
+    for job in cur_dict.values():
+        cur_job_ids.append(job['id'])
+
+    for job in prev_dict.values():
+        if job['provider'] == provider:
+            prev_job_ids.append(job['id'])
+
+    # get duplicate job ids and pop them from current scrape
+    duplicate_ids = []
+    for job_id in cur_job_ids:
+        if job_id in prev_job_ids:
+            duplicate_ids.append(cur_dict.pop(job_id)['id'])
+
+    # log duplicate id's
+    logging.info("found {} unique job ids and {} duplicates "
+                 "from {}".format(len(cur_dict.keys()), len(duplicate_ids),
+                                  provider))
+
+
 def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
                  max_similarity: float = 0.75):
     """ Fit a TFIDF vectorizer to a corpus of all listing's text
