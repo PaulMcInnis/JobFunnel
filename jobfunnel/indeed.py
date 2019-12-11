@@ -4,6 +4,7 @@ import logging
 import requests
 import bs4
 import re
+import os
 from threading import Thread
 from math import ceil
 
@@ -151,5 +152,6 @@ class Indeed(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        id_filter(self.scrape_data, super().read_csv(self.master_list_path),
-                  self.provider)
+        if os.path.exists(self.master_list_path):
+            id_filter(self.scrape_data,
+                      super().read_csv(self.master_list_path), self.provider)

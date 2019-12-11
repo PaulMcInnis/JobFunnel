@@ -8,8 +8,8 @@ output_path: './'
 # use indeed only for speed
 providers:
   - 'Indeed'
-  - 'Monster'
-  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+#  - 'Monster'
+#  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:

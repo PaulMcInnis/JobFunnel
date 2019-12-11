@@ -4,6 +4,7 @@ import logging
 import requests
 import bs4
 import re
+import os
 from threading import Thread
 from math import ceil
 
@@ -143,8 +144,9 @@ class Monster(JobFunnel):
             self.scrape_data[str(job['id'])] = job
 
         # Pop duplicate job ids already in master list
-        id_filter(self.scrape_data, super().read_csv(self.master_list_path),
-                  self.provider)
+        if os.path.exists(self.master_list_path):
+            id_filter(self.scrape_data,
+                      super().read_csv(self.master_list_path), self.provider)
 
         # search the job link to extract the blurb
         scrape_data_list = [i for i in self.scrape_data.values()]
