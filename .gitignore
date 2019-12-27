@@ -113,6 +113,7 @@ dmypy.json
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/tasks.xml
+.idea/inspectionProfiles
 
 # Pyre type checker
 .pyre/

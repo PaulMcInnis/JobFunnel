@@ -1,24 +1,23 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import NearestNeighbors
 from typing import List, Dict
 import numpy as np
-import pickle
-import string
 import logging
 
 
 # Filter duplicate job ids.
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
-    """function that filters duplicates based on job-id per site"""
-    # Get job_ids from scrape and master list by provider as lists
-    cur_job_ids, prev_job_ids = [], []
-    for job in cur_dict.values():
-        cur_job_ids.append(job['id'])
+    """ Filter duplicates on job-id per provider
+        Args:
+            cur_dict: today's job scrape dict
+            prev_dict: the existing master list job dict
+            provider: job board used
 
-    for job in prev_dict.values():
-        if job['provider'] == provider:
-            prev_job_ids.append(job['id'])
+    """
+    # Get job_ids from scrape and master list by provider as lists
+    cur_job_ids = [job['id'] for job in cur_dict.values()]
+    prev_job_ids = [job['id'] for job in prev_dict.values()
+                    if job['provider'] == provider]
 
     # get duplicate job ids and pop them from current scrape
     duplicate_ids = []
@@ -37,15 +36,13 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
     """ Fit a TFIDF vectorizer to a corpus of all listing's text
 
         Args:
-            cur_dict: the existing masterlist job dict
-            prev_dict: today's job scrape dict
+            cur_dict: today's job scrape dict
+            prev_dict: the existing master list job dict
             max_similarity: threshold above which a blurb similarity =
             duplicate
 
         Returns:
             list of duplicate job ids which were removed from cur_dict
-
-        @TODO skip calculating metric for jobs which have the same job id!
     """
     # init vectorizer
     vectorizer = TfidfVectorizer(strip_accents='unicode',
@@ -54,11 +51,9 @@ def tfidf_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict],
     # get reference words as list
     reference_words = [job['blurb'] for job in prev_dict.values()]
 
-    # get query words as list
-    query_words, query_ids = [], []
-    for job in cur_dict.values():
-        query_words.append(job['blurb'])
-        query_ids.append(job['id'])
+    # get query words and ids as lists
+    query_ids = [job['id'] for job in cur_dict.values()]
+    query_words = [job['blurb'] for job in cur_dict.values()]
 
     # fit vectorizer to entire corpus
     vectorizer.fit(query_words + reference_words)

@@ -11,7 +11,7 @@ log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
 
 
-def parse_cli():
+def _parse_cli():
     """Parse the command line arguments.
 
     """
@@ -86,7 +86,7 @@ def parse_config():
     default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
 
     # parse the command line arguments
-    cli = parse_cli()
+    cli = _parse_cli()
 
     # parse the settings file for the line arguments
     given_yaml = None

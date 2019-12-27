@@ -7,9 +7,9 @@ output_path: './'
 # Providers from which to search (case insensitive)
 # use indeed only for speed
 providers:
-  - 'Indeed'
+#  - 'Indeed'
 #  - 'Monster'
-#  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+  - 'GlassDoor' # This takes ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -22,6 +22,9 @@ search_terms:
 # this search is focused on programming
   keywords:
     - 'Python'
+    - 'Java'
+    - 'Git'
+    - 'Unix'
 ## Do later, and adjust for Monster
 #  experience_level: 
     #- 'intern' # This returns the intern job type on indeed

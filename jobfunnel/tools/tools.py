@@ -16,7 +16,9 @@ def filter_non_printables(job):
 
 
 def post_date_from_relative_post_age(job, date_regex):
-    """function that returns the post date from the relative post age"""
+    """function that returns the post date from the relative post age
+
+    """
     if not job['date']:
         return job['date']
 

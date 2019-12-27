@@ -20,6 +20,14 @@ REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb',
                      'link', 'id', 'provider']
 
+# initialize list and store regex objects of date quantifiers.
+date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
+              re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
+              re.compile(r'(\d+)(?:[ +]{1,3})?month'),
+              re.compile(r'(\d+)(?:[ +]{1,3})?year'),
+              re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
+              re.compile(r'[yY]esterday')]
+
 # user agent list
 # https://developers.whatismybrowser.com/useragents/explore/
 user_agent_list = [
@@ -171,7 +179,9 @@ class JobFunnel(object):
                 if jobid in data:
                     data.pop(jobid)
                     n_filtered += 1
-            logging.info(f'removed {n_filtered} jobs present in filter-list')
+            logging.info(
+                f'removed {n_filtered} jobs present in filter-list from '
+                f'master-list')
         else:
             self.logger.warning(
                 f'no jobs filtered, missing {self.filterlist_path}')
@@ -206,8 +216,7 @@ class JobFunnel(object):
                             job['id'], self.filterlist_path))
                     filtered_jobs[job['id']] = job
 
-            # write out the complete list with any additions from the
-            # masterlist
+            # write out complete list with any additions from the masterlist
             with open(self.filterlist_path, 'w', encoding='utf8') as outfile:
                 outfile.write(
                     json.dumps(

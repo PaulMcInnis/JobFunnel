@@ -8,7 +8,7 @@ import os
 from threading import Thread
 from math import ceil
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER, date_regex
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.filters import id_filter
@@ -51,15 +51,8 @@ class Indeed(JobFunnel):
         logging.info(
             'jobfunnel indeed to pickle running @ ' + self.date_string)
 
-        # ID regex quantifiers
+        # ID regex quantifier
         id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
-        # initialize and store date quantifiers as regex objects in list.
-        date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
-                      re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
-                      re.compile(r'(\d+)(?:[ +]{1,3})?month'),
-                      re.compile(r'(\d+)(?:[ +]{1,3})?year'),
-                      re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
-                      re.compile(r'[yY]esterday')]
 
         # form the query string
         query = '+'.join(self.search_terms['keywords'])
