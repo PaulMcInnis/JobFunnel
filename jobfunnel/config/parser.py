@@ -161,9 +161,6 @@ def parse_config():
     if cli.log_level is not None:
         config['log_level'] = log_levels[cli.log_level]
 
-    config['duplicate_list_path'] = os.path.join(
-        default_yaml['output_path'], 'duplicate_list.csv')
-
     # Define config path thingy here
     config['save_duplicates'] = default_yaml['save_duplicates']
     if given_yaml_path is not None:

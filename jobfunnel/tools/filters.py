@@ -80,7 +80,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 break
             # Gets duplicate id and reduces cosine similarity matrix
             if np.max(similarities[index]) >= max_similarity:
-                duplicate_ids.append(cur_dict.pop(query_ids.pop(index))['id'])
+                duplicate_ids.append(cur_dict.pop(query_ids.pop(index)))
                 similarities = np.delete(similarities, index, axis=0)
                 similarities = np.delete(similarities, index, axis=1)
             else:  # Increments index by one, if current gets no results
@@ -113,7 +113,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         # get duplicate job ids and pop them
         for sim, query_id in zip(similarities, query_ids):
             if np.max(sim) >= max_similarity:
-                duplicate_ids.append(cur_dict.pop(query_id)['id'])
+                duplicate_ids.append(cur_dict.pop(query_id))
 
         # log something
         logging.info("found {} unique listings and {} duplicate listings "
