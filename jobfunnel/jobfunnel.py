@@ -83,10 +83,12 @@ class JobFunnel(object):
         self.logfile = args['log_path']
         self.loglevel = args['log_level']
         self.pickles_dir = args['data_path']
+        self.duplicate_list_path = args['duplicate_list_path']
 
         # other inits
         self.filterlist = None
         self.similar_results = args['similar']
+        self.save_dup = args['save_duplicates']
         self.bs4_parser = 'lxml'
         self.scrape_data = {}
         self.user_agent = random.choice(user_agent_list)
@@ -98,8 +100,8 @@ class JobFunnel(object):
         self.search_terms = args['search_terms']
 
         # create data dir
-        if not os.path.exists(
-                args['data_path']): os.makedirs(args['data_path'])
+        if not os.path.exists(args['data_path']):
+            os.makedirs(args['data_path'])
 
     def init_logging(self):
         # initialise logging to file
@@ -249,7 +251,20 @@ class JobFunnel(object):
             self.remove_blacklisted_companies(masterlist)
 
             # update masterlist to contain only new (unique) listings
-            tfidf_filter(self.scrape_data, masterlist)
+            if self.save_dup:  # if true saves duplicates to own file
+                duplicate_list = tfidf_filter(self.scrape_data, masterlist)
+                if len(duplicate_list) > 0:
+                    if not os.path.exists(self.duplicate_list_path):
+                        master_dup = self.read_csv(self.duplicate_list_path)
+                        master_dup.extend(duplicate_list)
+                        self.write_csv(data=master_dup,
+                                       path=self.duplicate_list_path)
+                else:
+                    self.write_csv(data=duplicate_list,
+                                   path=self.duplicate_list_path)
+            else:
+                tfidf_filter(self.scrape_data, masterlist)
+
             masterlist.update(self.scrape_data)
 
             # save
@@ -257,7 +272,13 @@ class JobFunnel(object):
 
         except FileNotFoundError:
             # Run tf_idf filter on initial scrape
-            tfidf_filter(self.scrape_data)
+            if self.save_dup:  # if true saves duplicates to own file
+                duplicates = tfidf_filter(self.scrape_data)
+                if len(duplicates) > 0:
+                    self.write_csv(data=duplicates,
+                                   path=self.duplicate_list_path)
+            else:
+                tfidf_filter(self.scrape_data)
 
             # dump the results into the data folder as the master-list
             self.write_csv(data=self.scrape_data, path=self.master_list_path)

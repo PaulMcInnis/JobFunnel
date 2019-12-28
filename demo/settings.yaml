@@ -4,6 +4,7 @@
 # place the search right next to this file
 output_path: './'
 
+
 # Providers from which to search (case insensitive)
 # use indeed only for speed
 providers:
@@ -39,3 +40,6 @@ black_list:
 # Logging level options are: critical, error, warning, info, debug, notset
 # show me only errors
 log_level: 'info'
+
+# Save duplicates removed by tfidf filter to a separate csv
+save_duplicates: 'False'

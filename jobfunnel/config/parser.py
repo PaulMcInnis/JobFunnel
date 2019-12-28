@@ -69,6 +69,12 @@ def _parse_cli():
                         default=False,
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
+    parser.add_argument('--save_dup',
+                       dest='save_duplicates',
+                       action='store_true',
+                       default=False,
+                       help='save duplicates removed by tfidf filter to a '
+                            'separate csv file')
 
     return parser.parse_args()
 
@@ -102,15 +108,23 @@ def parse_config():
     config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
     config['master_list_path'] = os.path.join(
         default_yaml['output_path'], 'master_list.csv')
+    config['duplicate_list_path'] = os.path.join(
+        default_yaml['output_path'], 'duplicate_list.csv')
+
     if given_yaml_path is not None:
         config['data_path'] = os.path.join(
             given_yaml_path, given_yaml['output_path'], 'data')
         config['master_list_path'] = os.path.join(
             given_yaml_path, given_yaml['output_path'], 'master_list.csv')
+        config['duplicate_list_path'] = os.path.join(
+            given_yaml_path, given_yaml['output_path'], 'duplicate_list.csv')
+
     if cli.output_path is not None:
         config['data_path'] = os.path.join(cli.output_path, 'data')
         config['master_list_path'] = os.path.join(
             cli.output_path, 'master_list.csv')
+        config['duplicate_list_path'] = os.path.join(
+            cli.output_path, 'duplicate_list.csv')
 
     # parse the provider list
     config['providers'] = default_yaml['providers']
@@ -147,6 +161,16 @@ def parse_config():
     if cli.log_level is not None:
         config['log_level'] = log_levels[cli.log_level]
 
+    config['duplicate_list_path'] = os.path.join(
+        default_yaml['output_path'], 'duplicate_list.csv')
+
+    # Define config path thingy here
+    config['save_duplicates'] = default_yaml['save_duplicates']
+    if given_yaml_path is not None:
+        config['save_duplicates'] = given_yaml['save_duplicates']
+    if cli.save_duplicates is not None:
+        config['save_duplicates'] = cli.save_duplicates
+
     # define the log path
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
@@ -155,7 +179,8 @@ def parse_config():
         config['data_path'], 'filter_list.json')
 
     # normalize paths
-    for p in ['data_path', 'master_list_path', 'log_path', 'filter_list_path']:
+    for p in ['data_path', 'master_list_path', 'duplicate_list_path',
+              'log_path', 'filter_list_path']:
         config[p] = os.path.normpath(config[p])
 
     return config
