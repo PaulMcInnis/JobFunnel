@@ -254,14 +254,14 @@ class JobFunnel(object):
             if self.save_dup:  # if true saves duplicates to own file
                 duplicate_list = tfidf_filter(self.scrape_data, masterlist)
                 if len(duplicate_list) > 0:
-                    if not os.path.exists(self.duplicate_list_path):
+                    if os.path.exists(self.duplicate_list_path):
                         master_dup = self.read_csv(self.duplicate_list_path)
-                        master_dup.extend(duplicate_list)
+                        master_dup.update(duplicate_list)
                         self.write_csv(data=master_dup,
                                        path=self.duplicate_list_path)
-                else:
-                    self.write_csv(data=duplicate_list,
-                                   path=self.duplicate_list_path)
+                    else:
+                        self.write_csv(data=duplicate_list,
+                                       path=self.duplicate_list_path)
             else:
                 tfidf_filter(self.scrape_data, masterlist)
 
@@ -273,9 +273,9 @@ class JobFunnel(object):
         except FileNotFoundError:
             # Run tf_idf filter on initial scrape
             if self.save_dup:  # if true saves duplicates to own file
-                duplicates = tfidf_filter(self.scrape_data)
-                if len(duplicates) > 0:
-                    self.write_csv(data=duplicates,
+                duplicate_list = tfidf_filter(self.scrape_data)
+                if len(duplicate_list) > 0:
+                    self.write_csv(data=duplicate_list,
                                    path=self.duplicate_list_path)
             else:
                 tfidf_filter(self.scrape_data)

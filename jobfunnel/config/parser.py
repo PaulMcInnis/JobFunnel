@@ -69,12 +69,13 @@ def _parse_cli():
                         default=False,
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
+
     parser.add_argument('--save_dup',
-                       dest='save_duplicates',
-                       action='store_true',
-                       default=False,
-                       help='save duplicates removed by tfidf filter to a '
-                            'separate csv file')
+                        dest='save_duplicates',
+                        action='store_true',
+                        required=False,
+                        default=None,
+                        help='save duplicates popped by tf_idf filter to file')
 
     return parser.parse_args()
 
@@ -161,7 +162,7 @@ def parse_config():
     if cli.log_level is not None:
         config['log_level'] = log_levels[cli.log_level]
 
-    # Define config path thingy here
+    # parse save_duplicates option
     config['save_duplicates'] = default_yaml['save_duplicates']
     if given_yaml_path is not None:
         config['save_duplicates'] = given_yaml['save_duplicates']

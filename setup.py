@@ -10,7 +10,7 @@ requires = ['beautifulsoup4>=4.6.3',
             'python-dateutil>=2.8.0',
             'PyYAML>=5.1',
             'scikit-learn>=0.21.2',
-            'nltk >= 3.4.5',
+            'nltk >= 3.4.1',
             ]
 
 with open('readme.md', 'r') as f:

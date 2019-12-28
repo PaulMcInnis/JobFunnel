@@ -30,4 +30,5 @@ black_list:
 log_level: 'info'
 
 # Save duplicates removed by tfidf filter to a separate csv
-save_duplicates: 'False'
+# Options include True or False witout single quotes
+save_duplicates: False
