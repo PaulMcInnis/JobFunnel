@@ -180,8 +180,7 @@ class JobFunnel(object):
                     data.pop(jobid)
                     n_filtered += 1
             logging.info(
-                f'removed {n_filtered} jobs present in filter-list from '
-                f'master-list')
+                f'removed {n_filtered} jobs present in filter-list')
         else:
             self.logger.warning(
                 f'no jobs filtered, missing {self.filterlist_path}')
@@ -257,6 +256,9 @@ class JobFunnel(object):
             self.write_csv(data=masterlist, path=self.master_list_path)
 
         except FileNotFoundError:
+            # Run tf_idf filter on initial scrape
+            tfidf_filter(self.scrape_data)
+
             # dump the results into the data folder as the master-list
             self.write_csv(data=self.scrape_data, path=self.master_list_path)
             logging.info(
