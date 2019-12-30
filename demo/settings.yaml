@@ -6,11 +6,10 @@ output_path: './'
 
 
 # Providers from which to search (case insensitive)
-# use indeed only for speed
 providers:
-#  - 'Indeed'
-#  - 'Monster'
-  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+  #- 'Indeed'
+  #- 'Monster'
+  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
 search_terms:

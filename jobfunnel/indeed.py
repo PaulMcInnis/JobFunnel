@@ -1,14 +1,13 @@
-## scrapes data off indeed.ca and pickles it
-
-import logging
-import requests
-import bs4
 import re
 import os
-from threading import Thread
-from math import ceil
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER, date_regex
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
+from logging import info as log_info
+from math import ceil
+from requests import get
+
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.filters import id_filter
@@ -38,17 +37,15 @@ class Indeed(JobFunnel):
         """function that scrapes the indeed page for a list of job soups"""
         page_url = '{0}&start={1}'.format(
             search, int(page * self.max_results_per_page))
-        logging.info('getting indeed page {} : {}'.format(page, page_url))
-        jobs = bs4.BeautifulSoup(
-            requests.get(page_url, headers=self.headers).text,
-            self.bs4_parser).find_all(
+        log_info('getting indeed page {} : {}'.format(page, page_url))
+        jobs = BeautifulSoup(get(page_url, headers=self.headers).text,
+                             self.bs4_parser).find_all(
             'div', attrs={'data-tn-component': 'organicJob'})
         list_of_job_soups.extend(jobs)
 
     def scrape(self):
         """function that scrapes job posting from indeed and pickles it"""
-        ## scrape a page of indeed results to a pickle
-        logging.info(
+        log_info(
             'jobfunnel indeed to pickle running @ ' + self.date_string)
 
         # ID regex quantifier
@@ -69,15 +66,15 @@ class Indeed(JobFunnel):
             int(self.similar_results))
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(search, headers=self.headers)
-        soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
+        request_HTML = get(search, headers=self.headers)
+        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
         num_results = soup_base.find(id='searchCountPages').contents[0].strip()
         num_results = int(re.findall(r'f (\d+) ',
                                      num_results.replace(',', ''))[0])
-        logging.info(
+        log_info(
             'Found {0} indeed results for query={1}'.format(num_results,
                                                             query))
 
@@ -86,15 +83,20 @@ class Indeed(JobFunnel):
         pages = int(ceil(num_results / self.max_results_per_page))
 
         # search the pages to extract the list of job soups
-        threads = []
-        for page in range(0, pages):
-            process = Thread(target=self.search_indeed_page_for_job_soups,
-                             args=[search, page, list_of_job_soups])
-            process.start()
-            threads.append(process)
 
-        for process in threads:
-            process.join()
+        # for page in range(0, pages):
+        #     process = Thread(target=self.search_indeed_page_for_job_soups,
+        #                      args=[search, page, list_of_job_soups])
+        #     process.start()
+        #     threads.append(process)
+        #
+        # for process in threads:
+        #     process.join()
+
+        with ThreadPoolExecutor(max_workers=8) as threads:
+            for page in range(0, pages):
+                threads.submit(self.search_indeed_page_for_job_soups, search,
+                               page, list_of_job_soups)
 
         # make a dict of job postings from the listing briefs
         for s in list_of_job_soups:
@@ -140,10 +142,13 @@ class Indeed(JobFunnel):
             job['provider'] = self.provider
 
             filter_non_printables(job)
-            post_date_from_relative_post_age(job, date_regex)
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
+        scrape_list = [i for i in self.scrape_data.values()]
+
+        post_date_from_relative_post_age(scrape_list)
 
         if os.path.exists(self.master_list_path):
             id_filter(self.scrape_data,

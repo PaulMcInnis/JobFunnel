@@ -1,12 +1,12 @@
+import numpy as np
+import nltk
+import logging
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
-import nltk
-import numpy as np
-import logging
+from numpy import delete as np_delete, max as np_max
 
-
-# Filter duplicate job ids.
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
     """ Filter duplicates on job-id per provider
         Args:
@@ -20,7 +20,7 @@ def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
     prev_job_ids = [job['id'] for job in prev_dict.values()
                     if job['provider'] == provider]
 
-    # get duplicate job ids and pop them from current scrape
+    # Pop duplicate job ids from current scrape
     duplicate_ids = []
     for job_id in cur_job_ids:
         if job_id in prev_job_ids:
@@ -46,7 +46,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         Returns:
             list of duplicate job ids which were removed from cur_dict
     """
-    # Retrieve stopwords
+    # Retrieve stopwords if not already downloaded.
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -71,22 +71,23 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
         # Fills diagonals with 0, so whole dict does not get popped
         np.fill_diagonal(similarities, 0)
-        # Deletes row and column every time a max is identified for a job id.
-        # with dimensions defined as (n-1, n-1)
+        # Deletes row and column every time a max is found for a job id.
+        # Matrix dimensions are (n,n) and become (n-1, n-1) when a max is found
         index = 0  # init index
         while True:
             # Loop breaks when index is larger than matrix height
             if index == len(similarities):
                 break
             # Gets duplicate id and reduces cosine similarity matrix
-            if np.max(similarities[index]) >= max_similarity:
+            if np_max(similarities[index]) >= max_similarity:
                 # The query ids are popped so that the index
-                # always accesses the right element.
+                # always accesses the correct element.
                 duplicate_ids.update(
                     {query_ids[index]: cur_dict.pop(query_ids.pop(index))})
-                similarities = np.delete(similarities, index, axis=0)
-                similarities = np.delete(similarities, index, axis=1)
-            else:  # Increments index by one, if current gets no results
+                # Reduce matrix dimensions
+                similarities = np_delete(similarities, index, axis=0)
+                similarities = np_delete(similarities, index, axis=1)
+            else:  # Increment index by one
                 index += 1
         # log something
         logging.info("Found and removed {} re-posts/duplicates via TFIDF "
@@ -115,12 +116,12 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
         # get duplicate job ids and pop them
         for sim, query_id in zip(similarities, query_ids):
-            if np.max(sim) >= max_similarity:
+            if np_max(sim) >= max_similarity:
                 duplicate_ids.update({query_id: cur_dict.pop(query_id)})
 
         # log something
         logging.info("found {} unique listings and {} duplicates via TFIDF "
                      "cosine similarity".format(len(cur_dict.keys()),
                                                 len(duplicate_ids.keys())))
-
+    # Returns a dictionary of duplicates
     return duplicate_ids

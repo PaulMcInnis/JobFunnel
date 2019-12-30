@@ -1,14 +1,14 @@
-## scrapes data off monster.ca and pickles it
-
-import logging
-import requests
-import bs4
 import re
 import os
-from threading import Thread
-from math import ceil
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER, date_regex
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
+from logging import info as log_info
+from math import ceil
+from requests import get
+
+
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.filters import id_filter
@@ -36,10 +36,9 @@ class Monster(JobFunnel):
     def search_monster_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
-        logging.info(
-            'getting monster search: {}'.format(search))
-        request_HTML = requests.get(search, headers=self.headers)
-        job_link_soup = bs4.BeautifulSoup(
+        log_info('getting monster search: {}'.format(search))
+        request_HTML = get(search, headers=self.headers)
+        job_link_soup = BeautifulSoup(
             request_HTML.text, self.bs4_parser)
 
         try:
@@ -52,8 +51,7 @@ class Monster(JobFunnel):
 
     def scrape(self):
         """function that scrapes job posting from monster and pickles it"""
-        ## scrape a page of monster results to a pickle
-        logging.info(
+        log_info(
             'jobfunnel monster to pickle running @ : ' + self.date_string)
         # ID regex quantifiers
         id_regex = \
@@ -74,25 +72,25 @@ class Monster(JobFunnel):
             self.search_terms['region']['radius'])
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.get(search, headers=self.headers)
-        soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
+        request_HTML = get(search, headers=self.headers)
+        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         num_results = soup_base.find('h2', 'figure').text.strip()
         num_results = int(re.findall(r'(\d+)', num_results)[0])
-        logging.info(
+        log_info(
             'Found {} monster results for query={}'.format(num_results, query))
 
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
         pages = int(ceil(num_results / self.max_results_per_page))
         page_url = '{0}&start={1}'.format(search, pages)
-        logging.info(
+        log_info(
             'getting monster pages 1 to {0} : {1}'.format(pages, page_url))
-        jobs = bs4.BeautifulSoup(
-            requests.get(page_url, headers=self.headers).text,
-            self.bs4_parser).find_all(
-            'div', attrs={'class': 'flex-row'})
+        jobs = BeautifulSoup(
+            get(page_url, headers=self.headers).text,
+            self.bs4_parser).find_all('div', attrs={'class': 'flex-row'})
+
         list_of_job_soups.extend(jobs)
 
         # make a dict of job postings from the listing briefs
@@ -132,8 +130,6 @@ class Monster(JobFunnel):
 
             job['provider'] = self.provider
 
-            post_date_from_relative_post_age(job, date_regex)
-
             # key by id
             self.scrape_data[str(job['id'])] = job
 
@@ -143,14 +139,9 @@ class Monster(JobFunnel):
                       super().read_csv(self.master_list_path), self.provider)
 
         # search the job link to extract the blurb
-        scrape_data_list = [i for i in self.scrape_data.values()]
-        threads = []
-        for job in scrape_data_list:
-            if job['provider'] == self.provider:
-                process = Thread(target=self.search_monster_joblink_for_blurb,
-                                 args=[job])
-                process.start()
-                threads.append(process)
+        scrape_list = [i for i in self.scrape_data.values()]
 
-        for process in threads:
-            process.join()
+        post_date_from_relative_post_age(scrape_list)
+
+        with ThreadPoolExecutor(max_workers=8) as threads:
+            threads.map(self.search_monster_joblink_for_blurb, scrape_list)

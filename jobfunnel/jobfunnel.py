@@ -1,15 +1,17 @@
 ## Paul McInnis 2018
 ## writes pickles to master list path and applies search filters
 
-import pickle
+import csv
 import json
 import logging
 import os
-import re
-import csv
+import pickle
 import random
+import re
+
 from datetime import date
 from typing import Dict
+
 from .tools.filters import tfidf_filter
 
 # setting job status to these words removes them from masterlist + adds to
@@ -19,14 +21,6 @@ REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 # csv header:
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb',
                      'link', 'id', 'provider']
-
-# initialize list and store regex objects of date quantifiers.
-date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
-              re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
-              re.compile(r'(\d+)(?:[ +]{1,3})?month'),
-              re.compile(r'(\d+)(?:[ +]{1,3})?year'),
-              re.compile(r'[tT]oday|[jJ]ust [pP]osted'),
-              re.compile(r'[yY]esterday')]
 
 # user agent list
 # https://developers.whatismybrowser.com/useragents/explore/
@@ -251,15 +245,24 @@ class JobFunnel(object):
             self.remove_blacklisted_companies(masterlist)
 
             # update masterlist to contain only new (unique) listings
-            if self.save_dup:  # if true saves duplicates to own file
+            if self.save_dup:  # if true, saves duplicates to own file
+                # Calls tf_idf filter and returns popped duplicate list
                 duplicate_list = tfidf_filter(self.scrape_data, masterlist)
+
+                logging.info(
+                    f'Saving {len(duplicate_list)} duplicates jobs to '
+                    f'{self.duplicate_list_path}')
+                # Checks if duplicate list has entries
                 if len(duplicate_list) > 0:
+                    # Checks if duplicate_list.csv exists
                     if os.path.exists(self.duplicate_list_path):
+                        # Loads and adds current duplicates to list
                         master_dup = self.read_csv(self.duplicate_list_path)
                         master_dup.update(duplicate_list)
                         self.write_csv(data=master_dup,
                                        path=self.duplicate_list_path)
                     else:
+                        # Saves duplicates to duplicates_list.csv
                         self.write_csv(data=duplicate_list,
                                        path=self.duplicate_list_path)
             else:
@@ -274,7 +277,13 @@ class JobFunnel(object):
             # Run tf_idf filter on initial scrape
             if self.save_dup:  # if true saves duplicates to own file
                 duplicate_list = tfidf_filter(self.scrape_data)
+
+                logging.info(
+                    f'Saving {len(duplicate_list)} duplicates jobs to '
+                    f'{self.duplicate_list_path}')
+
                 if len(duplicate_list) > 0:
+                    # Saves duplicates to duplicates_list.csv
                     self.write_csv(data=duplicate_list,
                                    path=self.duplicate_list_path)
             else:

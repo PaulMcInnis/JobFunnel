@@ -1,14 +1,13 @@
-## scrapes data off glassdoor.ca and pickles it
-
-import logging
-import requests
-import bs4
-import re
 import os
-from threading import Thread
-from math import ceil
+import re
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER, date_regex
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, wait
+from logging import info as log_info
+from math import ceil
+from requests import post
+
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.filters import id_filter
@@ -20,6 +19,7 @@ class GlassDoor(JobFunnel):
         super().__init__(args)
         self.provider = 'glassdoor'
         self.max_results_per_page = 30
+        self.delay = 0
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
                       'q=0.9,image/webp,*/*;q=0.8',
@@ -73,24 +73,23 @@ class GlassDoor(JobFunnel):
 
         return glassdoor_radius[radius]
 
-    def search_glassdoor_page_for_job_soups(self, data, page,
-                                            page_url, list_of_job_soups):
+    def search_glassdoor_page_for_job_soups(self, data, page, page_url,
+                                            list_of_job_soups):
         """function that scrapes the glassdoor page for a list of job soups"""
-        logging.info(
+        log_info(
             'getting glassdoor page {0} : {1}'.format(page, page_url))
-        jobs = bs4.BeautifulSoup(
-            requests.post(page_url, headers=self.headers, data=data).text,
+        job = BeautifulSoup(
+            post(page_url, headers=self.headers, data=data).text,
             self.bs4_parser).find_all('li', attrs={'class', 'jl'})
-        list_of_job_soups.extend(jobs)
+        list_of_job_soups.extend(job)
 
     def search_glassdoor_joblink_for_blurb(self, job):
         """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
-        logging.info(
+        log_info(
             'getting glassdoor search: {}'.format(search))
-        request_HTML = requests.post(search, headers=self.location_headers)
-        job_link_soup = bs4.BeautifulSoup(request_HTML.text,
-                                          self.bs4_parser)
+        job_link_soup = BeautifulSoup(
+            post(search, headers=self.location_headers).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -102,8 +101,7 @@ class GlassDoor(JobFunnel):
 
     def scrape(self):
         """function that scrapes job posting from glassdoor and pickles it"""
-        ## scrape a page of monster results to a pickle
-        logging.info(
+        log_info(
             'jobfunnel glassdoor to pickle running @' + self.date_string)
 
         # form the query string
@@ -116,10 +114,9 @@ class GlassDoor(JobFunnel):
             'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
 
         # get the location id for search location
-        location_response = requests.post(location_url,
-                                          headers=self.location_headers,
-                                          data=data).json()
-        place_id = location_response[0]['locationId']
+        location_response = \
+            post(location_url, headers=self.location_headers, data=data).json()
+
         job_listing_url = 'https://www.glassdoor.{0}/Job/jobs.htm'.format(
             self.search_terms['region']['domain'])
 
@@ -128,51 +125,41 @@ class GlassDoor(JobFunnel):
             'clickSource': 'searchBtn',
             'sc.keyword': query,
             'locT': 'C',
-            'locId': place_id,
+            'locId': location_response[0]['locationId'],
             'jobType': '',
             'radius': self.convert_glassdoor_radius(
                 self.search_terms['region']['radius'])
         }
 
         # get the HTML data, initialize bs4 with lxml
-        request_HTML = requests.post(
-            job_listing_url, headers=self.headers, data=data)
-        soup_base = bs4.BeautifulSoup(request_HTML.text, self.bs4_parser)
+        request_HTML = post(job_listing_url, headers=self.headers, data=data)
+        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
-        num_results = soup_base.find(
+        num_res = soup_base.find(
             'p', attrs={'class', 'jobsCount'}).text.strip()
-        num_results = int(re.findall(r'(\d+)',
-                                     num_results.replace(',', ''))[0])
+        num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
 
-        logging.info('Found {} glassdoor results for query={}'.format(
-            num_results, query))
+        log_info(
+            'Found {} glassdoor results for query={}'.format(num_res, query))
 
         # scrape soups for all the pages containing jobs it found
+
+        pages = int(ceil(num_res / self.max_results_per_page))
         list_of_job_soups = []
-        pages = int(ceil(num_results / self.max_results_per_page))
-
         # search the pages to extract the list of job soups
-        threads = []
-        for page in range(1, pages + 1):
-            if page == 1:
-                page_url = request_HTML.url
-            else:
-                page_url = 'https://www.glassdoor.{0}{1}'.format(
-                    self.search_terms['region']['domain'],
-                    soup_base.find('li',
-                                   attrs={'class',
-                                          'next'}).find('a').get('href'))
-                page_url = re.sub(r'_IP\d+\.', "_IP" + str(page) + ".",
-                                  page_url)
-            process = Thread(target=self.search_glassdoor_page_for_job_soups,
-                             args=[data, page, page_url, list_of_job_soups])
-            process.start()
-            threads.append(process)
-
-        for process in threads:
-            process.join()
+        threads = ThreadPoolExecutor(max_workers=8)
+        res = [threads.submit(self.search_glassdoor_page_for_job_soups, data,
+                              page, request_HTML.url, list_of_job_soups)
+               if page == 1 else threads.submit(
+            self.search_glassdoor_page_for_job_soups, data, page, re.sub(
+                r'_IP\d+\.', "_IP" + str(page) + ".",
+                'https://www.glassdoor.{0}{1}'.format(
+                    self.search_terms['region']['domain'], soup_base.find(
+                        'li', attrs={'class', 'next'}).find('a').get('href'))
+            )) for page in range(1, pages + 1)]
+        wait(res)
 
         # make a dict of job postings from the listing briefs
         for s in list_of_job_soups:
@@ -187,7 +174,7 @@ class GlassDoor(JobFunnel):
                                                     'jobContainer'}). \
                     find('a', attrs={'class', 'jobLink jobInfoItem jobTitle'},
                          recursive=False).text.strip()
-                job['company'] =\
+                job['company'] = \
                     s.find('div',
                            attrs={'class',
                                   'jobInfoItem jobEmpolyerName'}).text.strip()
@@ -216,27 +203,20 @@ class GlassDoor(JobFunnel):
 
             job['provider'] = self.provider
 
-            post_date_from_relative_post_age(job, date_regex)
-
             # key by id
             self.scrape_data[str(job['id'])] = job
 
         # Pop duplicate job ids already in master list
         if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data,
-                      super().read_csv(self.master_list_path), self.provider)
+            id_filter(self.scrape_data, super().read_csv(
+                self.master_list_path), self.provider)
 
         # search the job link to extract the blurb
-        scrape_data_list = [i for i in self.scrape_data.values()]
+        scrape_list = [i for i in self.scrape_data.values()]
 
-        threads = []
-        for job in scrape_data_list:
-            if job['provider'] == self.provider:
-                process = Thread(
-                    target=self.search_glassdoor_joblink_for_blurb,
-                    args=[job])
-                process.start()
-                threads.append(process)
+        # Takes our scrape data and filters date all out once
+        post_date_from_relative_post_age(scrape_list)
 
-        for process in threads:
-            process.join()
+        # Maps jobs to threads and closes them after jobs finish
+        threads.map(self.search_glassdoor_joblink_for_blurb, scrape_list)
+        threads.shutdown()
