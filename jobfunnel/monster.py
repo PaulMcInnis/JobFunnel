@@ -2,15 +2,16 @@ import re
 import os
 
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging import info as log_info
 from math import ceil
 from requests import get
-
+from time import sleep
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from .tools.delay import random_delay
 from .tools.filters import id_filter
 
 
@@ -22,7 +23,7 @@ class Monster(JobFunnel):
         self.max_results_per_page = 25
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
-                'q=0.9,image/webp,*/*;q=0.8',
+                      'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.monster.{0}/'.format(
@@ -49,6 +50,32 @@ class Monster(JobFunnel):
 
         filter_non_printables(job)
 
+    # Split apart above function into two so gotten blurbs can be parsed while
+    # while others blurbs are being obtained.
+    def get_blurb_ms_w_dly(self, job, delay):
+        """
+        function that gets blurb from monster and uses request delaying
+        """
+        sleep(delay)
+        search = job['link']
+        log_info('getting glassdoor search: {}'.format(search))
+        res = get(search, headers=self.headers).text
+        return job, res
+
+    def parse_blurb_ms(self, job, html):
+        """
+        stores parsed job description into job dict
+        """
+        job_link_soup = BeautifulSoup(
+            html, self.bs4_parser)
+        try:
+            job['blurb'] = job_link_soup.find(
+                id='JobDescription').text.strip()
+        except AttributeError:
+            job['blurb'] = ''
+
+        filter_non_printables(job)
+
     def scrape(self):
         """function that scrapes job posting from monster and pickles it"""
         log_info(
@@ -56,14 +83,17 @@ class Monster(JobFunnel):
         # ID regex quantifiers
         id_regex = \
             re.compile(
-                r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
+                r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]['
+                r'0-9a-f]{3}-[0-9a-f]{12})|\d+)')
 
         # form the query string
         query = '-'.join(self.search_terms['keywords'])
 
         # build the job search URL
-        search = 'https://www.monster.{0}/jobs/search/?q={1}&where={2}__2C-{3}'\
-                 '&intcid=skr_navigation_nhpso_searchMain&rad={4}&where={2}__'\
+        search = 'https://www.monster.{0}/jobs/search/?q={1}&where={2}__2C-{' \
+                 '3}' \
+                 '&intcid=skr_navigation_nhpso_searchMain&rad={4}&where={' \
+                 '2}__' \
                  '2c-{3}'.format(
             self.search_terms['region']['domain'],
             query,
@@ -135,8 +165,12 @@ class Monster(JobFunnel):
 
         # Pop duplicate job ids already in master list
         if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data,
-                      super().read_csv(self.master_list_path), self.provider)
+            id_filter(self.scrape_data, super().read_csv(
+                self.master_list_path), self.provider)
+            # Checks duplicates file as well if it exists
+            if os.path.exists(self.duplicate_list_path):
+                id_filter(self.scrape_data, super().read_csv(
+                    self.duplicate_list_path), self.provider)
 
         # search the job link to extract the blurb
         scrape_list = [i for i in self.scrape_data.values()]
@@ -144,4 +178,23 @@ class Monster(JobFunnel):
         post_date_from_relative_post_age(scrape_list)
 
         with ThreadPoolExecutor(max_workers=8) as threads:
-            threads.map(self.search_monster_joblink_for_blurb, scrape_list)
+            if self.delay_config is not None:
+                # Calculates delay and returns list of delays
+                delays = random_delay(len(scrape_list), self.delay_config)
+                # Zips delays and scrape list as jobs for thread pool
+                scrape_jobs = zip(scrape_list, delays)
+                # Submits jobs and stores futures in dict
+                results = {threads.submit(self.get_blurb_ms_w_dly, job, delays)
+                           : job['id'] for job, delays in scrape_jobs}
+                # Loops through futures and removes each if successfully parsed
+                while results:
+                    # Gets each future as they complete
+                    for future in as_completed(results):
+                        try:
+                            job, html = future.result()  # Stores results
+                            self.parse_blurb_ms(job, html)
+                        except Exception:
+                            pass
+                        del results[future]
+            else:
+                threads.map(self.search_monster_joblink_for_blurb, scrape_list)

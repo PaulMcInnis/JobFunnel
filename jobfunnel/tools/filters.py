@@ -7,6 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
 from numpy import delete as np_delete, max as np_max
 
+
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
     """ Filter duplicates on job-id per provider
         Args:

@@ -93,6 +93,11 @@ class JobFunnel(object):
         # search term configuration data
         self.search_terms = args['search_terms']
 
+        # Set delay settings if they exist
+        self.delay_config = None
+        if args['delay_config'] is not None:
+            self.delay_config = args['delay_config']
+
         # create data dir
         if not os.path.exists(args['data_path']):
             os.makedirs(args['data_path'])
@@ -175,8 +180,7 @@ class JobFunnel(object):
                 if jobid in data:
                     data.pop(jobid)
                     n_filtered += 1
-            logging.info(
-                f'removed {n_filtered} jobs present in filter-list')
+            logging.info(f'removed {n_filtered} jobs present in filter-list')
         else:
             self.logger.warning(
                 f'no jobs filtered, missing {self.filterlist_path}')

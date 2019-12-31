@@ -7,8 +7,8 @@ output_path: './'
 
 # Providers from which to search (case insensitive)
 providers:
-  #- 'Indeed'
-  #- 'Monster'
+  - 'Indeed'
+  - 'Monster'
   - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
@@ -23,8 +23,9 @@ search_terms:
   keywords:
     - 'Python'
     - 'Java'
-    - 'Git'
+    #- 'Git'
     - 'Unix'
+
 ## Do later, and adjust for Monster
 #  experience_level: 
     #- 'intern' # This returns the intern job type on indeed
@@ -32,14 +33,23 @@ search_terms:
     #- 'mid'
     #- 'senior'
 # exclude these from the search
+
 black_list:
   - 'Infox Consulting'
   - 'Terminal'
 
 # Logging level options are: critical, error, warning, info, debug, notset
-# show me only errors
 log_level: 'info'
 
 # Save duplicates removed by tfidf filter to a separate csv
-# Options include True or False witout single quotes
 save_duplicates: False
+
+# Delaying config
+set_delay: True # False or True
+delay_config:
+    equation: 'linear' # Hard, Linear, Sigmoid
+    delay: 2 # Acts as our upper bound
+    lower_bound: 0 # Delay lower bound
+    random: True # Select random delays
+    
+    

@@ -176,6 +176,15 @@ def parse_config():
     config['filter_list_path'] = os.path.join(
         config['data_path'], 'filter_list.json')
 
+    # define delaying options
+    if given_yaml_path is not None:
+        if given_yaml['set_delay']:
+            config['delay_config'] = given_yaml['delay_config']
+            config['delay_config']['equation'] = \
+                config['delay_config']['equation'].lower()
+        else:
+            config['delay_config'] = None
+
     # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
               'log_path', 'filter_list_path']:

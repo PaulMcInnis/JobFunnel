@@ -41,7 +41,9 @@ class Indeed(JobFunnel):
         jobs = BeautifulSoup(get(page_url, headers=self.headers).text,
                              self.bs4_parser).find_all(
             'div', attrs={'data-tn-component': 'organicJob'})
+
         list_of_job_soups.extend(jobs)
+
 
     def scrape(self):
         """function that scrapes job posting from indeed and pickles it"""
@@ -81,17 +83,6 @@ class Indeed(JobFunnel):
         # scrape soups for all the pages containing jobs it found
         list_of_job_soups = []
         pages = int(ceil(num_results / self.max_results_per_page))
-
-        # search the pages to extract the list of job soups
-
-        # for page in range(0, pages):
-        #     process = Thread(target=self.search_indeed_page_for_job_soups,
-        #                      args=[search, page, list_of_job_soups])
-        #     process.start()
-        #     threads.append(process)
-        #
-        # for process in threads:
-        #     process.join()
 
         with ThreadPoolExecutor(max_workers=8) as threads:
             for page in range(0, pages):
@@ -151,5 +142,9 @@ class Indeed(JobFunnel):
         post_date_from_relative_post_age(scrape_list)
 
         if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data,
-                      super().read_csv(self.master_list_path), self.provider)
+            id_filter(self.scrape_data, super().read_csv(
+                self.master_list_path), self.provider)
+            # Checks duplicates file as well if it exists
+            if os.path.exists(self.duplicate_list_path):
+                id_filter(self.scrape_data, super().read_csv(
+                    self.duplicate_list_path), self.provider)
