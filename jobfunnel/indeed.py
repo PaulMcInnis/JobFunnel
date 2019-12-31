@@ -10,7 +10,6 @@ from requests import get
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
-from .tools.filters import id_filter
 
 
 class Indeed(JobFunnel):
@@ -141,10 +140,5 @@ class Indeed(JobFunnel):
 
         post_date_from_relative_post_age(scrape_list)
 
-        if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data, super().read_csv(
-                self.master_list_path), self.provider)
-            # Checks duplicates file as well if it exists
-            if os.path.exists(self.duplicate_list_path):
-                id_filter(self.scrape_data, super().read_csv(
-                    self.duplicate_list_path), self.provider)
+        # Apply job pre-filter before scraping blurbs
+        super().pre_filter(self.scrape_data, self.provider)

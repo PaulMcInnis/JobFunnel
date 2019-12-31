@@ -7,8 +7,8 @@ output_path: './'
 
 # Providers from which to search (case insensitive)
 providers:
-  - 'Indeed'
-  - 'Monster'
+  #- 'Indeed'
+  #- 'Monster'
   - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
@@ -23,7 +23,7 @@ search_terms:
   keywords:
     - 'Python'
     - 'Java'
-    #- 'Git'
+    - 'Git'
     - 'Unix'
 
 ## Do later, and adjust for Monster

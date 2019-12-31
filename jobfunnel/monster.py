@@ -1,5 +1,4 @@
 import re
-import os
 
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -12,7 +11,6 @@ from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.delay import random_delay
-from .tools.filters import id_filter
 
 
 class Monster(JobFunnel):
@@ -163,38 +161,18 @@ class Monster(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # Pop duplicate job ids already in master list
-        if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data, super().read_csv(
-                self.master_list_path), self.provider)
-            # Checks duplicates file as well if it exists
-            if os.path.exists(self.duplicate_list_path):
-                id_filter(self.scrape_data, super().read_csv(
-                    self.duplicate_list_path), self.provider)
+        # Apply job pre-filter before scraping blurbs
+        super().pre_filter(self.scrape_data, self.provider)
 
         # search the job link to extract the blurb
         scrape_list = [i for i in self.scrape_data.values()]
 
         post_date_from_relative_post_age(scrape_list)
 
-        with ThreadPoolExecutor(max_workers=8) as threads:
-            if self.delay_config is not None:
-                # Calculates delay and returns list of delays
-                delays = random_delay(len(scrape_list), self.delay_config)
-                # Zips delays and scrape list as jobs for thread pool
-                scrape_jobs = zip(scrape_list, delays)
-                # Submits jobs and stores futures in dict
-                results = {threads.submit(self.get_blurb_ms_w_dly, job, delays)
-                           : job['id'] for job, delays in scrape_jobs}
-                # Loops through futures and removes each if successfully parsed
-                while results:
-                    # Gets each future as they complete
-                    for future in as_completed(results):
-                        try:
-                            job, html = future.result()  # Stores results
-                            self.parse_blurb_ms(job, html)
-                        except Exception:
-                            pass
-                        del results[future]
-            else:
+        if self.delay_config is not None:
+            threads = ThreadPoolExecutor(max_workers=8)
+            super().delay_threader(scrape_list, self.get_blurb_ms_w_dly,
+                                   self.parse_blurb_ms, threads)
+        else:
+            with ThreadPoolExecutor(max_workers=8) as threads:
                 threads.map(self.search_monster_joblink_for_blurb, scrape_list)

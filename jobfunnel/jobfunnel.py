@@ -10,9 +10,11 @@ import random
 import re
 
 from datetime import date
-from typing import Dict
+from typing import Dict, List
+from concurrent.futures import as_completed
 
-from .tools.filters import tfidf_filter
+from .tools.filters import tfidf_filter, id_filter
+from .tools.delay import random_delay
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist
@@ -230,12 +232,64 @@ class JobFunnel(object):
         else:
             logging.warning("no master-list, filter-list was not updated")
 
+    def pre_filter(self, scrape_data: Dict[str, dict], provider):
+        """
+        Function called by child classes that applies multiple filters
+        before getting job blurbs
+        """
+        # Call id_filter for master and duplicate lists, if they exist
+        if os.path.isfile(self.master_list_path):
+            id_filter(scrape_data, self.read_csv(self.master_list_path),
+                      provider)
+            if os.path.isfile(self.duplicate_list_path):
+                id_filter(scrape_data, self.read_csv(
+                    self.duplicate_list_path), provider)
+
+        # filter out scraped jobs we have rejected, archived or blacklisted
+
+        try:
+            self.remove_jobs_in_filterlist(scrape_data)
+        except ValueError:
+            pass
+        self.remove_blacklisted_companies(scrape_data)
+
+    def delay_threader(self,
+                       scrape_list: List[Dict], scrape_fn, parse_fn, threads):
+        """
+        Function called by child classes to thread scrapes jobs with delays
+        """
+        if not scrape_list:
+            raise ValueError("No scraped jobs returned")
+        delays = random_delay(len(scrape_list), self.delay_config)
+        # Zips delays and scrape list as jobs for thread pool
+        scrape_jobs = zip(scrape_list, delays)
+
+        # Ballpark estimate of scrape time
+        logging.info("Scrape time estimated to take {} s or "
+                     "greater ".format(round((sum(delays) / 8) + 1, 2)))
+
+        # Submits jobs and stores futures in dict
+        results = {threads.submit(scrape_fn, job, delays): job['id']
+                   for job, delays in scrape_jobs}
+        # Loops through futures and removes each if successfully parsed
+        while results:
+            # Gets each future as they complete
+            for future in as_completed(results):
+                try:
+                    job, html = future.result()
+                    parse_fn(job, html)
+                except Exception:
+                    pass
+                del results[future]
+        threads.shutdown()
+
     def update_masterlist(self):
         ## use the scraped job listings to update the master spreadsheet
         if self.scrape_data == {}:
             raise ValueError("No scraped jobs, cannot update masterlist")
 
         # filter out scraped jobs we have rejected, archived or blacklisted
+        ## Left this here in case of pickle loading
         self.remove_jobs_in_filterlist(self.scrape_data)
         self.remove_blacklisted_companies(self.scrape_data)
 
@@ -253,13 +307,12 @@ class JobFunnel(object):
                 # Calls tf_idf filter and returns popped duplicate list
                 duplicate_list = tfidf_filter(self.scrape_data, masterlist)
 
-                logging.info(
-                    f'Saving {len(duplicate_list)} duplicates jobs to '
-                    f'{self.duplicate_list_path}')
+                logging.info(f'Saving {len(duplicate_list)} duplicates jobs to'
+                             f' {self.duplicate_list_path}')
                 # Checks if duplicate list has entries
                 if len(duplicate_list) > 0:
                     # Checks if duplicate_list.csv exists
-                    if os.path.exists(self.duplicate_list_path):
+                    if os.path.isfile(self.duplicate_list_path):
                         # Loads and adds current duplicates to list
                         master_dup = self.read_csv(self.duplicate_list_path)
                         master_dup.update(duplicate_list)

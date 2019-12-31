@@ -1,4 +1,3 @@
-import os
 import re
 
 from bs4 import BeautifulSoup
@@ -12,7 +11,6 @@ from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from .tools.delay import random_delay
-from .tools.filters import id_filter
 
 
 class GlassDoor(JobFunnel):
@@ -182,7 +180,7 @@ class GlassDoor(JobFunnel):
                 'https://www.glassdoor.{0}{1}'.format(
                     self.search_terms['region']['domain'], soup_base.find(
                         'li', attrs={'class', 'next'}).find('a').get('href'))
-            )) for page in range(1, pages + 1)]
+            ), list_of_job_soups) for page in range(1, pages + 1)]
         wait(res)
 
         # make a dict of job postings from the listing briefs
@@ -230,15 +228,8 @@ class GlassDoor(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # Pops duplicate job ids already in master list and
-        # also in the duplicate list
-        if os.path.exists(self.master_list_path):
-            id_filter(self.scrape_data, super().read_csv(
-                self.master_list_path), self.provider)
-            # Checks duplicates file as well if it exists
-            if os.path.exists(self.duplicate_list_path):
-                id_filter(self.scrape_data, super().read_csv(
-                    self.duplicate_list_path), self.provider)
+        # Apply job pre-filter before scraping blurbs
+        super().pre_filter(self.scrape_data, self.provider)
 
         # search the job link to extract the blurb
         scrape_list = [i for i in self.scrape_data.values()]
@@ -246,25 +237,28 @@ class GlassDoor(JobFunnel):
         # Takes our scrape data and filters date all out once
         post_date_from_relative_post_age(scrape_list)
 
+        # Checks if delay is set or not
         if self.delay_config is not None:
-            # Calculates delay and returns list of delays
-            delays = random_delay(len(scrape_list), self.delay_config)
-            # Zips delays and scrape list as jobs for thread pool
-            scrape_jobs = zip(scrape_list, delays)
-            # Submits jobs and stores futures in dict
-            results = {threads.submit(self.get_blurb_gd_w_dly, job, delays):
-                           job['id'] for job, delays in scrape_jobs}
-            # Loops through futures and removes each if successfully parsed
-            while results:
-                # Gets each future as they complete
-                for future in as_completed(results):
-                    try:
-                        job, html = future.result() # Stores results
-                        self.parse_blurb_gd(job, html) #
-                    except Exception:
-                        pass
-                    del results[future]
-            threads.shutdown()
+            super().delay_threader(scrape_list, self.get_blurb_gd_w_dly,
+                                   self.parse_blurb_gd, threads)
+            # # Calculates delay and returns list of delays
+            # delays = random_delay(len(scrape_list), self.delay_config)
+            # # Zips delays and scrape list as jobs for thread pool
+            # scrape_jobs = zip(scrape_list, delays)
+            # # Submits jobs and stores futures in dict
+            # results = {threads.submit(self.get_blurb_gd_w_dly, job, delays):
+            #                job['id'] for job, delays in scrape_jobs}
+            # # Loops through futures and removes each if successfully parsed
+            # while results:
+            #     # Gets each future as they complete
+            #     for future in as_completed(results):
+            #         try:
+            #             job, html = future.result()
+            #             self.parse_blurb_gd(job, html)
+            #         except Exception:
+            #             pass
+            #         del results[future]
+            # threads.shutdown()
         else:
             # Maps jobs to threads which shutdown when finished
             threads.map(self.search_glassdoor_joblink_for_blurb, scrape_list)

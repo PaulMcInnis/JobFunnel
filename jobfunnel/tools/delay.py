@@ -48,8 +48,7 @@ def _rich_delay(list_len: int, delay):
     return delays.tolist()
 
 
-
-def random_delay(list_len: int, delay_config: Dict):
+def random_delay(list_len, delay_config: Dict):
     """Checks config parameters and returns calculated delay list"""
     if isinstance(list_len, list):
         list_len == len(list_len)
