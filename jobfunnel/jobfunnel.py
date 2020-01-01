@@ -184,8 +184,11 @@ class JobFunnel(object):
                     n_filtered += 1
             logging.info(f'removed {n_filtered} jobs present in filter-list')
         else:
-            self.logger.warning(
-                f'no jobs filtered, missing {self.filterlist_path}')
+            if hasattr(self, 'provider'):
+                pass
+            else:
+                self.logger.warning(
+                    f'no jobs filtered, missing {self.filterlist_path}')
 
     def remove_blacklisted_companies(self, data: Dict[str, dict]):
         ## remove blacklisted companies from the scraped data
@@ -195,8 +198,7 @@ class JobFunnel(object):
             if job_data['company'] in self.blacklist:
                 blacklist_ids.append(job_id)
         logging.info(
-            f'removed {len(blacklist_ids)} jobs in black-list from '
-            f'master-list')
+            f'removed {len(blacklist_ids)} jobs in blacklist from master-list')
         for job_id in blacklist_ids:
             data.pop(job_id)
 
@@ -251,6 +253,7 @@ class JobFunnel(object):
             self.remove_jobs_in_filterlist(scrape_data)
         except ValueError:
             pass
+
         self.remove_blacklisted_companies(scrape_data)
 
     def delay_threader(self,
@@ -265,8 +268,8 @@ class JobFunnel(object):
         scrape_jobs = zip(scrape_list, delays)
 
         # Ballpark estimate of scrape time
-        logging.info("Scrape time estimated to take {} s or "
-                     "greater ".format(round((sum(delays) / 8) + 1, 2)))
+        logging.info(f'Scrape time estimated to take '
+                     f'{round((sum(delays) / 8)+1,2)} s or greater ')
 
         # Submits jobs and stores futures in dict
         results = {threads.submit(scrape_fn, job, delays): job['id']

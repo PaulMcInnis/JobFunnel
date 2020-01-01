@@ -1,5 +1,4 @@
 import re
-import logging
 
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
