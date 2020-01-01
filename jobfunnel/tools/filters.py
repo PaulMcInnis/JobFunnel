@@ -5,7 +5,7 @@ import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
-from numpy import delete as np_delete, max as np_max
+from numpy import delete as np_delete, max as np_max, fill_diagonal
 
 
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
@@ -71,7 +71,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         similarities = cosine_similarity(vectorizer.fit_transform(query_words))
 
         # Fills diagonals with 0, so whole dict does not get popped
-        np.fill_diagonal(similarities, 0)
+        fill_diagonal(similarities, 0)
         # Deletes row and column every time a max is found for a job id.
         # Matrix dimensions are (n,n) and become (n-1, n-1) when a max is found
         index = 0  # init index

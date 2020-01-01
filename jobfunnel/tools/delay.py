@@ -5,17 +5,17 @@ from math import sqrt, log, ceil
 from numpy import arange
 from random import uniform
 from scipy.special import expit
-from typing import Dict
+from typing import Dict, Union
 
 
-def _h_delay(list_len: int, delay):
+def _h_delay(list_len: int, delay: Union[int, float]):
     """Sets single delay value to whole list"""
     delays = [delay] * list_len  # y = b where b = delay
     delays[0] = 0  # Set first element to zero to avoid first scrape delay
     return delays
 
 
-def _lin_delay(list_len: int, delay):
+def _lin_delay(list_len: int, delay: Union[int, float]):
     """
     Calculates y=.2*x and sets y=delay at point of intersection between lines
     """
@@ -25,7 +25,7 @@ def _lin_delay(list_len: int, delay):
     if its <= 1:
         return _h_delay(list_len)
     else:
-        # Prevents slicing from breaking if decimal delay is used
+        # Prevents slicing from breaking if delay is a float
         if isinstance(its, float):
             its = int(ceil(its))
         # Create list of x values based on scrape list size
@@ -36,7 +36,7 @@ def _lin_delay(list_len: int, delay):
 
 
 # https://en.wikipedia.org/wiki/Generalised_logistic_function
-def _rich_delay(list_len: int, delay):
+def _rich_delay(list_len: int, delay: Union[int, float]):
     """ Calculates Richards/Sigmoid curve for delay"""
     if delay == 0:
         return _h_delay(list_len, 0)

@@ -7,9 +7,9 @@ output_path: './'
 
 # Providers from which to search (case insensitive)
 providers:
-  #- 'Indeed'
+  - 'Indeed'
   #- 'Monster'
-  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
+  #- 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -24,7 +24,7 @@ search_terms:
     - 'Python'
     - 'Java'
     - 'Git'
-    - 'Unix'
+    #- 'Unix'
 
 ## Do later, and adjust for Monster
 #  experience_level: 
@@ -48,8 +48,8 @@ save_duplicates: False
 set_delay: True # False or True
 delay_config:
     equation: 'linear' # Hard, Linear, Sigmoid
-    delay: 2 # Acts as our upper bound
-    lower_bound: 0 # Delay lower bound
-    random: True # Select random delays
+    delay: 5 # Defines upper bound/max delay
+    lower_bound: 0 # Delay lower bound/min delay
+    random: False # Switch for random delaying
     
     
