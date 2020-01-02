@@ -1,14 +1,17 @@
 """
 Module for calculating random or non-random delay
 """
+import sys
+
 from math import ceil, log, sqrt
-from numpy import arange, linspace
+from numpy import arange
 from random import uniform
 from scipy.special import expit
 from typing import Dict, Union
+from logging import warning
 
 
-def _h_delay(list_len: int, delay: Union[int, float]):
+def _c_delay(list_len: int, delay: Union[int, float]):
     """Sets single delay value to whole list"""
     delays = [delay] * list_len  # y = b where b = delay
     delays[0] = 0  # Set first element to zero to avoid first scrape delay
@@ -36,7 +39,7 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
     its = 5 * delay  # its = intersection
     # Any delay of .2 or less is hard delay
     if its <= 1:
-        return _h_delay(list_len, delay)
+        return _c_delay(list_len, delay)
     else:
         # Prevents slicing from breaking if delay is a float
         if isinstance(its, float):
@@ -51,8 +54,6 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
 # https://en.wikipedia.org/wiki/Generalised_logistic_function
 def _rich_delay(list_len: int, delay: Union[int, float]):
     """ Calculates Richards/Sigmoid curve for delay"""
-    if delay == 0:
-        return _h_delay(list_len, 0)
     gr = sqrt(delay) * 4  # Growth rate
     y_0 = log(4 * delay)  # Y(0)
     # Calculates sigmoid curve using vars rewritten to be our x
@@ -74,23 +75,36 @@ def delay_alg(list_len, delay_config: Dict):
     if isinstance(list_len, list):  # Prevents breaking if a list was passed
         list_len == len(list_len)
     try:
-        # Init args
+        # Init and check numerical arguments
         delay = delay_config['delay']
-        lb = delay_config['lower_bound']
+        if delay <= 0:
+            raise ValueError("\nYour delay is set to 0 or less.\nIf you want "
+                             "to turn off delaying use the --no_delay flag in "
+                             "the command line or set \'set_delay\' to False "
+                             "in your settings file.\nCancelling execution...")
+            sys.exit(1)
+
+        min_delay = delay_config['min_delay']
+        if min_delay < 0 or min_delay > delay:
+            warning("\nMinimum delay is set below 0, or higher than delay."
+                    "\nSetting to 0 and continuing execution."
+                    "\nIf this was a mistake, check your command line"
+                    " arguments or settings file. \n")
+            min_delay = 0
 
         # Delay calculations using specified equations
-        if delay_config['equation'] == 'hard':
-            delay_calcs = _h_delay(list_len, delay)
-        elif delay_config['equation'] == 'linear':
+        if delay_config['function'] == 'constant':
+            delay_calcs = _c_delay(list_len, delay)
+        elif delay_config['function'] == 'linear':
             delay_calcs = _lin_delay(list_len, delay)
-        elif delay_config['equation'] == 'sigmoid':
+        elif delay_config['function'] == 'sigmoid':
             delay_calcs = _rich_delay(list_len, delay)
 
-        # Check if lower bound is above 0 and less than last element
-        if 0 < lb < delay_calcs[-1]:
-            # Sets lb to values greater than itself to delay_calcs
+        # Check if minimum delay is above 0 and less than last element
+        if 0 < min_delay < delay_calcs[-1]:
+            # Sets min_delay to values greater than itself in delay_calcs
             for i, n in enumerate(delay_calcs):
-                if n > lb:
+                if n > min_delay:
                     break
                 delay_calcs[i] = lb
 
@@ -102,7 +116,7 @@ def delay_alg(list_len, delay_config: Dict):
                 delays = [round(uniform(x, delay), 3) for x in delay_calcs]
             else:
                 # lb = lower bounds, delay_calcs = upper bound
-                delays = [round(uniform(lb, x), 3) for x in delay_calcs]
+                delays = [round(uniform(min_delay, x), 3) for x in delay_calcs]
 
         else:
             delays = [round(i, 3) for i in delay_calcs]
@@ -112,4 +126,5 @@ def delay_alg(list_len, delay_config: Dict):
 
     # Captures possible errors and raise error about delay config
     except (NameError, TypeError):
-        raise ValueError("\n Somethings wrong with your delay config.")
+        raise ValueError("\nSomethings wrong, check your command line argument"
+                         "s or delay config located in you settings file.")

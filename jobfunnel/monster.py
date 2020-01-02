@@ -31,6 +31,51 @@ class Monster(JobFunnel):
             'Connection': 'keep-alive'
         }
 
+    def convert_monster_radius(self, radius):
+        """function that quantizes the user input radius to a valid radius
+        in either kilometers or miles"""
+        if self.search_terms['region']['domain'] == 'com':
+            if radius < 5:
+                radius = 0
+            elif 5 <= radius < 10:
+                radius = 5
+            elif 10 <= radius < 20:
+                radius = 10
+            elif 20 <= radius < 30:
+                radius = 20
+            elif 30 <= radius < 40:
+                radius = 30
+            elif 40 <= radius < 50:
+                radius = 40
+            elif 50 <= radius < 60:
+                radius = 50
+            elif 60 <= radius < 75:
+                radius = 60
+            elif 75 <= radius < 100:
+                radius = 75
+            elif 100 <= radius < 150:
+                radius = 100
+            elif 150 <= radius < 200:
+                radius = 150
+            elif 200 <= radius:
+                radius = 200
+            # Now I know why they call themselves monster
+        else:
+            if radius < 5:
+                radius = 0
+            elif 5 <= radius < 10:
+                radius = 5
+            elif 10 <= radius < 20:
+                radius = 10
+            elif 20 <= radius < 50:
+                radius = 20
+            elif 50 <= radius < 100:
+                radius = 50
+            elif 100 <= radius:
+                radius = 100
+
+        return radius
+
     def search_monster_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
@@ -85,7 +130,8 @@ class Monster(JobFunnel):
         domain = self.search_terms['region']['domain']
         city = self.search_terms['region']['city']
         province = self.search_terms['region']['province']
-        radius = self.search_terms['region']['radius']
+        radius = self.convert_monster_radius(
+            self.search_terms['region']['radius'])
 
         # build the job search URL
         search = (f'https://www.monster.{domain}'
@@ -182,4 +228,4 @@ class Monster(JobFunnel):
             threads.shutdown()
             # End and print recorded time
             end = time()
-            log_info(f'{self.provider} scrape job took {(end - start):.3f}s')
+            print(f'{self.provider} scrape job took {(end - start):.3f}s')

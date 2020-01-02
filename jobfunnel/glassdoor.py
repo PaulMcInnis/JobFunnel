@@ -45,32 +45,53 @@ class GlassDoor(JobFunnel):
         }
 
     def convert_glassdoor_radius(self, radius):
-        """function that quantizes the user input radius to a valid
-           radius value: 10, 20, 30, 50 and 100 kilometers"""
+        """function that quantizes the user input radius to a valid radius
+            value: 10, 20, 30, 50, 100, and 200 kilometers.
+            Now with US support. """
+        if self.search_terms['region']['domain'] == 'com':
+            if radius < 5:
+                radius = 0
+            elif 5 <= radius < 10:
+                radius = 5
+            elif 10 <= radius < 15:
+                radius = 10
+            elif 15 <= radius < 25:
+                radius = 15
+            elif 25 <= radius < 50:
+                radius = 25
+            elif 50 <= radius < 100:
+                radius = 50
+            elif 100 <= radius:
+                radius = 100
+            return radius
 
-        if radius < 10:
-            radius = 0
-        elif 10 <= radius < 20:
-            radius = 10
-        elif 20 <= radius < 30:
-            radius = 20
-        elif 30 <= radius < 50:
-            radius = 30
-        elif 50 <= radius < 100:
-            radius = 50
-        elif radius >= 100:
-            radius = 100
+        else:
+            if radius < 10:
+                radius = 0
+            elif 10 <= radius < 20:
+                radius = 10
+            elif 20 <= radius < 30:
+                radius = 20
+            elif 30 <= radius < 50:
+                radius = 30
+            elif 50 <= radius < 100:
+                radius = 50
+            elif 100 <= radius < 200:
+                radius = 100
+            elif radius >= 200:
+                radius = 200
 
-        glassdoor_radius = {
-            0: 0,
-            10: 6,
-            20: 12,
-            30: 19,
-            50: 31,
-            100: 62
-        }
+            glassdoor_radius = {
+                0: 0,
+                10: 6,
+                20: 12,
+                30: 19,
+                50: 31,
+                100: 62,
+                200: 124
+            }
 
-        return glassdoor_radius[radius]
+            return glassdoor_radius[radius]
 
     def search_glassdoor_page_for_job_soups(self, data, page, url, job_s_list):
         """function that scrapes the glassdoor page for a list of job soups"""
@@ -129,7 +150,8 @@ class GlassDoor(JobFunnel):
         # write region dict to vars, to reduce lookup load in loops
         domain = self.search_terms['region']['domain']
         city = self.search_terms['region']['city']
-        radius = self.search_terms['region']['radius']
+        radius = self.convert_glassdoor_radius(
+            self.search_terms['region']['radius'])
 
         data = {
             'term': city,
@@ -152,7 +174,7 @@ class GlassDoor(JobFunnel):
             'locT': 'C',
             'locId': location_response[0]['locationId'],
             'jobType': '',
-            'radius': self.convert_glassdoor_radius(radius)
+            'radius': radius
         }
 
         # get the HTML data, initialize bs4 with lxml
@@ -260,4 +282,4 @@ class GlassDoor(JobFunnel):
             threads.shutdown()
             # End and print recorded time
             end = time()
-            log_info(f'{self.provider} scrape job took {(end - start):.3f}s')
+            print(f'{self.provider} scrape job took {(end - start):.3f}s')

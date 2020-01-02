@@ -87,7 +87,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 index += 1
         # log something
         logging.info(f'Found and removed {len(duplicate_ids.keys())} '
-                     f're-posts/duplicates via TFIDF cosine similarity')
+                     f're-posts/duplicates via TFIDF cosine similarity!')
 
     else:
         # Checks current scrape for re-posts/duplicates

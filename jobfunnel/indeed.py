@@ -31,6 +31,25 @@ class Indeed(JobFunnel):
             'Connection': 'keep-alive'
         }
 
+    def convert_indeed_radius(self, radius):
+        """function that quantizes the user input radius to a valid radius
+            value: 5, 10, 15, 25, 50, 100, and 200 kilometers or miles"""
+        if radius < 5:
+            radius = 0
+        elif 5 <= radius < 10:
+            radius = 5
+        elif 10 <= radius < 15:
+            radius = 10
+        elif 15 <= radius < 25:
+            radius = 15
+        elif 25 <= radius < 50:
+            radius = 25
+        elif 50 <= radius < 100:
+            radius = 50
+        elif 100 <= radius:
+            radius = 100
+        return radius
+
     def search_indeed_page_for_job_soups(self, search, page, job_soup_list):
         """function that scrapes the indeed page for a list of job soups"""
         url = f'{search}&start={int(page * self.max_results_per_page)}'
@@ -93,7 +112,8 @@ class Indeed(JobFunnel):
         domain = self.search_terms['region']['domain']
         city = self.search_terms['region']['city']
         province = self.search_terms['region']['province']
-        radius = self.search_terms['region']['radius']
+        radius = self.convert_indeed_radius(
+            self.search_terms['region']['radius'])
 
         # form job search url
         search = (f'http://www.indeed.{domain}'
@@ -193,4 +213,4 @@ class Indeed(JobFunnel):
             threads.shutdown()
             # End and print recorded time
             end = time()
-            log_info(f'{self.provider} scrape job took {(end - start):.3f}s')
+            print(f'{self.provider} scrape job took {(end - start):.3f}s')

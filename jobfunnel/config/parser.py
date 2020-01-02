@@ -40,6 +40,39 @@ def _parse_cli():
                         help='list of keywords to use in the job search. ('
                              'i.e. Engineer, AI)')
 
+    parser.add_argument('-r',
+                        dest='random',
+                        action='store_true',
+                        required=False,
+                        default=None,
+                        help='turn on random delaying')
+
+    parser.add_argument('-c',
+                        dest='converge',
+                        action='store_true',
+                        required=False,
+                        default=None,
+                        help='use converging random delay')
+
+    parser.add_argument('-d',
+                        dest='delay',
+                        type=float,
+                        required=False,
+                        help='set delay seconds for scrapes.')
+
+    parser.add_argument('-md',
+                        dest='min_delay',
+                        type=float,
+                        required=False,
+                        help='set lower bound value for scraper')
+
+    parser.add_argument('--fun',
+                        dest='function',
+                        type=str,
+                        required=False,
+                        default=None,
+                        choices=['constant', 'linear', 'sigmoid'])
+
     parser.add_argument('--log_level',
                         dest='log_level',
                         type=str,
@@ -63,6 +96,13 @@ def _parse_cli():
                         help='skip web-scraping and load a previously saved '
                              'daily scrape pickle')
 
+    parser.add_argument('--no_delay',
+                        dest='set_delay',
+                        action='store_false',
+                        required=False,
+                        default=None,
+                        help='Turn random delay off, not a recommended action')
+
     parser.add_argument('--recover',
                         dest='recover',
                         action='store_true',
@@ -70,7 +110,7 @@ def _parse_cli():
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
 
-    parser.add_argument('--save_dup',
+    parser.add_argument('--save_duplicates', '-sd',
                         dest='save_duplicates',
                         action='store_true',
                         required=False,
@@ -176,14 +216,36 @@ def parse_config():
     config['filter_list_path'] = os.path.join(
         config['data_path'], 'filter_list.json')
 
-    # define delaying options
+    # set delaying
+    config['set_delay'] = default_yaml['set_delay']
     if given_yaml_path is not None:
-        if given_yaml['set_delay']:
+        config['set_delay'] = given_yaml['set_delay']
+    if cli.set_delay is not None:
+        config['set_delay'] = cli.set_delay
+
+    # parse options for delaying if turned on
+    if config['set_delay']:
+        config['delay_config'] = default_yaml['delay_config']
+        if given_yaml_path is not None:
             config['delay_config'] = given_yaml['delay_config']
-            config['delay_config']['equation'] = \
-                config['delay_config']['equation'].lower()
-        else:
-            config['delay_config'] = None
+
+        # Cli options for delaying configuration
+        if cli.function is not None:
+            config['delay_config']['function'] = cli.function
+        if cli.delay is not None:
+            config['delay_config']['delay'] = cli.delay
+        if cli.min_delay is not None:
+            config['delay_config']['min_delay'] = cli.min_delay
+        if cli.random is not None:
+            config['delay_config']['random'] = cli.random
+            if cli.converge is not None:
+                config['delay_config']['converge'] = cli.converge
+
+        # Converts function name to lower case in config
+        config['delay_config']['function'] = \
+            config['delay_config']['function'].lower()
+    else:
+        config['delay_config'] = None
 
     # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',

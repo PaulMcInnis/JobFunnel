@@ -8,6 +8,7 @@ import os
 import pickle
 import random
 import re
+import sys
 
 from concurrent.futures import as_completed
 from datetime import date
@@ -110,7 +111,11 @@ class JobFunnel(object):
         self.logger = logging.getLogger()
         self.logger.setLevel(self.loglevel)
         logging.basicConfig(filename=self.logfile, level=self.loglevel)
-        logging.getLogger().addHandler(logging.StreamHandler())
+        if self.loglevel == 20:
+            logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+        else:
+            logging.getLogger().addHandler(logging.StreamHandler())
+
         self.logger.info(f'jobfunnel initialized at {self.date_string}')
 
     def scrape(self):
@@ -264,9 +269,11 @@ class JobFunnel(object):
         Function called by child classes to thread scrapes jobs with delays
         """
         if not scrape_list:
-            raise ValueError("No scraped jobs returned")
-        # Calls
+            raise ValueError("No jobs to scrape")
+        # Calls delaying algorithm
+        print("Calculating delay...")
         delays = delay_alg(len(scrape_list), self.delay_config)
+        print("Done! Starting scrape!")
         # Zips delays and scrape list as jobs for thread pool
         scrape_jobs = zip(scrape_list, delays)
         # Start time recording
@@ -289,7 +296,7 @@ class JobFunnel(object):
         threads.shutdown()  # Clean up threads when done
         # End and print recorded time
         end = time()
-        logging.info(f'{self.provider} scrape job took {(end - start):.3f}s')
+        print(f'{self.provider} scrape job took {(end - start):.3f}s')
 
     def update_masterlist(self):
         """use the scraped job listings to update the master spreadsheet"""

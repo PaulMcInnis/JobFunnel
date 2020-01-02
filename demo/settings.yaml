@@ -4,11 +4,10 @@
 # place the search right next to this file
 output_path: './'
 
-
 # Providers from which to search (case insensitive)
 providers:
   - 'Indeed'
-  - 'Monster'
+  #- 'Monster'
   - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
@@ -19,20 +18,11 @@ search_terms:
     domain:   'ca'
     radius:   10
 
-# this search is focused on programming
   keywords:
     - 'Python'
     - 'Java'
-    #- 'Git'
+    - 'Git'
     - 'Unix'
-
-## Do later, and adjust for Monster
-#  experience_level: 
-    #- 'intern' # This returns the intern job type on indeed
-    #- 'entry'
-    #- 'mid'
-    #- 'senior'
-# exclude these from the search
 
 black_list:
   - 'Infox Consulting'
@@ -41,16 +31,23 @@ black_list:
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: 'info'
 
-# Save duplicates removed by tfidf filter to a separate csv
+# Saves duplicates removed by tfidf filter to duplicate_list.csv
 save_duplicates: False
 
-# Delaying config
-set_delay: True # False or True
+# Turn on or off delaying
+set_delay: True 
+
+# Delaying algorithm configuration
 delay_config:
-    equation: 'hard' # Hard, Linear, Sigmoid
-    delay: 5 # Defines upper bound/max delay
-    lower_bound: 0 # Delay lower bound/min delay
-    random: True # Switch for random delaying
-    converge: True # Switch for using converging random or not, only used if random is specified
+    # Functions used for delaying algorithm, options are: constant, linear, sigmoid
+    function: 'sigmoid'
+    # Maximum delay/upper bound for converging random delay
+    delay: 15
+    # Minimum delay/lower bound for random delay  
+    min_delay: 1 
+    # Random delay
+    random: True 
+    # Converging random delay, only used if 'random' is set to True
+    converge: True 
     
     
