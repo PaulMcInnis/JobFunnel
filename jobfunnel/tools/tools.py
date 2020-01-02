@@ -1,8 +1,10 @@
 import logging
 import re
 import string
-from datetime import datetime, timedelta
+
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+
 
 
 def filter_non_printables(job):
@@ -14,9 +16,7 @@ def filter_non_printables(job):
 
 
 def post_date_from_relative_post_age(job_list):
-    """function that returns the post date from the relative post age
-
-    """
+    """function that returns the post date from the relative post age"""
     # initialize list and store regex objects of date quantifiers.
     date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
                   re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
@@ -68,7 +68,6 @@ def post_date_from_relative_post_age(job_list):
                         elif not post_date:
                             # must be from the 1970's
                             post_date = datetime(1970, 1, 1)
-                            logging.error(
-                                'unknown date for job {}'.format(job['id']))
-
+                            logging.error(f"unknown date for job {job['id']}")
+        # Format date in standard format e.g. 2020-01-01
         job['date'] = post_date.strftime('%Y-%m-%d')

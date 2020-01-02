@@ -1,4 +1,3 @@
-import numpy as np
 import nltk
 import logging
 
@@ -22,15 +21,12 @@ def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
                     if job['provider'] == provider]
 
     # Pop duplicate job ids from current scrape
-    duplicate_ids = []
-    for job_id in cur_job_ids:
-        if job_id in prev_job_ids:
-            duplicate_ids.append(cur_dict.pop(job_id)['id'])
+    duplicate_ids = [cur_dict.pop(job_id)['id'] for job_id in cur_job_ids
+                     if job_id in prev_job_ids]
 
     # log duplicate id's
-    logging.info("found {} unique job ids and {} duplicates "
-                 "from {}".format(len(cur_dict.keys()), len(duplicate_ids),
-                                  provider))
+    logging.info(f'found {len(cur_dict.keys())} unique job ids and '
+                 f'{len(duplicate_ids)} duplicates from {provider}')
 
 
 def tfidf_filter(cur_dict: Dict[str, dict],
@@ -41,8 +37,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         Args:
             cur_dict: today's job scrape dict
             prev_dict: the existing master list job dict
-            max_similarity: threshold above which a blurb similarity =
-            duplicate
+            max_similarity: threshold above which blurb similarity = duplicate
 
         Returns:
             list of duplicate job ids which were removed from cur_dict
@@ -53,7 +48,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     except LookupError:
         try:
             nltk.download('stopwords', quiet=True)
-        except e:
+        except Exception as e:
             print(e)
 
     # init vectorizer
@@ -67,35 +62,35 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         query_ids = [job['id'] for job in cur_dict.values()]
         query_words = [job['blurb'] for job in cur_dict.values()]
 
-        # Returns cosine similarity between jobs in cur_dict as square matrix
+        # Returns cosine similarity between jobs as square matrix (n,n)
         similarities = cosine_similarity(vectorizer.fit_transform(query_words))
-
         # Fills diagonals with 0, so whole dict does not get popped
         fill_diagonal(similarities, 0)
-        # Deletes row and column every time a max is found for a job id.
-        # Matrix dimensions are (n,n) and become (n-1, n-1) when a max is found
-        index = 0  # init index
+        # init index
+        index = 0
+        # Identifies duplicates and stores them in duplicate_ids dictionary
         while True:
-            # Loop breaks when index is larger than matrix height
+            # Loop breaks when index is equal to matrix height
             if index == len(similarities):
                 break
-            # Gets duplicate id and reduces cosine similarity matrix
+
+            # Deletes row and column, every time a max is found for a job id.
             if np_max(similarities[index]) >= max_similarity:
-                # The query ids are popped so that the index
-                # always accesses the correct element.
+                # Query ids are popped so index always matches correct element.
                 duplicate_ids.update(
                     {query_ids[index]: cur_dict.pop(query_ids.pop(index))})
-                # Reduce matrix dimensions
+                # Reduce matrix dimensions, (n-1, n-1)
                 similarities = np_delete(similarities, index, axis=0)
                 similarities = np_delete(similarities, index, axis=1)
+
             else:  # Increment index by one
                 index += 1
         # log something
-        logging.info("Found and removed {} re-posts/duplicates via TFIDF "
-                     "cosine similarity".format(len(duplicate_ids.keys())))
+        logging.info(f'Found and removed {len(duplicate_ids.keys())} '
+                     f're-posts/duplicates via TFIDF cosine similarity')
 
     else:
-        # Checks cur_dict for re-posts/duplicates
+        # Checks current scrape for re-posts/duplicates
         duplicate_ids = tfidf_filter(cur_dict)
 
         # get query words and ids as lists
@@ -121,8 +116,9 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 duplicate_ids.update({query_id: cur_dict.pop(query_id)})
 
         # log something
-        logging.info("found {} unique listings and {} duplicates via TFIDF "
-                     "cosine similarity".format(len(cur_dict.keys()),
-                                                len(duplicate_ids.keys())))
+        logging.info(f'found {len(cur_dict.keys())} unique listings and '
+                     f'{len(duplicate_ids.keys())} duplicates '
+                     f'via TFIDF cosine similarity')
+
     # Returns a dictionary of duplicates
     return duplicate_ids

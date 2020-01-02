@@ -9,20 +9,21 @@ import pickle
 import random
 import re
 
-from datetime import date
-from typing import Dict, List
 from concurrent.futures import as_completed
+from datetime import date
+from time import time
+from typing import Dict, List
 
+from .tools.delay import delay_alg
 from .tools.filters import tfidf_filter, id_filter
-from .tools.delay import random_delay
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist
 REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header:
-MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date', 'blurb',
-                     'link', 'id', 'provider']
+MASTERLIST_HEADER = ['status', 'title', 'company', 'location',
+                     'date', 'blurb', 'link', 'id', 'provider']
 
 # user agent list
 # https://developers.whatismybrowser.com/useragents/explore/
@@ -136,16 +137,17 @@ class JobFunnel(object):
         for root, dirs, files in os.walk(pickle_path):
             for file in files:
                 if re.findall(r'jobs_.*', file):
-                    if not pickle_found: pickle_found = True
+                    if not pickle_found:
+                        pickle_found = True
                     pickle_file = file
                     pickle_filepath = os.path.join(pickle_path, pickle_file)
                     logging.info(f'loading pickle file: {pickle_filepath}')
                     self.scrape_data.update(
                         pickle.load(open(pickle_filepath, 'rb')))
         if not pickle_found:
-            logging.error(f'no pickles found in {pickle_path}! Have you '
-                          f'scraped any jobs?')
-            raise e
+            logging.error(f'no pickles found in {pickle_path}!'
+                          f' Have you scraped any jobs?')
+            raise Exception
 
     def dump_pickle(self):
         """function to dump a pickle of the daily scrape dict"""
@@ -187,8 +189,8 @@ class JobFunnel(object):
             if hasattr(self, 'provider'):
                 pass
             else:
-                self.logger.warning(
-                    f'no jobs filtered, missing {self.filterlist_path}')
+                self.logger.warning(f'no jobs filtered, '
+                                    f'missing {self.filterlist_path}')
 
     def remove_blacklisted_companies(self, data: Dict[str, dict]):
         ## remove blacklisted companies from the scraped data
@@ -197,8 +199,8 @@ class JobFunnel(object):
         for job_id, job_data in data.items():
             if job_data['company'] in self.blacklist:
                 blacklist_ids.append(job_id)
-        logging.info(
-            f'removed {len(blacklist_ids)} jobs in blacklist from master-list')
+        logging.info(f'removed {len(blacklist_ids)} jobs '
+                     f'in blacklist from master-list')
         for job_id in blacklist_ids:
             data.pop(job_id)
 
@@ -263,20 +265,19 @@ class JobFunnel(object):
         """
         if not scrape_list:
             raise ValueError("No scraped jobs returned")
-        delays = random_delay(len(scrape_list), self.delay_config)
+        # Calls
+        delays = delay_alg(len(scrape_list), self.delay_config)
         # Zips delays and scrape list as jobs for thread pool
         scrape_jobs = zip(scrape_list, delays)
-
-        # Ballpark estimate of scrape time
-        logging.info(f'Scrape time estimated to take '
-                     f'{round((sum(delays) / 8)+1,2)} s or greater ')
-
+        # Start time recording
+        start = time()
         # Submits jobs and stores futures in dict
         results = {threads.submit(scrape_fn, job, delays): job['id']
                    for job, delays in scrape_jobs}
+
         # Loops through futures and removes each if successfully parsed
         while results:
-            # Gets each future as they complete
+            # Parses futures as they complete
             for future in as_completed(results):
                 try:
                     job, html = future.result()
@@ -284,15 +285,18 @@ class JobFunnel(object):
                 except Exception:
                     pass
                 del results[future]
-        threads.shutdown()
+
+        threads.shutdown()  # Clean up threads when done
+        # End and print recorded time
+        end = time()
+        logging.info(f'{self.provider} scrape job took {(end - start):.3f}s')
 
     def update_masterlist(self):
-        ## use the scraped job listings to update the master spreadsheet
+        """use the scraped job listings to update the master spreadsheet"""
         if self.scrape_data == {}:
             raise ValueError("No scraped jobs, cannot update masterlist")
 
         # filter out scraped jobs we have rejected, archived or blacklisted
-        ## Left this here in case of pickle loading
         self.remove_jobs_in_filterlist(self.scrape_data)
         self.remove_blacklisted_companies(self.scrape_data)
 
@@ -346,6 +350,7 @@ class JobFunnel(object):
                     # Saves duplicates to duplicates_list.csv
                     self.write_csv(data=duplicate_list,
                                    path=self.duplicate_list_path)
+
             else:
                 tfidf_filter(self.scrape_data)
 

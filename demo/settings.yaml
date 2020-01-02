@@ -8,8 +8,8 @@ output_path: './'
 # Providers from which to search (case insensitive)
 providers:
   - 'Indeed'
-  #- 'Monster'
-  #- 'GlassDoor' # This used to take ~10x longer to run than the other providers
+  - 'Monster'
+  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -23,8 +23,8 @@ search_terms:
   keywords:
     - 'Python'
     - 'Java'
-    - 'Git'
-    #- 'Unix'
+    #- 'Git'
+    - 'Unix'
 
 ## Do later, and adjust for Monster
 #  experience_level: 
@@ -47,9 +47,10 @@ save_duplicates: False
 # Delaying config
 set_delay: True # False or True
 delay_config:
-    equation: 'linear' # Hard, Linear, Sigmoid
+    equation: 'hard' # Hard, Linear, Sigmoid
     delay: 5 # Defines upper bound/max delay
     lower_bound: 0 # Delay lower bound/min delay
-    random: False # Switch for random delaying
+    random: True # Switch for random delaying
+    converge: True # Switch for using converging random or not, only used if random is specified
     
     

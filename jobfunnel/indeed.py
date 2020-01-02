@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
 from math import ceil
 from requests import get
-from time import sleep
+from time import sleep, time
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
@@ -31,21 +31,22 @@ class Indeed(JobFunnel):
             'Connection': 'keep-alive'
         }
 
-    def search_indeed_page_for_job_soups(self, search, page,
-                                         list_of_job_soups):
+    def search_indeed_page_for_job_soups(self, search, page, job_soup_list):
         """function that scrapes the indeed page for a list of job soups"""
-        page_url = f'{search}&start={int(page * self.max_results_per_page)}'
-        log_info(f'getting indeed page {page} : {page_url}')
-        jobs = BeautifulSoup(get(page_url, headers=self.headers).text,
-                             self.bs4_parser).find_all(
-            'div', attrs={'data-tn-component': 'organicJob'})
+        url = f'{search}&start={int(page * self.max_results_per_page)}'
+        log_info(f'getting indeed page {page} : {url}')
 
-        list_of_job_soups.extend(jobs)
+        jobs = BeautifulSoup(
+            get(url, headers=self.headers).text, self.bs4_parser).\
+            find_all('div', attrs={'data-tn-component': 'organicJob'})
+
+        job_soup_list.extend(jobs)
 
     def search_indeed_joblink_for_blurb(self, job):
         """function that scrapes the indeed job link for the blurb"""
         search = job['link']
         log_info(f'getting indeed page: {search}')
+
         job_link_soup = BeautifulSoup(
             get(search, headers=self.headers).text, self.bs4_parser)
 
@@ -58,21 +59,19 @@ class Indeed(JobFunnel):
         filter_non_printables(job)
 
     def get_blurb_in_w_dly(self, job, delay):
-        """
-        function that gets blurb from indeed and uses request delaying
-        """
+        """gets blurb from indeed job link and sets delays for requests"""
         sleep(delay)
         search = job['link']
+
         log_info(f'getting indeed search: {search}')
+
         res = get(search, headers=self.headers).text
         return job, res
 
     def parse_blurb_in(self, job, html):
-        """
-        stores parsed job description into job dict
-        """
-        job_link_soup = BeautifulSoup(
-            html, self.bs4_parser)
+        """parses and stores job description into dict entry"""
+        job_link_soup = BeautifulSoup(html, self.bs4_parser)
+
         try:
             job['blurb'] = job_link_soup.find(
                 id='jobDescriptionText').text.strip()
@@ -81,51 +80,56 @@ class Indeed(JobFunnel):
 
         filter_non_printables(job)
 
-
     def scrape(self):
         """function that scrapes job posting from indeed and pickles it"""
-        log_info('jobfunnel indeed to pickle running @ ' + self.date_string)
+        log_info(f'jobfunnel indeed to pickle running @ {self.date_string}')
 
         # ID regex quantifier
         id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
 
         # form the query string
         query = '+'.join(self.search_terms['keywords'])
+        # write region dict to vars, to reduce lookup load in loops
+        domain = self.search_terms['region']['domain']
+        city = self.search_terms['region']['city']
+        province = self.search_terms['region']['province']
+        radius = self.search_terms['region']['radius']
 
-        # build the job search URL
-        search = 'http://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}' \
-                 '&limit={5}&filter={6}'.format(
-            self.search_terms['region']['domain'],
-            query,
-            self.search_terms['region']['city'],
-            self.search_terms['region']['province'],
-            self.search_terms['region']['radius'],
-            self.max_results_per_page,
-            int(self.similar_results))
+        # form job search url
+        search = (f'http://www.indeed.{domain}'
+                  f'/jobs?q={query}&l={city}%2C+{province}'
+                  f"&radius={radius}"
+                  f"&limit={self.max_results_per_page}"
+                  f"&filter={int(self.similar_results)}")
 
         # get the HTML data, initialize bs4 with lxml
         request_HTML = get(search, headers=self.headers)
         soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
 
-        # scrape total number of results, and calculate the # pages needed
+        # Parse total results, and calculate the # of pages needed
         # Now with less regex!
-        num_results = soup_base.find(id='searchCountPages').contents[0].strip()
-        num_results = int(re.findall(r'f (\d+) ',
-                                     num_results.replace(',', ''))[0])
+        num_res = soup_base.find(id='searchCountPages').contents[0].strip()
+        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
+        log_info(f'Found {num_res} indeed results for query={query}')
 
-        log_info(f'Found {num_results} indeed results for query={query}')
+        pages = int(ceil(num_res / self.max_results_per_page))
+
+        # Init list of job soups
+        job_soup_list = []
+        # Init threads
+        threads = ThreadPoolExecutor(max_workers=8)
+        # Init futures list
+        fts = []
 
         # scrape soups for all the pages containing jobs it found
-        list_of_job_soups = []
-        pages = int(ceil(num_results / self.max_results_per_page))
-
-        threads = ThreadPoolExecutor(max_workers=8)
-        wait([threads.submit(self.search_indeed_page_for_job_soups, search,
-                             page, list_of_job_soups)
-              for page in range(0, pages)])
+        for page in range(0, pages):
+            fts.append(  # Append thread job future to futures list
+                threads.submit(self.search_indeed_page_for_job_soups,
+                               search, page, job_soup_list))
+        wait(fts)  # Wait for all scrape jobs to finish
 
         # make a dict of job postings from the listing briefs
-        for s in list_of_job_soups:
+        for s in job_soup_list:
             # init dict to store scraped data
             job = dict([(k, '') for k in MASTERLIST_HEADER])
 
@@ -135,8 +139,8 @@ class Indeed(JobFunnel):
                 # jobs should at minimum have a title, company and location
                 job['title'] = s.find('a', attrs={
                     'data-tn-element': 'jobTitle'}).text.strip()
-                job['company'] = s.find(
-                    'span', attrs={'class': 'company'}).text.strip()
+                job['company'] = s.find('span', attrs={
+                    'class': 'company'}).text.strip()
                 job['location'] = s.find('span', attrs={
                     'class': 'location'}).text.strip()
             except AttributeError:
@@ -145,44 +149,48 @@ class Indeed(JobFunnel):
             job['blurb'] = ''
 
             try:
-                job['date'] = s.find(
-                    'span', attrs={'class': 'date'}).text.strip()
+                job['date'] = s.find('span', attrs={
+                    'class': 'date'}).text.strip()
             except AttributeError:
                 job['date'] = ''
 
             try:
                 # Added capture group so to only capture id once matched.
-                job['id'] = id_regex.findall(str(
-                    s.find('a',
-                           attrs={'class': 'sl resultLink save-job-link'})))[0]
-
-                job['link'] = 'http://www.indeed.{0}/viewjob?jk={1}'.format(
-                    self.search_terms['region']['domain'], job['id'])
+                job['id'] = id_regex.findall(str(s.find('a', attrs={
+                    'class': 'sl resultLink save-job-link'})))[0]
+                job['link'] = (f"http://www.indeed.{domain}"
+                               f"/viewjob?jk={job['id']}")
 
             except (AttributeError, IndexError):
                 job['id'] = ''
                 job['link'] = ''
 
-            filter_non_printables(job)
+            job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-            job['provider'] = self.provider
-
+        # Stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
 
+        # Converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
 
         # Apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 
-        # Checks if delay is set or not, then proceed to scrape blurbs
+        # Checks if delay is set or not, then extracts blurbs from job links
         if self.delay_config is not None:
             # Calls super class to run delay specific threading logic
             super().delay_threader(scrape_list, self.get_blurb_in_w_dly,
                                    self.parse_blurb_in, threads)
+
         else:
-            # Maps jobs to threads which shutdown when finished
+            # Start time recording
+            start = time()
+            # maps jobs to threads and cleans them up when done
             threads.map(self.search_indeed_joblink_for_blurb, scrape_list)
             threads.shutdown()
+            # End and print recorded time
+            end = time()
+            log_info(f'{self.provider} scrape job took {(end - start):.3f}s')

@@ -1,16 +1,15 @@
 import re
 
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, wait, as_completed
-from logging import info as log_info, error
+from concurrent.futures import ThreadPoolExecutor, wait
+from logging import info as log_info
 from math import ceil
 from requests import post
-from time import sleep
+from time import sleep, time
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
-from .tools.delay import random_delay
 
 
 class GlassDoor(JobFunnel):
@@ -73,20 +72,19 @@ class GlassDoor(JobFunnel):
 
         return glassdoor_radius[radius]
 
-    def search_glassdoor_page_for_job_soups(self, data, page, page_url,
-                                            list_of_job_soups):
+    def search_glassdoor_page_for_job_soups(self, data, page, url, job_s_list):
         """function that scrapes the glassdoor page for a list of job soups"""
-        log_info(
-            'getting glassdoor page {0} : {1}'.format(page, page_url))
+        log_info(f'getting glassdoor page {page} : {url}')
+
         job = BeautifulSoup(
-            post(page_url, headers=self.headers, data=data).text,
-            self.bs4_parser).find_all('li', attrs={'class', 'jl'})
-        list_of_job_soups.extend(job)
+            post(url, headers=self.headers, data=data).text, self.bs4_parser).\
+            find_all('li', attrs={'class', 'jl'})
+        job_s_list.extend(job)
 
     def search_glassdoor_joblink_for_blurb(self, job):
         """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
-        log_info('getting glassdoor search: {}'.format(search))
+        log_info(f'getting glassdoor search: {search}')
         job_link_soup = BeautifulSoup(
             post(search, headers=self.location_headers).text, self.bs4_parser)
 
@@ -101,20 +99,19 @@ class GlassDoor(JobFunnel):
     # Split apart above function into two so gotten blurbs can be parsed while
     # while others blurbs are being obtained.
     def get_blurb_gd_w_dly(self, job, delay):
-        """
-        function that gets blurb from glassdoor and uses request delaying
-        """
+        """gets blurb from glassdoor job link and sets delays for requests"""
         sleep(delay)
+
         search = job['link']
-        log_info('getting glassdoor search: {}'.format(search))
+        log_info(f'getting glassdoor search: {search}')
+
         res = post(search, headers=self.location_headers).text
         return job, res
 
     def parse_blurb_gd(self, job, html):
-        """
-        stores parsed job description into job dict
-        """
+        """parses and stores job description into dict entry"""
         job_link_soup = BeautifulSoup(html, self.bs4_parser)
+
         try:
             job['blurb'] = job_link_soup.find(
                 id='JobDescriptionContainer').text.strip()
@@ -125,14 +122,19 @@ class GlassDoor(JobFunnel):
 
     def scrape(self):
         """function that scrapes job posting from glassdoor and pickles it"""
-        log_info(
-            'jobfunnel glassdoor to pickle running @' + self.date_string)
+        log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
         # form the query string
-        query = '-'.join(self.search_terms['keywords'])
+        query = '+'.join(self.search_terms['keywords'])
+        # write region dict to vars, to reduce lookup load in loops
+        domain = self.search_terms['region']['domain']
+        city = self.search_terms['region']['city']
+        radius = self.search_terms['region']['radius']
 
-        data = {'term': self.search_terms['region']['city'],
-                'maxLocationsToReturn': 10}
+        data = {
+            'term': city,
+            'maxLocationsToReturn': 10
+        }
 
         location_url = \
             'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
@@ -141,8 +143,7 @@ class GlassDoor(JobFunnel):
         location_response = \
             post(location_url, headers=self.location_headers, data=data).json()
 
-        job_listing_url = 'https://www.glassdoor.{0}/Job/jobs.htm'.format(
-            self.search_terms['region']['domain'])
+        job_listing_url = f'https://www.glassdoor.{domain}/Job/jobs.htm'
 
         # form data to get job results
         data = {
@@ -151,8 +152,7 @@ class GlassDoor(JobFunnel):
             'locT': 'C',
             'locId': location_response[0]['locationId'],
             'jobType': '',
-            'radius': self.convert_glassdoor_radius(
-                self.search_terms['region']['radius'])
+            'radius': self.convert_glassdoor_radius(radius)
         }
 
         # get the HTML data, initialize bs4 with lxml
@@ -161,30 +161,42 @@ class GlassDoor(JobFunnel):
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
-        num_res = soup_base.find(
-            'p', attrs={'class', 'jobsCount'}).text.strip()
+        num_res = soup_base.find('p', attrs={
+            'class', 'jobsCount'}).text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
-        log_info(
-            'Found {} glassdoor results for query={}'.format(num_res, query))
+        log_info(f'Found {num_res} glassdoor results for query={query}')
+
         pages = int(ceil(num_res / self.max_results_per_page))
 
-        list_of_job_soups = []
+        # Init list of job soups
+        job_soup_list = []
+        # Init threads
+        threads = ThreadPoolExecutor(max_workers=8)
+        # Init futures list
+        fts = []
 
         # search the pages to extract the list of job soups
-        threads = ThreadPoolExecutor(max_workers=8)
-        res = [threads.submit(self.search_glassdoor_page_for_job_soups, data,
-                              page, request_HTML.url, list_of_job_soups)
-               if page == 1 else threads.submit(
-            self.search_glassdoor_page_for_job_soups, data, page, re.sub(
-                r'_IP\d+\.', "_IP" + str(page) + ".",
-                'https://www.glassdoor.{0}{1}'.format(
-                    self.search_terms['region']['domain'], soup_base.find(
-                        'li', attrs={'class', 'next'}).find('a').get('href'))
-            ), list_of_job_soups) for page in range(1, pages + 1)]
-        wait(res)
+        for page in range(1, pages + 1):
+            if page == 1:
+                fts.append(  # Append thread job future to futures list
+                    threads.submit(self.search_glassdoor_page_for_job_soups,
+                                   data, page, request_HTML.url, job_soup_list)
+                )
+            else:
+                # Gets partial url for next page
+                part_url = soup_base.find('li', attrs={
+                    'class', 'next'}).find('a').get('href')
+                # Uses partial url to construct next page url
+                page_url = re.sub(r'_IP\d+\.', "_IP" + str(page) + ".",
+                                  f'https://www.glassdoor.{domain}{part_url}')
+
+                fts.append(  # Append thread job future to futures list
+                    threads.submit(self.search_glassdoor_page_for_job_soups,
+                                   data, page, page_url, job_soup_list))
+        wait(fts)  # Wait for all scrape jobs to finish
 
         # make a dict of job postings from the listing briefs
-        for s in list_of_job_soups:
+        for s in job_soup_list:
             # init dict to store scraped data
             job = dict([(k, '') for k in MASTERLIST_HEADER])
 
@@ -192,19 +204,16 @@ class GlassDoor(JobFunnel):
             job['status'] = 'new'
             try:
                 # jobs should at minimum have a title, company and location
-                job['title'] = s.find('div', attrs={'class',
-                                                    'jobContainer'}). \
+                job['title'] = s.find('div', attrs={'class', 'jobContainer'}).\
                     find('a', attrs={'class', 'jobLink jobInfoItem jobTitle'},
                          recursive=False).text.strip()
-                job['company'] = \
-                    s.find('div',
-                           attrs={'class',
-                                  'jobInfoItem jobEmpolyerName'}).text.strip()
+                job['company'] = s.find('div', attrs={
+                    'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue
 
-            # no blurb is available in glassdoor job soups
+            # Set blurb to none for now
             job['blurb'] = None
 
             try:
@@ -214,11 +223,11 @@ class GlassDoor(JobFunnel):
                 job['date'] = ''
 
             try:
+                part_url = s.find('div', attrs={
+                    'class', 'logoWrap'}).find('a').get('href')
                 job['id'] = s.get('data-id')
-                job['link'] = 'https://www.glassdoor.{0}{1}'.format(
-                    self.search_terms['region']['domain'],
-                    s.find('div', attrs={'class', 'logoWrap'}).find('a').get(
-                        'href'))
+                job['link'] = f'https://www.glassdoor.{domain}{part_url}'
+
             except (AttributeError, IndexError):
                 job['id'] = ''
                 job['link'] = ''
@@ -231,35 +240,24 @@ class GlassDoor(JobFunnel):
         # Apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 
-        # search the job link to extract the blurb
+        # Stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
 
-        # Takes our scrape data and filters date all out once
+        # Converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
 
-        # Checks if delay is set or not
+        # Checks if delay is set or not, then extracts blurbs from job links
         if self.delay_config is not None:
+            # Calls super class to run delay specific threading logic
             super().delay_threader(scrape_list, self.get_blurb_gd_w_dly,
                                    self.parse_blurb_gd, threads)
-            # # Calculates delay and returns list of delays
-            # delays = random_delay(len(scrape_list), self.delay_config)
-            # # Zips delays and scrape list as jobs for thread pool
-            # scrape_jobs = zip(scrape_list, delays)
-            # # Submits jobs and stores futures in dict
-            # results = {threads.submit(self.get_blurb_gd_w_dly, job, delays):
-            #                job['id'] for job, delays in scrape_jobs}
-            # # Loops through futures and removes each if successfully parsed
-            # while results:
-            #     # Gets each future as they complete
-            #     for future in as_completed(results):
-            #         try:
-            #             job, html = future.result()
-            #             self.parse_blurb_gd(job, html)
-            #         except Exception:
-            #             pass
-            #         del results[future]
-            # threads.shutdown()
-        else:
-            # Maps jobs to threads which shutdown when finished
+
+        else:  # maps jobs to threads and cleans them up when done
+            # Start time recording
+            start = time()
+            # maps jobs to threads and cleans them up when done
             threads.map(self.search_glassdoor_joblink_for_blurb, scrape_list)
             threads.shutdown()
+            # End and print recorded time
+            end = time()
+            log_info(f'{self.provider} scrape job took {(end - start):.3f}s')
