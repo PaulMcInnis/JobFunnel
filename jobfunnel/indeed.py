@@ -141,6 +141,9 @@ class Indeed(JobFunnel):
         # Init futures list
         fts = []
 
+        # Replaces plus signs with dashes for storing query in master_list
+        query = query.replace('+', '-')
+
         # scrape soups for all the pages containing jobs it found
         for page in range(0, pages):
             fts.append(  # Append thread job future to futures list
@@ -185,6 +188,7 @@ class Indeed(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
+            job['query'] = query
             job['provider'] = self.provider
 
             # key by id

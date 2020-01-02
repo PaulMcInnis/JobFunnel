@@ -125,7 +125,7 @@ class Monster(JobFunnel):
                               r']{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
 
         # form the query string
-        query = '+'.join(self.search_terms['keywords'])
+        query = '-'.join(self.search_terms['keywords'])
         # write region dict to vars, to reduce lookup load in loops
         domain = self.search_terms['region']['domain']
         city = self.search_terms['region']['city']
@@ -200,6 +200,7 @@ class Monster(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
+            job['query'] = query
             job['provider'] = self.provider
 
             # key by id

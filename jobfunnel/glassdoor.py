@@ -146,7 +146,7 @@ class GlassDoor(JobFunnel):
         log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
         # form the query string
-        query = '+'.join(self.search_terms['keywords'])
+        query = '-'.join(self.search_terms['keywords'])
         # write region dict to vars, to reduce lookup load in loops
         domain = self.search_terms['region']['domain']
         city = self.search_terms['region']['city']
@@ -254,6 +254,7 @@ class GlassDoor(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
+            job['query'] = query
             job['provider'] = self.provider
 
             # key by id

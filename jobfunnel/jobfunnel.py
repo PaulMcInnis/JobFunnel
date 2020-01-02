@@ -24,7 +24,7 @@ REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header:
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location',
-                     'date', 'blurb', 'link', 'id', 'provider']
+                     'date', 'blurb', 'link', 'id', 'provider', 'query']
 
 # user agent list
 # https://developers.whatismybrowser.com/useragents/explore/
