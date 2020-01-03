@@ -13,28 +13,24 @@ from logging import warning
 
 def _c_delay(list_len: int, delay: Union[int, float]):
     """Sets single delay value to whole list"""
-    delays = [delay] * list_len  # y = b where b = delay
-    delays[0] = 0  # Set first element to zero to avoid first scrape delay
-
-    # Sets a small offset to hard delay, so scrapes don't start at same time
-    offset = .2
-    increment = .2
-    # Checks if delay is less than 1.5 to prevent negative or zero values
+    delays = [delay] * list_len
+    # Sets incrementing offsets to the first 8 elements
+    inc = .2  # Increment set to .2
+    offset = len(delays[0:8]) / 5  # offset
+    #  Checks if delay is < 1.5
     if delay < 1.5:
-        offset = delay/8
-        increment = delay/8
-    for i in reversed(range(1, 8)):
-        # Exception catching if list length is less than 8
-        try:
-            delays[i] -= offset
-            offset += increment
-        except IndexError:
-            pass
+        # Changes increment and offset, to prevent 0s and negative nums
+        inc = delay / 8
+        offset = float(len(delays[0:8]))*inc
+    # Division here is faster since they are both ints
+    delays[0:8] = [(x - offset) + i*inc for i, x in enumerate(delays[0:8])]
     return delays
 
 
 def _lin_delay(list_len: int, delay: Union[int, float]):
-    """Calculates y=.2*x and sets y=delay at intersection of x between lines"""
+    """
+    Calculates y=.2*x and sets y=delay at intersection of x between lines.
+    """
     # Calculates x value where lines intersect
     its = 5 * delay  # its = intersection
     # Any delay of .2 or less is hard delay
@@ -46,7 +42,7 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
             its = int(ceil(its))
         # Create list of x values based on scrape list size
         delays = [*range(list_len)]
-        delays[0:its] = [.2*x for x in delays[0:its]]
+        delays[0:its] = [x/5 for x in delays[0:its]]
         delays[its:] = [delay] * (len(delays) - its)
         return delays
 
@@ -58,7 +54,6 @@ def _rich_delay(list_len: int, delay: Union[int, float]):
     y_0 = log(4 * delay)  # Y(0)
     # Calculates sigmoid curve using vars rewritten to be our x
     delays = delay * expit(arange(list_len) / gr - y_0)
-    delays[0] = 0
     return delays.tolist()
 
 
@@ -106,7 +101,7 @@ def delay_alg(list_len, delay_config: Dict):
             for i, n in enumerate(delay_calcs):
                 if n > min_delay:
                     break
-                delay_calcs[i] = lb
+                delay_calcs[i] = min_delay
 
         # Outputs final list of delays rounded up to 3 decimal places
         if delay_config['random']:  # Check if random delay was specified
@@ -120,7 +115,7 @@ def delay_alg(list_len, delay_config: Dict):
 
         else:
             delays = [round(i, 3) for i in delay_calcs]
-        # Always set the first element to 0
+        # Set first element to 0 so scrape starts right away
         delays[0] = 0
         return delays
 
