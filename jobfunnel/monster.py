@@ -146,15 +146,11 @@ class Monster(JobFunnel):
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
-        try:
-            num_res = soup_base.find('h2', 'figure').text.strip()
-            num_res = int(re.findall(r'(\d+)', num_res)[0])
-            log_info(f'Found {num_res} monster results for query={query}')
-        except AttributeError:
-            log_info(f'Found 0 monster results for query={query}')
+        num_res = soup_base.find('h2', 'figure').text.strip()
+        num_res = int(re.findall(r'(\d+)', num_res)[0])
+        log_info(f'Found {num_res} monster results for query={query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
-
         # scrape soups for all the pages containing jobs it found
         page_url = f'{search}&start={pages}'
         log_info(f'getting monster pages 1 to {pages} : {page_url}')
