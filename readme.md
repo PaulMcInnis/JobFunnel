@@ -1,26 +1,26 @@
 ---
-<img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" />
+<img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" /><br>
 ### About
 
-As me and many others have found out, the process of job searching is very time consuming and riddled with annoyances; especially with online job boards where problems like reposts and filled jobs being posted jobs are way too common. Looking for a way to help automate this process, I found jobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
+As me and many others have found out, the job search process is very time consuming and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found jobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
 
-### Whats been done in this fork:
+### What's been done in this fork:
 
 * Implementing a delaying algorithm so that you can respectively scrape job postings. 
 * Upgrading the multi-threading module from [threading][thread] to  [concurrent.futures][conc_fut].
-* Option to save filtered duplicates to a seperate file for enhancing filtering capabilities.
+* Option to save filtered duplicates to a separate file for enhancing filtering capabilities.
 * Improving the detection accuracy of duplicate filter, and allowing for the ability to detect duplicate jobs within a single scrape dictionary.
-* Implementing a jobID filter that checks the master list and duplicate list for filtered ids, to avoid re-scraping filtered jobs.
+* Implementing a job ID filter that checks the master list and duplicate list for filtered ids, to avoid re-scraping filtered jobs.
 * Regex optimization wizardry :shipit:
 * Improving saved data content retrieved for doing data science stuff.
 * Optimizing a lot of the code to be more computationally efficient e.g. replacing for-loops with list comprehensions, or reducing usage of unnecessary repetition. 
 * Date string parsing captures almost all fringe cases and is output to a more standard format (YYYY-MM-DD). 
-* Add function ensure radius compatability between using diffrent domains(.com, .ca) and diffrent providers.
-* Other misc. things to improve user experiance. 
+* Added code that ensures radius compatibility between different domains(.com, .ca) and providers.
+* Other misc. things to improve user experience.
 
 ### Usage Notes Part 2:
 * **Saving Duplicates** <br/> 
-Duplicates can be saved by turn the option in your ``settings.yaml` file or by using the `--save_dup` flag in the command line. The duplicates file would be stored in the same directory as your master list file under the name `duplicates_list.csv`
+Duplicates can be saved by turning it on in your ``settings.yaml` file or by using the `--save_dup` flag in the command line. The duplicates file would be stored in the same directory as your master list file under the name `duplicates_list.csv`
 * **Setting Delay** <br/>
   Delay can be configured using a ``settings.yaml` file or using command line arguments.
   - `-d` lets you set your max delay value: ``funnel -s demo/settings.yaml -kw AI -d 15`
@@ -29,9 +29,9 @@ Duplicates can be saved by turn the option in your ``settings.yaml` file or by u
   - `-md` lets you set a minimum delay value: `funnel -s demo/settings.yaml -d 15 -md 5` 
   - `--fun` controls what function is used to calculate delay, where you have the choice of selecting either ``constant`,  `linear`, or `sigmoid` delay: `funnel -s demo/settings.yaml -rcd 15 -md 5 --fun sigmoid` 
 
-  To better understand how to configure delaying, check out [this Jupyter Notebook][delay_jp] I made breaking down how the delaying algorithm works with code and visualizations of how the arguments affect delaying behavior.
+  To better understand how the delaying algorithm works, check out [this Jupyter Notebook][delay_jp] I made breaking it down step by step with code and visualizations included.
 
-Since this is just a fork I will leave the original description at the bottom, which gives valuable instructions and provides credit to the original creators. Also for anyone interestested in Data Science stuff, check out [this other Jupyter Notebook][tfidf_jp] where I did some very rough exploratory analysis and experimentation with building the current implementation of the duplicate filter which uses TF-IDF and Cosine Similarity to achieve our duplicate filtering.
+Since this is just a fork I will leave the original description at the bottom, which gives valuable instructions and provides credit to the original creators. Also for anyone interested in Data Science stuff, check out [this other Jupyter Notebook][tfidf_jp] where I did some very rough exploratory analysis and experimentation while building the current implementation of the duplicate filter, which uses TF-IDF and Cosine Similarity to detect duplicates.
 
 __*Note*__: If the scraper seems slow, that is on purpose. Delaying is enabled by default and can be turned off, but I HIGHLY recommend not doing that. You can try tweaking the delay settings if it seems too slow. 
 
