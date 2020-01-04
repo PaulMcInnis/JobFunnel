@@ -48,13 +48,13 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
 
 
 # https://en.wikipedia.org/wiki/Generalised_logistic_function
-def _rich_delay(list_len: int, delay: Union[int, float]):
+def _sig_delay(list_len: int, delay: Union[int, float]):
     """ Calculates Richards/Sigmoid curve for delay"""
     gr = sqrt(delay) * 4  # Growth rate
     y_0 = log(4 * delay)  # Y(0)
     # Calculates sigmoid curve using vars rewritten to be our x
     delays = delay * expit(arange(list_len) / gr - y_0)
-    return delays.tolist()
+    return delays.tolist()  # Convert np array back to list
 
 
 def delay_alg(list_len, delay_config: Dict):
@@ -80,11 +80,12 @@ def delay_alg(list_len, delay_config: Dict):
             sys.exit(1)
 
         min_delay = delay_config['min_delay']
-        if min_delay < 0 or min_delay > delay:
-            warning("\nMinimum delay is set below 0, or higher than delay."
-                    "\nSetting to 0 and continuing execution."
-                    "\nIf this was a mistake, check your command line"
-                    " arguments or settings file. \n")
+        if min_delay < 0 or min_delay >= delay:
+            warning(
+                "\nMinimum delay is below 0, or more than or equal to delay."
+                "\nSetting to 0 and continuing execution."
+                "\nIf this was a mistake, check your command line"
+                " arguments or settings file. \n")
             min_delay = 0
 
         # Delay calculations using specified equations
@@ -93,7 +94,7 @@ def delay_alg(list_len, delay_config: Dict):
         elif delay_config['function'] == 'linear':
             delay_calcs = _lin_delay(list_len, delay)
         elif delay_config['function'] == 'sigmoid':
-            delay_calcs = _rich_delay(list_len, delay)
+            delay_calcs = _sig_delay(list_len, delay)
 
         # Check if minimum delay is above 0 and less than last element
         if 0 < min_delay < delay_calcs[-1]:

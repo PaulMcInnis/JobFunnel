@@ -41,7 +41,7 @@ delay_config:
     function: 'linear'
     # Maximum delay/upper bound for converging random delay 
     delay: 15 
-    # Minimum delay/lower bound for random delay 
+    # Minimum delay/lower bound for random delay
     min_delay: 1 
     # Random delay
     random: False

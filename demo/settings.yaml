@@ -21,8 +21,8 @@ search_terms:
   keywords:
     - 'Python'
     - 'Java'
-    #- 'Git'
-    - 'Unix'
+    - 'Git'
+    #- 'Unix'
 
 black_list:
   - 'Infox Consulting'
@@ -44,7 +44,7 @@ delay_config:
     # Maximum delay/upper bound for converging random delay
     delay: 15
     # Minimum delay/lower bound for random delay  
-    min_delay: 1 
+    min_delay: 5 
     # Random delay
     random: True 
     # Converging random delay, only used if 'random' is set to True

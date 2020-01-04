@@ -71,7 +71,8 @@ def _parse_cli():
                         type=str,
                         required=False,
                         default=None,
-                        choices=['constant', 'linear', 'sigmoid'])
+                        choices=['constant', 'linear', 'sigmoid'],
+                        help='Select a function to calculate delay times with')
 
     parser.add_argument('--log_level',
                         dest='log_level',
@@ -110,7 +111,7 @@ def _parse_cli():
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
 
-    parser.add_argument('--save_duplicates', '-sd',
+    parser.add_argument('--save_dup',
                         dest='save_duplicates',
                         action='store_true',
                         required=False,
