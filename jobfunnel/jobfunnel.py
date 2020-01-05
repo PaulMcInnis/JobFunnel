@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import pickle
+import random
 import re
 import sys
 
@@ -142,7 +143,7 @@ class JobFunnel(object):
         self.save_dup = args['save_duplicates']
         self.bs4_parser = 'lxml'
         self.scrape_data = {}
-        self.user_agent = user_agent_list[1]#random.choice(user_agent_list)
+        self.user_agent = random.choice(user_agent_list)
 
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
