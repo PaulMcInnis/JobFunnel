@@ -6,9 +6,9 @@ output_path: './'
 
 # Providers from which to search (case insensitive)
 providers:
-  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
-  - 'Monster'
   - 'Indeed'
+  - 'Monster'
+  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
    
 
 # Filters.
@@ -22,8 +22,6 @@ search_terms:
   keywords:
     - 'Python'
     - 'Java'
-    - 'Git'
-    #- 'Unix'
 
 black_list:
   - 'Infox Consulting'
@@ -33,7 +31,7 @@ black_list:
 log_level: 'info'
 
 # Saves duplicates removed by tfidf filter to duplicate_list.csv
-save_duplicates: True
+save_duplicates: False
 
 # Turn on or off delaying
 set_delay: True 

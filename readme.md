@@ -1,43 +1,5 @@
----
-<img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" /><br>
-### About
-
-As me and many others have found out, job searching is a very time consuming process and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found JobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
-
-### What's been done in this fork:
-
-* Implemented a delaying algorithm, so that you can respectively scrape job postings. 
-* Upgraded the multi-threading module [threading][thread] to  [concurrent.futures][conc_fut].
-* Added option to save filtered duplicates to a separate file for enhancing filtering capabilities and 
-* Improved the detection accuracy of the duplicate filter, as well as giving it the ability to filter duplicate jobs within a single scrape (when there's not master list to compare it to yet).
-* Implementing a job ID filter that checks the master list and duplicate list (if it exists) for filtered ids, to avoid re-scraping filtered jobs.
-* Regex optimization wizardry :shipit:
-* Added additional attributes such as search `query` used and relevant job `tags` for doing analytics stuff.
-* * Date string parsing captures almost all fringe cases and is output as 'YYYY-MM-DD'. 
-* Optimizing a lot of the code to be more computationally efficient e.g. replacing for-loops with list comprehensions, or reducing unnecessary repetition. 
-* Added code, that ensures radius compatibility between different domains(.com, .ca) and providers.
-* Other misc. things like bug fixes, or code cleanup.
-
-### Usage Notes Part 2:
-* **Saving Duplicates** <br/> 
-Duplicates can be saved by configuring it on in your ``settings.yaml` file or by using the `--save_dup` flag in the command line. The duplicates file is stored in the same directory as your `master_list.csv` file under the name `duplicates_list.csv`
-* **Setting Delay** <br/>
-  Delay can be configured using a ``settings.yaml` file or using command line arguments.
-  - `-d` lets you set your max delay value: ``funnel -s demo/settings.yaml -kw AI -d 15`
-  - `-r` lets you specify if you want to use random delaying, and uses `-d` to control the range of randoms we pull from.
-  - `-c` lets you specify if you want to use converging random delay, which is a diffrent mode of random delay where the possible random value is constrained to a smaller range over time till it becomes equal to your set delay. You need to set `-r` flag for this flag to work. Proper usage would look something like: `funnel -s demo/settings.yaml -kw AI -rcd 15`
-  - `-md` lets you set a minimum delay value: `funnel -s demo/settings.yaml -d 15 -md 5` 
-  - `--fun` controls what function is used to calculate delay, where you have the choice of selecting either ``constant`,  `linear`, or `sigmoid` delay: `funnel -s demo/settings.yaml -rcd 15 -md 5 --fun sigmoid` 
-
-  To better understand how the delaying algorithm works, check out [this Jupyter Notebook][delay_jp] I made breaking it down step by step with code and visualizations included.
-
-Since this is just a fork I'll leave the original description at the bottom, which provides valuable instructions and gives credit to the original creators. Also for anyone interested in Data Science stuff, check out [this other Jupyter Notebook][tfidf_jp] where I did some very rough exploratory analysis and experimentation while building the current implementation of the duplicate filter, which uses TF-IDF and Cosine Similarity to detect duplicates.
-
-__*Note*__: If the scraper seems slow, that's on purpose. Delaying is enabled by default and can be turned off, but I HIGHLY recommend not doing that. You can tweak the delay settings if it's too slow for you. 
-
----
-
 <img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
+<img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" >
 
 Automated tool for scraping job postings into a `.csv` file.
 
@@ -113,8 +75,25 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
   ```
   column -s, -t < master_list.csv | less -#2 -N -S
   ```
+* **Saving Duplicates** <br/> 
+  You can save removed duplicates in a separate file, which is stored in the same place as your master list: <br>
+  ```
+  funnel --save_dup
+  ```
+* **Respectful Delaying** <br/>
+  Respectfully scrape your job posts with our built-in delaying algorithm, which can be configured using a config file (see `JobFunnel/jobfunnel/config/settings.yaml`) or with command line arguments:
+  - `-d` lets you set your max delay value: ``funnel -s demo/settings.yaml -kw AI -d 15`
+  - `-r` lets you specify if you want to use random delaying, and uses `-d` to control the range of randoms we pull from: <br>
+  `funnel -s demo/settings.yaml -kw AI -r`
+  - `-c` specifies converging random delay, which is an alternative mode of random delay. Random delay needed to be turned on as well for it to work. Proper usage would look something like this: <br>
+  `funnel -s demo/settings.yaml -kw AI -r -c` 
+  - `-md` lets you set a minimum delay value: <br> 
+  `funnel -s demo/settings.yaml -d 15 -md 5` 
+  - `--fun` can be used to set which mathematical function (`constant`,  `linear`, or `sigmoid`) is used to calculate delay: <br> `funnel -s demo/settings.yaml --fun sigmoid` 
+  - `--no_delay` Turns off delaying, but it's usage is not recommended.
   
-
+  To better understand how to configure delaying, check out [this Jupyter Notebook][delay_jp] breaking down the algorithm step by step with code and visualizations.
+  
 <!-- links -->
 
 [masterlist]:demo/assests/demo.png "masterlist.csv"
@@ -125,4 +104,3 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 [conc_fut]:https://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
 [thread]: https://docs.python.org/3.8/library/threading.html
 [delay_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/delay_algorithm.ipynb
-[tfidf_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/tf_idf%20analysis.ipynb
