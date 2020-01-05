@@ -99,7 +99,7 @@ class Monster(JobFunnel):
         sleep(delay)
 
         search = job['link']
-        log_info(f'Delay={delay}\'s, getting monster search: {search}')
+        log_info(f'delay of {delay}\'s, getting monster search: {search}')
         #log_info(f'getting monster search: {search}')
 
         res = get(search, headers=self.headers).text

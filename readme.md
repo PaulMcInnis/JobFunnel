@@ -2,21 +2,21 @@
 <img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" /><br>
 ### About
 
-As me and many others have found out, job searching is a very time consuming process and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found jobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
+As me and many others have found out, job searching is a very time consuming process and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found JobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
 
 ### What's been done in this fork:
 
-* Implementing a delaying algorithm so that you can respectively scrape job postings. 
-* Upgrading the multi-threading module from [threading][thread] to  [concurrent.futures][conc_fut].
-* Added option to save filtered duplicates to a separate file for enhancing filtering capabilities.
-* Improving the detection accuracy of duplicate filter, and allowing for the ability to detect duplicate jobs within a single scrape dictionary.
-* Implementing a job ID filter that checks the master list and duplicate list for filtered ids, to avoid re-scraping filtered jobs.
+* Implemented a delaying algorithm, so that you can respectively scrape job postings. 
+* Upgraded the multi-threading module [threading][thread] to  [concurrent.futures][conc_fut].
+* Added option to save filtered duplicates to a separate file for enhancing filtering capabilities and 
+* Improved the detection accuracy of the duplicate filter, as well as giving it the ability to filter duplicate jobs within a single scrape (when there's not master list to compare it to yet).
+* Implementing a job ID filter that checks the master list and duplicate list (if it exists) for filtered ids, to avoid re-scraping filtered jobs.
 * Regex optimization wizardry :shipit:
-* Improving saved data content retrieved for doing data science stuff.
-* Optimizing a lot of the code to be more computationally efficient e.g. replacing for-loops with list comprehensions, or reducing usage of unnecessary repetition. 
-* Date string parsing captures almost all fringe cases and is output to a more standard format (YYYY-MM-DD). 
+* Added additional attributes such as search `query` used and relevant job `tags` for doing analytics stuff.
+* * Date string parsing captures almost all fringe cases and is output as 'YYYY-MM-DD'. 
+* Optimizing a lot of the code to be more computationally efficient e.g. replacing for-loops with list comprehensions, or reducing unnecessary repetition. 
 * Added code, that ensures radius compatibility between different domains(.com, .ca) and providers.
-* Other misc. things to improve user experience.
+* Other misc. things like bug fixes, or code cleanup.
 
 ### Usage Notes Part 2:
 * **Saving Duplicates** <br/> 
@@ -31,9 +31,9 @@ Duplicates can be saved by configuring it on in your ``settings.yaml` file or by
 
   To better understand how the delaying algorithm works, check out [this Jupyter Notebook][delay_jp] I made breaking it down step by step with code and visualizations included.
 
-Since this is just a fork I will leave the original description at the bottom, which gives valuable instructions and provides credit to the original creators. Also for anyone interested in Data Science stuff, check out [this other Jupyter Notebook][tfidf_jp] where I did some very rough exploratory analysis and experimentation while building the current implementation of the duplicate filter, which uses TF-IDF and Cosine Similarity to detect duplicates.
+Since this is just a fork I'll leave the original description at the bottom, which provides valuable instructions and gives credit to the original creators. Also for anyone interested in Data Science stuff, check out [this other Jupyter Notebook][tfidf_jp] where I did some very rough exploratory analysis and experimentation while building the current implementation of the duplicate filter, which uses TF-IDF and Cosine Similarity to detect duplicates.
 
-__*Note*__: If the scraper seems slow, that is on purpose. Delaying is enabled by default and can be turned off, but I HIGHLY recommend not doing that. You can try tweaking the delay settings if it seems too slow. 
+__*Note*__: If the scraper seems slow, that's on purpose. Delaying is enabled by default and can be turned off, but I HIGHLY recommend not doing that. You can tweak the delay settings if it's too slow for you. 
 
 ---
 

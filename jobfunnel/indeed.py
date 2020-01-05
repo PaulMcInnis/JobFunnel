@@ -82,7 +82,7 @@ class Indeed(JobFunnel):
         sleep(delay)
         search = job['link']
 
-        log_info(f'Delay={delay}\'s, getting indeed search: {search}')
+        log_info(f'delay of {delay}\'s, getting indeed search: {search}')
         # log_info(f'getting indeed search: {search}')
 
         res = get(search, headers=self.headers).text
