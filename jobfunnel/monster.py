@@ -99,7 +99,8 @@ class Monster(JobFunnel):
         sleep(delay)
 
         search = job['link']
-        log_info(f'getting monster search: {search}')
+        log_info(f'Delay={delay}\'s, getting monster search: {search}')
+        #log_info(f'getting monster search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
@@ -182,7 +183,8 @@ class Monster(JobFunnel):
 
             # no blurb is available in monster job soups
             job['blurb'] = ''
-
+            # Tags are not support on monster
+            job['tags'] = ''
             try:
                 job['date'] = s.find('time').text.strip()
             except AttributeError:

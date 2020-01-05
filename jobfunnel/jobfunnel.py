@@ -6,10 +6,10 @@ import json
 import logging
 import os
 import pickle
-import random
 import re
 import sys
 
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from datetime import date
 from time import time
@@ -23,8 +23,8 @@ from .tools.filters import tfidf_filter, id_filter
 REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header:
-MASTERLIST_HEADER = ['status', 'title', 'company', 'location',
-                     'date', 'blurb', 'link', 'id', 'provider', 'query']
+MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date',
+                     'blurb', 'tags', 'link', 'id', 'provider', 'query']
 
 # user agent list
 # https://developers.whatismybrowser.com/useragents/explore/
@@ -122,7 +122,6 @@ user_agent_list = [
     'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; .NET '
 ]
 
-
 class JobFunnel(object):
     """class that writes pickles to master list path and applies search
     filters """
@@ -143,7 +142,7 @@ class JobFunnel(object):
         self.save_dup = args['save_duplicates']
         self.bs4_parser = 'lxml'
         self.scrape_data = {}
-        self.user_agent = random.choice(user_agent_list)
+        self.user_agent = user_agent_list[1]#random.choice(user_agent_list)
 
         # date string for pickle files
         self.date_string = date.today().strftime("%Y-%m-%d")
@@ -295,27 +294,27 @@ class JobFunnel(object):
         else:
             logging.warning("no master-list, filter-list was not updated")
 
-    def pre_filter(self, scrape_data: Dict[str, dict], provider):
+    def pre_filter(self, data: Dict[str, dict], provider):
         """
         Function called by child classes that applies multiple filters
         before getting job blurbs
         """
         # Call id_filter for master and duplicate lists, if they exist
         if os.path.isfile(self.master_list_path):
-            id_filter(scrape_data, self.read_csv(self.master_list_path),
+            id_filter(data, self.read_csv(self.master_list_path),
                       provider)
             if os.path.isfile(self.duplicate_list_path):
-                id_filter(scrape_data, self.read_csv(
+                id_filter(data, self.read_csv(
                     self.duplicate_list_path), provider)
 
         # filter out scraped jobs we have rejected, archived or blacklisted
 
         try:
-            self.remove_jobs_in_filterlist(scrape_data)
+            self.remove_jobs_in_filterlist(data)
         except ValueError:
             pass
 
-        self.remove_blacklisted_companies(scrape_data)
+        self.remove_blacklisted_companies(data)
 
     def delay_threader(self,
                        scrape_list: List[Dict], scrape_fn, parse_fn, threads):
@@ -357,6 +356,10 @@ class JobFunnel(object):
         if self.scrape_data == {}:
             raise ValueError("No scraped jobs, cannot update masterlist")
 
+        # Converts scrape data to Ordered Dictionary to filter all duplicates
+        # with not tags first.
+        self.scrape_data = OrderedDict(sorted(self.scrape_data.items(),
+                                              key=lambda t: t[1]['tags']))
         # filter out scraped jobs we have rejected, archived or blacklisted
         self.remove_jobs_in_filterlist(self.scrape_data)
         self.remove_blacklisted_companies(self.scrape_data)

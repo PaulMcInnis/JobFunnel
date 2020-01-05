@@ -2,25 +2,25 @@
 <img src="https://travis-ci.com/bunsenmurder/JobFunnel.svg?branch=dev" alt="Build Status" /><br>
 ### About
 
-As me and many others have found out, the job search process is very time consuming and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found jobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
+As me and many others have found out, job searching is a very time consuming process and riddled with annoyances; online job boards especially, where problems like re-posts and already filled jobs being posted are way too common. Looking for a way to help automate this process, I found jobFunnel and decided to add some personal touches and fixes I think are essential for improving the tool and helping make the job search a little less garbaggio.
 
 ### What's been done in this fork:
 
 * Implementing a delaying algorithm so that you can respectively scrape job postings. 
 * Upgrading the multi-threading module from [threading][thread] to  [concurrent.futures][conc_fut].
-* Option to save filtered duplicates to a separate file for enhancing filtering capabilities.
+* Added option to save filtered duplicates to a separate file for enhancing filtering capabilities.
 * Improving the detection accuracy of duplicate filter, and allowing for the ability to detect duplicate jobs within a single scrape dictionary.
 * Implementing a job ID filter that checks the master list and duplicate list for filtered ids, to avoid re-scraping filtered jobs.
 * Regex optimization wizardry :shipit:
 * Improving saved data content retrieved for doing data science stuff.
 * Optimizing a lot of the code to be more computationally efficient e.g. replacing for-loops with list comprehensions, or reducing usage of unnecessary repetition. 
 * Date string parsing captures almost all fringe cases and is output to a more standard format (YYYY-MM-DD). 
-* Added code that ensures radius compatibility between different domains(.com, .ca) and providers.
+* Added code, that ensures radius compatibility between different domains(.com, .ca) and providers.
 * Other misc. things to improve user experience.
 
 ### Usage Notes Part 2:
 * **Saving Duplicates** <br/> 
-Duplicates can be saved by turning it on in your ``settings.yaml` file or by using the `--save_dup` flag in the command line. The duplicates file would be stored in the same directory as your master list file under the name `duplicates_list.csv`
+Duplicates can be saved by configuring it on in your ``settings.yaml` file or by using the `--save_dup` flag in the command line. The duplicates file is stored in the same directory as your `master_list.csv` file under the name `duplicates_list.csv`
 * **Setting Delay** <br/>
   Delay can be configured using a ``settings.yaml` file or using command line arguments.
   - `-d` lets you set your max delay value: ``funnel -s demo/settings.yaml -kw AI -d 15`

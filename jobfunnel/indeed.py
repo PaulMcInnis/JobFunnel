@@ -82,7 +82,8 @@ class Indeed(JobFunnel):
         sleep(delay)
         search = job['link']
 
-        log_info(f'getting indeed search: {search}')
+        log_info(f'Delay={delay}\'s, getting indeed search: {search}')
+        # log_info(f'getting indeed search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
@@ -170,6 +171,14 @@ class Indeed(JobFunnel):
                 continue
 
             job['blurb'] = ''
+
+            try:
+                table = s.find(
+                    'table', attrs={'class': 'jobCardShelfContainer'}).\
+                    find_all('td', attrs={'class': 'jobCardShelfItem'})
+                job['tags'] = "\n".join([td.text.strip() for td in table])
+            except AttributeError:
+                job['tags'] = ''
 
             try:
                 job['date'] = s.find('span', attrs={

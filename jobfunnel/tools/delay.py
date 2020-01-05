@@ -97,7 +97,7 @@ def delay_alg(list_len, delay_config: Dict):
             delay_calcs = _sig_delay(list_len, delay)
 
         # Check if minimum delay is above 0 and less than last element
-        if 0 < min_delay < delay_calcs[-1]:
+        if 0 < min_delay:
             # Sets min_delay to values greater than itself in delay_calcs
             for i, n in enumerate(delay_calcs):
                 if n > min_delay:

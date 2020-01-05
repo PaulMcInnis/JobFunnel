@@ -6,9 +6,10 @@ output_path: './'
 
 # Providers from which to search (case insensitive)
 providers:
-  - 'Indeed'
-  - 'Monster'
   - 'GlassDoor' # This used to take ~10x longer to run than the other providers
+  - 'Monster'
+  - 'Indeed'
+   
 
 # Filters.
 search_terms:
@@ -32,7 +33,7 @@ black_list:
 log_level: 'info'
 
 # Saves duplicates removed by tfidf filter to duplicate_list.csv
-save_duplicates: False
+save_duplicates: True
 
 # Turn on or off delaying
 set_delay: True 
@@ -40,11 +41,11 @@ set_delay: True
 # Delaying algorithm configuration
 delay_config:
     # Functions used for delaying algorithm, options are: constant, linear, sigmoid
-    function: 'sigmoid'
+    function: 'linear'
     # Maximum delay/upper bound for converging random delay
-    delay: 15
+    delay: 30
     # Minimum delay/lower bound for random delay  
-    min_delay: 5 
+    min_delay: 15 
     # Random delay
     random: True 
     # Converging random delay, only used if 'random' is set to True

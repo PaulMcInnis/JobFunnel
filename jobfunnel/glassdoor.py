@@ -1,4 +1,5 @@
 import re
+from typing import Dict, Any, Union
 
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -124,7 +125,8 @@ class GlassDoor(JobFunnel):
         sleep(delay)
 
         search = job['link']
-        log_info(f'getting glassdoor search: {search}')
+        log_info(f'delay of {delay}\'s, getting glassdoor search: {search}')
+        #log_info(f'getting glassdoor search: {search}')
 
         res = post(search, headers=self.location_headers).text
         return job, res
@@ -236,7 +238,14 @@ class GlassDoor(JobFunnel):
                 continue
 
             # Set blurb to none for now
-            job['blurb'] = None
+            job['blurb'] = ''
+
+            try:
+                labels = s.find_all('div', attrs={'class', 'jobLabel'})
+                job['tags'] = "\n".join([l.text.strip() for l in labels
+                                         if l.text.strip() != 'New'])
+            except AttributeError:
+                job['tags'] = ''
 
             try:
                 job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
@@ -259,7 +268,6 @@ class GlassDoor(JobFunnel):
 
             # key by id
             self.scrape_data[str(job['id'])] = job
-
         # Apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 
