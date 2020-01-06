@@ -9,7 +9,9 @@ requires = ['beautifulsoup4>=4.6.3',
             'requests>=2.19.1',
             'python-dateutil>=2.8.0',
             'PyYAML>=5.1',
-            'scikit-learn==0.21.2',
+            'scikit-learn>=0.21.2',
+            'nltk >= 3.4.1',
+            'scipy >= 1.4.1',
             ]
 
 with open('readme.md', 'r') as f:
@@ -20,7 +22,7 @@ setup(
     version              = version,
     description          = description,
     long_description     = readme,
-    author               = 'Paul McInnis, Bradley Kohler, Jose Alarcon',
+    author               = 'Paul McInnis, Bradley Kohler, Jose Alarcon, Erich Mengore',
     author_email         = 'paulmcinnis99@gmail.com',
     url                  = url,
     license              = 'MIT License',

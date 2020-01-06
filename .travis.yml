@@ -1,7 +1,8 @@
 language: python
 python:
-  - '3.6'
+  - '3.6.9'
 install:
   - 'pip install pipenv'
   - 'pipenv sync'
+  - 'python -m nltk.downloader stopwords'
 script: 'python -m jobfunnel -s demo/settings.yaml -o demo/'

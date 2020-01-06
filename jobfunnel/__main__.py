@@ -12,6 +12,7 @@ from .glassdoor import GlassDoor
 
 providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
+
 def main():
     """Main function.
 
@@ -47,7 +48,9 @@ def main():
     jp.update_masterlist()
 
     # done!
-    jp.logger.info("done. see un-archived jobs in " + config['master_list_path'])
+    jp.logger.info(
+        "done. see un-archived jobs in " + config['master_list_path'])
+
 
 if __name__ == '__main__':
     main()
