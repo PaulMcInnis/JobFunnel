@@ -1,5 +1,5 @@
 <img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
-<img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" />
+<img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" >
 
 Automated tool for scraping job postings into a `.csv` file.
 
@@ -75,8 +75,25 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
   ```
   column -s, -t < master_list.csv | less -#2 -N -S
   ```
+* **Saving Duplicates** <br/> 
+  You can save removed duplicates in a separate file, which is stored in the same place as your master list: <br>
+  ```
+  funnel --save_dup
+  ```
+* **Respectful Delaying** <br/>
+  Respectfully scrape your job posts with our built-in delaying algorithm, which can be configured using a config file (see `JobFunnel/jobfunnel/config/settings.yaml`) or with command line arguments:
+  - `-d` lets you set your max delay value: ``funnel -s demo/settings.yaml -kw AI -d 15`
+  - `-r` lets you specify if you want to use random delaying, and uses `-d` to control the range of randoms we pull from: <br>
+  `funnel -s demo/settings.yaml -kw AI -r`
+  - `-c` specifies converging random delay, which is an alternative mode of random delay. Random delay needed to be turned on as well for it to work. Proper usage would look something like this: <br>
+  `funnel -s demo/settings.yaml -kw AI -r -c` 
+  - `-md` lets you set a minimum delay value: <br> 
+  `funnel -s demo/settings.yaml -d 15 -md 5` 
+  - `--fun` can be used to set which mathematical function (`constant`,  `linear`, or `sigmoid`) is used to calculate delay: <br> `funnel -s demo/settings.yaml --fun sigmoid` 
+  - `--no_delay` Turns off delaying, but it's usage is not recommended.
   
-
+  To better understand how to configure delaying, check out [this Jupyter Notebook][delay_jp] breaking down the algorithm step by step with code and visualizations.
+  
 <!-- links -->
 
 [masterlist]:demo/assests/demo.png "masterlist.csv"
@@ -84,3 +101,6 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 [demo]:demo/readme.md
 [cron]:https://en.wikipedia.org/wiki/Cron
 [cron_doc]:docs/crontab/readme.md
+[conc_fut]:https://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
+[thread]: https://docs.python.org/3.8/library/threading.html
+[delay_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/delay_algorithm.ipynb

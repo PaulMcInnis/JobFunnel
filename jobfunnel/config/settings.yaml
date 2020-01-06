@@ -9,7 +9,7 @@ output_path: 'search'
 providers:
   - 'Indeed'
   - 'Monster'
-  - 'GlassDoor' # This takes ~10x longer to run than the other providers
+  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
 
 # Filters.
 search_terms:
@@ -28,3 +28,22 @@ black_list:
 
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: 'info'
+
+# Saves duplicates removed by tfidf filter to duplicate_list.csv
+save_duplicates: False
+
+# Turn on or off delaying
+set_delay: True 
+
+# Delaying algorithm configuration
+delay_config:
+    # Functions used for delaying algorithm, options are: constant, linear, sigmoid
+    function: 'linear'
+    # Maximum delay/upper bound for converging random delay 
+    delay: 15 
+    # Minimum delay/lower bound for random delay
+    min_delay: 1 
+    # Random delay
+    random: False
+    # Converging random delay, only used if 'random' is set to True
+    converge: False 
