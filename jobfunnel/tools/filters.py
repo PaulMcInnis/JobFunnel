@@ -48,6 +48,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     except LookupError:
         try:
             nltk.download('stopwords', quiet=True)
+            stopwords = nltk.corpus.stopwords.words('english')
         except Exception as e:
             print(e)
 
