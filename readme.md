@@ -29,8 +29,8 @@ funnel --help
 If you want to develop JobFunnel, you may want to install it in-place:
 
 ```
-git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnel
-pip install -e ./jobfunnel
+git clone https://github.com/PaulMcInnis/JobFunnel.git jobfunnel
+pip3 install -e ./jobfunnel
 funnel --help
 ```
 
