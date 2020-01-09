@@ -1,14 +1,14 @@
-#!python
+#!/usr/bin/env python3
 """Main script.
 
 Scrapes data off several listings, pickles it, and applies search filters.
 """
-from .config.parser import parse_config
+from config.parser import parse_config
 
-from .jobfunnel import JobFunnel
-from .indeed import Indeed
-from .monster import Monster
-from .glassdoor import GlassDoor
+from jobfunnel import JobFunnel
+from indeed import Indeed
+from monster import Monster
+from glassdoor import GlassDoor
 
 providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
@@ -17,8 +17,10 @@ def main():
     """Main function.
 
     """
+    print("main#1")
     config = parse_config()
-
+    print("config easy_apply:", config['easy_apply'])
+    return
     # init class + logging
     jp = JobFunnel(config)
     jp.init_logging()
