@@ -82,17 +82,51 @@ class GlassDoor(JobFunnel):
             elif radius >= 200:
                 radius = 200
 
-            glassdoor_radius = {
-                0: 0,
-                10: 6,
-                20: 12,
-                30: 19,
-                50: 31,
-                100: 62,
-                200: 124
-            }
+        glassdoor_radius = {
+            0: 0,
+            10: 6,
+            20: 12,
+            30: 19,
+            50: 31,
+            100: 62,
+            200: 124
+        }
 
-            return glassdoor_radius[radius]
+        return glassdoor_radius[radius]
+
+    def get_glassdoor_request_html(self, query, domain, city, radius):
+        """gets the glassdoor request html"""
+        # form the location lookup request data
+        data = {
+            'term': city,
+            'maxLocationsToReturn': 10
+        }
+
+        # form the location lookup url
+        location_url = \
+            'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
+
+        # get the location id for search location
+        location_response = \
+            post(location_url, headers=self.location_headers, data=data).json()
+
+        # form the job search data
+        data = {
+            'clickSource': 'searchBtn',
+            'sc.keyword': query,
+            'locT': 'C',
+            'locId': location_response[0]['locationId'],
+            'jobType': '',
+            'radius': radius
+        }
+
+        # form the job serach url
+        job_listing_url = f'https://www.glassdoor.{domain}/Job/jobs.htm'
+
+        # get the html data, initialize bs4 with lxml
+        request_html = post(job_listing_url, headers=self.headers, data=data)
+
+        return request_html
 
     def search_glassdoor_page_for_job_soups(self, data, page, url, job_s_list):
         """function that scrapes the glassdoor page for a list of job soups"""
@@ -125,8 +159,7 @@ class GlassDoor(JobFunnel):
         sleep(delay)
 
         search = job['link']
-        log_info(f'delay of {delay}\'s, getting glassdoor search: {search}')
-        #log_info(f'getting glassdoor search: {search}')
+        log_info(f'delay of {delay:.2}s, getting glassdoor search: {search}')
 
         res = post(search, headers=self.location_headers).text
         return job, res
@@ -147,41 +180,16 @@ class GlassDoor(JobFunnel):
         """function that scrapes job posting from glassdoor and pickles it"""
         log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
-        # form the query string
-        query = '-'.join(self.search_terms['keywords'])
-        # write region dict to vars, to reduce lookup load in loops
-        domain = self.search_terms['region']['domain']
-        city = self.search_terms['region']['city']
-        radius = self.convert_glassdoor_radius(
-            self.search_terms['region']['radius'])
+        # get the request html
+        request_html = self.get_glassdoor_request_html(
+            '-'.join(self.search_terms['keywords']),
+            self.search_terms['region']['domain'],
+            self.search_terms['region']['city'],
+            self.convert_glassdoor_radius(
+                self.search_terms['region']['radius']))
 
-        data = {
-            'term': city,
-            'maxLocationsToReturn': 10
-        }
-
-        location_url = \
-            'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
-
-        # get the location id for search location
-        location_response = \
-            post(location_url, headers=self.location_headers, data=data).json()
-
-        job_listing_url = f'https://www.glassdoor.{domain}/Job/jobs.htm'
-
-        # form data to get job results
-        data = {
-            'clickSource': 'searchBtn',
-            'sc.keyword': query,
-            'locT': 'C',
-            'locId': location_response[0]['locationId'],
-            'jobType': '',
-            'radius': radius
-        }
-
-        # get the HTML data, initialize bs4 with lxml
-        request_HTML = post(job_listing_url, headers=self.headers, data=data)
-        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
+        # create the soup base
+        soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
@@ -204,7 +212,7 @@ class GlassDoor(JobFunnel):
             if page == 1:
                 fts.append(  # Append thread job future to futures list
                     threads.submit(self.search_glassdoor_page_for_job_soups,
-                                   data, page, request_HTML.url, job_soup_list)
+                                   data, page, request_html.url, job_soup_list)
                 )
             else:
                 # Gets partial url for next page

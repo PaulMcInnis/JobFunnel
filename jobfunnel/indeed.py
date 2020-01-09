@@ -50,6 +50,21 @@ class Indeed(JobFunnel):
             radius = 100
         return radius
 
+    def get_indeed_request_html(
+            self, query, domain, city, province, radius):
+        """gets the indeed request html"""
+        # form job search url
+        search = (f'http://www.indeed.{domain}'
+                  f'/jobs?q={query}&l={city}%2C+{province}'
+                  f"&radius={radius}"
+                  f"&limit={self.max_results_per_page}"
+                  f"&filter={int(self.similar_results)}")
+
+        # get the html data, initialize bs4 with lxml
+        request_html = get(search, headers=self.headers)
+
+        return request_html
+
     def search_indeed_page_for_job_soups(self, search, page, job_soup_list):
         """function that scrapes the indeed page for a list of job soups"""
         url = f'{search}&start={int(page * self.max_results_per_page)}'
@@ -80,10 +95,9 @@ class Indeed(JobFunnel):
     def get_blurb_in_w_dly(self, job, delay):
         """gets blurb from indeed job link and sets delays for requests"""
         sleep(delay)
-        search = job['link']
 
-        log_info(f'delay of {delay}\'s, getting indeed search: {search}')
-        # log_info(f'getting indeed search: {search}')
+        search = job['link']
+        log_info(f'delay of {delay:.2}s, getting indeed search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
@@ -104,28 +118,17 @@ class Indeed(JobFunnel):
         """function that scrapes job posting from indeed and pickles it"""
         log_info(f'jobfunnel indeed to pickle running @ {self.date_string}')
 
-        # ID regex quantifier
-        id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
+        # get the request html
+        request_html = self.get_indeed_request_html(
+            '+'.join(self.search_terms['keywords']),
+            self.search_terms['region']['domain'],
+            self.search_terms['region']['city'],
+            self.search_terms['region']['province'],
+            self.convert_indeed_radius(
+                self.search_terms['region']['radius']))
 
-        # form the query string
-        query = '+'.join(self.search_terms['keywords'])
-        # write region dict to vars, to reduce lookup load in loops
-        domain = self.search_terms['region']['domain']
-        city = self.search_terms['region']['city']
-        province = self.search_terms['region']['province']
-        radius = self.convert_indeed_radius(
-            self.search_terms['region']['radius'])
-
-        # form job search url
-        search = (f'http://www.indeed.{domain}'
-                  f'/jobs?q={query}&l={city}%2C+{province}'
-                  f"&radius={radius}"
-                  f"&limit={self.max_results_per_page}"
-                  f"&filter={int(self.similar_results)}")
-
-        # get the HTML data, initialize bs4 with lxml
-        request_HTML = get(search, headers=self.headers)
-        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
+        # create the soup base
+        soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # Parse total results, and calculate the # of pages needed
         # Now with less regex!
@@ -188,6 +191,7 @@ class Indeed(JobFunnel):
 
             try:
                 # Added capture group so to only capture id once matched.
+                id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
                 job['link'] = (f"http://www.indeed.{domain}"

@@ -76,6 +76,19 @@ class Monster(JobFunnel):
 
         return radius
 
+    def get_monster_request_html(
+            self, query, domain, city, province, radius):
+        """gets the monster request html"""
+        # form job search url
+        search = (f'https://www.monster.{domain}'
+                  f'/jobs/search/?q={query}'
+                  f'&where={city}__2C-{province}'
+                  f'&intcid=skr_navigation_nhpso_searchMain'
+                  f'&rad={radius}&where={city}__2c-{province}')
+
+        # get the html data, initialize bs4 with lxml
+        request_html = get(search, headers=self.headers)
+
     def search_monster_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
@@ -99,8 +112,7 @@ class Monster(JobFunnel):
         sleep(delay)
 
         search = job['link']
-        log_info(f'delay of {delay}\'s, getting monster search: {search}')
-        #log_info(f'getting monster search: {search}')
+        log_info(f'delay of {delay:.2}s, getting monster search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
@@ -125,25 +137,17 @@ class Monster(JobFunnel):
         id_regex = re.compile(r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f'
                               r']{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
 
-        # form the query string
-        query = '-'.join(self.search_terms['keywords'])
-        # write region dict to vars, to reduce lookup load in loops
-        domain = self.search_terms['region']['domain']
-        city = self.search_terms['region']['city']
-        province = self.search_terms['region']['province']
-        radius = self.convert_monster_radius(
-            self.search_terms['region']['radius'])
+        # get the request html
+        request_html = get_monster_request_html(
+            '-'.join(self.search_terms['keywords']),
+            self.search_terms['region']['domain'],
+            self.search_terms['region']['city'],
+            self.search_terms['region']['province'],
+            self.convert_monster_radius(
+                self.search_terms['region']['radius']))
 
-        # build the job search URL
-        search = (f'https://www.monster.{domain}'
-                  f'/jobs/search/?q={query}'
-                  f'&where={city}__2C-{province}'
-                  f'&intcid=skr_navigation_nhpso_searchMain'
-                  f'&rad={radius}&where={city}__2c-{province}')
-
-        # get the HTML data, initialize bs4 with lxml
-        request_HTML = get(search, headers=self.headers)
-        soup_base = BeautifulSoup(request_HTML.text, self.bs4_parser)
+        # create the soup base
+        soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         # Now with less regex!
