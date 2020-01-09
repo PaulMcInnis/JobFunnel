@@ -19,7 +19,8 @@ def main():
     """
     print("main#1")
     config = parse_config()
-    print("config easy_apply:", config['easy_apply'])
+    print("main#2")
+    # print("config easy_apply:", config['easy_apply'])
     return
     # init class + logging
     jp = JobFunnel(config)

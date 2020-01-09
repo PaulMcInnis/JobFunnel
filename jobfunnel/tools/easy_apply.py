@@ -47,7 +47,7 @@ def count_csv_rows(csvfile):
     return count
 
 
-def jobfunnel_easy_apply(parser):
+def jobfunnel_easy_apply(output_file, input_file, status, number_of_times):
     """
     This modeule integrates and uses JobFunnel. It is especifically designed to work with JobFunnel.
     It will randomly open up as many tabs as you tell it to on your browser from your master_list file that
@@ -57,7 +57,9 @@ def jobfunnel_easy_apply(parser):
     the status you passed.
     Hope it helps you on your job hunting as much as it has helped me :).
     """
-    args = parser.parse_args()
+    print("running jobfunnel_easy_apply:",[output_file,input_file,status,number_of_times])
+    return
+    # args = parser.parse_args()
     input_file = args.input
     output_file = args.output
     status = args.status
@@ -130,6 +132,7 @@ def standalone_easy_apply():
     The default status is 'archive'. After running the easy_apply function, you should see a "updated_master_list.csv" file
     on the same directory you ran the script on. And your master_list.csv file should have some updated rows with
     the status you passed.
+    This "standalone" version for those who want to experiment and run it directly from the command line :).
     Hope it helps you on your job hunting as much as it has helped me :).
     """
     parser = argparse.ArgumentParser()
