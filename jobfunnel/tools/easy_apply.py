@@ -67,7 +67,7 @@ def easy_apply(output_file, input_file, status, number_of_times):
     print("running jobfunnel_easy_apply:",[output_file,input_file,status,number_of_times])
     # args = parser.parse_args()
 
-    if not(status.lower() in ["archive", "interview", "offer", "new"]):
+    if not(status.lower() in ["archive", "interview", "offer"):
         print("invalid status")
         print("Must pass one of these as status:",["archive", "interview", "offer"] )
         return
