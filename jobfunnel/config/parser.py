@@ -5,7 +5,7 @@ import argparse
 import logging
 import os
 import yaml
-from .tools import easy_apply
+from tools import easy_apply
 
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
