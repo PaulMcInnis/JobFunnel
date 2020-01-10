@@ -117,7 +117,7 @@ Once you have your scraped "master_list.csv" file, you can start using easy_appl
 	cd JobFunnel/jobfunnel
 
 
-**Make sure that the "data" and "search" folders which contains the master_list are on this directory. Copy them to this directory if you have to.**
+**Make sure that the "data" and "search" folders which contains the master_list are on this directory. Copy them to this directory if you have to. Make sure that there is a "settings.yaml" in "JobFunnel/jobfunnel" as well.**
 
 	./__main__.py easy_apply --ea_number 2
 	
