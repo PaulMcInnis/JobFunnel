@@ -3,7 +3,7 @@
 
 Scrapes data off several listings, pickles it, and applies search filters.
 """
-from config.parser import parse_config
+from .config.parser import parse_config
 
 from jobfunnel import JobFunnel
 from indeed import Indeed
