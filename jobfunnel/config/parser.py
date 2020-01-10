@@ -24,7 +24,7 @@ def _parse_easy_apply(parser):
     easy_apply_parser.add_argument("--ea_status","--status", help="The new status the random jobs will be marked with. The default is 'archive'.",
                         default='archive')
     easy_apply_parser.add_argument("--ea_number","--number_of_times", help="Number of jobs to apply to",default=1)
-    easy_apply_parser.set_defaults(func=easy_apply.jobfunnel_easy_apply, which="easy_apply")
+    easy_apply_parser.set_defaults(func=easy_apply.easy_apply, which="easy_apply")
 
 
 def _config_easy_apply_args(config, args):
