@@ -5,10 +5,10 @@ Scrapes data off several listings, pickles it, and applies search filters.
 """
 from .config.parser import parse_config
 
-from jobfunnel import JobFunnel
-from indeed import Indeed
-from monster import Monster
-from glassdoor import GlassDoor
+from .jobfunnel import JobFunnel
+from .indeed import Indeed
+from .monster import Monster
+from .glassdoor import GlassDoor
 
 providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
