@@ -38,10 +38,6 @@ def _parse_cli():
 
     parser = argparse.ArgumentParser('CLI options take precedence over settings in the yaml file'
         'empty arguments are replaced by settings in the default yaml file')
-    print("_parse_easy_apply")
-    # parser.set_defaults(which='job_funnel')
-    # args = parser.parse_args()
-    # print("easy_apply value:", args.easy_apply)
     parser.add_argument('-s',
                         dest='settings',
                         type=str,
@@ -157,12 +153,7 @@ def parse_config():
     default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
 
     # parse the command line arguments
-    print("parse_config#1")
     cli = _parse_cli()
-    print("parse_config#2")
-    # print("cli.easy_apply=", cli.easy_apply)
-    print("calling easy_apply function...")
-    # print("namespace object=", cli["job_funnel"])
     # parse the settings file for the line arguments
     given_yaml = None
     given_yaml_path = None

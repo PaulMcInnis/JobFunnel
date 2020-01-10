@@ -18,7 +18,6 @@ def main():
 
     """
     config = parse_config()
-    # print("config easy_apply:", config['easy_apply'])
     # Call easy_apply and update master_list if the sub-command was passed
     if config['easy_apply'] is not None:
         config['easy_apply_func'](config['ea_output'],config['master_list_path'],config['ea_status'],config['ea_number'])
