@@ -106,7 +106,7 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 [thread]: https://docs.python.org/3.8/library/threading.html
 [delay_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/delay_algorithm.ipynb
 
-###easy_apply extension
+### easy_apply extension
 
 The easy_apply extension nicely integrates with JobFunnel to make your job search even easier!
 
