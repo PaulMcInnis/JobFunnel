@@ -9,6 +9,7 @@ Automated tool for scraping job postings into a `.csv` file.
 * Browse all search results at once, in an easy to read/sort spreadsheet.
 * Keep track of all explicitly new job postings in your area.
 * See jobs from multiple job search sites all in one place.
+* Now with the easy_apply extension, you can manipulate the csv and browse your jobs directly from the terminal.
 
 The spreadsheet for managing your job search:
 
@@ -104,3 +105,46 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 [conc_fut]:https://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
 [thread]: https://docs.python.org/3.8/library/threading.html
 [delay_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/delay_algorithm.ipynb
+
+###easy_apply extension
+
+The easy_apply extension nicely integrates with JobFunnel to make your job search even easier!
+
+It will open as many browser tabs as you tell it to with randomly selected job links. It also marks those same jobs with a custom status of your choosing(the default is "archive")
+
+Once you have your scraped "master_list.csv" file, you can start using easy_apply.
+
+	cd JobFunnel/jobfunnel
+
+
+**Make sure that the "data" and "search" folders which contains the master_list are on this directory. Copy them to this directory if you have to.**
+
+	./__main__.py easy_apply --ea_number 2
+	
+
+
+Two browser tabs should open up for your job applications.
+These two jobs will be marked as "archive" in the csv master_list.
+
+
+
+You can also set a specific status for the jobs you are applying for
+
+	./__main__.py easy_apply --ea_number 2 --ea_status offer
+
+
+Two browser tabs should open up for your job applications.
+These two jobs will be marked as "offer" in the csv master_list.
+
+Or you could do no arguments:
+
+	./__main__.py easy_apply
+
+One browser tab should open up for your job application.
+This job will be marked as "archive" in the csv master_list.
+
+I apologize this isn't nicely packaged yet. Hopefully I'll be able to packge it by the end of this week -- 1/09/2020.
+
+
+	
+

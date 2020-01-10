@@ -17,11 +17,13 @@ def main():
     """Main function.
 
     """
-    print("main#1")
     config = parse_config()
-    print("main#2")
     # print("config easy_apply:", config['easy_apply'])
-    return
+    # Call easy_apply and update master_list if the sub-command was passed
+    if config['easy_apply'] is not None:
+        config['easy_apply_func'](config['ea_output'],config['master_list_path'],config['ea_status'],config['ea_number'])
+        return
+
     # init class + logging
     jp = JobFunnel(config)
     jp.init_logging()

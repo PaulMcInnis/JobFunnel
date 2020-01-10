@@ -16,28 +16,30 @@ def _parse_easy_apply(parser):
     """
     Parse the arguments for the easy_apply sub-command.
     """
-    subparsers = parser.add_subparsers()
-
+    #Give the easy_apply sub-command a name
+    subparsers = parser.add_subparsers(dest="easy_apply")
     easy_apply_parser = subparsers.add_parser('easy_apply')
-    # easy_apply_parser.dest="easy_apply"
     easy_apply_parser.add_argument("--ea_output","--output", help="The contents of the new csv are dumped onto this file. The default is 'updated_master_list.csv'",
                         default='updated_master_list.csv')
-    easy_apply_parser.add_argument("--ea_input","--input", help="This is the csv that is getting scanned. The default value is 'master_list.csv'",
-                        default='master_list.csv')
     easy_apply_parser.add_argument("--ea_status","--status", help="The new status the random jobs will be marked with. The default is 'archive'.",
                         default='archive')
     easy_apply_parser.add_argument("--ea_number","--number_of_times", help="Number of jobs to apply to",default=1)
-    easy_apply_parser.set_defaults(func=easy_apply.jobfunnel_easy_apply)
+    easy_apply_parser.set_defaults(func=easy_apply.jobfunnel_easy_apply, which="easy_apply")
 
+
+def _config_easy_apply_args(config, args):
+    config['ea_output'] = args.ea_output
+    config['ea_status'] = args.ea_status
+    config['ea_number'] = args.ea_number
+    config['easy_apply_func'] = args.func
 def _parse_cli():
     """Parse the command line arguments.
-
     """
 
-    parser = argparse.ArgumentParser(
-        'CLI options take precedence over settings in the yaml file'
+    parser = argparse.ArgumentParser('CLI options take precedence over settings in the yaml file'
         'empty arguments are replaced by settings in the default yaml file')
     print("_parse_easy_apply")
+    # parser.set_defaults(which='job_funnel')
     # args = parser.parse_args()
     # print("easy_apply value:", args.easy_apply)
     parser.add_argument('-s',
@@ -158,10 +160,9 @@ def parse_config():
     print("parse_config#1")
     cli = _parse_cli()
     print("parse_config#2")
-    print("cli.easy_apply=", cli.ea_output)
+    # print("cli.easy_apply=", cli.easy_apply)
     print("calling easy_apply function...")
-    cli.func(cli.ea_output,cli.ea_input,cli.ea_status,cli.ea_number)
-    print("returned from easy_apply function")
+    # print("namespace object=", cli["job_funnel"])
     # parse the settings file for the line arguments
     given_yaml = None
     given_yaml_path = None
@@ -171,10 +172,6 @@ def parse_config():
 
     # prepare the configuration dictionary
     config = {}
-    # easy_apply_args
-    print("config assignment")
-    # config["easy_apply"] = cli.easy_apply.parse_args()
-    # print("config easy_apply:", config['easy_apply'])
     # parse the data path
     config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
     config['master_list_path'] = os.path.join(
@@ -189,7 +186,9 @@ def parse_config():
             given_yaml_path, given_yaml['output_path'], 'master_list.csv')
         config['duplicate_list_path'] = os.path.join(
             given_yaml_path, given_yaml['output_path'], 'duplicate_list.csv')
-
+    config['easy_apply'] = cli.easy_apply
+    if config['easy_apply'] is not None:
+        _config_easy_apply_args(config, cli)
     if cli.output_path is not None:
         config['data_path'] = os.path.join(cli.output_path, 'data')
         config['master_list_path'] = os.path.join(

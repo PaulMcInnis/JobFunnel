@@ -23,8 +23,6 @@ def duplicate_csv(new_file, old_file):
     this_new_file = csv.writer(new_file, delimiter=',')
     this_old_file = csv.reader(old_file, delimiter=',')
     for row in this_old_file:
-        if row[0] != "new":
-            print(f"row {row} is a problem")
         this_new_file.writerow(row)
     new_file.seek(0)
     old_file.seek(0)
@@ -58,16 +56,13 @@ def jobfunnel_easy_apply(output_file, input_file, status, number_of_times):
     Hope it helps you on your job hunting as much as it has helped me :).
     """
     print("running jobfunnel_easy_apply:",[output_file,input_file,status,number_of_times])
-    return
     # args = parser.parse_args()
-    input_file = args.input
-    output_file = args.output
-    status = args.status
+
     if not(status.lower() in ["archive", "interview", "offer"]):
         print("invalid status")
         print("Must pass one of these as as status:",["archive", "interview", "offer"] )
         return
-    number_of_times = int(args.number_of_times)
+    number_of_times = int(number_of_times)
     if number_of_times>=30:
         print(f"Are you sure you want to open {number_of_times} tabs on your browser? This could make a low-spec system crash.\n \
                To go on, type 'y' and ENTER to proceed. Type 'n' to cancel this session.")
@@ -132,7 +127,7 @@ def standalone_easy_apply():
     The default status is 'archive'. After running the easy_apply function, you should see a "updated_master_list.csv" file
     on the same directory you ran the script on. And your master_list.csv file should have some updated rows with
     the status you passed.
-    This "standalone" version for those who want to experiment and run it directly from the command line :).
+    This "standalone" version is for those who want to experiment and run it directly from the command line :).
     Hope it helps you on your job hunting as much as it has helped me :).
     """
     parser = argparse.ArgumentParser()
