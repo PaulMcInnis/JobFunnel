@@ -30,10 +30,11 @@ class Indeed(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
+        self.query = '+'.join(self.search_terms['keywords'])
 
-    def convert_indeed_radius(self, radius):
-        """function that quantizes the user input radius to a valid radius
-            value: 5, 10, 15, 25, 50, 100, and 200 kilometers or miles"""
+    def convert_radius(self, radius):
+        """function that quantifies the user input radius to a valid radius
+           value: 5, 10, 15, 25, 50, 100, and 200 kilometers or miles"""
         if radius < 5:
             radius = 0
         elif 5 <= radius < 10:
@@ -50,33 +51,39 @@ class Indeed(JobFunnel):
             radius = 100
         return radius
 
-    def get_indeed_request_html(
-            self, query, domain, city, province, radius):
-        """gets the indeed request html"""
-        # form job search url
-        search = (f'http://www.indeed.{domain}'
-                  f'/jobs?q={query}&l={city}%2C+{province}'
-                  f"&radius={radius}"
-                  f"&limit={self.max_results_per_page}"
-                  f"&filter={int(self.similar_results)}")
+    def get_search_url(self, method='get'):
+        """gets the indeed search url"""
+        if method is 'get':
+            # form job search url
+            search = ('http://www.indeed.{0}/jobs?'
+                      'q={1}&1={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
+                self.search_terms['region']['domain'],
+                self.query,
+                self.search_terms['region']['city'],
+                self.search_terms['region']['province'],
+                self.convert_radius(self.search_terms['region']['radius']),
+                self.max_results_per_page,
+                int(self.similar_results)))
 
-        # get the html data, initialize bs4 with lxml
-        request_html = get(search, headers=self.headers)
+            return search
+        elif method is 'post':
+            # @TODO implement get style for indeed
+            raise NotImplementedError()
+        else:
+            raise ValueError(f"No html method {method} exists")
 
-        return request_html
-
-    def search_indeed_page_for_job_soups(self, search, page, job_soup_list):
+    def search_page_for_job_soups(self, search, page, job_soup_list):
         """function that scrapes the indeed page for a list of job soups"""
         url = f'{search}&start={int(page * self.max_results_per_page)}'
         log_info(f'getting indeed page {page} : {url}')
 
         jobs = BeautifulSoup(
-            get(url, headers=self.headers).text, self.bs4_parser).\
+            get(url, headers=self.headers).text, self.bs4_parser). \
             find_all('div', attrs={'data-tn-component': 'organicJob'})
 
         job_soup_list.extend(jobs)
 
-    def search_indeed_joblink_for_blurb(self, job):
+    def search_joblink_for_blurb(self, job):
         """function that scrapes the indeed job link for the blurb"""
         search = job['link']
         log_info(f'getting indeed page: {search}')
@@ -92,17 +99,17 @@ class Indeed(JobFunnel):
 
         filter_non_printables(job)
 
-    def get_blurb_in_w_dly(self, job, delay):
+    def get_blurb_with_delay(self, job, delay):
         """gets blurb from indeed job link and sets delays for requests"""
         sleep(delay)
 
         search = job['link']
-        log_info(f'delay of {delay:.2}s, getting indeed search: {search}')
+        log_info(f'delay of {delay:.2f}s, getting indeed search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
 
-    def parse_blurb_in(self, job, html):
+    def parse_blurb(self, job, html):
         """parses and stores job description into dict entry"""
         job_link_soup = BeautifulSoup(html, self.bs4_parser)
 
@@ -118,42 +125,36 @@ class Indeed(JobFunnel):
         """function that scrapes job posting from indeed and pickles it"""
         log_info(f'jobfunnel indeed to pickle running @ {self.date_string}')
 
-        # get the request html
-        request_html = self.get_indeed_request_html(
-            '+'.join(self.search_terms['keywords']),
-            self.search_terms['region']['domain'],
-            self.search_terms['region']['city'],
-            self.search_terms['region']['province'],
-            self.convert_indeed_radius(
-                self.search_terms['region']['radius']))
+        # get the search url
+        search = self.get_search_url()
+
+        # get the html data, initialize bs4 with lxml
+        request_html = get(search, headers=self.headers)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
-        # Parse total results, and calculate the # of pages needed
-        # Now with less regex!
+        # parse total results, and calculate the # of pages needed
         num_res = soup_base.find(id='searchCountPages').contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
-        log_info(f'Found {num_res} indeed results for query={query}')
+        log_info(f'Found {num_res} indeed results for query='
+                 f'{self.query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
 
-        # Init list of job soups
+        # init list of job soups
         job_soup_list = []
-        # Init threads
+        # init threads
         threads = ThreadPoolExecutor(max_workers=8)
-        # Init futures list
+        # init futures list
         fts = []
-
-        # Replaces plus signs with dashes for storing query in master_list
-        query = query.replace('+', '-')
 
         # scrape soups for all the pages containing jobs it found
         for page in range(0, pages):
-            fts.append(  # Append thread job future to futures list
-                threads.submit(self.search_indeed_page_for_job_soups,
+            fts.append(  # append thread job future to futures list
+                threads.submit(self.search_page_for_job_soups,
                                search, page, job_soup_list))
-        wait(fts)  # Wait for all scrape jobs to finish
+        wait(fts)  # wait for all scrape jobs to finish
 
         # make a dict of job postings from the listing briefs
         for s in job_soup_list:
@@ -177,7 +178,7 @@ class Indeed(JobFunnel):
 
             try:
                 table = s.find(
-                    'table', attrs={'class': 'jobCardShelfContainer'}).\
+                    'table', attrs={'class': 'jobCardShelfContainer'}). \
                     find_all('td', attrs={'class': 'jobCardShelfItem'})
                 job['tags'] = "\n".join([td.text.strip() for td in table])
             except AttributeError:
@@ -190,44 +191,47 @@ class Indeed(JobFunnel):
                 job['date'] = ''
 
             try:
-                # Added capture group so to only capture id once matched.
+                # added capture group so to only capture id once matched
                 id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
-                job['link'] = (f"http://www.indeed.{domain}"
+                job['link'] = (f"http://www.indeed."
+                               f"{self.search_terms['region']['domain']}"
                                f"/viewjob?jk={job['id']}")
 
             except (AttributeError, IndexError):
                 job['id'] = ''
                 job['link'] = ''
 
-            job['query'] = query
+            job['query'] = self.query
             job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # Stores references to jobs in list to be used in blurb retrieval
+        # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
 
-        # Converts job date formats into a standard date format
+        # converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
 
-        # Apply job pre-filter before scraping blurbs
+        # apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 
-        # Checks if delay is set or not, then extracts blurbs from job links
+        # checks if delay is set or not, then extracts blurbs from job links
         if self.delay_config is not None:
-            # Calls super class to run delay specific threading logic
-            super().delay_threader(scrape_list, self.get_blurb_in_w_dly,
-                                   self.parse_blurb_in, threads)
+            # calls super class to run delay specific threading logic
+            super().delay_threader(scrape_list, self.get_blurb_with_delay,
+                                   self.parse_blurb, threads)
 
         else:
-            # Start time recording
+            # start time recording
             start = time()
+
             # maps jobs to threads and cleans them up when done
-            threads.map(self.search_indeed_joblink_for_blurb, scrape_list)
+            threads.map(self.search_joblink_for_blurb, scrape_list)
             threads.shutdown()
-            # End and print recorded time
+
+            # end and print recorded time
             end = time()
             print(f'{self.provider} scrape job took {(end - start):.3f}s')

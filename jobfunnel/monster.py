@@ -30,8 +30,9 @@ class Monster(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
+        self.query = '-'.join(self.search_terms['keywords'])
 
-    def convert_monster_radius(self, radius):
+    def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
         in either kilometers or miles"""
         if self.search_terms['region']['domain'] == 'com':
@@ -59,7 +60,6 @@ class Monster(JobFunnel):
                 radius = 150
             elif 200 <= radius:
                 radius = 200
-            # Now I know why they call themselves monster
         else:
             if radius < 5:
                 radius = 0
@@ -76,20 +76,27 @@ class Monster(JobFunnel):
 
         return radius
 
-    def get_monster_request_html(
-            self, query, domain, city, province, radius):
+    def get_search_url(self, method='get'):
         """gets the monster request html"""
         # form job search url
-        search = (f'https://www.monster.{domain}'
-                  f'/jobs/search/?q={query}'
-                  f'&where={city}__2C-{province}'
-                  f'&intcid=skr_navigation_nhpso_searchMain'
-                  f'&rad={radius}&where={city}__2c-{province}')
+        if method is 'get':
+            search = ('https://www.monster.{0}/jobs/search/?'
+                      'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
+                self.search_terms['region']['domain'],
+                self.query,
+                self.search_terms['region']['city'],
+                self.search_terms['region']['province'],
+                'skr_navigation_nhpso_searchMain',
+                self.convert_radius(self.search_terms['region']['radius'])))
 
-        # get the html data, initialize bs4 with lxml
-        request_html = get(search, headers=self.headers)
+            return search
+        elif method is 'post':
+            # @TODO implement get style for monster
+            raise NotImplementedError()
+        else:
+            raise ValueError(f"No html method {method} exists")
 
-    def search_monster_joblink_for_blurb(self, job):
+    def search_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
         log_info(f'getting monster search: {search}')
@@ -105,19 +112,19 @@ class Monster(JobFunnel):
 
         filter_non_printables(job)
 
-    # Split apart above function into two so gotten blurbs can be parsed while
-    # while others blurbs are being obtained.
-    def get_blurb_ms_w_dly(self, job, delay):
+    # split apart above function into two so gotten blurbs can be parsed
+    # while others blurbs are being obtained
+    def get_blurb_with_delay(self, job, delay):
         """gets blurb from monster job link and sets delays for requests"""
         sleep(delay)
 
         search = job['link']
-        log_info(f'delay of {delay:.2}s, getting monster search: {search}')
+        log_info(f'delay of {delay:.2f}s, getting monster search: {search}')
 
         res = get(search, headers=self.headers).text
         return job, res
 
-    def parse_blurb_ms(self, job, html):
+    def parse_blurb(self, job, html):
         """parses and stores job description into dict entry"""
         job_link_soup = BeautifulSoup(html, self.bs4_parser)
 
@@ -133,27 +140,20 @@ class Monster(JobFunnel):
         """function that scrapes job posting from monster and pickles it"""
         log_info(f'jobfunnel monster to pickle running @ {self.date_string}')
 
-        # ID regex quantifiers
-        id_regex = re.compile(r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f'
-                              r']{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
+        # get the search url
+        search = self.get_search_url()
 
-        # get the request html
-        request_html = get_monster_request_html(
-            '-'.join(self.search_terms['keywords']),
-            self.search_terms['region']['domain'],
-            self.search_terms['region']['city'],
-            self.search_terms['region']['province'],
-            self.convert_monster_radius(
-                self.search_terms['region']['radius']))
+        # get the html data, initialize bs4 with lxml
+        request_html = get(search, headers=self.headers)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
-        # Now with less regex!
         num_res = soup_base.find('h2', 'figure').text.strip()
         num_res = int(re.findall(r'(\d+)', num_res)[0])
-        log_info(f'Found {num_res} monster results for query={query}')
+        log_info(f'Found {num_res} monster results for query='
+                 f'{self.query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
         # scrape soups for all the pages containing jobs it found
@@ -166,6 +166,10 @@ class Monster(JobFunnel):
 
         job_soup_list = []
         job_soup_list.extend(jobs)
+
+        # id regex quantifiers
+        id_regex = re.compile(r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f'
+                              r']{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
 
         # make a dict of job postings from the listing briefs
         for s in job_soup_list:
@@ -187,13 +191,13 @@ class Monster(JobFunnel):
 
             # no blurb is available in monster job soups
             job['blurb'] = ''
-            # Tags are not support on monster
+            # tags are not supported in monster
             job['tags'] = ''
             try:
                 job['date'] = s.find('time').text.strip()
             except AttributeError:
                 job['date'] = ''
-            # Captures uuid or int id's, by extracting from URL instead.
+            # captures uuid or int ids, by extracting from url instead
             try:
                 job['link'] = str(s.find('a', attrs={
                     'data-bypass': 'true'}).get('href'))
@@ -202,33 +206,35 @@ class Monster(JobFunnel):
                 job['id'] = ''
                 job['link'] = ''
 
-            job['query'] = query
+            job['query'] = self.query
             job['provider'] = self.provider
 
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # Apply job pre-filter before scraping blurbs
+        # apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 
-        # Stores references to jobs in list to be used in blurb retrieval
+        # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
 
-        # Converts job date formats into a standard date format
+        # converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
 
         threads = ThreadPoolExecutor(max_workers=8)
-        # Checks if delay is set or not, then extracts blurbs from job links
+        # checks if delay is set or not, then extracts blurbs from job links
         if self.delay_config is not None:
-            # Calls super class to run delay specific threading logic
-            super().delay_threader(scrape_list, self.get_blurb_ms_w_dly,
-                                   self.parse_blurb_ms, threads)
+            # calls super class to run delay specific threading logic
+            super().delay_threader(scrape_list, self.get_blurb_with_delay,
+                                   self.parse_blurb, threads)
         else:
-            # Start time recording
+            # start time recording
             start = time()
+
             # maps jobs to threads and cleans them up when done
-            threads.map(self.search_monster_joblink_for_blurb, scrape_list)
+            threads.map(self.search_joblink_for_blurb, scrape_list)
             threads.shutdown()
-            # End and print recorded time
+
+            # end and print recorded time
             end = time()
             print(f'{self.provider} scrape job took {(end - start):.3f}s')

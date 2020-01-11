@@ -1,8 +1,6 @@
 #!python
-"""Main script.
-
-Scrapes data off several listings, pickles it, and applies search filters.
-"""
+"""main script, scrapes data off several listings, pickles it,
+and applies search filters"""
 from .config.parser import parse_config
 
 from .jobfunnel import JobFunnel
@@ -14,9 +12,7 @@ providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 
 def main():
-    """Main function.
-
-    """
+    """main function"""
     config = parse_config()
 
     # init class + logging

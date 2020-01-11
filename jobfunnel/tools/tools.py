@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 
 
-
 def filter_non_printables(job):
     """function that filters trailing characters in scraped strings"""
     # filter all of the weird characters some job postings have...
