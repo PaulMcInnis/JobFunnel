@@ -67,7 +67,7 @@ class Indeed(JobFunnel):
 
             return search
         elif method is 'post':
-            # @TODO implement get style for indeed
+            # @TODO implement post style for indeed
             raise NotImplementedError()
         else:
             raise ValueError(f"No html method {method} exists")

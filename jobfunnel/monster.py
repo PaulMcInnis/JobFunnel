@@ -91,7 +91,7 @@ class Monster(JobFunnel):
 
             return search
         elif method is 'post':
-            # @TODO implement get style for monster
+            # @TODO implement post style for monster
             raise NotImplementedError()
         else:
             raise ValueError(f"No html method {method} exists")

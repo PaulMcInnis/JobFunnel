@@ -186,7 +186,7 @@ class GlassDoor(JobFunnel):
         log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
         # get the search url and data
-        search, data = self.get_search_url(style='post')
+        search, data = self.get_search_url(method='post')
 
         # get the html data, initialize bs4 with lxml
         request_html = post(search, headers=self.headers, data=data)
