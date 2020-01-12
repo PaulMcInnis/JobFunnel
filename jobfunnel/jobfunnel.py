@@ -16,8 +16,8 @@ from datetime import date
 from time import time
 from typing import Dict, List
 
-from tools.delay import delay_alg
-from tools.filters import tfidf_filter, id_filter
+from .tools.delay import delay_alg
+from .tools.filters import tfidf_filter, id_filter
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist

@@ -62,12 +62,12 @@ def easy_apply(output_file, input_file, status, number_of_times):
     The default status is 'archive'. After running the easy_apply function, you should see a "updated_master_list.csv" file
     on the same directory you ran the script on. And your master_list.csv file should have some updated rows with
     the status you passed.
-    Hope it helps you on your job hunting as much as it has helped me :).
+    Hope it helps you on your job hunting as much as it has helped me :). 
     """
     print("running jobfunnel_easy_apply:",[output_file,input_file,status,number_of_times])
     # args = parser.parse_args()
 
-    if not(status.lower() in ["archive", "interview", "offer"):
+    if not(status.lower() in ["archive", "interview", "offer"]):
         print("invalid status")
         print("Must pass one of these as status:",["archive", "interview", "offer"] )
         return
