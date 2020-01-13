@@ -129,8 +129,11 @@ class Indeed(JobFunnel):
 
         # Parse total results, and calculate the # of pages needed
         # Now with less regex!
-        num_res = soup_base.find(id='searchCountPages').contents[0].strip()
-        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
+        if (soup_base.find(id='searchCountPages') == None):
+            num_res = 0
+        else:
+            num_res = soup_base.find(id='searchCountPages').contents[0].strip()
+            num_res = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
         log_info(f'Found {num_res} indeed results for query={query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
