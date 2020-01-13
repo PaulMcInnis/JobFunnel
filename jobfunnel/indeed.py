@@ -135,10 +135,13 @@ class Indeed(JobFunnel):
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # parse total results, and calculate the # of pages needed
-        num_res = soup_base.find(id='searchCountPages').contents[0].strip()
-        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
-        log_info(f'Found {num_res} indeed results for query='
-                 f'{self.query}')
+        if (soup_base.find(id='searchCountPages') == None):
+            num_res = 0
+        else:
+            num_res = soup_base.find(id='searchCountPages').contents[0].strip()
+            num_res = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+            log_info(f'Found {num_res} indeed results for query='
+                     f'{self.query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
 
