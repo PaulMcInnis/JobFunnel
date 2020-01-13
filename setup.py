@@ -11,13 +11,9 @@ requires = ['beautifulsoup4>=4.6.3',
             'PyYAML>=5.1',
             'scikit-learn>=0.21.2',
             'nltk>=3.4.1',
-            'scipy>=1.4.1'
+            'scipy>=1.4.1',
+            'pytest>=5.3.1'
             ]
-dev_requires = ['pytest>=5.3.1']
-
-package_data = {
-    'JobFunnel': ['jobfunnel/config/settings.yaml', 'jobfunnel/text/user_agent_list.txt']
-    }
 
 with open('readme.md', 'r') as f:
     readme = f.read()
@@ -34,8 +30,6 @@ setup(
     license                       = 'MIT License',
     python_requires               = '>=3.6.0',
     install_requires              = requires,
-    extras_require                = {'dev': dev_requires},
     packages                      = find_packages(exclude=('demo',)),
-    package_data                  = package_data,
     include_package_data          = True,
     entry_points                  = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
