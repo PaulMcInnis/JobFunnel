@@ -12,7 +12,7 @@ List any developers that will be affected or those who you had merge conflicts w
 Please add options that are relevant and mark any boxes that apply.
 
 - [ ] Software (software that runs on the PC)
-- [ ] Library (library that either runs on an MCU or the PC)
+- [ ] Library (library that runs on the PC)
 - [ ] Tool (tool that assists coding development)
 - [ ] Other
 
@@ -27,7 +27,9 @@ Please mark any boxes that apply.
 
 ## How Has This Been Tested?
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
+Please describe the tests that you ran to verify your changes.
+Provide instructions so we can reproduce.
+Please also list any relevant details for your test configuration.
 
 - [ ] Test A
 - [ ] Test B
