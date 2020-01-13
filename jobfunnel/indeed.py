@@ -156,6 +156,9 @@ class Indeed(JobFunnel):
                                search, page, job_soup_list))
         wait(fts)  # wait for all scrape jobs to finish
 
+        # id regex quantifiers
+        id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
+
         # make a dict of job postings from the listing briefs
         for s in job_soup_list:
             # init dict to store scraped data
@@ -191,8 +194,6 @@ class Indeed(JobFunnel):
                 job['date'] = ''
 
             try:
-                # added capture group so to only capture id once matched
-                id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
                 job['link'] = (f"http://www.indeed."
