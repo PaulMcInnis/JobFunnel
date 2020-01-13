@@ -70,3 +70,13 @@ def post_date_from_relative_post_age(job_list):
                             logging.error(f"unknown date for job {job['id']}")
         # format date in standard format e.g. 2020-01-01
         job['date'] = post_date.strftime('%Y-%m-%d')
+    
+
+def split_url(url):
+    match = re.match('^(http[s]?)://([A-Za-z0-9\-\.]+):([0-9]+)?(.*)$', url)
+
+    return {
+        'protocol': match.group(1),
+        'ip_address': match.group(2),
+        'port': match.group(3),
+    }
