@@ -6,8 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-jobfunnel = {editable = true,path = "."}
-nltk = "*"
+jobfunnel = {path = ".",editable = true}
 
 [requires]
 python_version = "3.6"

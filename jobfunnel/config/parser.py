@@ -11,11 +11,10 @@ log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
 
 
-def _parse_cli():
-    """Parse the command line arguments.
+def parse_cli():
+    """ Parse the command line arguments.
 
     """
-
     parser = argparse.ArgumentParser(
         'CLI options take precedence over settings in the yaml file'
         'empty arguments are replaced by settings in the default yaml file')
@@ -122,7 +121,7 @@ def _parse_cli():
 
 
 def parse_config():
-    """Parse the JobFunnel configuration settings.
+    """ Parse the JobFunnel configuration settings.
 
     """
     # find the jobfunnel root dir
@@ -134,7 +133,7 @@ def parse_config():
     default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
 
     # parse the command line arguments
-    cli = _parse_cli()
+    cli = parse_cli()
 
     # parse the settings file for the line arguments
     given_yaml = None
@@ -181,6 +180,13 @@ def parse_config():
         config['search_terms'] = given_yaml['search_terms']
     if cli.keywords is not None:
         config['search_terms']['keywords'] = cli.keywords
+
+    # search term state is inserted as province if province does not already exist
+    if 'state' in config['search_terms']['region']:
+        if (config['search_terms']['region']['state'] is not None) and \
+                (config['search_terms']['region']['province'] is None):
+            config['search_terms']['region']['province'] = \
+                config['search_terms']['region']['state']
 
     # parse the blacklist
     config['black_list'] = default_yaml['black_list']
@@ -230,7 +236,7 @@ def parse_config():
         if given_yaml_path is not None:
             config['delay_config'] = given_yaml['delay_config']
 
-        # Cli options for delaying configuration
+        # cli options for delaying configuration
         if cli.function is not None:
             config['delay_config']['function'] = cli.function
         if cli.delay is not None:
@@ -242,7 +248,7 @@ def parse_config():
             if cli.converge is not None:
                 config['delay_config']['converge'] = cli.converge
 
-        # Converts function name to lower case in config
+        # converts function name to lower case in config
         config['delay_config']['function'] = \
             config['delay_config']['function'].lower()
     else:
