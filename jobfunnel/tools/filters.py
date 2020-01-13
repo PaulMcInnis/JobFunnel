@@ -8,9 +8,9 @@ from numpy import delete as np_delete, max as np_max, fill_diagonal
 
 
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
-    """ filter duplicates on job id per provider
+    """ Filter duplicates on job id per provider.
 
-        args:
+        Args:
             cur_dict: today's job scrape dict
             prev_dict: the existing master list job dict
             provider: job board used
@@ -33,14 +33,14 @@ def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
 def tfidf_filter(cur_dict: Dict[str, dict],
                  prev_dict: Optional[Dict[str, dict]] = None,
                  max_similarity: float = 0.75):
-    """ fit a tfidf vectorizer to a corpus of all listing's text
+    """ Fit a tfidf vectorizer to a corpus of all listing's text.
 
-        args:
+        Args:
             cur_dict: today's job scrape dict
             prev_dict: the existing master list job dict
             max_similarity: threshold above which blurb similarity = duplicate
 
-        returns:
+        Returns:
             list of duplicate job ids which were removed from cur_dict
     """
     # retrieve stopwords if not already downloaded

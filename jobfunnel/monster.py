@@ -94,7 +94,7 @@ class Monster(JobFunnel):
             # @TODO implement post style for monster
             raise NotImplementedError()
         else:
-            raise ValueError(f"No html method {method} exists")
+            raise ValueError(f'No html method {method} exists')
 
     def search_joblink_for_blurb(self, job):
         """function that scrapes the monster job link for the blurb"""

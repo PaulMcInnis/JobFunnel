@@ -1,6 +1,8 @@
 #!python
 """main script, scrapes data off several listings, pickles it,
 and applies search filters"""
+from typing import Union
+
 from .config.parser import parse_config
 
 from .jobfunnel import JobFunnel
@@ -8,7 +10,7 @@ from .indeed import Indeed
 from .monster import Monster
 from .glassdoor import GlassDoor
 
-providers = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
+PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 
 def main():
@@ -29,7 +31,7 @@ def main():
         jf.load_pickle(config)
     else:
         for p in config['providers']:
-            provider = providers[p](config)
+            provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
             provider_id = provider.__class__.__name__
             try:
                 provider.scrape()

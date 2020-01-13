@@ -12,6 +12,7 @@ requires = ['beautifulsoup4>=4.6.3',
             'scikit-learn>=0.21.2',
             'nltk>=3.4.1',
             'scipy>=1.4.1',
+            'pytest>=5.3.1'
             ]
 package_data = {
     'sample': ['jobfunnel/config/settings.yaml']

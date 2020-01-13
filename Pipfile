@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 jobfunnel = {path = ".",editable = true}
-nltk = "==3.4.5"
 
 [requires]
 python_version = "3.6"

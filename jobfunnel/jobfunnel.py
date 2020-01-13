@@ -1,5 +1,5 @@
-## Paul McInnis 2018
-## writes pickles to master list path and applies search filters
+# Paul McInnis 2018
+# writes pickles to master list path and applies search filters
 
 import csv
 import json
@@ -28,7 +28,8 @@ MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date',
                      'blurb', 'tags', 'link', 'id', 'provider', 'query']
 
 # user agent list
-USER_AGENT_LIST = 'jobfunnel/text/user_agent_list.txt'
+USER_AGENT_LIST = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), 'text/user_agent_list.txt'))
 
 
 class JobFunnel(object):
@@ -57,7 +58,7 @@ class JobFunnel(object):
         with open(USER_AGENT_LIST) as file:
             for line in file:
                 li = line.strip()
-                if not li.startswith("#"):
+                if li and not li.startswith("#"):
                     user_agent_list.append(line.rstrip('\n'))
         self.user_agent = random.choice(user_agent_list)
 
@@ -67,7 +68,7 @@ class JobFunnel(object):
         # search term configuration data
         self.search_terms = args['search_terms']
 
-        # Set delay settings if they exist
+        # set delay settings if they exist
         self.delay_config = None
         if args['delay_config'] is not None:
             self.delay_config = args['delay_config']
@@ -87,6 +88,10 @@ class JobFunnel(object):
             logging.getLogger().addHandler(logging.StreamHandler())
 
         self.logger.info(f'jobfunnel initialized at {self.date_string}')
+
+    def get_search_url(self, method='get'):
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
 
     def scrape(self):
         """function to be implemented by child classes"""
@@ -150,7 +155,7 @@ class JobFunnel(object):
     def remove_jobs_in_filterlist(self, data: Dict[str, dict]):
         # load the filter-list if it exists, apply it to remove scraped jobs
         if data == {}:
-            raise ValueError("No scraped job data to filter")
+            raise ValueError('No scraped job data to filter')
 
         if os.path.isfile(self.filterlist_path):
             self.filterlist = json.load(open(self.filterlist_path, 'r'))
@@ -235,7 +240,7 @@ class JobFunnel(object):
         """function called by child classes to thread scrapes jobs
         with delays"""
         if not scrape_list:
-            raise ValueError("No jobs to scrape")
+            raise ValueError('No jobs to scrape')
         # calls delaying algorithm
         print("Calculating delay...")
         delays = delay_alg(len(scrape_list), self.delay_config)
@@ -267,7 +272,7 @@ class JobFunnel(object):
     def update_masterlist(self):
         """use the scraped job listings to update the master spreadsheet"""
         if self.scrape_data == {}:
-            raise ValueError("No scraped jobs, cannot update masterlist")
+            raise ValueError('No scraped jobs, cannot update masterlist')
 
         # converts scrape data to ordered dictionary to filter all duplicates
         self.scrape_data = OrderedDict(sorted(self.scrape_data.items(),
@@ -278,7 +283,7 @@ class JobFunnel(object):
 
         # load and update existing masterlist
         try:
-            # open masterlist if it exists & init updated master-list
+            # open masterlist if it exists & init updated masterlist
             masterlist = self.read_csv(self.master_list_path)
 
             # update masterlist to remove filtered/blacklisted jobs
@@ -287,7 +292,7 @@ class JobFunnel(object):
 
             # update masterlist to contain only new (unique) listings
             if self.save_dup:  # if true, saves duplicates to own file
-                # calls tf_idf filter and returns popped duplicate list
+                # calls tfidf filter and returns popped duplicate list
                 duplicate_list = tfidf_filter(self.scrape_data, masterlist)
 
                 logging.info(f'Saving {len(duplicate_list)} duplicates jobs to'

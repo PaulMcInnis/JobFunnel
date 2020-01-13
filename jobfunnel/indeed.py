@@ -33,7 +33,7 @@ class Indeed(JobFunnel):
         self.query = '+'.join(self.search_terms['keywords'])
 
     def convert_radius(self, radius):
-        """function that quantifies the user input radius to a valid radius
+        """function that quantizes the user input radius to a valid radius
            value: 5, 10, 15, 25, 50, 100, and 200 kilometers or miles"""
         if radius < 5:
             radius = 0
@@ -56,7 +56,7 @@ class Indeed(JobFunnel):
         if method is 'get':
             # form job search url
             search = ('http://www.indeed.{0}/jobs?'
-                      'q={1}&1={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
+                      'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
                 self.search_terms['region']['domain'],
                 self.query,
                 self.search_terms['region']['city'],
@@ -70,7 +70,7 @@ class Indeed(JobFunnel):
             # @TODO implement post style for indeed
             raise NotImplementedError()
         else:
-            raise ValueError(f"No html method {method} exists")
+            raise ValueError(f'No html method {method} exists')
 
     def search_page_for_job_soups(self, search, page, job_soup_list):
         """function that scrapes the indeed page for a list of job soups"""

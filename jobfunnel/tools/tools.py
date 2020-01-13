@@ -16,7 +16,7 @@ def filter_non_printables(job):
 
 def post_date_from_relative_post_age(job_list):
     """function that returns the post date from the relative post age"""
-    # initialize list and store regex objects of date quantifiers.
+    # initialize list and store regex objects of date quantifiers
     date_regex = [re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)'),
                   re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)'),
                   re.compile(r'(\d+)(?:[ +]{1,3})?month'),
@@ -30,7 +30,7 @@ def post_date_from_relative_post_age(job_list):
 
         post_date = None
 
-        # Supports almost all formats like 7 hours|days and 7 hr|d|+d
+        # supports almost all formats like 7 hours|days and 7 hr|d|+d
         try:
             # hours old
             hours_ago = date_regex[0].findall(job['date'])[0]
@@ -68,5 +68,5 @@ def post_date_from_relative_post_age(job_list):
                             # must be from the 1970's
                             post_date = datetime(1970, 1, 1)
                             logging.error(f"unknown date for job {job['id']}")
-        # Format date in standard format e.g. 2020-01-01
+        # format date in standard format e.g. 2020-01-01
         job['date'] = post_date.strftime('%Y-%m-%d')

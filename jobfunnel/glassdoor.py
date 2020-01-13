@@ -1,5 +1,4 @@
 import re
-from typing import Dict, Any, Union
 
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -47,7 +46,7 @@ class GlassDoor(JobFunnel):
         self.query = '-'.join(self.search_terms['keywords'])
 
     def convert_radius(self, radius):
-        """function that quantifies the user input radius to a valid radius
+        """function that quantizes the user input radius to a valid radius
            value: 10, 20, 30, 50, 100, and 200 kilometers"""
         if self.search_terms['region']['domain'] == 'com':
             if radius < 5:
@@ -131,16 +130,16 @@ class GlassDoor(JobFunnel):
 
             return search, data
         else:
-            raise ValueError(f"No html method {method} exists")
+            raise ValueError(f'No html method {method} exists')
 
-    def search_page_for_job_soups(self, data, page, url, job_s_list):
+    def search_page_for_job_soups(self, data, page, url, job_soup_list):
         """function that scrapes the glassdoor page for a list of job soups"""
         log_info(f'getting glassdoor page {page} : {url}')
 
         job = BeautifulSoup(
             post(url, headers=self.headers, data=data).text, self.bs4_parser).\
             find_all('li', attrs={'class', 'jl'})
-        job_s_list.extend(job)
+        job_soup_list.extend(job)
 
     def search_joblink_for_blurb(self, job):
         """function that scrapes the glassdoor job link for the blurb"""
@@ -222,8 +221,10 @@ class GlassDoor(JobFunnel):
                 part_url = soup_base.find('li', attrs={
                     'class', 'next'}).find('a').get('href')
                 # uses partial url to construct next page url
-                page_url = re.sub(r'_IP\d+\.', "_IP" + str(page) + ".",
-                                  f'https://www.glassdoor.{domain}{part_url}')
+                page_url = re.sub(r'_IP\d+\.', "_IP" + str(page) + '.',
+                                  f"https://www.glassdoor."
+                                  f"{self.search_terms['region']['domain']}"
+                                  f"{part_url}")
 
                 fts.append(  # append thread job future to futures list
                     threads.submit(self.search_page_for_job_soups,
@@ -268,7 +269,9 @@ class GlassDoor(JobFunnel):
                 part_url = s.find('div', attrs={
                     'class', 'logoWrap'}).find('a').get('href')
                 job['id'] = s.get('data-id')
-                job['link'] = f'https://www.glassdoor.{domain}{part_url}'
+                job['link'] = (f"https://www.glassdoor."
+                               f"{self.search_terms['region']['domain']}"
+                               f"{part_url}")
 
             except (AttributeError, IndexError):
                 job['id'] = ''
