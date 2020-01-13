@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Main script.
 
-Scrapes data off several listings, pickles it, and applies search filters. 
+Scrapes data off several listings, pickles it, and applies search filters.
 """
 from .config.parser import parse_config
 

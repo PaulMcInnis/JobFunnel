@@ -114,23 +114,33 @@ It will open as many browser tabs as you tell it to with randomly selected job l
 
 Once you have your scraped "master_list.csv" file, you can start using easy_apply.
 
-	cd JobFunnel/jobfunnel
+If you ran JobFunnel like this:
+
+	funnel -s settings.yaml
 
 
-**Make sure that the "data" and "search" folders which contains the master_list are on this directory. Copy them to this directory if you have to. Make sure that there is a "settings.yaml" in "JobFunnel/jobfunnel" as well.**
+Make sure you stay in the same directory and then all you have to do is this:
 
-	./__main__.py easy_apply --ea_number 2
+	funnel easy_apply --ea_number 2
 	
 
 
 Two browser tabs should open up for your job applications.
 These two jobs will be marked as "archive" in the csv master_list.
 
+However, if you passed your own output path like this:
+
+	funnel -o PATH
+	
+**Then make sure you cd into PATH BEFORE you run easy_apply.**
+
+	cd PATH
+
 
 
 You can also set a specific status for the jobs you are applying for
 
-	./__main__.py easy_apply --ea_number 2 --ea_status offer
+	funnel easy_apply --ea_number 2 --ea_status offer
 
 
 Two browser tabs should open up for your job applications.
@@ -138,12 +148,10 @@ These two jobs will be marked as "offer" in the csv master_list.
 
 Or you could do no arguments:
 
-	./__main__.py easy_apply
+	funnel easy_apply
 
 One browser tab should open up for your job application.
 This job will be marked as "archive" in the csv master_list.
-
-I apologize this isn't nicely packaged yet. Hopefully I'll be able to packge it by the end of this week -- 1/09/2020.
 
 
 	

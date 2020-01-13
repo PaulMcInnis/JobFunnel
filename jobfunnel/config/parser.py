@@ -12,26 +12,13 @@ log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
 
 
-def _parse_easy_apply(parser):
-    """
-    Parse the arguments for the easy_apply sub-command.
-    """
-    #Give the easy_apply sub-command a name
-    subparsers = parser.add_subparsers(dest="easy_apply")
-    easy_apply_parser = subparsers.add_parser('easy_apply')
-    easy_apply_parser.add_argument("--ea_output","--output", help="The contents of the new csv are dumped onto this file. The default is 'updated_master_list.csv'",
-                        default='updated_master_list.csv')
-    easy_apply_parser.add_argument("--ea_status","--status", help="The new status the random jobs will be marked with. The default is 'archive'.",
-                        default='archive')
-    easy_apply_parser.add_argument("--ea_number","--number_of_times", help="Number of jobs to apply to",default=1)
-    easy_apply_parser.set_defaults(func=easy_apply.easy_apply, which="easy_apply")
-
-
 def _config_easy_apply_args(config, args):
     config['ea_output'] = args.ea_output
     config['ea_status'] = args.ea_status
     config['ea_number'] = args.ea_number
     config['easy_apply_func'] = args.func
+
+
 def _parse_cli():
     """Parse the command line arguments.
     """
@@ -135,8 +122,17 @@ def _parse_cli():
                         required=False,
                         default=None,
                         help='save duplicates popped by tf_idf filter to file')
-    print("parser string:", parser)
-    _parse_easy_apply(parser)
+
+    #Parse the arguments for the easy_apply sub-command
+    #Give the easy_apply sub-command a name
+    subparsers = parser.add_subparsers(dest="easy_apply")
+    easy_apply_parser = subparsers.add_parser('easy_apply')
+    easy_apply_parser.add_argument("--ea_output","--output", help="The contents of the new csv are dumped onto this file. The default is 'updated_master_list.csv'",
+                        default='updated_master_list.csv')
+    easy_apply_parser.add_argument("--ea_status","--status", help="The new status the random jobs will be marked with. The default is 'archive'.",
+                        default='archive')
+    easy_apply_parser.add_argument("--ea_number","--number_of_times", help="Number of jobs to apply to",default=1)
+    easy_apply_parser.set_defaults(func=easy_apply.easy_apply, which="easy_apply")
     return parser.parse_args()
 
 
