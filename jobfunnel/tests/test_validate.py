@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from ..config.parser import parse_config
 from ..config.validate import validate_config
-from ..tools.tools import change_nested_dict, config_factory
+from ..tools.tools import config_factory
 
 with patch.object(sys, 'argv', ['']):
     config = parse_config()

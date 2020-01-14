@@ -4,8 +4,6 @@
 import argparse
 import logging
 import os
-import re
-import sys
 import yaml
 
 from .valid_options import CONFIG_TYPES
@@ -17,9 +15,9 @@ log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
 
 
 class ConfigError(ValueError):
-     def __init__(self, arg):
-         self.strerror = f"ConfigError: '{arg}' has an invalid value"
-         self.args = {arg}
+    def __init__(self, arg):
+        self.strerror = f"ConfigError: '{arg}' has an invalid value"
+        self.args = {arg}
 
 
 def parse_cli():
@@ -165,13 +163,13 @@ def cli_to_yaml(cli):
 
     if cli.proxy is not None:
         yaml['proxy'] = split_url(cli.proxy)
-    
+
     return yaml
 
 
 def update_yaml(config, new_yaml):
     """ Update fiels of current yaml with new yaml
-    
+
     """
     for k, v in new_yaml.items():
         # if v is a dict we need to dive deeper...
@@ -203,7 +201,7 @@ def check_config_types(config):
     types_check = recursive_check_config_types(config, CONFIG_TYPES)
 
     # Select all wrong types and throw error when there is such a value
-    wrong_types = [k for k, v in types_check if v == False]
+    wrong_types = [k for k, v in types_check if v is False]
     if len(wrong_types) > 0:
         raise ConfigError(', '.join(wrong_types))
 
@@ -231,9 +229,9 @@ def parse_config():
         given_yaml_path = os.path.dirname(cli.settings)
         given_yaml = yaml.safe_load(open(cli.settings, 'r'))
 
-    # combine default, given and argument yamls into one. Note that we update 
+    # combine default, given and argument yamls into one. Note that we update
     # the values of the default_yaml, so we use this for the rest of the file.
-    # We could make a deep copy if necessary. 
+    # We could make a deep copy if necessary.
     config = default_yaml
     if given_yaml is not None:
         update_yaml(config, given_yaml)
@@ -255,7 +253,8 @@ def parse_config():
     config['data_path'] = os.path.join(output_path, 'data')
     config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
     config['duplicate_list_path'] = os.path.join(output_path, 'duplicate_list.csv')
-    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
+    config['filter_list_path'] = os.path.join(
+        config['data_path'], 'filter_list.json')
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
     # normalize paths
@@ -275,5 +274,5 @@ def parse_config():
     # check if proxy has not been set yet (optional)
     if 'proxy' not in config:
         config['proxy'] = None
-    
+
     return config

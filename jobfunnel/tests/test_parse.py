@@ -4,8 +4,6 @@ import sys
 from unittest.mock import patch
 
 from ..config.parser import parse_config
-from ..config.validate import validate_config
-from ..tools.tools import change_nested_dict, config_factory
 
 
 def test_user_yaml():
