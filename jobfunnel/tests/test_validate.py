@@ -1,12 +1,14 @@
 import pytest
 import sys
 
+from unittest.mock import patch
+
 from ..config.parser import parse_config
 from ..config.validate import validate_config
 from ..tools.tools import change_nested_dict, config_factory
 
-sys.argv = ['']
-config = parse_config()
+with patch.object(sys, 'argv', ['']):
+    config = parse_config()
 
 # define config dictionaries that are not valid
 # invalid path
