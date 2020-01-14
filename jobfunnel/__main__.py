@@ -23,7 +23,7 @@ def main():
     try:
         check_config(config)
     except ConfigError as e:
-        print(e)
+        print(e.strerror)
         sys.exit()
 
     # init class + logging

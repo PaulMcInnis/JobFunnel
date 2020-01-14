@@ -16,7 +16,7 @@ log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
 
 class ConfigError(ValueError):
      def __init__(self, arg):
-         self.strerror = f'{arg} has an invalid value'
+         self.strerror = f"ConfigError: '{arg}' has an invalid value"
          self.args = {arg}
 
 
@@ -251,7 +251,7 @@ def parse_config():
             config['delay_config']['function'].lower()
     else:
         config['delay_config'] = None
-
+    
     # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
               'log_path', 'filter_list_path']:
@@ -291,13 +291,13 @@ def check_config(config):
     check_paths = {
         'data_path': r'data$',
         'master_list_path': r'master_list\.csv$',
-        'duplicate_list_path', r'duplicate_list\.csv$',
+        'duplicate_list_path': r'duplicate_list\.csv$',
         'log_path': r'data\/jobfunnel.log$',
         'filter_list_path': r'data\/filter_list\.json$',
     }
 
     for path, pattern in check_paths.items():
-        if not re.match(pattern, config[path]):
+        if not re.search(pattern, config[path]):
             raise ConfigError(path)
 
     # check if the provider list only consists of supported providers
