@@ -4,6 +4,7 @@ CONFIG_TYPES = {
     'search_terms': {
         'region': {
             'province': [str],
+            'state': [str],
             'city': [str],
             'domain': [str],
             'radius': [int]
@@ -19,8 +20,8 @@ CONFIG_TYPES = {
     'set_delay': [bool],
     'delay_config': {
         'function': [str],
-        'delay': [float],
-        'min_delay': [float],
+        'delay': [float, int],
+        'min_delay': [float, int],
         'random': [bool],
         'converge': [bool]
     },

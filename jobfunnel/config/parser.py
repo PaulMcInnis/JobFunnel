@@ -153,7 +153,7 @@ def cli_to_yaml(cli):
         'no_scrape': cli.no_scrape,
         'recover': cli.recover,
         'save_duplicates': cli.save_duplicates,
-        'set_delay': cli.no_scrape,
+        'set_delay': cli.set_delay,
         'delay_config': {
             'function': cli.function,
             'delay': cli.delay,
