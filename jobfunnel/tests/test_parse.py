@@ -19,9 +19,17 @@ def test_user_yaml():
     assert config['search_terms']['region']['domain'] == 'com'
     assert config['search_terms']['region']['radius'] == 25
 
+
 def test_cli_yaml():
     # TODO load --no_delay argument
 
     config = parse_config()
 
     # assert config['set_delay'] == False
+
+
+def test_config_fail():
+    with pytest.raises(KeyError):
+        sys.argv[1] = '-s'
+        sys.argv[2] = 'jobfunnel/tests/settings/settings_fail.yaml'
+        config = parse_config()

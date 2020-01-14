@@ -12,10 +12,6 @@ def validate_region(region):
     if region['domain'] not in DOMAINS:
         raise ConfigError('domain')
     
-    # city should always be provided in the region settings (for now)
-    if 'city' not in region:
-        raise ConfigError('city')
-    
     # search term state is inserted as province if province does not already exist
     if 'state' in region:
         if (region['state'] is not None) and (region['province'] is None):
@@ -36,6 +32,10 @@ def validate_delay(delay):
     
     # maximum delay should be larger or equal to minimum delay
     if delay['delay'] < delay['min_delay']:
+        raise ConfigError('(min)_delay')
+
+    # minimum delay should be at least 1 and maximum delay at least 10
+    if delay['delay'] < 10 or delay['min_delay'] < 1:
         raise ConfigError('(min)_delay')
 
 
