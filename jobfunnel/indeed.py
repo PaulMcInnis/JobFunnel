@@ -53,7 +53,7 @@ class Indeed(JobFunnel):
 
     def get_search_url(self, method='get'):
         """gets the indeed search url"""
-        if method is 'get':
+        if method == 'get':
             # form job search url
             search = ('http://www.indeed.{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
@@ -66,7 +66,7 @@ class Indeed(JobFunnel):
                 int(self.similar_results)))
 
             return search
-        elif method is 'post':
+        elif method == 'post':
             # @TODO implement post style for indeed
             raise NotImplementedError()
         else:
@@ -78,7 +78,7 @@ class Indeed(JobFunnel):
         log_info(f'getting indeed page {page} : {url}')
 
         jobs = BeautifulSoup(
-            get(url, headers=self.headers).text, self.bs4_parser). \
+            self.s.get(url, headers=self.headers).text, self.bs4_parser). \
             find_all('div', attrs={'data-tn-component': 'organicJob'})
 
         job_soup_list.extend(jobs)
@@ -89,7 +89,7 @@ class Indeed(JobFunnel):
         log_info(f'getting indeed page: {search}')
 
         job_link_soup = BeautifulSoup(
-            get(search, headers=self.headers).text, self.bs4_parser)
+            self.s.get(search, headers=self.headers).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -106,7 +106,7 @@ class Indeed(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting indeed search: {search}')
 
-        res = get(search, headers=self.headers).text
+        res = self.s.get(search, headers=self.headers).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -129,7 +129,7 @@ class Indeed(JobFunnel):
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = get(search, headers=self.headers)
+        request_html = self.s.get(search, headers=self.headers)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)

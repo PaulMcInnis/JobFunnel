@@ -56,3 +56,12 @@ delay_config:
     random: False
     # converging random delay, only used if 'random' is set to True
     converge: False
+
+# proxy settings
+# proxy:
+#   # protocol (http or https)
+#   protocol: 'https'
+#   # ip address
+#   ip_address: '1.1.1.1'
+#   # port
+#   port: '200'

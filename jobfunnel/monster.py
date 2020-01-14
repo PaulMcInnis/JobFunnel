@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from logging import info as log_info
 from math import ceil
-from requests import get
 from time import sleep, time
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -79,7 +78,7 @@ class Monster(JobFunnel):
     def get_search_url(self, method='get'):
         """gets the monster request html"""
         # form job search url
-        if method is 'get':
+        if method == 'get':
             search = ('https://www.monster.{0}/jobs/search/?'
                       'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
                 self.search_terms['region']['domain'],
@@ -90,7 +89,7 @@ class Monster(JobFunnel):
                 self.convert_radius(self.search_terms['region']['radius'])))
 
             return search
-        elif method is 'post':
+        elif method == 'post':
             # @TODO implement post style for monster
             raise NotImplementedError()
         else:
@@ -102,7 +101,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster search: {search}')
 
         job_link_soup = BeautifulSoup(
-            get(search, headers=self.headers).text, self.bs4_parser)
+            self.s.get(search, headers=self.headers).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -121,7 +120,7 @@ class Monster(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting monster search: {search}')
 
-        res = get(search, headers=self.headers).text
+        res = self.s.get(search, headers=self.headers).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -144,7 +143,7 @@ class Monster(JobFunnel):
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = get(search, headers=self.headers)
+        request_html = self.s.get(search, headers=self.headers)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
@@ -161,7 +160,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster pages 1 to {pages} : {page_url}')
 
         jobs = BeautifulSoup(
-            get(page_url, headers=self.headers).text, self.bs4_parser). \
+            self.s.get(page_url, headers=self.headers).text, self.bs4_parser). \
             find_all('div', attrs={'class': 'flex-row'})
 
         job_soup_list = []

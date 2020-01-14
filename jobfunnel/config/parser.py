@@ -9,6 +9,7 @@ import sys
 import yaml
 
 from .valid_options import CONFIG_TYPES
+from ..tools.tools import split_url
 
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
@@ -113,6 +114,13 @@ def parse_cli():
                         default=None,
                         help='Turn random delay off, not a recommended action')
 
+    parser.add_argument('--proxy',
+                        dest='proxy',
+                        type=str,
+                        required=False,
+                        default=None,
+                        help='proxy address')
+
     parser.add_argument('--recover',
                         dest='recover',
                         action='store_true',
@@ -135,7 +143,7 @@ def cli_to_yaml(cli):
         yaml.
 
     """
-    return {
+    yaml = {
         'output_path': cli.output_path,
         'search_terms': {
             'keywords': cli.keywords
@@ -154,6 +162,11 @@ def cli_to_yaml(cli):
             'converge': cli.converge
         }
     }
+
+    if cli.proxy is not None:
+        yaml['proxy'] = split_url(cli.proxy)
+    
+    return yaml
 
 
 def update_yaml(config, new_yaml):
@@ -178,7 +191,7 @@ def recursive_check_config_types(config, types):
         if type(v) is dict:
             yield from recursive_check_config_types(v, types[k])
         else:
-            yield (k, type(v) == types[k])
+            yield (k, type(v) in types[k])
 
 
 def check_config_types(config):
@@ -245,6 +258,7 @@ def parse_config():
     config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
+    # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
               'log_path', 'filter_list_path']:
         config[p] = os.path.normpath(config[p])
@@ -258,4 +272,8 @@ def parse_config():
     # parse the log level
     config['log_level'] = log_levels[config['log_level']]
 
+    # check if proxy has not been set yet (optional)
+    if 'proxy' not in config:
+        config['proxy'] = None
+    
     return config

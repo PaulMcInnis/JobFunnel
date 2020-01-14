@@ -107,12 +107,12 @@ class GlassDoor(JobFunnel):
 
         # get the location id for search location
         location_response = \
-            post(location_url, headers=self.location_headers, data=data).json()
+            self.s.post(location_url, headers=self.location_headers, data=data).json()
 
-        if method is 'get':
+        if method == 'get':
             # @TODO implement get style for glassdoor
             raise NotImplementedError()
-        elif method is 'post':
+        elif method == 'post':
             # form the job search url
             search = (f"https://www.glassdoor."
                       f"{self.search_terms['region']['domain']}/Job/jobs.htm")
@@ -137,7 +137,7 @@ class GlassDoor(JobFunnel):
         log_info(f'getting glassdoor page {page} : {url}')
 
         job = BeautifulSoup(
-            post(url, headers=self.headers, data=data).text, self.bs4_parser).\
+            self.s.post(url, headers=self.headers, data=data).text, self.bs4_parser).\
             find_all('li', attrs={'class', 'jl'})
         job_soup_list.extend(job)
 
@@ -146,7 +146,7 @@ class GlassDoor(JobFunnel):
         search = job['link']
         log_info(f'getting glassdoor search: {search}')
         job_link_soup = BeautifulSoup(
-            post(search, headers=self.location_headers).text, self.bs4_parser)
+            self.s.post(search, headers=self.location_headers).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -165,7 +165,7 @@ class GlassDoor(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting glassdoor search: {search}')
 
-        res = post(search, headers=self.location_headers).text
+        res = self.s.post(search, headers=self.location_headers).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -188,7 +188,7 @@ class GlassDoor(JobFunnel):
         search, data = self.get_search_url(method='post')
 
         # get the html data, initialize bs4 with lxml
-        request_html = post(search, headers=self.headers, data=data)
+        request_html = self.s.post(search, headers=self.headers, data=data)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)

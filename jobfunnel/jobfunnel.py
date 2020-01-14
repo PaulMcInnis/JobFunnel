@@ -15,9 +15,11 @@ from concurrent.futures import as_completed
 from datetime import date
 from time import time
 from typing import Dict, List
+from requests import Session
 
 from .tools.delay import delay_alg
 from .tools.filters import tfidf_filter, id_filter
+from .tools.tools import proxy_dict_to_url
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist
@@ -72,6 +74,15 @@ class JobFunnel(object):
         self.delay_config = None
         if args['delay_config'] is not None:
             self.delay_config = args['delay_config']
+
+        # set session with (potential proxy)
+        self.s = Session()
+
+        # set proxy if given
+        if args['proxy'] is not None:
+            self.s.proxies = {
+                args['proxy']['protocol']: proxy_dict_to_url(args['proxy'])
+            }
 
         # create data dir
         if not os.path.exists(args['data_path']):

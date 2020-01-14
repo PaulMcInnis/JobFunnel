@@ -1,29 +1,37 @@
 CONFIG_TYPES = {
-    'output_path': str,
-    'providers': list,
+    'output_path': [str],
+    'providers': [list],
     'search_terms': {
         'region': {
-            'province': str,
-            'city': str,
-            'domain': str,
-            'radius': int
+            'province': [str],
+            'city': [str],
+            'domain': [str],
+            'radius': [int]
         },
-        'keywords': list
+        'keywords': [list]
     },
-    'black_list': list,
-    'log_level': str,
-    'similar': bool,
-    'no_scrape': bool,
-    'recover': bool,
-    'save_duplicates': bool,
-    'set_delay': bool,
+    'black_list': [list],
+    'log_level': [str],
+    'similar': [bool],
+    'no_scrape': [bool],
+    'recover': [bool],
+    'save_duplicates': [bool],
+    'set_delay': [bool],
     'delay_config': {
-        'function': str,
-        'delay': float,
-        'min_delay': float,
-        'random': bool,
-        'converge': bool
-    }
+        'function': [str],
+        'delay': [float],
+        'min_delay': [float],
+        'random': [bool],
+        'converge': [bool]
+    },
+    'proxy': [
+        None, 
+        {
+            'protocol': str,
+            'ip_address': str,
+            'port': str
+        }
+    ]
 }
 
 PROVIDERS = ['glassdoor', 'indeed', 'monster']
