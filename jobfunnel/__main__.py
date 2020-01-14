@@ -5,7 +5,8 @@ import sys
 
 from typing import Union
 
-from .config.parser import parse_config, check_config, ConfigError
+from .config.parser import parse_config, ConfigError
+from .config.validate import validate_config
 
 from .jobfunnel import JobFunnel
 from .indeed import Indeed
@@ -17,11 +18,9 @@ PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 def main():
     """main function"""
-    config = parse_config()
-
-    # check if config is a valid configuration
     try:
-        check_config(config)
+        config = parse_config()
+        validate_config(config)
     except ConfigError as e:
         print(e.strerror)
         sys.exit()
