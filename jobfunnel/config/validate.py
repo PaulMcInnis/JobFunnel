@@ -22,7 +22,7 @@ def validate_region(region):
             region['province'] = region['state']
 
     # north american jobs should have a province/state provided
-    if region['domain'] in ['com', 'ca'] and 'province' not in region:
+    if region['domain'] in ['com', 'ca'] and region['province'] is None:
         raise ConfigError('province')
 
 

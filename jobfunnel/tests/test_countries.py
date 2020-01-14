@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from requests import get, post
 from typing import Union
 
-from ..config.parser import parse_config, check_config
+from ..config.parser import parse_config
 
 from ..indeed import Indeed
 from ..monster import Monster
