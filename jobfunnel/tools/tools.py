@@ -73,6 +73,7 @@ def post_date_from_relative_post_age(job_list):
     
 
 def split_url(url):
+    # capture protocol, ip address and port from given url
     match = re.match('^(http[s]?)://([A-Za-z0-9\-\.]+):([0-9]+)?(.*)$', url)
 
     return {
@@ -80,3 +81,11 @@ def split_url(url):
         'ip_address': match.group(2),
         'port': match.group(3),
     }
+
+
+def proxy_dict_to_url(proxy_dict):
+    protocol = proxy_dict['protocol']
+    ip = proxy_dict['ip_address']
+    port = proxy_dict['port']
+    
+    return f'{protocol}://{ip}:{port}'

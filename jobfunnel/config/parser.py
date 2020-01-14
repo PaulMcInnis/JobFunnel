@@ -6,6 +6,8 @@ import logging
 import os
 import yaml
 
+from ..tools.tools import split_url
+
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
@@ -103,6 +105,13 @@ def parse_cli():
                         default=None,
                         help='Turn random delay off, not a recommended action')
 
+    parser.add_argument('--proxy',
+                        dest='proxy',
+                        type=str,
+                        required=False,
+                        default=None,
+                        help='proxy address')
+
     parser.add_argument('--recover',
                         dest='recover',
                         action='store_true',
@@ -181,7 +190,8 @@ def parse_config():
     if cli.keywords is not None:
         config['search_terms']['keywords'] = cli.keywords
 
-    # search term state is inserted as province if province does not already exist
+    # search term state is inserted as province if province does not already 
+    # exist
     if 'state' in config['search_terms']['region']:
         if (config['search_terms']['region']['state'] is not None) and \
                 (config['search_terms']['region']['province'] is None):
@@ -253,6 +263,13 @@ def parse_config():
             config['delay_config']['function'].lower()
     else:
         config['delay_config'] = None
+
+    # set proxy
+    config['proxy'] = default_yaml.get('proxy', None)
+    if given_yaml_path is not None:
+        config['proxy'] = given_yaml.get('proxy', None)
+    if cli.proxy is not None:
+        config['proxy'] = split_url(cli.proxy)
 
     # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
