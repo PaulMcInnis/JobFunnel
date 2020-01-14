@@ -2,6 +2,7 @@ import logging
 import re
 import string
 
+from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 
@@ -91,7 +92,7 @@ def proxy_dict_to_url(proxy_dict):
     protocol = proxy_dict['protocol']
     ip = proxy_dict['ip_address']
     port = proxy_dict['port']
-    
+
     url_str = ''
     if protocol != '':
         url_str += protocol + '://'
@@ -99,5 +100,35 @@ def proxy_dict_to_url(proxy_dict):
         url_str += ip
     if port != '':
         url_str += ':' + port
-    
+      
     return url_str
+
+
+def change_nested_dict(data, args, val):
+    """ Access nested dictionary using multiple arguments.
+
+    https://stackoverflow.com/questions/10399614/accessing-value-inside-nested-dictionaries
+    """
+    if args and data:
+        element = args[0]
+        if element:
+            if len(args) == 1:
+                data[element] = val
+            else:
+                change_nested_dict(data[element], args[1:], val)
+
+
+def config_factory(base_config, attr_list):
+    """ Create new config files from attribute dictionary.
+
+    """
+    configs = []
+    for attr in attr_list:
+        # create deep copy of nested dict
+        config_cp = deepcopy(base_config)
+
+        # change value and append
+        change_nested_dict(config_cp, attr[0], attr[1])
+        configs.append(config_cp)
+
+    return configs

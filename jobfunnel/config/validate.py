@@ -40,7 +40,7 @@ def validate_delay(delay):
 
 
 def validate_config(config):
-    """ Check whether the config is a valid configuration. 
+    """ Check whether the config is a valid configuration.
     
     Some options are already checked at the command-line tool, e.g., loggging.
     Some checks are trivial while others have a separate function.
