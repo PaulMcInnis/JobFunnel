@@ -4,11 +4,20 @@
 import argparse
 import logging
 import os
+import re
 import yaml
+
+from .valid_options import PROVIDERS, DOMAINS
 
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
+
+
+class ConfigError(ValueError):
+     def __init__(self, arg):
+         self.strerror = f'{arg} has an invalid value'
+         self.args = {arg}
 
 
 def parse_cli():
@@ -145,27 +154,16 @@ def parse_config():
     # prepare the configuration dictionary
     config = {}
 
-    # parse the data path
-    config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
-    config['master_list_path'] = os.path.join(
-        default_yaml['output_path'], 'master_list.csv')
-    config['duplicate_list_path'] = os.path.join(
-        default_yaml['output_path'], 'duplicate_list.csv')
-
+    # parse the output path
+    output_path = default_yaml['output_path']
     if given_yaml_path is not None:
-        config['data_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'data')
-        config['master_list_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'master_list.csv')
-        config['duplicate_list_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'duplicate_list.csv')
-
+        output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
     if cli.output_path is not None:
-        config['data_path'] = os.path.join(cli.output_path, 'data')
-        config['master_list_path'] = os.path.join(
-            cli.output_path, 'master_list.csv')
-        config['duplicate_list_path'] = os.path.join(
-            cli.output_path, 'duplicate_list.csv')
+        output_path = cli.output_path
+    
+    config['data_path'] = os.path.join(output_path, 'data')
+    config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
+    config['duplicate_list_path'] = os.path.join(output_path, 'duplicate_list.csv')
 
     # parse the provider list
     config['providers'] = default_yaml['providers']
@@ -260,3 +258,67 @@ def parse_config():
         config[p] = os.path.normpath(config[p])
 
     return config
+
+
+def check_region(region):
+    """ Check if the region settings are valid
+
+    """
+    # only allow supported domains
+    if not region['domain'] in DOMAINS:
+        raise ConfigError('domain')
+    
+    # city should always be provided in the region settings (for now)
+    if 'city' not in region:
+        raise ConfigError('city')
+    
+    # north american jobs should have a province/state provided
+    if region['domain'] in ['com', 'ca'] and 'province' not in region:
+        raise ConfigError('province')
+
+    if 'radius' not in region:
+        raise ConfigError('radius')
+    elif type(region['radius']) is not int:
+        raise ConfigError('radius')
+
+
+def check_config(config):
+    """ Check whether the config is a valid configuration. 
+    
+    Some options are already checked at the command-line tool, e.g., loggging.
+    """
+    # check if paths are valid
+    check_paths = {
+        'data_path': r'data$',
+        'master_list_path': r'master_list\.csv$',
+        'duplicate_list_path', r'duplicate_list\.csv$',
+        'log_path': r'data\/jobfunnel.log$',
+        'filter_list_path': r'data\/filter_list\.json$',
+    }
+
+    for path, pattern in check_paths.items():
+        if not re.match(pattern, config[path]):
+            raise ConfigError(path)
+
+    # check if the provider list only consists of supported providers
+    if not set(config['providers']).issubset(PROVIDERS):
+        raise ConfigError('providers')
+
+    # check validity of region settings
+    check_region(config['search_terms']['region'])
+
+    # search terms should be a list
+    if type(config['search_terms']['keywords']) is not list:
+        raise ConfigError('keywords')
+    
+    # idem for blacklist although I think it's better if we allow black_list
+    # to be None
+    if type(config['black_list']) is not list:
+        raise ConfigError('black_list')
+    
+    # save_duplicates should either be true or false
+    if type(config['save_duplicates']) is not bool:
+        raise ConfigError('save_duplicates')
+
+    if type(config['set_delay']) is not bool:
+        raise ConfigError('set_delay')

@@ -1,9 +1,11 @@
 #!python
 """main script, scrapes data off several listings, pickles it,
 and applies search filters"""
+import sys
+
 from typing import Union
 
-from .config.parser import parse_config
+from .config.parser import parse_config, check_config, ConfigError
 
 from .jobfunnel import JobFunnel
 from .indeed import Indeed
@@ -16,6 +18,13 @@ PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 def main():
     """main function"""
     config = parse_config()
+
+    # check if config is a valid configuration
+    try:
+        check_config(config)
+    except ConfigError as e:
+        print(e)
+        sys.exit()
 
     # init class + logging
     jf = JobFunnel(config)
