@@ -5,9 +5,10 @@ import argparse
 import logging
 import os
 import re
+import sys
 import yaml
 
-from .valid_options import PROVIDERS, DOMAINS
+from .valid_options import CONFIG_TYPES
 
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
@@ -129,6 +130,71 @@ def parse_cli():
     return parser.parse_args()
 
 
+def cli_to_yaml(cli):
+    """ Put program arguments into dictionary in same style as configuration
+    yaml.
+
+    """"
+    return {
+        'output_path': cli.output_path,
+        'region': {
+            'keywords': cli.keywords
+        },
+        'log_level': cli.log_level,
+        'similar': cli.similar,
+        'no_scrape': cli.no_scrape,
+        'recover': cli.recover,
+        'save_duplicates': cli.save_duplicates,
+        'set_delay': cli.no_scrape,
+        'delay_config': {
+            'function': cli.function,
+            'delay': cli.delay,
+            'min_delay': cli.min_delay,
+            'random': cli.random,
+            'converge': cli.converge
+        }
+    }
+
+
+def update_yaml(config, new_yaml):
+    """ Update fiels of current yaml with new yaml
+    
+    """
+    for k, v in new_yaml.items():
+        # if v is a dict we need to dive deeper...
+        if type(v) is dict:
+            update_yaml(config[k], v)
+        else:
+            if v is not None:
+                config[k] = v
+
+
+def recursive_check_config_types(config, types):
+    """ Recursively check type of setting vars.
+
+    """
+    for k, v in config.items():
+        # if type is dict than we have to recursively handle this
+        if type(v) is dict:
+            yield from recursive_check_config_types(v, types[k])
+        else:
+            yield (k, type(v) == types[k])
+
+
+def check_config_types(config):
+    """ Check if no settings have a wrong type and if we do not have unsupported
+    options.
+
+    """
+    # Get a dictionary of all types and boolean if it's the right type
+    types_check = recursive_check_config_types(config, CONFIG_TYPES)
+
+    # Select all wrong types and throw error when there is such a value
+    wrong_types = [k for k, v in types_check if v == False]
+    if len(wrong_types) > 0:
+        raise ConfigError(wrong_types)
+
+
 def parse_config():
     """ Parse the JobFunnel configuration settings.
 
@@ -143,6 +209,7 @@ def parse_config():
 
     # parse the command line arguments
     cli = parse_cli()
+    cli_yaml = cli_to_yaml(cli)
 
     # parse the settings file for the line arguments
     given_yaml = None
@@ -151,174 +218,41 @@ def parse_config():
         given_yaml_path = os.path.dirname(cli.settings)
         given_yaml = yaml.safe_load(open(cli.settings, 'r'))
 
-    # prepare the configuration dictionary
-    config = {}
+    # combine default, given and argument yamls into one. Note that we update 
+    # the values of the default_yaml, so we use this for the rest of the file.
+    # We could make a deep copy if necessary. 
+    config = default_yaml
+    if given_yaml is not None:
+        update_yaml(config, given_yaml)
+    update_yaml(config, cli_yaml)
 
-    # parse the output path
-    output_path = default_yaml['output_path']
-    if given_yaml_path is not None:
-        output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
+    # check if the config has valid attribute types
+    check_config_types(config)
+
+    # create output path and corresponding (children) data paths
+    # I feel like this is not in line with the rest of the file's philosophy
     if cli.output_path is not None:
         output_path = cli.output_path
-    
+    elif given_yaml_path is not None:
+        output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
+    else:
+        output_path = default_yaml['output_path']
+
+    # define paths and normalise
     config['data_path'] = os.path.join(output_path, 'data')
     config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
     config['duplicate_list_path'] = os.path.join(output_path, 'duplicate_list.csv')
-
-    # parse the provider list
-    config['providers'] = default_yaml['providers']
-    if given_yaml_path is not None:
-        config['providers'] = given_yaml['providers']
-    for i, p in enumerate(config['providers']):
-        config['providers'][i] = p.lower()
-
-    # parse the search terms
-    config['search_terms'] = default_yaml['search_terms']
-    if given_yaml_path is not None:
-        config['search_terms'] = given_yaml['search_terms']
-    if cli.keywords is not None:
-        config['search_terms']['keywords'] = cli.keywords
-
-    # search term state is inserted as province if province does not already exist
-    if 'state' in config['search_terms']['region']:
-        if (config['search_terms']['region']['state'] is not None) and \
-                (config['search_terms']['region']['province'] is None):
-            config['search_terms']['region']['province'] = \
-                config['search_terms']['region']['state']
-
-    # parse the blacklist
-    config['black_list'] = default_yaml['black_list']
-    if given_yaml_path is not None:
-        config['black_list'] = given_yaml['black_list']
-
-    # parse the similar option
-    config['similar'] = cli.similar
-
-    # parse the no_scrape option
-    config['no_scrape'] = cli.no_scrape
-
-    # parse the recovery option
-    config['recover'] = cli.recover
-
-    # parse the log level
-    config['log_level'] = log_levels[default_yaml['log_level']]
-    if given_yaml_path is not None:
-        config['log_level'] = log_levels[given_yaml['log_level']]
-    if cli.log_level is not None:
-        config['log_level'] = log_levels[cli.log_level]
-
-    # parse save_duplicates option
-    config['save_duplicates'] = default_yaml['save_duplicates']
-    if given_yaml_path is not None:
-        config['save_duplicates'] = given_yaml['save_duplicates']
-    if cli.save_duplicates is not None:
-        config['save_duplicates'] = cli.save_duplicates
-
-    # define the log path
+    config['filter_list_path'] = os.path.join(config['data_path'], 'filter_list.json')
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
-    # define the filter list path
-    config['filter_list_path'] = os.path.join(
-        config['data_path'], 'filter_list.json')
-
-    # set delaying
-    config['set_delay'] = default_yaml['set_delay']
-    if given_yaml_path is not None:
-        config['set_delay'] = given_yaml['set_delay']
-    if cli.set_delay is not None:
-        config['set_delay'] = cli.set_delay
-
-    # parse options for delaying if turned on
-    if config['set_delay']:
-        config['delay_config'] = default_yaml['delay_config']
-        if given_yaml_path is not None:
-            config['delay_config'] = given_yaml['delay_config']
-
-        # cli options for delaying configuration
-        if cli.function is not None:
-            config['delay_config']['function'] = cli.function
-        if cli.delay is not None:
-            config['delay_config']['delay'] = cli.delay
-        if cli.min_delay is not None:
-            config['delay_config']['min_delay'] = cli.min_delay
-        if cli.random is not None:
-            config['delay_config']['random'] = cli.random
-            if cli.converge is not None:
-                config['delay_config']['converge'] = cli.converge
-
-        # converts function name to lower case in config
-        config['delay_config']['function'] = \
-            config['delay_config']['function'].lower()
-    else:
-        config['delay_config'] = None
-    
-    # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
               'log_path', 'filter_list_path']:
         config[p] = os.path.normpath(config[p])
 
+    # lower provider and delay function
+    for i, p in enumerate(config['providers']):
+        config['providers'][i] = p.lower()
+    config['delay_config']['function'] = \
+        config['delay_config']['function'].lower()
+
     return config
-
-
-def check_region(region):
-    """ Check if the region settings are valid
-
-    """
-    # only allow supported domains
-    if not region['domain'] in DOMAINS:
-        raise ConfigError('domain')
-    
-    # city should always be provided in the region settings (for now)
-    if 'city' not in region:
-        raise ConfigError('city')
-    
-    # north american jobs should have a province/state provided
-    if region['domain'] in ['com', 'ca'] and 'province' not in region:
-        raise ConfigError('province')
-
-    if 'radius' not in region:
-        raise ConfigError('radius')
-    elif type(region['radius']) is not int:
-        raise ConfigError('radius')
-
-
-def check_config(config):
-    """ Check whether the config is a valid configuration. 
-    
-    Some options are already checked at the command-line tool, e.g., loggging.
-    """
-    # check if paths are valid
-    check_paths = {
-        'data_path': r'data$',
-        'master_list_path': r'master_list\.csv$',
-        'duplicate_list_path': r'duplicate_list\.csv$',
-        'log_path': r'data\/jobfunnel.log$',
-        'filter_list_path': r'data\/filter_list\.json$',
-    }
-
-    for path, pattern in check_paths.items():
-        if not re.search(pattern, config[path]):
-            raise ConfigError(path)
-
-    # check if the provider list only consists of supported providers
-    if not set(config['providers']).issubset(PROVIDERS):
-        raise ConfigError('providers')
-
-    # check validity of region settings
-    check_region(config['search_terms']['region'])
-
-    # search terms should be a list
-    if type(config['search_terms']['keywords']) is not list:
-        raise ConfigError('keywords')
-    
-    # idem for blacklist although I think it's better if we allow black_list
-    # to be None
-    if type(config['black_list']) is not list:
-        raise ConfigError('black_list')
-    
-    # save_duplicates should either be true or false
-    if type(config['save_duplicates']) is not bool:
-        raise ConfigError('save_duplicates')
-
-    if type(config['set_delay']) is not bool:
-        raise ConfigError('set_delay')
