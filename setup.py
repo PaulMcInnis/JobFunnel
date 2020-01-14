@@ -14,9 +14,6 @@ requires = ['beautifulsoup4>=4.6.3',
             'scipy>=1.4.1',
             'pytest>=5.3.1'
             ]
-package_data = {
-    'sample': ['jobfunnel/config/settings.yaml']
-    }
 
 with open('readme.md', 'r') as f:
     readme = f.read()
@@ -34,6 +31,4 @@ setup(
     python_requires               = '>=3.6.0',
     install_requires              = requires,
     packages                      = find_packages(exclude=('demo',)),
-    package_data                  = package_data,
-    include_package_data          = True,
     entry_points                  = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
