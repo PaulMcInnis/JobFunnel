@@ -255,4 +255,7 @@ def parse_config():
     config['delay_config']['function'] = \
         config['delay_config']['function'].lower()
 
+    # parse the log level
+    config['log_level'] = log_levels[config['log_level']]
+
     return config
