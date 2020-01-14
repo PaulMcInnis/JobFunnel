@@ -96,13 +96,13 @@ def parse_cli():
     parser.add_argument('--similar',
                         dest='similar',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='pass to get \'similar\' job listings')
 
     parser.add_argument('--no_scrape',
                         dest='no_scrape',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='skip web-scraping and load a previously saved '
                              'daily scrape pickle')
 
@@ -116,7 +116,7 @@ def parse_cli():
     parser.add_argument('--recover',
                         dest='recover',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
 
@@ -132,12 +132,12 @@ def parse_cli():
 
 def cli_to_yaml(cli):
     """ Put program arguments into dictionary in same style as configuration
-    yaml.
+        yaml.
 
-    """"
+    """
     return {
         'output_path': cli.output_path,
-        'region': {
+        'search_terms': {
             'keywords': cli.keywords
         },
         'log_level': cli.log_level,
@@ -192,7 +192,7 @@ def check_config_types(config):
     # Select all wrong types and throw error when there is such a value
     wrong_types = [k for k, v in types_check if v == False]
     if len(wrong_types) > 0:
-        raise ConfigError(wrong_types)
+        raise ConfigError(', '.join(wrong_types))
 
 
 def parse_config():

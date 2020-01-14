@@ -13,8 +13,8 @@ CONFIG_TYPES = {
     'black_list': list,
     'log_level': str,
     'similar': bool,
-    'no_scrape': False,
-    'recover': False,
+    'no_scrape': bool,
+    'recover': bool,
     'save_duplicates': bool,
     'set_delay': bool,
     'delay_config': {
@@ -28,3 +28,4 @@ CONFIG_TYPES = {
 
 PROVIDERS = ['glassdoor', 'indeed', 'monster']
 DOMAINS = ['com', 'ca']
+DELAY_FUN = ['constant', 'linear', 'sigmoid']
