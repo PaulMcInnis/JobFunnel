@@ -264,7 +264,7 @@ def parse_config():
     else:
         config['delay_config'] = None
 
-    # set proxy
+    # set proxy (need get because value should be None when missing)
     config['proxy'] = default_yaml.get('proxy', None)
     if given_yaml_path is not None:
         config['proxy'] = given_yaml.get('proxy', None)

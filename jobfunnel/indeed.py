@@ -53,7 +53,7 @@ class Indeed(JobFunnel):
 
     def get_search_url(self, method='get'):
         """gets the indeed search url"""
-        if method is 'get':
+        if method == 'get':
             # form job search url
             search = ('http://www.indeed.{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
@@ -66,7 +66,7 @@ class Indeed(JobFunnel):
                 int(self.similar_results)))
 
             return search
-        elif method is 'post':
+        elif method == 'post':
             # @TODO implement post style for indeed
             raise NotImplementedError()
         else:
