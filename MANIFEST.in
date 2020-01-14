@@ -1,0 +1,2 @@
+include jobfunnel/config/settings.yaml
+include jobfunnel/text/user_agent_list.txt
