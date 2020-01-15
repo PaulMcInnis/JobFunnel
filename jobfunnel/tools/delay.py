@@ -77,10 +77,8 @@ def delay_alg(list_len, delay_config: Dict):
         # init and check numerical arguments
         delay = delay_config['delay']
         if delay <= 0:
-            raise ValueError("\nYour delay is set to 0 or less.\nIf you want "
-                             "to turn off delaying use the --no_delay flag in "
-                             "the command line or set \'set_delay\' to False "
-                             "in your settings file.\nCancelling execution...")
+            raise ValueError("\nYour delay is set to 0 or less.\nCancelling "
+                             "execution...")
             sys.exit(1)
 
         min_delay = delay_config['min_delay']
