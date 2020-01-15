@@ -105,13 +105,6 @@ def parse_cli():
                         help='skip web-scraping and load a previously saved '
                              'daily scrape pickle')
 
-    parser.add_argument('--no_delay',
-                        dest='set_delay',
-                        action='store_false',
-                        required=False,
-                        default=None,
-                        help='Turn random delay off, not a recommended action')
-
     parser.add_argument('--proxy',
                         dest='proxy',
                         type=str,
@@ -151,7 +144,6 @@ def cli_to_yaml(cli):
         'no_scrape': cli.no_scrape,
         'recover': cli.recover,
         'save_duplicates': cli.save_duplicates,
-        'set_delay': cli.set_delay,
         'delay_config': {
             'function': cli.function,
             'delay': cli.delay,
@@ -252,7 +244,8 @@ def parse_config():
     # define paths and normalise
     config['data_path'] = os.path.join(output_path, 'data')
     config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
-    config['duplicate_list_path'] = os.path.join(output_path, 'duplicate_list.csv')
+    config['duplicate_list_path'] = os.path.join(
+        output_path, 'duplicate_list.csv')
     config['filter_list_path'] = os.path.join(
         config['data_path'], 'filter_list.json')
     config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')

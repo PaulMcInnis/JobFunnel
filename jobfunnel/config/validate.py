@@ -1,6 +1,6 @@
 import re
 
-from .valid_options import CONFIG_TYPES, DOMAINS, PROVIDERS, DELAY_FUN
+from .valid_options import DOMAINS, PROVIDERS, DELAY_FUN
 from .parser import ConfigError
 
 
@@ -11,8 +11,9 @@ def validate_region(region):
     # only allow supported domains
     if region['domain'] not in DOMAINS:
         raise ConfigError('domain')
-    
-    # search term state is inserted as province if province does not already exist
+
+    # search term state is inserted as province if province does not already 
+    # exist
     if 'state' in region:
         if (region['state'] is not None) and (region['province'] is None):
             region['province'] = region['state']
@@ -29,7 +30,7 @@ def validate_delay(delay):
     # delay function should be constant, linear or sigmoid
     if delay['function'] not in DELAY_FUN:
         raise ConfigError('delay_function')
-    
+
     # maximum delay should be larger or equal to minimum delay
     if delay['delay'] < delay['min_delay']:
         raise ConfigError('(min)_delay')
@@ -41,7 +42,7 @@ def validate_delay(delay):
 
 def validate_config(config):
     """ Check whether the config is a valid configuration.
-    
+
     Some options are already checked at the command-line tool, e.g., loggging.
     Some checks are trivial while others have a separate function.
     """

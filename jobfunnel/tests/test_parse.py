@@ -44,9 +44,9 @@ def test_user_yaml(tmpdir):
 
 
 def test_cli_yaml():
-    with patch.object(sys, 'argv', ['', '--no_delay']):
+    with patch.object(sys, 'argv', ['', '--no_scrape']):
         config = parse_config()
-        assert config['set_delay'] is False
+        assert config['no_scrape'] is True
 
 
 def test_config_fail(tmpdir):

@@ -41,9 +41,6 @@ recover: False
 # saves duplicates removed by tfidf filter to duplicate_list.csv
 save_duplicates: False
 
-# turn on or off delaying
-set_delay: True
-
 # delaying algorithm configuration
 delay_config:
     # functions used for delaying algorithm, options are: constant, linear, sigmoid

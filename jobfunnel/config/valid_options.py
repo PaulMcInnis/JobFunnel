@@ -17,7 +17,6 @@ CONFIG_TYPES = {
     'no_scrape': [bool],
     'recover': [bool],
     'save_duplicates': [bool],
-    'set_delay': [bool],
     'delay_config': {
         'function': [str],
         'delay': [float, int],
