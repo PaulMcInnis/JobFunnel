@@ -8,6 +8,7 @@ import random
 from bs4 import BeautifulSoup
 from requests import get, post
 from typing import Union
+from unittest.mock import patch
 
 from ..config.parser import parse_config
 
@@ -38,9 +39,8 @@ if len(cities) < test_size:
 # take a random sample of cities of size test_size
 cities = random.sample(cities, test_size)
 
-sys.argv = ['']
-config = parse_config()
-
+with patch.object(sys, 'argv', ['']):
+    config = parse_config()
 
 @pytest.mark.xfail(strict=False)
 @pytest.mark.parametrize('city', cities)

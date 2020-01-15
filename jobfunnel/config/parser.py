@@ -168,7 +168,7 @@ def cli_to_yaml(cli):
 
 
 def update_yaml(config, new_yaml):
-    """ Update fiels of current yaml with new yaml
+    """ Update fields of current yaml with new yaml.
 
     """
     for k, v in new_yaml.items():
