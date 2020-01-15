@@ -148,7 +148,7 @@ class JobFunnel(object):
 
     def read_csv(self, path, key_by_id=True):
         # reads csv passed in as path
-        with open(path, 'r') as csvfile:
+        with open(path, 'r', encoding='utf8', errors='ignore') as csvfile:
             reader = csv.DictReader(csvfile)
             if key_by_id:
                 return dict([(j['id'], j) for j in reader])
