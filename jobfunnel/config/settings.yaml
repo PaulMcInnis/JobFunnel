@@ -1,17 +1,17 @@
 # This is the default settings file. Do not edit.
 
-# All paths are relative to this file.
+# all paths are relative to this file
 
-# Paths.
+# paths
 output_path: 'search'
 
-# Providers from which to search (case insensitive)
+# providers from which to search (case insensitive)
 providers:
   - 'Indeed'
   - 'Monster'
-  - 'GlassDoor' # This used to take ~10x longer to run than the other providers
+  - 'GlassDoor'
 
-# Filters.
+# filters
 search_terms:
   region:
     province: 'ON'
@@ -22,28 +22,43 @@ search_terms:
   keywords:
     - 'Python'
 
-# Black-listed company names
+# black-listed company names
 black_list:
   - 'Infox Consulting'
 
-# Logging level options are: critical, error, warning, info, debug, notset
+# logging level options are: critical, error, warning, info, debug, notset
 log_level: 'info'
 
-# Saves duplicates removed by tfidf filter to duplicate_list.csv
+# keep similar job postings
+similar: False
+
+# skip web-scraping and load a previously saved daily scrape pickle
+no_scrape: False
+
+# recover master-list by accessing all historic scrapes pickles
+recover: False
+
+# saves duplicates removed by tfidf filter to duplicate_list.csv
 save_duplicates: False
 
-# Turn on or off delaying
-set_delay: True 
-
-# Delaying algorithm configuration
+# delaying algorithm configuration
 delay_config:
-    # Functions used for delaying algorithm, options are: constant, linear, sigmoid
+    # functions used for delaying algorithm, options are: constant, linear, sigmoid
     function: 'linear'
-    # Maximum delay/upper bound for converging random delay 
-    delay: 15 
-    # Minimum delay/lower bound for random delay
-    min_delay: 1 
-    # Random delay
+    # maximum delay/upper bound for converging random delay
+    delay: 10.0
+    # minimum delay/lower bound for random delay
+    min_delay: 1.0
+    # random delay
     random: False
-    # Converging random delay, only used if 'random' is set to True
-    converge: False 
+    # converging random delay, only used if 'random' is set to True
+    converge: False
+
+# proxy settings
+# proxy:
+#   # protocol (http or https)
+#   protocol: 'https'
+#   # ip address
+#   ip_address: '1.1.1.1'
+#   # port
+#   port: '200'

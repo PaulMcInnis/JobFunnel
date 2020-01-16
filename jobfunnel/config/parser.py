@@ -6,16 +6,24 @@ import logging
 import os
 import yaml
 
+from .valid_options import CONFIG_TYPES
+from ..tools.tools import split_url
+
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
               'warning': logging.WARNING, 'info': logging.INFO,
               'debug': logging.DEBUG, 'notset': logging.NOTSET}
 
 
-def _parse_cli():
-    """Parse the command line arguments.
+class ConfigError(ValueError):
+    def __init__(self, arg):
+        self.strerror = f"ConfigError: '{arg}' has an invalid value"
+        self.args = {arg}
+
+
+def parse_cli():
+    """ Parse the command line arguments.
 
     """
-
     parser = argparse.ArgumentParser(
         'CLI options take precedence over settings in the yaml file'
         'empty arguments are replaced by settings in the default yaml file')
@@ -87,27 +95,27 @@ def _parse_cli():
     parser.add_argument('--similar',
                         dest='similar',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='pass to get \'similar\' job listings')
 
     parser.add_argument('--no_scrape',
                         dest='no_scrape',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='skip web-scraping and load a previously saved '
                              'daily scrape pickle')
 
-    parser.add_argument('--no_delay',
-                        dest='set_delay',
-                        action='store_false',
+    parser.add_argument('--proxy',
+                        dest='proxy',
+                        type=str,
                         required=False,
                         default=None,
-                        help='Turn random delay off, not a recommended action')
+                        help='proxy address')
 
     parser.add_argument('--recover',
                         dest='recover',
                         action='store_true',
-                        default=False,
+                        default=None,
                         help='recover master-list by accessing all historic '
                              'scrapes pickles')
 
@@ -121,8 +129,77 @@ def _parse_cli():
     return parser.parse_args()
 
 
+def cli_to_yaml(cli):
+    """ Put program arguments into dictionary in same style as configuration
+        yaml.
+
+    """
+    yaml = {
+        'output_path': cli.output_path,
+        'search_terms': {
+            'keywords': cli.keywords
+        },
+        'log_level': cli.log_level,
+        'similar': cli.similar,
+        'no_scrape': cli.no_scrape,
+        'recover': cli.recover,
+        'save_duplicates': cli.save_duplicates,
+        'delay_config': {
+            'function': cli.function,
+            'delay': cli.delay,
+            'min_delay': cli.min_delay,
+            'random': cli.random,
+            'converge': cli.converge
+        }
+    }
+
+    if cli.proxy is not None:
+        yaml['proxy'] = split_url(cli.proxy)
+
+    return yaml
+
+
+def update_yaml(config, new_yaml):
+    """ Update fields of current yaml with new yaml.
+
+    """
+    for k, v in new_yaml.items():
+        # if v is a dict we need to dive deeper...
+        if type(v) is dict:
+            update_yaml(config[k], v)
+        else:
+            if v is not None:
+                config[k] = v
+
+
+def recursive_check_config_types(config, types):
+    """ Recursively check type of setting vars.
+
+    """
+    for k, v in config.items():
+        # if type is dict than we have to recursively handle this
+        if type(v) is dict:
+            yield from recursive_check_config_types(v, types[k])
+        else:
+            yield (k, type(v) in types[k])
+
+
+def check_config_types(config):
+    """ Check if no settings have a wrong type and if we do not have unsupported
+    options.
+
+    """
+    # Get a dictionary of all types and boolean if it's the right type
+    types_check = recursive_check_config_types(config, CONFIG_TYPES)
+
+    # Select all wrong types and throw error when there is such a value
+    wrong_types = [k for k, v in types_check if v is False]
+    if len(wrong_types) > 0:
+        raise ConfigError(', '.join(wrong_types))
+
+
 def parse_config():
-    """Parse the JobFunnel configuration settings.
+    """ Parse the JobFunnel configuration settings.
 
     """
     # find the jobfunnel root dir
@@ -134,7 +211,8 @@ def parse_config():
     default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
 
     # parse the command line arguments
-    cli = _parse_cli()
+    cli = parse_cli()
+    cli_yaml = cli_to_yaml(cli)
 
     # parse the settings file for the line arguments
     given_yaml = None
@@ -143,114 +221,51 @@ def parse_config():
         given_yaml_path = os.path.dirname(cli.settings)
         given_yaml = yaml.safe_load(open(cli.settings, 'r'))
 
-    # prepare the configuration dictionary
-    config = {}
+    # combine default, given and argument yamls into one. Note that we update
+    # the values of the default_yaml, so we use this for the rest of the file.
+    # We could make a deep copy if necessary.
+    config = default_yaml
+    if given_yaml is not None:
+        update_yaml(config, given_yaml)
+    update_yaml(config, cli_yaml)
 
-    # parse the data path
-    config['data_path'] = os.path.join(default_yaml['output_path'], 'data')
-    config['master_list_path'] = os.path.join(
-        default_yaml['output_path'], 'master_list.csv')
-    config['duplicate_list_path'] = os.path.join(
-        default_yaml['output_path'], 'duplicate_list.csv')
+    # check if the config has valid attribute types
+    check_config_types(config)
 
-    if given_yaml_path is not None:
-        config['data_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'data')
-        config['master_list_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'master_list.csv')
-        config['duplicate_list_path'] = os.path.join(
-            given_yaml_path, given_yaml['output_path'], 'duplicate_list.csv')
-
+    # create output path and corresponding (children) data paths
+    # I feel like this is not in line with the rest of the file's philosophy
     if cli.output_path is not None:
-        config['data_path'] = os.path.join(cli.output_path, 'data')
-        config['master_list_path'] = os.path.join(
-            cli.output_path, 'master_list.csv')
-        config['duplicate_list_path'] = os.path.join(
-            cli.output_path, 'duplicate_list.csv')
+        output_path = cli.output_path
+    elif given_yaml_path is not None:
+        output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
+    else:
+        output_path = default_yaml['output_path']
 
-    # parse the provider list
-    config['providers'] = default_yaml['providers']
-    if given_yaml_path is not None:
-        config['providers'] = given_yaml['providers']
-    for i, p in enumerate(config['providers']):
-        config['providers'][i] = p.lower()
-
-    # parse the search terms
-    config['search_terms'] = default_yaml['search_terms']
-    if given_yaml_path is not None:
-        config['search_terms'] = given_yaml['search_terms']
-    if cli.keywords is not None:
-        config['search_terms']['keywords'] = cli.keywords
-
-    # parse the blacklist
-    config['black_list'] = default_yaml['black_list']
-    if given_yaml_path is not None:
-        config['black_list'] = given_yaml['black_list']
-
-    # parse the similar option
-    config['similar'] = cli.similar
-
-    # parse the no_scrape option
-    config['no_scrape'] = cli.no_scrape
-
-    # parse the recovery option
-    config['recover'] = cli.recover
-
-    # parse the log level
-    config['log_level'] = log_levels[default_yaml['log_level']]
-    if given_yaml_path is not None:
-        config['log_level'] = log_levels[given_yaml['log_level']]
-    if cli.log_level is not None:
-        config['log_level'] = log_levels[cli.log_level]
-
-    # parse save_duplicates option
-    config['save_duplicates'] = default_yaml['save_duplicates']
-    if given_yaml_path is not None:
-        config['save_duplicates'] = given_yaml['save_duplicates']
-    if cli.save_duplicates is not None:
-        config['save_duplicates'] = cli.save_duplicates
-
-    # define the log path
-    config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
-
-    # define the filter list path
+    # define paths and normalise
+    config['data_path'] = os.path.join(output_path, 'data')
+    config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
+    config['duplicate_list_path'] = os.path.join(
+        output_path, 'duplicate_list.csv')
     config['filter_list_path'] = os.path.join(
         config['data_path'], 'filter_list.json')
-
-    # set delaying
-    config['set_delay'] = default_yaml['set_delay']
-    if given_yaml_path is not None:
-        config['set_delay'] = given_yaml['set_delay']
-    if cli.set_delay is not None:
-        config['set_delay'] = cli.set_delay
-
-    # parse options for delaying if turned on
-    if config['set_delay']:
-        config['delay_config'] = default_yaml['delay_config']
-        if given_yaml_path is not None:
-            config['delay_config'] = given_yaml['delay_config']
-
-        # Cli options for delaying configuration
-        if cli.function is not None:
-            config['delay_config']['function'] = cli.function
-        if cli.delay is not None:
-            config['delay_config']['delay'] = cli.delay
-        if cli.min_delay is not None:
-            config['delay_config']['min_delay'] = cli.min_delay
-        if cli.random is not None:
-            config['delay_config']['random'] = cli.random
-            if cli.converge is not None:
-                config['delay_config']['converge'] = cli.converge
-
-        # Converts function name to lower case in config
-        config['delay_config']['function'] = \
-            config['delay_config']['function'].lower()
-    else:
-        config['delay_config'] = None
+    config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
 
     # normalize paths
     for p in ['data_path', 'master_list_path', 'duplicate_list_path',
               'log_path', 'filter_list_path']:
         config[p] = os.path.normpath(config[p])
+
+    # lower provider and delay function
+    for i, p in enumerate(config['providers']):
+        config['providers'][i] = p.lower()
+    config['delay_config']['function'] = \
+        config['delay_config']['function'].lower()
+
+    # parse the log level
+    config['log_level'] = log_levels[config['log_level']]
+
+    # check if proxy has not been set yet (optional)
+    if 'proxy' not in config:
+        config['proxy'] = None
 
     return config
