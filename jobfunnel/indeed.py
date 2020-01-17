@@ -3,13 +3,19 @@ import re
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
+from logging import getLogger as get_logger
+from logging import CRITICAL as LOG_CRITICAL
 from math import ceil
-from requests import get
 from time import sleep, time
+from gensim.summarization.summarizer import summarize
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER
+from .jobfunnel import JobFunnel, MASTERLIST_HEADER, BLURB_WORD_COUNT
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+
+# disable log output from gensim, except critical logs
+get_logger('gensim.corpora.dictionary').setLevel(LOG_CRITICAL)
+get_logger('gensim.summarization.summarizer').setLevel(LOG_CRITICAL)
 
 
 class Indeed(JobFunnel):
@@ -114,8 +120,9 @@ class Indeed(JobFunnel):
         job_link_soup = BeautifulSoup(html, self.bs4_parser)
 
         try:
-            job['blurb'] = job_link_soup.find(
-                id='jobDescriptionText').text.strip()
+            # summarize the page contents to form the blurb
+            job['blurb'] = summarize(job_link_soup.find(
+                id='jobDescriptionText').text.strip(), word_count=BLURB_WORD_COUNT)
         except AttributeError:
             job['blurb'] = ''
 

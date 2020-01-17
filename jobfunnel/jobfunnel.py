@@ -33,6 +33,8 @@ MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date',
 USER_AGENT_LIST = os.path.normpath(
     os.path.join(os.path.dirname(__file__), 'text/user_agent_list.txt'))
 
+BLURB_WORD_COUNT = 100
+
 
 class JobFunnel(object):
     """class that writes pickles to master list path and applies search
@@ -90,7 +92,7 @@ class JobFunnel(object):
 
     def init_logging(self):
         # initialise logging to file
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self.loglevel)
         logging.basicConfig(filename=self.logfile, level=self.loglevel)
         if self.loglevel == 20:
