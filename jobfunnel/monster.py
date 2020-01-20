@@ -3,7 +3,7 @@ import re
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from logging import info as log_info
-from logging import getLogger as get_logger
+from logging import getLogger
 from logging import CRITICAL as LOG_CRITICAL
 from math import ceil
 from time import sleep, time
@@ -14,8 +14,8 @@ from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 
 # disable log output from gensim, except critical logs
-get_logger('gensim.corpora.dictionary').setLevel(LOG_CRITICAL)
-get_logger('gensim.summarization.summarizer').setLevel(LOG_CRITICAL)
+getLogger('gensim.corpora.dictionary').setLevel(LOG_CRITICAL)
+getLogger('gensim.summarization.summarizer').setLevel(LOG_CRITICAL)
 
 
 class Monster(JobFunnel):
@@ -102,8 +102,8 @@ class Monster(JobFunnel):
         else:
             raise ValueError(f'No html method {method} exists')
 
-    def search_joblink_for_blurb(self, job):
-        """function that scrapes the monster job link for the blurb"""
+    def search_joblink_for_description(self, job):
+        """function that scrapes the monster job link for the description"""
         search = job['link']
         log_info(f'getting monster search: {search}')
 
@@ -111,17 +111,24 @@ class Monster(JobFunnel):
             self.s.get(search, headers=self.headers).text, self.bs4_parser)
 
         try:
-            job['blurb'] = job_link_soup.find(
+            job['description'] = job_link_soup.find(
                 id='JobDescription').text.strip()
         except AttributeError:
-            job['blurb'] = ''
+            job['description'] = ''
 
         filter_non_printables(job)
 
-    # split apart above function into two so gotten blurbs can be parsed
-    # while others blurbs are being obtained
-    def get_blurb_with_delay(self, job, delay):
-        """gets blurb from monster job link and sets delays for requests"""
+        # add the blurb while we're at it
+        if not job['description']:
+            job['blurb'] = summarize(job['description'],
+                                     word_count=BLURB_WORD_COUNT)
+        else:
+            job['blurb'] = ''
+
+    # split apart above function into two so gotten descriptions can be parsed
+    # while others descriptions are being obtained
+    def get_description_with_delay(self, job, delay):
+        """gets description from monster job link and sets delays for requests"""
         sleep(delay)
 
         search = job['link']
@@ -130,18 +137,25 @@ class Monster(JobFunnel):
         res = self.s.get(search, headers=self.headers).text
         return job, res
 
-    def parse_blurb(self, job, html):
+    def parse_description(self, job, html):
         """parses and stores job description into dict entry"""
         job_link_soup = BeautifulSoup(html, self.bs4_parser)
 
         try:
-            # summarize the page contents to form the blurb
-            job['blurb'] = summarize(job_link_soup.find(
-                id='JobDescription').text.strip(), word_count=BLURB_WORD_COUNT)
+            # summarize the page contents to form the description
+            job['description'] = job_link_soup.find(
+                id='JobDescription').text.strip()
         except AttributeError:
-            job['blurb'] = ''
+            job['description'] = ''
 
         filter_non_printables(job)
+
+        # add the blurb while we're at it
+        if not job['description']:
+            job['blurb'] = summarize(job['description'],
+                                     word_count=BLURB_WORD_COUNT)
+        else:
+            job['blurb'] = ''
 
     def scrape(self):
         """function that scrapes job posting from monster and pickles it"""
@@ -196,8 +210,10 @@ class Monster(JobFunnel):
             except AttributeError:
                 continue
 
-            # no blurb is available in monster job soups
+            # set description to an empty string for now
+            job['description'] = ''
             job['blurb'] = ''
+
             # tags are not supported in monster
             job['tags'] = ''
             try:
@@ -219,27 +235,27 @@ class Monster(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # apply job pre-filter before scraping blurbs
+        # apply job pre-filter before scraping descriptions
         super().pre_filter(self.scrape_data, self.provider)
 
-        # stores references to jobs in list to be used in blurb retrieval
+        # stores references to jobs in list to be used in descriptions retrieval
         scrape_list = [i for i in self.scrape_data.values()]
 
         # converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
 
         threads = ThreadPoolExecutor(max_workers=8)
-        # checks if delay is set or not, then extracts blurbs from job links
+        # checks if delay is set or not, then extracts descriptions from job links
         if self.delay_config is not None:
             # calls super class to run delay specific threading logic
-            super().delay_threader(scrape_list, self.get_blurb_with_delay,
-                                   self.parse_blurb, threads)
+            super().delay_threader(scrape_list, self.get_description_with_delay,
+                                   self.parse_description, threads)
         else:
             # start time recording
             start = time()
 
             # maps jobs to threads and cleans them up when done
-            threads.map(self.search_joblink_for_blurb, scrape_list)
+            threads.map(self.search_joblink_for_description, scrape_list)
             threads.shutdown()
 
             # end and print recorded time

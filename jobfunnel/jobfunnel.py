@@ -27,7 +27,7 @@ REMOVE_STATUSES = ['archive', 'archived', 'remove', 'rejected']
 
 # csv header
 MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date',
-                     'blurb', 'tags', 'link', 'id', 'provider', 'query']
+                     'description', 'blurb', 'tags', 'link', 'id', 'provider', 'query']
 
 # user agent list
 USER_AGENT_LIST = os.path.normpath(
@@ -231,7 +231,7 @@ class JobFunnel(object):
 
     def pre_filter(self, data: Dict[str, dict], provider):
         """function called by child classes that applies multiple filters
-        before getting job blurbs"""
+        before getting job descriptions"""
         # call id_filter for master and duplicate lists, if they exist
         if os.path.isfile(self.master_list_path):
             id_filter(data, self.read_csv(self.master_list_path),

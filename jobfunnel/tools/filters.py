@@ -38,7 +38,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         Args:
             cur_dict: today's job scrape dict
             prev_dict: the existing master list job dict
-            max_similarity: threshold above which blurb similarity = duplicate
+            max_similarity: threshold above which description similarity = duplicate
 
         Returns:
             list of duplicate job ids which were removed from cur_dict
@@ -60,7 +60,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     if prev_dict is None:
         # get query words and ids as lists
         query_ids = [job['id'] for job in cur_dict.values()]
-        query_words = [job['blurb'] for job in cur_dict.values()]
+        query_words = [job['description'] for job in cur_dict.values()]
 
         # returns cosine similarity between jobs as square matrix (n,n)
         similarities = cosine_similarity(vectorizer.fit_transform(query_words))
@@ -95,10 +95,10 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
         # get query words and ids as lists
         query_ids = [job['id'] for job in cur_dict.values()]
-        query_words = [job['blurb'] for job in cur_dict.values()]
+        query_words = [job['description'] for job in cur_dict.values()]
 
         # get reference words as list
-        reference_words = [job['blurb'] for job in prev_dict.values()]
+        reference_words = [job['description'] for job in prev_dict.values()]
 
         # fit vectorizer to entire corpus
         vectorizer.fit(query_words + reference_words)
@@ -106,7 +106,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         # set reference tfidf for cosine similarity later
         references = vectorizer.transform(reference_words)
 
-        # calculate cosine similarity between reference and current blurbs
+        # calculate cosine similarity between reference and current descriptions
         similarities = cosine_similarity(
             vectorizer.transform(query_words), references)
 
@@ -116,7 +116,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 duplicate_ids.update({query_id: cur_dict.pop(query_id)})
 
         # log something
-        logging.info(f'found {len(cur_dict.keys())} unique listings and '
+        logging.info(f'Found {len(cur_dict.keys())} unique listings and '
                      f'{len(duplicate_ids.keys())} duplicates '
                      f'via TFIDF cosine similarity')
 

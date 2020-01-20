@@ -12,7 +12,7 @@ def filter_non_printables(job):
     # filter all of the weird characters some job postings have...
     printable = set(string.printable)
     job['title'] = ''.join(filter(lambda x: x in printable, job['title']))
-    job['blurb'] = ''.join(filter(lambda x: x in printable, job['blurb']))
+    job['description'] = ''.join(filter(lambda x: x in printable, job['description']))
 
 
 def post_date_from_relative_post_age(job_list):
