@@ -31,4 +31,5 @@ setup(
     python_requires               = '>=3.6.0',
     install_requires              = requires,
     packages                      = find_packages(exclude=('demo',)),
+    include_package_data          = True,
     entry_points                  = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
