@@ -47,6 +47,25 @@ def parse_cli():
                         required=False,
                         help='list of keywords to use in the job search. ('
                              'i.e. Engineer, AI)')
+    ''' adding additional cli options '''
+    parser.add_argument('-p',
+                        dest='province',
+                        type=str,
+                        required=False,
+                        help='Province value for a region ')
+
+    parser.add_argument('-city',
+                        dest='city',
+                        type=str,
+                        required=False,
+                        help='City value for a region ')
+
+    parser.add_argument('-domain',
+                        dest='domain',
+                        type=str,
+                        required=False,
+                        help='Domain value for a region ')   
+
 
     parser.add_argument('-r',
                         dest='random',
@@ -137,8 +156,13 @@ def cli_to_yaml(cli):
     yaml = {
         'output_path': cli.output_path,
         'search_terms': {
+            'region': {
+            'province': cli.province,
+            'city': cli.city,
+            'domain': cli.domain
+            },
             'keywords': cli.keywords
-        },
+            },
         'log_level': cli.log_level,
         'similar': cli.similar,
         'no_scrape': cli.no_scrape,
