@@ -47,7 +47,7 @@ def parse_cli():
                         required=False,
                         help='list of keywords to use in the job search. ('
                              'i.e. Engineer, AI)')
-    ''' adding additional cli options '''
+
     parser.add_argument('-p',
                         dest='province',
                         type=str,
@@ -161,7 +161,7 @@ def cli_to_yaml(cli):
             'domain': cli.domain
             },
             'keywords': cli.keywords
-            },
+        },
         'log_level': cli.log_level,
         'similar': cli.similar,
         'no_scrape': cli.no_scrape,
