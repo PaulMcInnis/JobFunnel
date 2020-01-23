@@ -52,20 +52,19 @@ def parse_cli():
                         dest='province',
                         type=str,
                         required=False,
-                        help='Province value for a region ')
+                        help='province value for a region ')
 
-    parser.add_argument('-city',
+    parser.add_argument('--city',
                         dest='city',
                         type=str,
                         required=False,
-                        help='City value for a region ')
+                        help='city value for a region ')
 
-    parser.add_argument('-domain',
+    parser.add_argument('--domain',
                         dest='domain',
                         type=str,
                         required=False,
-                        help='Domain value for a region ')   
-
+                        help='domain value for a region ')   
 
     parser.add_argument('-r',
                         dest='random',
