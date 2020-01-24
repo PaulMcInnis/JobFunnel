@@ -12,7 +12,7 @@ def validate_region(region):
     if region['domain'] not in DOMAINS:
         raise ConfigError('domain')
 
-    # search term state is inserted as province if province does not already 
+    # search term state is inserted as province if province does not already
     # exist
     if 'state' in region:
         if (region['state'] is not None) and (region['province'] is None):
@@ -51,8 +51,8 @@ def validate_config(config):
         'data_path': r'data$',
         'master_list_path': r'master_list\.csv$',
         'duplicate_list_path': r'duplicate_list\.csv$',
-        'log_path': r'data\/jobfunnel.log$',
-        'filter_list_path': r'data\/filter_list\.json$',
+        'log_path': r'data[\\\/]jobfunnel.log$',
+        'filter_list_path': r'data[\\\/]filter_list\.json$',
     }
 
     for path, pattern in check_paths.items():
