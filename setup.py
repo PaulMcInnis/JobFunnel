@@ -12,6 +12,8 @@ requires = ['beautifulsoup4>=4.6.3',
             'scikit-learn>=0.21.2',
             'nltk>=3.4.1',
             'scipy>=1.4.1',
+            'termcolor>=1.1.0',
+            'colorama>=0.4.3',
             'pytest>=5.3.1'
             ]
 
