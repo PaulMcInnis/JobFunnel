@@ -6,13 +6,35 @@ import logging
 import os
 import yaml
 
+from argparse import RawTextHelpFormatter
+from termcolor import colored
+from colorama import init as colorama_init
+
 from .valid_options import CONFIG_TYPES
 from ..tools.tools import split_url
 
-log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
-              'warning': logging.WARNING, 'info': logging.INFO,
-              'debug': logging.DEBUG, 'notset': logging.NOTSET}
+DESCRIPTION = ('CLI options take precedence over settings in the yaml file'
+               'empty arguments are replaced by settings in the default yaml'
+               'file')
 
+LOG_LEVELS = {
+    'critical': logging.CRITICAL,
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'notset': logging.NOTSET
+    }
+
+CHOICES = {
+    'log_level': ['critical', 'error', 'warning', 'info', 'debug', 'notset'],
+    'function': ['constant', 'linear', 'sigmoid']
+    }
+
+COLOR = 'green'
+ATTRS = ['bold']
+
+choices_str = colored('\nchoices:', COLOR, attrs=ATTRS)
 
 class ConfigError(ValueError):
     def __init__(self, arg):
@@ -24,125 +46,166 @@ def parse_cli():
     """ Parse the command line arguments.
 
     """
+    colorama_init()
     parser = argparse.ArgumentParser(
-        'CLI options take precedence over settings in the yaml file'
-        'empty arguments are replaced by settings in the default yaml file')
+        description=DESCRIPTION,
+        formatter_class=RawTextHelpFormatter
+    )
 
     parser.add_argument('-s',
+                        '--settings',
                         dest='settings',
                         type=str,
                         required=False,
-                        help='path to the yaml settings file')
+                        help='path to the yaml settings file',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
     parser.add_argument('-o',
+                        '--output_path',
                         dest='output_path',
+                        type=str,
                         action='store',
                         required=False,
                         help='directory where the search results will be '
-                             'stored')
+                             'stored',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
     parser.add_argument('-kw',
+                        '--keywords',
                         dest='keywords',
                         nargs='*',
                         required=False,
-                        help='list of keywords to use in the job search. ('
-                             'i.e. Engineer, AI)')
+                        help='list of keywords to use in the job search',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
     parser.add_argument('-p',
+                        '--province',
                         dest='province',
                         type=str,
                         required=False,
-                        help='province value for a region ')
+                        help='province value for a region ('
+                             'takes precedence over state)',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--city',
+    parser.add_argument('-st',
+                        '--state',
+                        dest='state',
+                        type=str,
+                        required=False,
+                        help='state value for a region',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
+
+    parser.add_argument('-ci',
+                        '--city',
                         dest='city',
                         type=str,
                         required=False,
-                        help='city value for a region ')
+                        help='city value for a region',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--domain',
+    parser.add_argument('-d',
+                        '--domain',
                         dest='domain',
                         type=str,
                         required=False,
-                        help='domain value for a region ')   
+                        help='domain value for a region',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
     parser.add_argument('-r',
+                        '--random',
                         dest='random',
                         action='store_true',
                         required=False,
                         default=None,
-                        help='turn on random delaying')
+                        help='pass to turn on random delaying')
 
     parser.add_argument('-c',
+                        '--coverage',
                         dest='converge',
                         action='store_true',
                         required=False,
                         default=None,
-                        help='use converging random delay')
+                        help='pass to use a converging random delay')
 
-    parser.add_argument('-d',
+    parser.add_argument('-dl',
+                        '--delay',
                         dest='delay',
                         type=float,
                         required=False,
-                        help='set delay seconds for scrapes.')
+                        help='set the maximum delay in seconds for scrapes',
+                        metavar=colored(float.__name__, COLOR, attrs=ATTRS))
 
     parser.add_argument('-md',
+                        '--min_delay',
                         dest='min_delay',
                         type=float,
                         required=False,
-                        help='set lower bound value for scraper')
+                        help='set the minimum delay in seconds for scraper',
+                        metavar=colored(float.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--fun',
+    parser.add_argument('-f',
+                        '--fun',
                         dest='function',
                         type=str,
                         required=False,
                         default=None,
-                        choices=['constant', 'linear', 'sigmoid'],
-                        help='Select a function to calculate delay times with')
+                        choices=CHOICES['function'],
+                        help='select a function to calculate delay times '
+                             '{} {}'.format(choices_str, CHOICES['function']),
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--log_level',
+    parser.add_argument('-ll',
+                        '--log_level',
                         dest='log_level',
                         type=str,
                         required=False,
                         default=None,
-                        choices=['critical', 'error', 'warning', 'info',
-                                 'debug', 'notset'],
-                        help='Type of logging information shown on the '
-                             'terminal.')
+                        choices=CHOICES['log_level'],
+                        help='type of logging information shown in the '
+                             'terminal '
+                             '{} {}'.format(choices_str, CHOICES['log_level']),
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--similar',
+    parser.add_argument('-si',
+                        '--similar',
                         dest='similar',
                         action='store_true',
                         default=None,
-                        help='pass to get \'similar\' job listings')
+                        help='pass to get similar job listings')
 
-    parser.add_argument('--no_scrape',
+    parser.add_argument('-ns',
+                        '--no_scrape',
                         dest='no_scrape',
                         action='store_true',
                         default=None,
-                        help='skip web-scraping and load a previously saved '
-                             'daily scrape pickle')
+                        help='pass to skip web-scraping and load a previously'
+                             'saved daily scrape pickle')
 
-    parser.add_argument('--proxy',
+    parser.add_argument('-px',
+                        '--proxy',
                         dest='proxy',
                         type=str,
                         required=False,
                         default=None,
-                        help='proxy address')
+                        help='proxy address',
+                        metavar=colored(str.__name__, COLOR, attrs=ATTRS))
 
-    parser.add_argument('--recover',
+    parser.add_argument('-rv',
+                        '--recover',
                         dest='recover',
                         action='store_true',
                         default=None,
-                        help='recover master-list by accessing all historic '
-                             'scrapes pickles')
+                        help='pass to recover the master-list file by accessing '
+                             'all historic scrape pickles')
 
-    parser.add_argument('--save_dup',
+    parser.add_argument('-sd',
+                        '--save_dup',
                         dest='save_duplicates',
                         action='store_true',
                         required=False,
                         default=None,
-                        help='save duplicates popped by tf_idf filter to file')
+                        help='pass to save duplicates popped by tf_idf filter '
+                             'to file')
 
     return parser.parse_args()
 
@@ -156,9 +219,10 @@ def cli_to_yaml(cli):
         'output_path': cli.output_path,
         'search_terms': {
             'region': {
-            'province': cli.province,
-            'city': cli.city,
-            'domain': cli.domain
+                'province': cli.province,
+                'state': cli.state,
+                'city': cli.city,
+                'domain': cli.domain
             },
             'keywords': cli.keywords
         },
@@ -285,7 +349,7 @@ def parse_config():
         config['delay_config']['function'].lower()
 
     # parse the log level
-    config['log_level'] = log_levels[config['log_level']]
+    config['log_level'] = LOG_LEVELS[config['log_level']]
 
     # check if proxy has not been set yet (optional)
     if 'proxy' not in config:
