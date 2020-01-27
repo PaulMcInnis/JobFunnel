@@ -18,7 +18,7 @@ from ..glassdoor import GlassDoor
 
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
-DOMAINS = {'America': 'com', 'Canada': 'ca'}
+DOMAINS = {'America': 'com', 'Canada': 'ca', 'New Zealand': 'nz'}
 
 cities_america = os.path.normpath(
     os.path.join(os.path.dirname(__file__), 'json/cities_america.json'))

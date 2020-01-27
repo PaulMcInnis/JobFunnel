@@ -1,5 +1,7 @@
 import re
 
+
+from collections import defaultdict as dd
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
@@ -12,6 +14,11 @@ from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 
 
+dom_dict = dd(str)
+
+dom_dict['com'] = 'http://www.indeed.com'
+dom_dict['nz'] = 'https://nz.indeed.com'
+
 class Indeed(JobFunnel):
 
     def __init__(self, args):
@@ -23,8 +30,8 @@ class Indeed(JobFunnel):
                       'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.indeed.{0}/'.format(
-                self.search_terms['region']['domain']),
+            'referer': '{0}/'.format(
+                dom_dict[self.search_terms['region']['domain']]),
             'upgrade-insecure-requests': '1',
             'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
@@ -55,9 +62,9 @@ class Indeed(JobFunnel):
         """gets the indeed search url"""
         if method == 'get':
             # form job search url
-            search = ('http://www.indeed.{0}/jobs?'
+            search = ('{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
-                self.search_terms['region']['domain'],
+                dom_dict[self.search_terms['region']['domain']],
                 self.query,
                 self.search_terms['region']['city'],
                 self.search_terms['region']['province'],
@@ -127,6 +134,7 @@ class Indeed(JobFunnel):
 
         # get the search url
         search = self.get_search_url()
+        print('search',search)
 
         # get the html data, initialize bs4 with lxml
         request_html = self.s.get(search, headers=self.headers)
@@ -135,6 +143,7 @@ class Indeed(JobFunnel):
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # parse total results, and calculate the # of pages needed
+        
         num_res = soup_base.find(id='searchCountPages').contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
         log_info(f'Found {num_res} indeed results for query='
@@ -196,8 +205,8 @@ class Indeed(JobFunnel):
             try:
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
-                job['link'] = (f"http://www.indeed."
-                               f"{self.search_terms['region']['domain']}"
+                temp = dom_dict[self.search_terms['region']['domain']]
+                job['link'] = (f"{temp}"
                                f"/viewjob?jk={job['id']}")
 
             except (AttributeError, IndexError):
