@@ -1,5 +1,5 @@
 # file for storing all countries and urls
-from collections import defaultindeed as dd
+from collections import defaultdict as dd
 
 
 country_indeed = dd(str)
