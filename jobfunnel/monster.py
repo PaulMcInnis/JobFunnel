@@ -9,7 +9,7 @@ from time import sleep, time
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
-
+from jobfunnel.database import country_monster
 
 class Monster(JobFunnel):
 
@@ -22,8 +22,8 @@ class Monster(JobFunnel):
                       'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.monster.{0}/'.format(
-                self.search_terms['region']['domain']),
+            'referer': '{0}/'.format(
+                country_monster[self.search_terms['region']['country']]),
             'upgrade-insecure-requests': '1',
             'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
@@ -34,7 +34,7 @@ class Monster(JobFunnel):
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
         in either kilometers or miles"""
-        if self.search_terms['region']['domain'] == 'com':
+        if self.search_terms['region']['country'] == 'www.monster.com':
             if radius < 5:
                 radius = 0
             elif 5 <= radius < 10:
@@ -79,15 +79,14 @@ class Monster(JobFunnel):
         """gets the monster request html"""
         # form job search url
         if method == 'get':
-            search = ('https://www.monster.{0}/jobs/search/?'
-                      'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
-                self.search_terms['region']['domain'],
+            search = ('{0}/?'
+                      'q={1}&where={2}__2C-{3}&rad={4}&where={2}__2c-{3}'.format(
+                country_monster[self.search_terms['region']['country']],
                 self.query,
                 self.search_terms['region']['city'],
-                self.search_terms['region']['province'],
                 'skr_navigation_nhpso_searchMain',
                 self.convert_radius(self.search_terms['region']['radius'])))
-
+            print(search)
             return search
         elif method == 'post':
             # @TODO implement post style for monster

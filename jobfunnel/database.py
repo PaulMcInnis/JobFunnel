@@ -1,8 +1,10 @@
 # file for storing all countries and urls
 from collections import defaultdict as dd
 
-
+# indeed sites
 country_indeed = dd(str)
+country_monster = dd(str)
+
 country_indeed['Argentina']             = 'https://ar.indeed.com'
 country_indeed['Australia']             = 'https://au.indeed.com'
 country_indeed['Austria']               = 'https://at.indeed.com'
@@ -65,3 +67,23 @@ country_indeed['United States']	        = 'https://www.indeed.com'
 country_indeed['Uruguay']			    = 'https://uy.indeed.com'
 country_indeed['Venezuela']		        = 'https://ve.indeed.com'
 country_indeed['Vietnam']			    = 'https://vn.indeed.com'
+
+# monster sites
+
+
+country_monster['Austria'] = 'https://www.monster.at/jobs/suche'
+country_monster['Belgium'] = 'https://www.monster.be/en/jobs/search'
+country_monster['Canada'] = 'https://www.monster.ca/jobs/search'
+country_monster['Czech Republic'] = 'https://www.monster.cz/prace/hledat'
+country_monster['Finland'] = 'https://www.monster.fi/tyopaikat/haku'
+country_monster['France'] = 'https://www.monster.fr/emploi/recherche'
+country_monster['Germany'] = 'https://www.monster.de/jobs/suche'
+country_monster['Ireland'] = 'https://www.monster.ie/jobs/search'
+country_monster['Italy'] = 'https://www.monster.it/lavoro/cerca'
+country_monster['Luxembourg'] = 'https://www.monster.lu/fr/emploi/recherche'
+country_monster['Netherlands'] = 'https://www.monsterboard.nl/vacatures/zoeken'
+country_monster['Spain'] = 'https://www.monster.es/trabajo/buscar'
+country_monster['Sweden'] = 'https://www.monster.se/jobb/sok/'
+country_monster['Switzerland'] = 'https://www.monster.ch/de/jobs/suche'
+country_monster['United Kingdom'] = 'https://www.monster.co.uk/jobs/search'
+country_monster['United States'] = 'https://www.monster.com/jobs/search'
