@@ -6,7 +6,7 @@ CONFIG_TYPES = {
             'province': [str],
             'state': [str],
             'city': [str],
-            'domain': [str],
+            'country': [str],
             'radius': [int]
         },
         'keywords': [list]
@@ -35,5 +35,5 @@ CONFIG_TYPES = {
 }
 
 PROVIDERS = ['indeed', 'glassdoor', 'monster']
-DOMAINS = ['com', 'ca','nz']
+#DOMAINS = ['com', 'ca','nz']
 DELAY_FUN = ['constant', 'linear', 'sigmoid']

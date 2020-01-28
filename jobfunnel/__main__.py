@@ -20,7 +20,7 @@ def main():
     """main function"""
     try:
         config = parse_config()
-        validate_config(config)
+       # validate_config(config)
     except ConfigError as e:
         print(e.strerror)
         sys.exit()

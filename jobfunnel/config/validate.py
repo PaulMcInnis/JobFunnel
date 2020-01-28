@@ -1,6 +1,6 @@
 import re
 
-from .valid_options import DOMAINS, PROVIDERS, DELAY_FUN
+from .valid_options import PROVIDERS, DELAY_FUN
 from .parser import ConfigError
 
 

@@ -32,7 +32,7 @@ class Indeed(JobFunnel):
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': '{0}/'.format(
-                country_indeed[self.search_terms['region']['domain']]),
+                country_indeed[self.search_terms['region']['country']]),
             'upgrade-insecure-requests': '1',
             'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
@@ -65,7 +65,7 @@ class Indeed(JobFunnel):
             # form job search url
             search = ('{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
-                    country_indeed[self.search_terms['region']['domain']],
+                    country_indeed[self.search_terms['region']['country']],
                 self.query,
                 self.search_terms['region']['city'],
                 self.search_terms['region']['province'],
@@ -208,7 +208,7 @@ class Indeed(JobFunnel):
             try:
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
-                temp = country_indeed[self.search_terms['region']['domain']]
+                temp = country_indeed[self.search_terms['region']['country']]
                 job['link'] = (f"{temp}"
                                f"/viewjob?jk={job['id']}")
 
