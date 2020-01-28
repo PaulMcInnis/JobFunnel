@@ -283,7 +283,8 @@ class JobFunnel(object):
     def update_masterlist(self):
         """use the scraped job listings to update the master spreadsheet"""
         if self.scrape_data == {}:
-            raise ValueError('No scraped jobs, cannot update masterlist')
+            # raise ValueError('No scraped jobs, cannot update masterlist')
+            return
 
         # converts scrape data to ordered dictionary to filter all duplicates
         self.scrape_data = OrderedDict(sorted(self.scrape_data.items(),
