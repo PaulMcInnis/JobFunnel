@@ -125,13 +125,12 @@ class GlassDoor(JobFunnel):
             data = {
                 'clickSource': 'searchBtn',
                 'sc.keyword': self.query,
-                'locT': 'C',
+                'locT': location_response[0]['locationType'],
                 'locId': location_response[0]['locationId'],
                 'jobType': '',
                 'radius': self.convert_radius(
-                    self.search_terms['region']['radius'])
+                    self.search_terms['region']['radius']),
             }
-            print(search,data)
             return search, data
         else:
             raise ValueError(f'No html method {method} exists')
@@ -193,6 +192,7 @@ class GlassDoor(JobFunnel):
 
         # get the html data, initialize bs4 with lxml
         request_html = self.s.post(search, headers=self.headers, data=data)
+        
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
