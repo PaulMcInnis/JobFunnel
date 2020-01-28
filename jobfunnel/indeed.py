@@ -12,12 +12,13 @@ from time import sleep, time
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from  jobfunnel.database import country_indeed
 
 
-dom_dict = dd(str)
+# country_indeed = dd(str)
 
-dom_dict['com'] = 'http://www.indeed.com'
-dom_dict['nz'] = 'https://nz.indeed.com'
+# country_indeed['com'] = 'https://www.indeed.com'
+# country_indeed['nz'] = 'https://nz.indeed.com'
 
 class Indeed(JobFunnel):
 
@@ -31,7 +32,7 @@ class Indeed(JobFunnel):
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': '{0}/'.format(
-                dom_dict[self.search_terms['region']['domain']]),
+                country_indeed[self.search_terms['region']['domain']]),
             'upgrade-insecure-requests': '1',
             'user-agent': self.user_agent,
             'Cache-Control': 'no-cache',
@@ -64,13 +65,15 @@ class Indeed(JobFunnel):
             # form job search url
             search = ('{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
-                dom_dict[self.search_terms['region']['domain']],
+                    country_indeed[self.search_terms['region']['domain']],
                 self.query,
                 self.search_terms['region']['city'],
                 self.search_terms['region']['province'],
                 self.convert_radius(self.search_terms['region']['radius']),
                 self.max_results_per_page,
                 int(self.similar_results)))
+                #print(search)
+            #print(country_indeed)
 
             return search
         elif method == 'post':
@@ -205,7 +208,7 @@ class Indeed(JobFunnel):
             try:
                 job['id'] = id_regex.findall(str(s.find('a', attrs={
                     'class': 'sl resultLink save-job-link'})))[0]
-                temp = dom_dict[self.search_terms['region']['domain']]
+                temp = country_indeed[self.search_terms['region']['domain']]
                 job['link'] = (f"{temp}"
                                f"/viewjob?jk={job['id']}")
 

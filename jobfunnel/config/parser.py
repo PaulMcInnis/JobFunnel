@@ -60,11 +60,11 @@ def parse_cli():
                         required=False,
                         help='city value for a region ')
 
-    parser.add_argument('--domain',
-                        dest='domain',
+    parser.add_argument('--country',
+                        dest='country',
                         type=str,
                         required=False,
-                        help='domain value for a region ')   
+                        help='country value for a region ')   
 
     parser.add_argument('-r',
                         dest='random',
@@ -158,7 +158,7 @@ def cli_to_yaml(cli):
             'region': {
             'province': cli.province,
             'city': cli.city,
-            'domain': cli.domain
+            'country': cli.country
             },
             'keywords': cli.keywords
         },

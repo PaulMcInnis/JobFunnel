@@ -1,1 +1,0 @@
-# file for storing all countries and urls

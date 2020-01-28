@@ -9,8 +9,8 @@ def validate_region(region):
 
     """
     # only allow supported domains
-    if region['domain'] not in DOMAINS:
-        raise ConfigError('domain')
+    # if region['domain'] not in DOMAINS:
+    #     raise ConfigError('domain')
 
     # search term state is inserted as province if province does not already
     # exist
@@ -19,8 +19,8 @@ def validate_region(region):
             region['province'] = region['state']
 
     # north american jobs should have a province/state provided
-    if region['domain'] in ['com', 'ca','nz'] and region['province'] is None:
-        raise ConfigError('province')
+    # if region['domain'] in ['com', 'ca','nz'] and region['province'] is None:
+    #     raise ConfigError('province')
 
 
 def validate_delay(delay):
