@@ -14,9 +14,8 @@ providers:
 # filters
 search_terms:
   region:
-    province: 'ON'
     city:     'waterloo'
-    country:   'ca'
+    country:   'United States'
     radius:   25
 
   keywords:

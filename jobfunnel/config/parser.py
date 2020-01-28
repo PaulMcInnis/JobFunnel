@@ -48,12 +48,6 @@ def parse_cli():
                         help='list of keywords to use in the job search. ('
                              'i.e. Engineer, AI)')
 
-    parser.add_argument('-p',
-                        dest='province',
-                        type=str,
-                        required=False,
-                        help='province value for a region ')
-
     parser.add_argument('--city',
                         dest='city',
                         type=str,
@@ -156,7 +150,6 @@ def cli_to_yaml(cli):
         'output_path': cli.output_path,
         'search_terms': {
             'region': {
-            'province': cli.province,
             'city': cli.city,
             'country': cli.country
             },

@@ -64,11 +64,10 @@ class Indeed(JobFunnel):
         if method == 'get':
             # form job search url
             search = ('{0}/jobs?'
-                      'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
+                      'q={1}&l={2}&radius={3}&limit={4}&filter={5}'.format(
                     country_indeed[self.search_terms['region']['country']],
                 self.query,
                 self.search_terms['region']['city'],
-                self.search_terms['region']['province'],
                 self.convert_radius(self.search_terms['region']['radius']),
                 self.max_results_per_page,
                 int(self.similar_results)))

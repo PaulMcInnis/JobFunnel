@@ -3,7 +3,6 @@ CONFIG_TYPES = {
     'providers': [list],
     'search_terms': {
         'region': {
-            'province': [str],
             'state': [str],
             'city': [str],
             'country': [str],
