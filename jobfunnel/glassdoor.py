@@ -12,10 +12,6 @@ from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
 from collections import defaultdict as dd 
 
-dom_dict = dd(str)
-
-dom_dict['Auckland'] = 'com'
-
 
 class GlassDoor(JobFunnel):
 

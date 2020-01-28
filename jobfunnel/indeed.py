@@ -15,11 +15,6 @@ from .tools.tools import post_date_from_relative_post_age
 from  jobfunnel.database import country_indeed
 
 
-# country_indeed = dd(str)
-
-# country_indeed['com'] = 'https://www.indeed.com'
-# country_indeed['nz'] = 'https://nz.indeed.com'
-
 class Indeed(JobFunnel):
 
     def __init__(self, args):
