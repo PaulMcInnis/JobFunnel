@@ -114,8 +114,8 @@ class GlassDoor(JobFunnel):
             raise NotImplementedError()
         elif method == 'post':
             # form the job search url
-            search = (f"https://www.glassdoor."
-                      f"{self.search_terms['region']['domain']}/Job/jobs.htm")
+            search = (f"https://www.glassdoor.com"
+                      f"/Job/jobs.htm")
 
             # form the job search data
             data = {
