@@ -1,0 +1,27 @@
+attrs==19.3.0
+beautifulsoup4==4.8.2
+certifi==2019.11.28
+chardet==3.0.4
+idna==2.8
+importlib-metadata==1.4.0
+-e git+git@github.com:SatyamJindal/JobFunnel.git@68cd075b37ae228e5c5115a1134258962fd5a200#egg=JobFunnel
+joblib==0.14.1
+lxml==4.4.2
+more-itertools==8.1.0
+nltk==3.4.5
+numpy==1.18.1
+packaging==20.1
+pluggy==0.13.1
+py==1.8.1
+pyparsing==2.4.6
+pytest==5.3.4
+python-dateutil==2.8.1
+PyYAML==5.3
+requests==2.22.0
+scikit-learn==0.22.1
+scipy==1.4.1
+six==1.14.0
+soupsieve==1.9.5
+urllib3==1.25.8
+wcwidth==0.1.8
+zipp==2.1.0
