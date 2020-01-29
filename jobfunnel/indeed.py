@@ -140,8 +140,11 @@ class Indeed(JobFunnel):
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # parse total results, and calculate the # of pages needed
-        
-        num_res = soup_base.find(id='searchCountPages').contents[0].strip()
+        try:
+            num_res = soup_base.find(id='searchCountPages').contents[0].strip()
+        except Exception as e:
+            log_info('No searches found for the keyword on indeed')
+            return 
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
         log_info(f'Found {num_res} indeed results for query='
                  f'{self.query}')

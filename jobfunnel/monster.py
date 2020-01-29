@@ -98,7 +98,7 @@ class Monster(JobFunnel):
         """function that scrapes the monster job link for the blurb"""
         search = job['link']
         log_info(f'getting monster search: {search}')
-
+        
         job_link_soup = BeautifulSoup(
             self.s.get(search, headers=self.headers).text, self.bs4_parser)
 
@@ -148,7 +148,12 @@ class Monster(JobFunnel):
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
-        num_res = soup_base.find('h2', 'figure').text.strip()
+        try:
+            num_res = soup_base.find('h2', 'figure').text.strip()
+        except Exception as e:
+            log_info('No searches found for the keyword')
+            return 
+
         num_res = int(re.findall(r'(\d+)', num_res)[0])
         log_info(f'Found {num_res} monster results for query='
                  f'{self.query}')
