@@ -17,9 +17,9 @@ from time import time
 from typing import Dict, List
 from requests import Session
 
-from .tools.delay import delay_alg
-from .tools.filters import tfidf_filter, id_filter
-from .tools.tools import proxy_dict_to_url
+from tools.delay import delay_alg
+from tools.filters import tfidf_filter, id_filter
+from tools.tools import proxy_dict_to_url
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist

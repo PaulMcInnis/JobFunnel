@@ -283,5 +283,8 @@ def parse_config():
     # check if proxy has not been set yet (optional)
     if 'proxy' not in config:
         config['proxy'] = None
+    
+
+    print('config',config)
 
     return config
