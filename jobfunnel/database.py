@@ -88,3 +88,5 @@ country_monster['Switzerland'] = 'https://www.monster.ch/de/jobs/suche'
 country_monster['United Kingdom'] = 'https://www.monster.co.uk/jobs/search'
 country_monster['United States'] = 'https://www.monster.com/jobs/search'
 country_monster['India'] = 'https://www.monster.com/jobs/search'
+
+
