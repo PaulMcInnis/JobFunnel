@@ -84,7 +84,9 @@ def lambda_handler():
                     provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
                     provider_id = provider.__class__.__name__
                     try:
+                        #print('hi')
                         provider.scrape()
+                        #print('hi2')
                         jf.scrape_data.update(provider.scrape_data)
                     except Exception as e:
                         jf.logger.error(f'failed to scrape {provider_id}: {str(e)}')

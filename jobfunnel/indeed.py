@@ -143,14 +143,17 @@ class Indeed(JobFunnel):
         try:
             num_res = soup_base.find(id='searchCountPages').contents[0].strip()
         except Exception as e:
+
             log_info('No searches found for the keyword on indeed')
             return 
+        print('num_res',num_res)
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
+        
         log_info(f'Found {num_res} indeed results for query='
                  f'{self.query}')
-
+        
         pages = int(ceil(num_res / self.max_results_per_page))
-
+        
         # init list of job soups
         job_soup_list = []
         # init threads

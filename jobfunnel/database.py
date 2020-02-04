@@ -5,7 +5,7 @@ from collections import defaultdict as dd
 country_indeed = dd(str)
 country_monster = dd(str)
 
-country_indeed['Argentina']             = 'https://ar.indeed.com'
+#country_indeed['Argentina']             = 'https://ar.indeed.com'
 country_indeed['Australia']             = 'https://au.indeed.com'
 country_indeed['Austria']               = 'https://at.indeed.com'
 country_indeed['Bahrain']               = 'https://bh.indeed.com'
