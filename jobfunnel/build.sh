@@ -11,7 +11,6 @@ cp database.py build/.
 cp __init__.py build/.
 mkdir -p ./build/config/
 cp ./config/settings.yaml ./build/config/.
-cp ./config/valid_options.py ./build/config/.
 mkdir -p ./build/text/
 cp ./text/user_agent_list.txt ./build/text/.
 mkdir -p ./build/tools/
