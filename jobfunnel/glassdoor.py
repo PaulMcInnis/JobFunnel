@@ -191,8 +191,9 @@ class GlassDoor(JobFunnel):
         
 
         # create the soup base
+        print('hi')
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
-
+        print('hi2')
         # scrape total number of results, and calculate the # pages needed
         num_res = soup_base.find('p', attrs={
             'class', 'jobsCount'}).text.strip()

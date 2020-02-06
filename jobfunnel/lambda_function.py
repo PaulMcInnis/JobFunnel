@@ -1,14 +1,16 @@
 
 #Function which receives data from the SQS Queue
 import sys
+import os
 
 from typing import Union
-
+import boto3
 from jobfunnel import JobFunnel
 from indeed import Indeed
 from monster import Monster
 from glassdoor import GlassDoor
 from country_hash import *
+from config import *
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 providers_dict={
@@ -16,7 +18,7 @@ providers_dict={
     1: ['indeed', 'glassdoor']
 }
 
-keyword = ['hackerrank','google']
+keyword = ['ytfytvv']
 
 
 def lambda_handler(event,context):
@@ -102,11 +104,13 @@ def lambda_handler(event,context):
                 "done. see un-archived jobs in " + config['master_list_path'])
             print('-'*100)
 
+   
     s3 = boto3.client('s3')
-    s3.upload_file(master_list_path, config.S3_BUCKET_NAME, filename)
+    s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
+    os.system("ls /tmp/")
 
     
-
+#lambda_handler(1,1)
 
 
 

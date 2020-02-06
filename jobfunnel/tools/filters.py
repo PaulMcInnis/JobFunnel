@@ -1,4 +1,4 @@
-import nltk
+#import nltk
 import logging
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -44,11 +44,37 @@ def tfidf_filter(cur_dict: Dict[str, dict],
             list of duplicate job ids which were removed from cur_dict
     """
     # retrieve stopwords if not already downloaded
-    try:
+
+    stopwords = {'him', ')', 'why', 'wasn', 'itself', 'they', '<', 'with',
+	'nor', ':', 'mightn', 'during', "haven't", ';', 'has', 'any', "it's", 'was',
+	'then', 't', "mightn't", ',', 'some', '*', 'needn', '=', 'before', 'below',
+	'into', 'what', "'", 'do', 'wouldn', 'been', 'both', 'did', 'had', 'she',
+	"that'll", 'doing', "didn't", '#', 'too', 'o', 'them', 'is', 'which',
+	"mustn't", "she's", 'doesn', 'y', "needn't", 'who', 'm', 'will', '|',
+	'himself', 'hadn', 'your', '~', 'couldn', 'can', 'most', "shan't", 'am',
+	'own', 'weren', 'above', 'its', 'ourselves', 'as', 'have', '[', '?', 'out',
+	"weren't", 'shouldn', 'not', 'between', "don't", 'myself', 'being', '\\',
+	'only', 'herself', 'few', 'we', 'me', "hasn't", 'hers', '!', 'each',
+	'over', 'having', 'this', "won't", '(', 'whom', 'haven', "should've",
+	'because', 'or', 'here', "wouldn't", 'how', '"', 'our', '{', 'shan',
+	"shouldn't", ']', 'through', 'yourself', 'so', '_', "you'll", 'my', 'a',
+	'are', 'it', 'off', 'against', "couldn't", 'when', 'once', 'while', 'be',
+	'should', 'he', 'where', 's', 'such', '^', 'ours', 'than', 'don', 'at',
+	'isn', '}', 'were', 'on', "hadn't", 've', 'i', 'more', 'd', "wasn't", 'his',
+	"doesn't", '.', "aren't", '+', 'up', 'now', '/', 'further', 'their', 'her',
+	'after', 'in', 'all', 'by', 'very', 'ain', '%', '`', 'yourselves', 'and',
+	'$', 'won', 'but', 'yours', 'if', 'to', 'same', 'hasn', 'there', 'under',
+	'from', 're', 'down', 'mustn', 'themselves', '-', 'didn', 'these', 'no',
+	'those', 'that', 'about', '@', "isn't", 'until', 'other', 'll', 'again',
+	'an', 'you', 'ma', 'of', 'for', 'aren', "you're", 'just', 'does', 'the',
+	"you've", "you'd", 'theirs', '&', '>'
+    }
+
+    '''try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
         nltk.download('stopwords', quiet=True)
-        stopwords = nltk.corpus.stopwords.words('english')
+        stopwords = nltk.corpus.stopwords.words('english')'''
 
     # init vectorizer
     vectorizer = TfidfVectorizer(strip_accents='unicode', lowercase=True,

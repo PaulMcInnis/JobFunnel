@@ -7,6 +7,8 @@ cp jobfunnel.py build/.
 cp glassdoor.py build/.
 cp indeed.py build/.
 cp monster.py build/.
+cp country_hash.py build/.
+cp config.py build/.
 cp database.py build/.
 cp __init__.py build/.
 mkdir -p ./build/config/
