@@ -13,6 +13,8 @@ from country_hash import *
 from config import *
 import pandas as pd 
 from global_cache import * 
+import datetime
+
 
 
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
@@ -31,14 +33,16 @@ df = df[['Company','Country']]
 
 df.fillna('NA')
 
-
+cur_date = str(datetime.datetime.now())[:10][::-1]
 
 db = dd(dd)
 
 for i in range(len(df)):
 	key = df.iloc[i][0]
 	coun = df.iloc[i][1]
-	db[key][coun]=1
+	db[key][coun]=cur_date
+
+print('curr',cur_date)
 
 keyword = []
 countries = []
