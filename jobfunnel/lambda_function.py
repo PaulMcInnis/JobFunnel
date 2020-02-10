@@ -1,10 +1,9 @@
-
 #Function which receives data from the SQS Queue
 import sys
 import os
 from collections import defaultdict as dd
 from typing import Union
-import boto3
+#import boto3
 from jobfunnel import JobFunnel
 from indeed import Indeed
 from monster import Monster
@@ -13,12 +12,15 @@ from country_hash import *
 from config import *
 import pandas as pd 
 from global_cache import * 
-from __future__ import print_function
+import datetime
 import pickle
 import os.path
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+import os
+import shutil
+from datetime import datetime
+
+
+
 
 
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
@@ -28,8 +30,10 @@ providers_dict={
     1: ['indeed', 'glassdoor']
 }
 
+get_prev_cache()
 
-data  = pd.read_csv('/Users/satyam/Desktop/data.csv')
+print('glob',glob_cache)
+data  = pd.read_csv('/Users/riya/Desktop/data.csv')
 
 
 df = pd.DataFrame(data)
@@ -37,14 +41,18 @@ df = df[['Company','Country']]
 
 df.fillna('NA')
 
-
+cur_date = str(datetime.datetime.now())[:10][::-1]
 
 db = dd(dd)
 
+
 for i in range(len(df)):
-	key = df.iloc[i][0]
-	coun = df.iloc[i][1]
-	db[key][coun]=1
+    key = df.iloc[i][0]
+    coun = df.iloc[i][1]
+    key = key.replace(' ','_')
+    coun = coun.replace(' ','_')
+    db[key][coun] = cur_date
+
 
 keyword = []
 countries = []
@@ -65,6 +73,12 @@ def clean(kword):
 
 
 
+for i in glob_cache.keys():
+    for j in glob_cache[i].keys():
+        print(i,j)
+
+
+
 
 def lambda_handler(event,context):
     for i in range(len(keyword)):
@@ -76,26 +90,40 @@ def lambda_handler(event,context):
 
         print('Keyword: ', kword)
         print('Country: ', ctry)
+        file_name = 'search/{0}'.format(str(kword + '-' + ctry))
+        # get current timestamp
+       
+        current_date = datetime.today().strftime("%d-%Y-%m")
+        src_fpath = file_name
+        dest_fpath = current_date + "/" + file_name
+        #create folder if it doesn't exists
+        if not os.path.exists(current_date):
+            os.makedirs(current_date)
+
         if((kword not in glob_cache) and (ctry not in glob_cache[kword])):
-            glob_cache[kword][ctry]=1
+            glob_cache[kword][ctry]=cur_date
         else:
-            continue
+            shutil.copy(src_fpath, dest_fpath)
+            print('country already in hash')
+            continue    #Have to take this file from local and push it to drive
         if(ctry in ctry_hash):
             curr = 0
         else:
             curr = 1
             print('Country not supported by monster!')
         try:
+            temp_ctry = ctry.replace('_',' ')
+            temp_kword = kword.replace('_',' ')
             config =    {
                             'output_path': 'search',
                             'providers': providers_dict[curr],
                             'search_terms': {
                                                 'region': {
-                                                                'city': ctry, 
-                                                                'country': ctry,
+                                                                'city': temp_ctry, 
+                                                                'country': temp_ctry,
                                                                 'radius': 25
                                                         },
-                                                'keywords': [kword]
+                                                'keywords': [temp_kword]
                                             }, 
                             'black_list': ['Infox Consulting'],
                             'log_level': 20, 
@@ -111,7 +139,7 @@ def lambda_handler(event,context):
                                                 'converge': False
                                             },
                             'data_path': 'search/data',
-                            'master_list_path': 'search/{0}'.format(str(kword + '-' + ctry)),
+                            'master_list_path': 'search/{0}'.format(str(temp_kword + '-' + temp_ctry)),
                             'duplicate_list_path': 'search/duplicate_list.csv',
                             'filter_list_path': 'search/data/filter_list.json',
                             'log_path': 'search/data/jobfunnel.log', 'proxy': None
@@ -139,7 +167,7 @@ def lambda_handler(event,context):
                 provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
                 provider_id = provider.__class__.__name__
                 try:
-                    #print('h
+                    #print('hi')
                     provider.scrape()
                     #print('hi2')
                     jf.scrape_data.update(provider.scrape_data)
@@ -156,50 +184,19 @@ def lambda_handler(event,context):
         jf.logger.info(
             "done. see un-archived jobs in " + config['master_list_path'])
         print('-'*100)
-
+    file = open('global_hash.txt','w')
+    for i in db.keys():
+        for j in db[i].keys():
+            file.write(str(i)+' ')
+            file.write(str(j)+' ')
+            file.write(str(db[i][j]) + ' ')
+    
+    file.close()
 
 '''s3 = boto3.client('s3')
 s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
 os.system("ls /tmp/")'''
 
-creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-if os.path.exists(''):
-    with open('token.pickle', 'rb') as token:
-        creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'credentials.json', SCOPES)
-        creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-    with open('token.pickle', 'wb') as token:
-        pickle.dump(creds, token)
-
-    service = build('drive', 'v3', credentials=creds)
-
-    # Call the Drive v3 API
-    results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
-
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
-        for item in items:
-            print(u'{0} ({1})'.format(item['name'], item['id']))
-
     
 lambda_handler(1,1)
 
-
-
-
-
-    
