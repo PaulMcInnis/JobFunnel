@@ -52,6 +52,8 @@ def lambda_handler(event,context):
     for i in range(len(keyword)):
         kword = keyword[i]
         ctry = countries[i]
+        if(len(kword) < 5):
+            continue
         print('Keyword: ', kword)
         print('Country: ', ctry)
         if((kword not in glob_cache) and (ctry not in glob_cache[kword])):
@@ -89,7 +91,7 @@ def lambda_handler(event,context):
                                                 'converge': False
                                             },
                             'data_path': 'search/data',
-                            'master_list_path': 'searchmaster_list.csv',
+                            'master_list_path': 'search/{0}'.format(str(kword + '-' + ctry)),
                             'duplicate_list_path': 'search/duplicate_list.csv',
                             'filter_list_path': 'search/data/filter_list.json',
                             'log_path': 'search/data/jobfunnel.log', 'proxy': None

@@ -295,6 +295,7 @@ class JobFunnel(object):
 
         # load and update existing masterlist
         try:
+            print('path',self.master_list_path)
             # open masterlist if it exists & init updated masterlist
             masterlist = self.read_csv(self.master_list_path)
 
