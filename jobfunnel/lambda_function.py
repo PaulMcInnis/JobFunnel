@@ -41,8 +41,9 @@ df = pd.DataFrame(data)
 df = df[['Company','Country']]
 
 df.fillna('NA')
-
-cur_date = str(datetime.datetime.now())
+ct_date = today.strftime("%d-%m-%Y")
+cur_date = ''
+cur_date+=ct_date
 
 db = dd(dd)
 
@@ -84,8 +85,8 @@ for i in glob_cache.keys():
 def lambda_handler(event,context):
     for i in range(len(keyword)):
         kword = keyword[i]
-        ctry = countries[i]
-        if(len(kword) < 5):
+        ctry = countries[i] 
+        if(len(kword) < 4):
             continue
         kword = clean(kword)
 
@@ -94,9 +95,9 @@ def lambda_handler(event,context):
         file_name = 'search/{0}'.format(str(kword + '-' + ctry))
         # get current timestamp
        
-        current_date = today.strftime("%d-%m-%Y")
-        src_fpath = file_name
-        dest_fpath = current_date + "/" + file_name
+        current_date = today.strftime("%Y-%m-%d")
+        src_fpath = file_name.replace('_',' ')
+        dest_fpath = current_date + "/" + '{0}'.format(str(kword + '-' + ctry)) + ".csv"
         #create folder if it doesn't exists
         if not os.path.exists(current_date):
             os.makedirs(current_date)
@@ -104,8 +105,11 @@ def lambda_handler(event,context):
         if((kword not in glob_cache) and (ctry not in glob_cache[kword])):
             glob_cache[kword][ctry]=cur_date
         else:
-            shutil.copy(src_fpath, dest_fpath)
-            print('country already in hash')
+            try:
+                shutil.copy(src_fpath, dest_fpath)
+            except IOError as e:
+                print("Unable to copy file. %s" % e)
+            #print('country already in hash')
             continue    #Have to take this file from local and push it to drive
         if(ctry in ctry_hash):
             curr = 0
@@ -185,6 +189,7 @@ def lambda_handler(event,context):
         jf.logger.info(
             "done. see un-archived jobs in " + config['master_list_path'])
         print('-'*100)
+        shutil.copy(src_fpath, dest_fpath)
     file = open('global_hash.txt','w')
     for i in db.keys():
         for j in db[i].keys():
@@ -193,7 +198,8 @@ def lambda_handler(event,context):
             file.write(str(db[i][j]) + ' ')
     
     file.close()
-
+        
+    
 '''s3 = boto3.client('s3')
 s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
 os.system("ls /tmp/")'''
