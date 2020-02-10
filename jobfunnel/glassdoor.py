@@ -247,7 +247,6 @@ class GlassDoor(JobFunnel):
                     'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
                 if(str(self.search_terms['keywords'][0]).lower()!=job['company'].lower()):
                     log_info('No searches found on glassdoor')
-                    return
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue

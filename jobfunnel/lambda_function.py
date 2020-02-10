@@ -29,6 +29,8 @@ data  = pd.read_csv('/Users/satyam/Desktop/data.csv')
 df = pd.DataFrame(data)
 df = df[['Company','Country']]
 
+df.fillna('NA')
+
 
 
 db = dd(dd)
@@ -48,12 +50,24 @@ for i in db.keys():
 #keyword = ['hackerrank']
 
 
+
+def clean(kword):
+    if ('.com Inc' in kword):
+        kword = kword[:kword.index('.')+1]
+    
+    return kword
+
+
+
+
 def lambda_handler(event,context):
     for i in range(len(keyword)):
         kword = keyword[i]
         ctry = countries[i]
         if(len(kword) < 5):
             continue
+        kword = clean(kword)
+
         print('Keyword: ', kword)
         print('Country: ', ctry)
         if((kword not in glob_cache) and (ctry not in glob_cache[kword])):
