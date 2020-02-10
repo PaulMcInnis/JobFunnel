@@ -191,9 +191,9 @@ class GlassDoor(JobFunnel):
         
 
         # create the soup base
-        #print('hi')
+      
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
-        #print('hi2')
+    
         # scrape total number of results, and calculate the # pages needed
         num_res = soup_base.find('p', attrs={
             'class', 'jobsCount'}).text.strip()
@@ -245,8 +245,10 @@ class GlassDoor(JobFunnel):
                          recursive=False).text.strip()
                 job['company'] = s.find('div', attrs={
                     'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
+                print(job['company'].lower())
                 if(str(self.search_terms['keywords'][0]).lower()!=job['company'].lower()):
                     log_info('No searches found on glassdoor')
+                    continue
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue

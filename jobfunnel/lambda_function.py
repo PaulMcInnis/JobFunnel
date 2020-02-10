@@ -70,6 +70,8 @@ for i in db.keys():
 def clean(kword):
     if ('.com Inc' in kword):
         kword = kword[:kword.index('.')+1]
+    if ('Encs' in kword):
+        kword = kword[:kword.index('Encs')+1]
     
     return kword
 
