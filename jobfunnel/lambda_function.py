@@ -17,7 +17,8 @@ import pickle
 import os.path
 import os
 import shutil
-from datetime import datetime
+from datetime import date
+today = date.today()
 
 
 
@@ -41,7 +42,7 @@ df = df[['Company','Country']]
 
 df.fillna('NA')
 
-cur_date = str(datetime.datetime.now())[:10][::-1]
+cur_date = str(datetime.datetime.now())
 
 db = dd(dd)
 
@@ -93,7 +94,7 @@ def lambda_handler(event,context):
         file_name = 'search/{0}'.format(str(kword + '-' + ctry))
         # get current timestamp
        
-        current_date = datetime.today().strftime("%d-%Y-%m")
+        current_date = today.strftime("%d-%m-%Y")
         src_fpath = file_name
         dest_fpath = current_date + "/" + file_name
         #create folder if it doesn't exists
