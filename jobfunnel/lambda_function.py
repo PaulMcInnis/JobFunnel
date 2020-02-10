@@ -17,6 +17,8 @@ import datetime
 
 
 
+
+
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 providers_dict={
@@ -24,7 +26,9 @@ providers_dict={
     1: ['indeed', 'glassdoor']
 }
 
+get_prev_cache()
 
+print('glob',glob_cache)
 data  = pd.read_csv('/Users/satyam/Desktop/data.csv')
 
 
@@ -37,12 +41,14 @@ cur_date = str(datetime.datetime.now())[:10][::-1]
 
 db = dd(dd)
 
-for i in range(len(df)):
-	key = df.iloc[i][0]
-	coun = df.iloc[i][1]
-	db[key][coun]=cur_date
 
-print('curr',cur_date)
+for i in range(len(df)):
+    key = df.iloc[i][0]
+    coun = df.iloc[i][1]
+    key = key.replace(' ','_')
+    coun = coun.replace(' ','_')
+    db[key][coun] = cur_date
+
 
 keyword = []
 countries = []
@@ -63,6 +69,12 @@ def clean(kword):
 
 
 
+for i in glob_cache.keys():
+    for j in glob_cache[i].keys():
+        print(i,j)
+
+
+
 
 def lambda_handler(event,context):
     for i in range(len(keyword)):
@@ -75,25 +87,28 @@ def lambda_handler(event,context):
         print('Keyword: ', kword)
         print('Country: ', ctry)
         if((kword not in glob_cache) and (ctry not in glob_cache[kword])):
-            glob_cache[kword][ctry]=1
+            glob_cache[kword][ctry]=cur_date
         else:
-            continue
+            print('country already in hash')
+            continue    #Have to take this file from local and push it to drive
         if(ctry in ctry_hash):
             curr = 0
         else:
             curr = 1
             print('Country not supported by monster!')
         try:
+            temp_ctry = ctry.replace('_',' ')
+            temp_kword = kword.replace('_',' ')
             config =    {
                             'output_path': 'search',
                             'providers': providers_dict[curr],
                             'search_terms': {
                                                 'region': {
-                                                                'city': ctry, 
-                                                                'country': ctry,
+                                                                'city': temp_ctry, 
+                                                                'country': temp_ctry,
                                                                 'radius': 25
                                                         },
-                                                'keywords': [kword]
+                                                'keywords': [temp_kword]
                                             }, 
                             'black_list': ['Infox Consulting'],
                             'log_level': 20, 
@@ -109,7 +124,7 @@ def lambda_handler(event,context):
                                                 'converge': False
                                             },
                             'data_path': 'search/data',
-                            'master_list_path': 'search/{0}'.format(str(kword + '-' + ctry)),
+                            'master_list_path': 'search/{0}'.format(str(temp_kword + '-' + temp_ctry)),
                             'duplicate_list_path': 'search/duplicate_list.csv',
                             'filter_list_path': 'search/data/filter_list.json',
                             'log_path': 'search/data/jobfunnel.log', 'proxy': None
@@ -154,7 +169,14 @@ def lambda_handler(event,context):
         jf.logger.info(
             "done. see un-archived jobs in " + config['master_list_path'])
         print('-'*100)
-
+    file = open('global_hash.txt','w')
+    for i in db.keys():
+        for j in db[i].keys():
+            file.write(str(i)+' ')
+            file.write(str(j)+' ')
+            file.write(str(db[i][j]) + ' ')
+    
+    file.close()
 
 '''s3 = boto3.client('s3')
 s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
