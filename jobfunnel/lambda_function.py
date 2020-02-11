@@ -72,7 +72,7 @@ def clean(kword):
         kword = kword[:kword.index('.')+1]
     if ('Encs' in kword):
         kword = kword[:kword.index('Encs')+1]
-    
+  
     return kword
 
 
@@ -88,8 +88,7 @@ def lambda_handler(event,context):
     for i in range(len(keyword)):
         kword = keyword[i]
         ctry = countries[i] 
-        if ('HackerRank' in kword):
-            continue
+       
         if(len(kword) < 4):
             continue
         kword = clean(kword)
