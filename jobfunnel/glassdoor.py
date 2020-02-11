@@ -230,8 +230,8 @@ class GlassDoor(JobFunnel):
                     threads.submit(self.search_page_for_job_soups,
                                    data, page, page_url, job_soup_list))
         wait(fts)  # wait for all scrape jobs to finish
-
         # make a dict of job postings from the listing briefs
+        status = 0
         for s in job_soup_list:
             # init dict to store scraped data
             job = dict([(k, '') for k in MASTERLIST_HEADER])
@@ -245,12 +245,16 @@ class GlassDoor(JobFunnel):
                          recursive=False).text.strip()
                 job['company'] = s.find('div', attrs={
                     'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
-
-                company_name = self.search_terms['keywords'][0]
-                company_name = company_name[:company_name.rfind(' developer')]
-                if(company_name.lower()!=job['company'].lower()):
+                #print(job['company'].lower())
+                search_key = str(self.search_terms['keywords'][0]).lower().strip('developer').strip()
+                first_job = job['company'].lower().strip()
+                #print('fir',search_key,'sec',first_job)
+                #print(str(search_key).lower().strip()==str(first_job).lower().strip())
+                if(search_key!=first_job):
                     log_info('No searches found on glassdoor')
-                    return 
+                    status = 1
+                    continue
+                    
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue
@@ -287,6 +291,7 @@ class GlassDoor(JobFunnel):
 
             # key by id
             self.scrape_data[str(job['id'])] = job
+
         # apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 

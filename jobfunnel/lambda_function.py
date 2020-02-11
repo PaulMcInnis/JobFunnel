@@ -27,8 +27,8 @@ today = date.today()
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
 providers_dict={
-    0 : ['indeed', 'monster', 'glassdoor'],
-    1: ['indeed', 'glassdoor']
+    0 : ['glassdoor', 'monster', 'indeed'],
+    1: ['glassdoor', 'indeed']
 }
 
 get_prev_cache()
@@ -55,8 +55,8 @@ invalid_comp = []
 for i in range(len(df)):
     key = df.iloc[i][0]
     coun = df.iloc[i][1]
-    print(key,coun)
-
+    #print(key,coun)
+    key = key.strip()
     key = key.replace(' ','_')
     coun = coun.replace(' ','_')
     db[key][coun] = cur_date
@@ -96,7 +96,10 @@ for i in glob_cache.keys():
 def lambda_handler(event,context):
     for i in range(len(keyword)):
         kword = keyword[i]
-        ctry = countries[i] 
+        kword = kword.strip()
+        ctry = countries[i]
+
+        
        
         if(len(kword) < 4 and (kword.lower() not in valid)):
             invalid_comp.append(kword)
@@ -126,10 +129,11 @@ def lambda_handler(event,context):
         else:
             try:
                 shutil.copy(src_fpath, dest_fpath)
+                continue
             except IOError as e:
                 print("Unable to copy file. %s" % e)
             #print('country already in hash')
-            continue    #Have to take this file from local and push it to drive
+            #continue    #Have to take this file from local and push it to drive
         if(ctry in ctry_hash):
             curr = 0
         else:
@@ -141,13 +145,14 @@ def lambda_handler(event,context):
             config =    {
                             'output_path': 'search',
                             'providers': providers_dict[curr],
+                            #'providers': ['indeed'],
                             'search_terms': {
                                                 'region': {
                                                                 'city': temp_ctry, 
                                                                 'country': temp_ctry,
                                                                 'radius': 25
                                                         },
-                                                'keywords': [temp_kword]
+                                                'keywords': [temp_kword.strip() + ' developer']
                                             }, 
                             'black_list': ['Infox Consulting'],
                             'log_level': 20, 
@@ -187,6 +192,7 @@ def lambda_handler(event,context):
         elif config['no_scrape']:
             jf.load_pickle(config)
         else:
+            count=0
             for p in config['providers']:
                 provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
                 provider_id = provider.__class__.__name__
@@ -194,6 +200,7 @@ def lambda_handler(event,context):
                     provider.scrape()
                     jf.scrape_data.update(provider.scrape_data)
                 except Exception as e:
+                    count+=1
                     jf.logger.error(f'failed to scrape {provider_id}: {str(e)}')
 
             # dump scraped data to pickle
@@ -206,7 +213,11 @@ def lambda_handler(event,context):
         jf.logger.info(
             "done. see un-archived jobs in " + config['master_list_path'])
         print('-'*100)
-        shutil.copy(src_fpath, dest_fpath)
+        try:
+            if(count!=len(config['providers'])):
+                shutil.copy(src_fpath, dest_fpath)
+        except Exception as e:
+            pass
     file = open('global_hash.txt','w')
     for i in db.keys():
         for j in db[i].keys():

@@ -153,9 +153,9 @@ class Indeed(JobFunnel):
                  f'{self.query}')
         
         pages = int(ceil(num_res / self.max_results_per_page))
-        pages = min(pages,10)
+        pages = min(10,pages)
         
-        # init list of job soups
+        # init list of job soups    
         job_soup_list = []
         # init threads
         threads = ThreadPoolExecutor(max_workers=8)
@@ -185,9 +185,16 @@ class Indeed(JobFunnel):
                     'data-tn-element': 'jobTitle'}).text.strip()
                 job['company'] = s.find('span', attrs={
                     'class': 'company'}).text.strip()
+                fir = self.search_terms['keywords'][0].strip(' developer').lower().strip()
+                sec = str(job['company']).lower().strip()
+
+                if(fir!=sec):
+                    continue
+
                 job['location'] = s.find('span', attrs={
                     'class': 'location'}).text.strip()
-            except AttributeError:
+            except Exception as e:
+                print(e)
                 continue
 
             job['blurb'] = ''
