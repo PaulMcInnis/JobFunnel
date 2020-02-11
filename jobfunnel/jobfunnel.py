@@ -16,10 +16,11 @@ from datetime import date
 from time import time
 from typing import Dict, List
 from requests import Session
-
+from collections import defaultdict as dd
 from tools.delay import delay_alg
 from tools.filters import tfidf_filter, id_filter
 from tools.tools import proxy_dict_to_url
+import pandas as pd
 
 # setting job status to these words removes them from masterlist + adds to
 # blacklist
@@ -156,11 +157,34 @@ class JobFunnel(object):
                 return [row for row in reader]
 
     def write_csv(self, data, path, fieldnames=MASTERLIST_HEADER):
+
+        stack_overflow_tags = dd(int)
+
+        data_stack = pd.read_csv('QueryResults.csv')
+        data_stack = pd.DataFrame(data_stack)
+
+
+        for i in range(len(data_stack)):
+            stack_overflow_tags[str(data_stack.iloc[i][0]).lower()]=1
+
         # writes data [dict(),..] to a csv at path
         with open(path, 'w', encoding='utf8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
+
             for row in data:
+                st = set()
+                curr_cont = list(data[row]['blurb'].split(' '))
+                ans=''
+
+                for i in curr_cont:
+                    if( i.lower() in stack_overflow_tags):
+                        st.add(i)
+                for i in st:
+                    ans+=i+','
+                print('ans',ans)
+                data[row]['tags'] = ans
+                #print('here', data[row]['tags'])
                 writer.writerow(data[row])
 
     def remove_jobs_in_filterlist(self, data: Dict[str, dict]):

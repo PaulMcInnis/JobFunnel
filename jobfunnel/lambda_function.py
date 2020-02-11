@@ -20,14 +20,7 @@ import shutil
 from datetime import date
 today = date.today()
 
-stack_overflow_tags = dd(int)
 
-data_stack = pd.read_csv('QueryResults.csv')
-data_stack = pd.DataFrame(data_stack)
-
-
-for i in range(len(data_stack)):
-    stack_overflow_tags[data_stack.iloc[i][0]]=1
 
 
 
@@ -182,7 +175,7 @@ def lambda_handler(event,context):
                             'master_list_path': 'search/{0}'.format(str(temp_kword + '-' + temp_ctry)),
                             'duplicate_list_path': 'search/duplicate_list.csv',
                             'filter_list_path': 'search/data/filter_list.json',
-                            'log_path': 'search/data/jobfunnel.log', 'proxy': None
+                            'log_path': 'search/data/jobfunnel.log', 'proxy': None,
                         }
         # validate_config(config)
         except Exception as e:
@@ -248,5 +241,5 @@ s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
 os.system("ls /tmp/")'''
 
     
-#lambda_handler(1,1)
+lambda_handler(1,1)
 
