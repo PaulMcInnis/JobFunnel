@@ -1,0 +1,171 @@
+status,title,company,location,date,blurb,tags,link,id,provider,query
+new,Engineering Manager,Keller Williams,"Austin, TX 78746",2020-02-11,"What youll be called: Engineering Manager
+
+Where youll work: KWRI HeadquartersAustin, TX
+
+Named a Happiest Company to Work for in 2019; one of the Best Places to Work in Austin, TX; and featured on the Training Magazine Training 125 list seven times, Keller Williams Realty International (KWRI) thrives within a creative and collaborative culture where transforming the real estate industry through technology is our primary goal.
+
+KW Technology is the foremost provider of real estate solutions, offering the most comprehensive end-to-end portfolio of products, services and training in the industry. Our Engineering Team converts agent and consumer challenges into intuitive, insight-enhanced technology and consumer experiences using tools such as ReactJS, NodeJS and Golang.
+
+What youll do:
+
+Oversee a team of developers and QA engineers who deliver technical solutions as part of our microservice architecture. You will identify risks and clearly communicate with stakeholders through the entire project lifecycle.
+
+Essential Duties and Responsibilities:
+
+Manage and execute software development projects from start to finish.
+Guide, mentor and lead 1-2 development teams in development best practices and processes.
+Design secure development coding systems and models using the latest industry standards and tools, including QA automation.
+Partner with business units to provide engineering insight on product design ensuring accurate level of effort estimates.
+Work in an agile environment and deliver a consistent burndown rate.
+Deliver highly available, scalable and permanent solutions.
+Collaborate with DevOps for release management.
+
+Minimum Qualifications:
+
+Bachelors degree or equivalent experience.
+6 or more years of experience in software development.
+2 or more years of experience managing software development teams.
+
+Preferred Qualifications:
+
+4 or more years of experience managing software development teams.
+Experience with development tools, such as ReactJS, NodeJS and Golang.
+Experience with cloud platforms, such as AWS and GCP.
+Experience with microservice architecture.
+Experience with secure development coding systems and models.
+
+Who are we?
+
+Keller Williams Realty Inc. is the largest real estate company by agent count across the globe and is number one in units and volume in the United States. Founded in 1983, we pride ourselves on an agent-centric, technology-driven and education-based culture that rewards agents as stakeholders. Keller Williams Realty International (KWRI), is the companys corporate headquarters located in Austin, TX. Here, through a focus on cutting edge technology, education, and products and services, we support our agents and associates to create careers worth having, businesses worth owning, lives worth living, experiences worth giving and legacies worth leaving.",,https://www.indeed.com/viewjob?jk=ce79746328dd77c6,ce79746328dd77c6,indeed,Keller Williams developer
+new,Data Engineer,Keller Williams,"Austin, TX 78746",2020-01-12,"What youll be called: Data Engineer
+
+Where youll work: KWRI HeadquartersAustin, TX
+
+Named a Happiest Company to Work for in 2019; one of the Best Places to Work in Austin, TX; and featured on the Training Magazine Training 125 list seven times, Keller Williams Realty International (KWRI) thrives within a creative and collaborative culture where transforming the real estate industry through technology is our primary goal.
+
+KW Technology is the foremost provider of real estate solutions, offering the most comprehensive end-to-end portfolio of products, services and training in the industry. Our Data Engineering team converts agent and consumer challenges into intuitive, insight-enhanced technology and consumer experiences using tools such as Python, Hadoop, Spark, MySQL, MongoDB and Snaplogic.
+
+What youll do:
+
+Design, develop and implement data infrastructure and best-in-class pipelines that collect, connect, centralize and curate data from various internal and external data sources. You will ensure that architectures support the needs of the business, and recommend ways to improve data reliability, efficiency.
+
+Essential Duties and Responsibilities:
+
+Design, develop, and implement data infrastructure and pipelines that collect, connect, centralize, and curate data from various internal and external data sources
+Participate in data architecture discussions to understand target data structures, required data transformations and deliver data pipelines/ETL loading processes that meet requirements.
+Perform detailed exploration of new internal and external source data to perform source-to-target mapping to inform the development of new data pipelines/flows.
+Work in close collaboration with your data-minded colleagues focused on back-end (microservice) development, business intelligence reporting, machine learning and artificial intelligence models.
+Investigate the root cause of data-related issues and implement viable, sustainable solutions to correct issues.
+Perform database administration activities such as refreshes, updates, migrations, etc. in support of data pipeline maintenance.
+
+Minimum Qualifications:
+
+Bachelors degree in Computer Science, Information Management, Data Science, Analytics or related field or equivalent experience.
+3 or more years of experience as a data engineer on enterprise-level data solutions, specifically as a Data Engineer or ETL Developer.
+2 or more years of experience working with relational and unstructured databases and enterprise data warehouses, such as work with MySQL, PostgreSQL, MongoDB, SQL Server, or Oracle.
+Experience with Spark, Presto, Hive and/or other map/reduce ""big data"" systems and services.
+Experience in SQL and Python for scripting automation.
+
+Preferred Qualifications:
+
+Masters degree in Information Management, Data Science, Analytics or related field.
+Experience building open source data pipeline systems such as AirFlow, Hadoop or Kafka.
+Familiar working in a Cloud environment (AWS or GCP) with a subset of the following tools or their equivalent - Redshift, RDS, S3, EC2, Lambda, Kinesis, Elasticsearch, EMR, BigQuery, GCS.
+
+Who are we?
+
+Keller Williams Realty Inc. is the largest real estate company by agent count across the globe and is number one in units and volume in the United States. Founded in 1983, we pride ourselves on an agent-centric, technology-driven and education-based culture that rewards agents as stakeholders. Keller Williams Realty International (KWRI), is the companys corporate headquarters located in Austin, TX. Here, through a focus on cutting edge technology, education, and products and services, we support our agents and associates to create careers worth having, businesses worth owning, lives worth living, experiences worth giving and legacies worth leaving.",,https://www.indeed.com/viewjob?jk=172f7bcd4a560255,172f7bcd4a560255,indeed,Keller Williams developer
+new,Senior UI Designer,Keller Williams,"Austin, TX 78746",2020-01-12,"What youll be called: Senior UI Designer
+
+Department: Marketing and Communications
+
+Where youll work: KWRI HeadquartersAustin, TX
+
+Named a Happiest Company to Work for in 2019; one of the Best Places to Work in Austin, TX; and featured on the Training Magazine Training 125 list seven times, Keller Williams Realty International (KWRI) thrives within a creative and collaborative culture where transforming the real estate industry through technology is our primary goal.
+
+What youll do:
+
+Lead the ideation and design of beautiful, interactive, movement-centered design experiences for mobile and web interfaces. Drive the KW website design process, partnering with company stakeholders to redefine the web brand and increase adoption.
+
+Essential Duties and Responsibilities:
+
+Create wireframes and interactive prototypes for web and mobile interfaces utilizing established style guides and content models.
+Iterate rapidly on proposed designs based on user feedback.
+Consult with stakeholders, design team members, end users and developers on UI best practices.
+Solve unique UI challenges facing our users and products teams using modern design paradigms based in design theory.
+Test proposed designs with users in live design labs and utilizing digital tools.
+Own redesign of the KW website brand identity and incorporate that brand identity across entire UI ecosystem.
+Establish UI kits that can be applied across multiple web and mobile properties.
+
+Minimum Requirements:
+
+Bachelors degree in design, graphic or human-centered design or digital art or equivalent experience.
+6 or more years of digital design experience.
+A portfolio that demonstrates a range of solutions with a full grasp of product process from concept to delivery.
+Experience compiling data gathered in user research, user testing, A/B testing to create strong human centered design.
+Experience with responsive design, visual brand development and motion design.
+Strong working knowledge of Sketch, InVision, Adobe Illustrator and other design tools.
+
+Preferred Qualifications:
+
+Familiarity with HTML and CSS.
+Experience working in an Agile environment.
+Motion animation experience.
+Email design experience.
+Excellent communication, presentation and interpersonal skills.
+
+Who are we?
+
+Keller Williams Realty Inc. is the largest real estate company by agent count across the globe and is number one in units and volume in the United States. Founded in 1983, we pride ourselves on an agent-centric, technology-driven and education-based culture that rewards agents as stakeholders. Keller Williams Realty International (KWRI), is the companys corporate headquarters located in Austin, TX. Here, through a focus on cutting edge technology, education, and products and services, we support our agents and associates to create careers worth having, businesses worth owning, lives worth living, experiences worth giving and legacies worth leaving.",,https://www.indeed.com/viewjob?jk=9f27aba050ac393c,9f27aba050ac393c,indeed,Keller Williams developer
+new,Lead Software Engineer,Keller Williams,"Austin, TX 78746",2020-01-12,"What youll be called: Lead Software Engineer
+
+Where youll work: KWRI HeadquartersAustin, TX
+
+Named a Happiest Company to Work for in 2019; one of the Best Places to Work in Austin, TX; and featured on the Training Magazine Training 125 list seven times, Keller Williams Realty International (KWRI) thrives within a creative and collaborative culture where transforming the real estate industry through technology is our primary goal.
+
+KW Technology is the foremost provider of real estate solutions, offering the most comprehensive end-to-end portfolio of products, services and training in the industry. Our Engineering Team converts agent and consumer challenges into intuitive, insight-enhanced technology and consumer experiences using tools such as React, Node.js, Golang and Python.
+
+What you will do:
+
+Design, document and deliver well-thought-out solutions as part of our microservice architecture while leading and motivating a small team of developers and QA engineers.
+
+Essential Duties and Responsibilities:
+
+On-time delivery of software solutions fully aligned to business and technical requirements.
+Design, document and deliver well-thought-out solutions as part of our microservice architecture in partnership with the Product Team.
+Mentor, coach and delegate work to a team of developers and QA engineers.
+Drive automation into test, documentation and the build process.
+Work closely with cross-functional project teams to develop new or additional functionality. Maintain velocity while minimizing defects.
+Establish a test-driven culture.
+
+Minimum Qualifications:
+
+Bachelors degree in Information Technology, Computer Science, Software Engineering or a related field or equivalent experience.
+8 or more years of experience in software development.
+5 or more years of experience in technical architecture, solution/application architecture, application development or middleware design.
+3 or more years of experience leading a software development team in delivery of complex and challenging software solutions.
+Experience using one or more of the following: Node.js, Java, Python, JavaScript, C# or Golang.
+Experience designing and developing scalable and highly available cloud-based solutions on AWS, Azure or GCP.
+Experience with multiple database technologies such as MySql, Postgres, Oracle, MongoDB or Cassandra.
+Experience with searching and caching tools and technology such as Elasticsearch, Solr, Ignite or Redis.
+Experience designing for large scale, highly available, fault-tolerant transactional and analytical systems in a dynamic environment.
+Proven experience building microservice or SOA architectures using SOAP or REST/GraphQL.
+
+Preferred Qualifications:
+
+Masters degree in Computer Science, Computer Engineering, Information Technology or equivalent Engineering field.
+10 or more years of experience in software development.
+5 or more years of experience using one or more of the following: Node.js, Java, Python or Golang.
+3 or more years of experience working with JavaScript libraries or frameworks such as React, Angular or Vue.
+2 years of experience with Docker.
+Experience with Kubernetes.
+Mobile development experience using Objective-C/Swift, Java or React Native.
+Familiarity with design patterns.
+Technical knowledge of infrastructure components such as Network, Storage, Linux/Windows and IT security.
+Able to handle changes in priority and requirements, without loss of enthusiasm.
+Experience working with a geographically dispersed team.
+
+Who are we?
+
+Keller Williams Realty Inc. is the largest real estate company by agent count across the globe and is number one in units and volume in the United States. Founded in 1983, we pride ourselves on an agent-centric, technology-driven and education-based culture that rewards agents as stakeholders. Keller Williams Realty International (KWRI), is the companys corporate headquarters located in Austin, TX. Here, through a focus on cutting edge technology, education, and products and services, we support our agents and associates to create careers worth having, businesses worth owning, lives worth living, experiences worth giving and legacies worth leaving.",,https://www.indeed.com/viewjob?jk=e5e64355fba8e4e5,e5e64355fba8e4e5,indeed,Keller Williams developer

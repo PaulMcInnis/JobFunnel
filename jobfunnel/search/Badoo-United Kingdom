@@ -1,0 +1,99 @@
+status,title,company,location,date,blurb,tags,link,id,provider,query
+new,Android Developer,Badoo,"London, England",2020-01-22,"Were looking for Android Developers to work within our highly experienced team, building high-performance systems using cutting-edge open-source technologies. You will both teach and learn in an innovative and fast-paced Agile environment, and be responsible for delivery of key product features crucial to our success. KEY ACCOUNTABILITIES
+
+
+Hands-on development: analyse product specifications, design implementations, write code and rapidly deliver Android app feature designsContribute technical ideas and suggestions to enhance the direction of the productWrite test cases and work with QA on a weekly release cycleWork within an agile team (daily standups, weekly planning meetings)Maintain build systems and write unit testsReview analytics and performance metrics to draw conclusions and drive change
+
+
+REQUIRED SKILLS AND KNOWLEDGE
+
+
+Product-focused Android application development experiencePortfolio of consumer facing high-performance Android applications available in the MarketplaceAdvanced Android SDK / Java skillsStrong knowledge of Android API capabilities at different levels, framework components and lifecyclesGood understanding of design patterns & Object Orientated ProgrammingEnthusiastic about teamwork in an AGILE/Scrum environmentSound computer science foundations: algorithms, data structures, concurrency, threading, and programming languages (Java, PHP, JavaScript desirable)
+
+
+
+About You:
+
+
+
+Self-motivated and able to achieve deadlines and work independentlyYou'll love to write clean, reusable code and have a passion for mobile development inside and outside of the officeSolid communication skills and team-working capabilityPositive and logical approach together with willingness to learn.Attention to detail and a passion for qualityEnthusiastic and fun to work withA desire to work with a fresh, social digital brand
+
+
+Why MagicLab?
+We are proud to be the largest dating network in the world, with over 500 million users across 190 countries. Online dating has more than doubled in the last decade, and it is estimated that the global online dating market could be worth $12 billion next year. We continually innovate so that we can provide the best technology and user experience for people to meet because we believe that happiness is better shared.",,https://www.glassdoor.com/partner/jobListing.htm?pos=101&ao=85944&s=58&guid=0000017033e931ccafd4233848c01b62&src=GD_JOB_AD&t=SR&extid=1&exst=EOL&ist=&ast=EOL&vt=w&slr=true&cs=1_d671ab1d&cb=1581418885795&jobListingId=3400142930,3400142930,glassdoor,Badoo developer
+new,Senior PHP Developer,Badoo,"London, England",2020-01-21,"Badoo is seeking an expert PHP Developer to help in the ongoing development of our large-scale web and mobile applications backend. This role will be focused on backend coding and database design and will require your participation in the development process from design through to deployment and support.
+
+KEY ACCOUNTABILITIES
+
+Participate in a creation of a very large scale backend API (PHP/MySQL/NoSQL, millions of users, thousands of servers, over 50k requests per seconds for PHP backend) and see the results of your efforts in a matter of days
+
+Write backend code and design databases (no client-side coding required)
+
+Support our huge PHP application (several millions lines of code)
+
+Actively participate in the whole process of development, from initial design to deployment and support
+
+Proactively communicate with colleagues to refine application design
+
+Suggest and implement high-tech, innovative solutions
+
+Optimise backend code, look for bottlenecks and, as and when necessary, implement visualisation and monitoring systems
+
+REQUIRED SKILLS AND KNOWLEDGE
+
+Proven backend development experience
+
+Excellent knowledge of PHP, weak and strong points of this language
+
+Experience in relational databases and SQL, preferably MySQL
+
+Understanding how to optimise and fine-tune backend application that uses MySQL or other external data sources
+
+Knowledge of *nix console environment
+
+Good computer science and internet technology background
+
+Strong will to learn new stuff
+
+Words like caching, sharding, replication, reliability are familiar to you or you should be able to learn them quickly
+
+Why MagicLab?
+
+We are proud to be the largest dating network in the world, with over 500 million users across 190 countries. Online dating has more than doubled in the last decade, and it is estimated that the global online dating market could be worth $12 billion next year. We continually innovate so that we can provide the best technology and user experience for people to meet because we believe that happiness is better shared.",,https://www.glassdoor.com/partner/jobListing.htm?pos=104&ao=437149&s=58&guid=0000017033e931ccafd4233848c01b62&src=GD_JOB_AD&t=SR&extid=1&exst=EOL&ist=&ast=EOL&vt=w&slr=true&cs=1_1567c5e7&cb=1581418885797&jobListingId=3340733687,3340733687,glassdoor,Badoo developer
+new,Senior Frontend Developer,Badoo,"London, England",2020-01-22,"Our team is growing, and its exciting! By joining us, youd be working on some of the top dating and social brands in the industry  not only Badoo, but also Bumble, Chappy, Lumen and Quack. It really is an exciting time to get on board: after all, the features we develop and the optimisations we make are delivered to millions of people across the globe. On top of that, youll get the chance to try your hand at modular cross-app architecture and write modules to be integrated into multiple brands.
+Were looking for someone who combines strong technical skills, extensive experience in product development and a pragmatic, results-oriented approach.KEY ACCOUNTABILITIES
+
+
+Design the architecture, plan, develop and release new features for our millions of global usersTake the lead on new features as requiredWork with JavaScriptServer-side API: strictly typed and well defined data-only APIWork in a big team, actively collaborating with fellow JavaScript and CSS developers, Quality Assurance, Release Engineers and designersCommunicate well and be an efficient and responsible team member
+
+
+REQUIRED SKILLS AND KNOWLEDGE
+
+
+Extensive full-time development experience (ideally five or more years)Solid knowledge of foundations of JavaScriptAbility to write functional and modular code that will be supported for a long timeKnowledge of internet stack: HTTP, Linux, Nginx, Node.js desirableExperience with JavaScript toolingExperience with one of the server-side scripting languages desirableBackground in high load project work, optimising code and performance desirableBeing flexible and able to adapt to new requirements quickly
+
+
+Why MagicLab?
+We are proud to be the largest dating network in the world, with over 500 million users across 190 countries. Online dating has more than doubled in the last decade, and it is estimated that the global online dating market could be worth $12 billion next year. We continually innovate so that we can provide the best technology and user experience for people to meet because we believe that happiness is better shared.",,https://www.glassdoor.com/partner/jobListing.htm?pos=105&ao=85944&s=58&guid=0000017033e931ccafd4233848c01b62&src=GD_JOB_AD&t=SR&extid=1&exst=EOL&ist=&ast=EOL&vt=w&slr=true&cs=1_bf29fc63&cb=1581418885798&jobListingId=3007729493,3007729493,glassdoor,Badoo developer
+new,iOS Developer,Badoo,"London, England",2020-01-23,"Our iOS team is made of dynamic and fun-loving coders at the top of their game! We take pride in our work, love our crew and live & breathe iOS. As part of our team, you will own and drive technical projects from specification through to delivery and beyond. You will impact millions of users, share know-how with the community and experiment a lot. If you get a buzz from taking initiative, redefining expectations but also getting involved in challenging technical debates with the team, this is your place.KEY ACCOUNTABILITIES
+
+
+Hands-on development: analyse product specifications, design implementations, write code and rapidly deliver featuresMind performance metrics to draw conclusions and drive changeContribute technical ideas and suggestions to enhance the direction of the productWrite efficient, maintainable and reusable code and tests. Pass code reviews and be a good scout in generalBe an efficient and responsible team member, communicate, participate and helpWork with QA in a weekly release cycleBe enthused about teamwork in an AGILE environment: attend daily stand-ups, plan and demo your projects
+
+
+REQUIRED SKILLS AND KNOWLEDGE
+
+
+Product-focused iOS application development experienceEvidence of delivering consumer facing, mass market, networked, high-performance iOS applications available in the App StoreUp to date with the latest Cocoa and iOS trendsUnderstanding of UIKit, Core Animation, GCD & NetworkingExcellent understanding of design patterns & Object Oriented ProgrammingUnderstanding of analytics, remote reporting and measurementsExperience of working with Continuous Integration (CI) and Unit Testing on iOSKnowledge of socket based networking desirableExperience performance profiling with instruments in Xcode
+
+
+
+About You:
+
+
+
+Think, live and breathe CocoaSelf-motivated and able to achieve deadlines and work independentlyLove to write clean, reusable code and have a passion for mobile development inside and outside of the officeSolid communication skills and team-working capabilityPositive and logical approach together with willingness to learnAttention to detail and a passion for quality
+
+
+Why MagicLab?
+We are proud to be the largest dating network in the world, with over 500 million users across 190 countries. Online dating has more than doubled in the last decade, and it is estimated that the global online dating market could be worth $12 billion next year. We continually innovate so that we can provide the best technology and user experience for people to meet because we believe that happiness is better shared.",Hot,https://www.glassdoor.com/partner/jobListing.htm?pos=103&ao=85944&s=58&guid=0000017033e931ccafd4233848c01b62&src=GD_JOB_AD&t=SR&extid=1&exst=EOL&ist=&ast=EOL&vt=w&slr=true&cs=1_efdc29f2&cb=1581418885797&jobListingId=3426314832,3426314832,glassdoor,Badoo developer

@@ -1,0 +1,65 @@
+status,title,company,location,date,blurb,tags,link,id,provider,query
+new,iOS Engineer,Instacart,"San Francisco, CA",2020-01-12,"OVERVIEW
+
+At Instacart, our mobile engineers are working to delight our customers and empower our shoppers. We're building a robust, well-architected app to simplify the complex process of getting our customer's orders from the store to their door in an hour or less.
+
+We're looking for iOS engineers to build the mobile apps at the core of Instacart's business. On the customer side, our mobile engineers are tasked with building a flexible and intuitive app for all of our customersfrom the technologically savvy to those who just got their first iPhone. On the Shopper side, developers are building a critical tool that guides shoppers through the store as they select items for our customers, all the way through last-mile logistics and delivery. On the Enterprise side, our mobile engineers are developing white-label products and APIs that let retailers build and maintain their own digital storefronts.
+
+ABOUT THE JOB
+
+In your application, please include a short note about your background and interests, your Github username, and/or links to any projects that represent your skill set.
+
+
+Executing a variety of projects to extend and enhance our Instacart application for iPhone and iPad
+Building new features to create an experience nothing short of magical
+
+ABOUT YOU
+
+
+Bachelor's degree in computer science is preferred with 2+ years of software development experience and at least 3 years of iOS app development experience
+Very strong development skills in Swift and Objective C, iOS SDK, and good general programming and algorithm skills
+Superior analytical skills and a strong sense of urgency and ownership in your work
+Proven customer facing application development, troubleshooting, deployment and application performance tuning experience
+Proven ability to build, launch and iterate on apps under pressure
+Willing and able to travel internationally based on job requirements
+
+ABOUT INSTACART
+
+Founded in 2012, Instacart is a leader in North American online groceries and one of the fastest-growing companies in e-commerce. Our same-day delivery and pickup services bring everyday essentials and fresh groceries to consumers in the U.S. and Canada in as fast as an hour. We have partnered with more than 300 beloved national, regional and local retailers to deliver from more than 20,000 stores across more than 5,500 cities in North America.
+
+We believe that great people are the ingredients for success. We like to think that we are like a potluckeveryone brings something new, different and flavorful to the table. We believe that just as meals are best shared together, success is best shared together. Our mix of thoughtful, inventive and neighborly employees work together to deliver our common goal: to make grocery shopping effortless for everyone. If this resonates with you, then Instacart just might be the place for you. Welcome home.",,https://www.indeed.com/viewjob?jk=4b00e2a4e2088311,4b00e2a4e2088311,indeed,Instacart developer
+new,"Senior Software Engineer, Infrastructure",Instacart,"San Francisco, CA",2020-01-12,"OVERVIEW
+
+We're looking for an experienced Software Developer to join our infrastructure team. We're a small team that moves fast. We code mostly in Python and our infrastructure runs on Amazon Web Services. Come join us!
+
+ABOUT THE JOB
+
+
+Create tools for software engineers, data scientists, and data analysts to easily run their production (and staging) services.
+Be part of a team of 7 with a large amount of ownership and responsibility across our development org.
+Own the security and availability of critical infrastructure components.
+
+ABOUT YOU
+
+
+3+ years of industry experience
+Bachelor's degree in computer science, computer engineering, electrical engineering or equivalent work experience
+Strong coding ability
+Strong understanding of Linux and how to manage servers
+Experience with Amazon Web Services (AWS), including EC2
+Experience with configuration management, such as SaltStack or Ansible
+Experience with micro-services (Docker)
+The ability to ship pragmatic solutions with a high sense of urgency
+Self-motivation and a strong sense of ownership
+Willing and able to travel internationally based on job requirements
+The ability to analyze data with SQL
+Experience with Python, Ruby, or JavaScript
+Experience with web frameworks, like Ruby on Rails
+Experience with Postgres, Redis, and Elasticsearch
+Open-source projects or contributions
+
+ABOUT INSTACART
+
+Founded in 2012, Instacart is a leader in North American online groceries and one of the fastest-growing companies in e-commerce. Our same-day delivery and pickup services bring everyday essentials and fresh groceries to consumers in the U.S. and Canada in as fast as an hour. We have partnered with more than 300 beloved national, regional and local retailers to deliver from more than 20,000 stores across more than 5,500 cities in North America.
+
+We believe that great people are the ingredients for success. We like to think that we are like a potluckeveryone brings something new, different and flavorful to the table. We believe that just as meals are best shared together, success is best shared together. Our mix of thoughtful, inventive and neighborly employees work together to deliver our common goal: to make grocery shopping effortless for everyone. If this resonates with you, then Instacart just might be the place for you. Welcome home.",,https://www.indeed.com/viewjob?jk=a270e515de6c9d2d,a270e515de6c9d2d,indeed,Instacart developer

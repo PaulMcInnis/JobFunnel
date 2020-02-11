@@ -1,0 +1,622 @@
+status,title,company,location,date,blurb,tags,link,id,provider,query
+new,Software Development Intern - Summer 2020 (Boston),Athenahealth,"Watertown, MA",2020-01-22,"Connect with work that matters. Be a part of transforming the healthcare industry!
+At athenahealth were using technology to transform the way our friends and family get medical care and how doctors treat patients. We bring cloud-based web and mobile software to the healthcare industry to build an information backbone with the power to transform health delivery.
+
+We are seeking Software Engineering interns to join us for the summer of 2020.
+Interns at athena work on a variety of technical problems across products and platform teams, including:
+Core Products: athenaCollector, athenaClinicals, athenaCommunicator
+Platform Services
+athena.intelligence  a.i./ data science
+Engineering Enablemen t
+Are you looking for an opportunity for your software development skills to make a real impact in the world?
+
+Developers come here because of the tremendous opportunity to learn and grow with a socially responsible company focused on changing healthcare at a fundamental level.
+
+We offer dynamic, energetic, and collaborative teams that thrive in athenas open working environment.
+
+Please take a look at this 60 second video for a preview of athenahealths Mission/Culture .
+Qualifications:
+Were looking for developers who want to work on challenging technology problems to create products that medical professionals and patients use every day. We work with a mix of technologies, but dont hire developers based on particular coding language.
+We're more interested in folks with raw talent and a burning desire to succeed. The most important requirement for applying is a passion to learn and to make a difference developing enabling technologies.
+Ability to learn and adapt quickly
+Experience reading and writing code in a programming language
+Experience working collaboratively towards project goals and deadlines
+Enrolled in a full-time Computer Science or relevant technical academic program, or relevant technical degree program is a plus, though we will consider non-traditional, non-CS degreed applicants.
+Current Team Opportunities:
+Our athenaClinical s team builds our industry leading, cloud-based electronic health record (EHR) software, used by more than 160,000 healthcare providers every day. athenaClinicals works on the beating heart of clinical patient workflows,building the interface to make interactions between these providers and the EHR as seamless as possible andelevating what the doctor needs to see, when they need to see it.
+Our athenaCollector team shepherds the financial health of our clients, working to ensure that in our increasingly complex healthcare landscape our providers are reimbursed appropriately. They build key components and workflows used to ensure providers get paid, such as medical claim submission, revenue reporting, medical coding, patient account management, denials prevention and patient access.
+Our athenaCommunicator team builds a convenient digital experience, with provider engagement tools to connect with patients via patient portals, a variety of messaging channels, and more.
+Our athena.intelligence team is made up of data scientists and data engineers who deliver insights that leverage data from across the athenahealth network to solve the most challenging, impactful problems. Data science is a key part of our strategy.
+Our Platform Services teams are responsible for developing, enhancing and maintaining all the core foundational components of our technology stack that are required by other development teams to successfully build products. This team builds shared services, and enables the safe storage and movement of millions of patients health data.
+Our Engineering Enablement team delivers the tools and systems that scale the effectiveness of our product developers so that they can spend more time doing what they do best: building products for our end users. They do this by enhancing and maintaining the core infrastructure (CI/CD pipeline, database, development tools, etc.) upon which the rest of the R&D organization rely.
+
+About athenahealth
+
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location : This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=5ef6a3da71dbe365,5ef6a3da71dbe365,indeed,Athenahealth developer
+new,Front End Web Developer,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+A thenahealth is seeking the very best front-end developers to create beautiful user interfaces for web applications. You know that the finest user experiences are crafted through attention to every detail. You are a developer who can imagine the interactions needed to implement a design straight from concept. You enjoy creating awesome digital products and are excited to be involved in the broader design and development process.
+The Team: We are looking for a front-end developer to join our design system team. Our design system is built with the latest front-end technologies and is aimed at producing beautiful cohesive user experiences at scale. We are dedicated to shaping the next generation of user experiences for healthcare by enabling hundreds of designers and developers to work faster with reusable components featuring accessibility and modern aesthetic design.
+Typical Qualifications
+BA/BS required. Focus in Computer Science, Human Computer Interaction, Interaction Design preferred, or equivalent industry experience
+Understanding of web accessibility design and development (e.g. WCAG AA)
+Desktop web cross-browser / cross-platform implementation experience
+Version control experience (preferably Git)
+2-4 years of experience developing web user interfaces
+Experience working in modern JS, CSS (including preprocessors, e.g. SASS), and HTML
+Experience with React
+Experience with automated testing
+Experience with Typescript is helpful
+Experience creating reusable components is helpful
+Experience with Node JS, Jenkins and Webpack is helpful
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location : This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to several restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or  athenistas ) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=83f79f961acad6f0,83f79f961acad6f0,indeed,Athenahealth developer
+new,Senior Back End Developer (.Net),Athenahealth,"Austin, TX",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Back End Developer to join our team of developers building our next generation Scheduling, Practice Management, and Referral Management solutions . Yo ur job will be to create easy to use, powerful, cloud-based tools which allow medical professionals to focus on what they do best  treat patients . But , enough about us; lets talk about you.
+
+You participa te fully in the SDLC process and apply ag ile methods to develop core web application s and contribut e to object-oriented design for the Scheduling software product . You monitor the progress of performance and apply new concepts and/or principals to address any problems as needed.
+
+The Team: Our consumer-focused Scheduling application team aims to bring a marketplace experience to healthcare, allowing patients to feel empowered in their healthcare decisions.
+
+
+Job Responsibilities
+Write, debug, and deploy code to production; deliver timely fixes
+Proactively identify and proposes new, alternative technology in order to create scalable implementations and achieve results.
+Deliver customer value in the form of high-quality software components and services in adherence with RPR policies on Security, performance, longevity and Integration testing.
+Adhere to DOD (story definition of done) as part of the sprint, including unit tests, functional testing, code reviews, no regressions, bug fixes, documentation and adhere to best coding practices.
+Typical Qualifications
+4 + years of experience in back end development using .Net framework
+Bachelors Degree or equivalent and experience in an Agile environment
+Experience creating test frameworks
+Strong Object-Oriented design and development experience as well as a strong foundation in REST API development
+Hands on experience in cloud environments, preferably Azure
+Ability to write code that is technically sound, performant, scalable, and readable
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location : This role is located in downtown Austin, TX in the historic Seaholm Power Plant building.
+Our Culture: At athenahealth, our employees (or  athenistas ) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=c89b7d6652d3c948,c89b7d6652d3c948,indeed,Athenahealth developer
+new,Lead Front End Developer,Athenahealth,"Austin, TX",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Front End Developer to join our Scheduling Development team. Your job will be to lead a team of engineers, mentoring and defining technical designs, working toward our product goals. But enough about us; lets talk about you.
+
+
+If you have a pulse on modern front-end frameworks, experience in building and designing front-end applications in React, we would love to hear from you.
+
+
+The Team: Our consumer-focused Scheduling application team aims to bring a marketplace experience to healthcare, allowing patients to feel empowered in their healthcare decisions.
+
+
+Job Responsibilities
+Write, debug, and deploy code to production; deliver timely fixes
+Proactively identify and proposes new, alternative technology in order to create scalable implementations and achieve results.
+Deliver customer value in the form of high-quality software components and services in adherence with RPR policies on Security, performance, longevity and Integration testing.
+Adhere to DOD (story definition of done) as part of the sprint, including unit tests, functional testing, code reviews, no regressions, bug fixes, documentation and adhere to best coding practices.
+Provide technical direction to team members
+Typical Qualifications
+7 + years of experience in front end development using JavaScript frameworks
+Bachelors Degree or equivalent and experience in an Agile environment
+3+ years of experience with Reac t and Redux
+Experience creating test frameworks
+Aiding the development of front-end architecture
+Ability to write code that is technically sound, performant, scalable, and readable
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location : This role is located in downtown Austin, TX in the historic Seaholm Power Plant building.
+Our Culture: At athenahealth, our employees (or  athenistas ) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=b48a80c0b70cb45e,b48a80c0b70cb45e,indeed,Athenahealth developer
+new,Software Engineer,Athenahealth,"Watertown, MA",2020-02-07,"Connect with work that matters. Be a part of transforming the healthcare industry!
+Responsibilities may include, but are not limited to:
+85% [Primary Function] Technical Execution
+Contribute to accurate, unambiguous technical design specifications to the appropriate detail
+Deliver customer value in the form of high quality software components and services in adherence with RPR policies on Security, performance, longevity and Integration testing
+Understand and follow coding conventions, architectures, and best practices
+Write, debug, and deploy code to production; deliver timely fixes
+Adhere to DOD (story definition of done) as part of the sprint, including unit tests, functional testing, code reviews, no regressions, bug fixes, documentation and adhere to best coding practices
+10% Contributions to the Team
+Learn the domain knowledge for area of assignment
+Take ownership of what the team builds after the release; consider customer adoption as success criteria
+Contribute to agile ceremonies to improve team performance
+Volunteer for work in the backlog and commit to quality delivery; Coordinate efforts across the team to ensure completion and effectiveness
+Participate and contribute to scrum meetings i.e. daily stand-up, sprint planning, readouts and retrospectives
+Drive self-organization; help determine how the team functions in collaboration with your peers
+5% Cross functional Coordination and Communication
+Work collaboratively across the Technology and Product organizations to ensure alignment towards business goals
+Builds strong relationships with cross-functional team members
+Education, Experience, & Skills Required:
+0-2 years of experience in an engineering role
+Familiarity of working in an Agile environment preferred
+Bachelors Degree or equivalent
+Software engineering skills and computer science experience
+Knowledge of at least one modern programming languages such as: C#, C++, Perl, Java, Python, and javascript/jQuery
+Familiarity with Unix/Linux, Big Data, SQL, NOSQL, and various other technologies
+Exposure to object oriented programing, relational database technologies, distributed computing tech (Hadoop, spark), RESTful API, WebUI (HTML 5) and Modern JS frameworks
+Understanding of iOS and Android environments
+Behaviors & Abilities Required:
+Ability to learn and adapt in a fast paced environment, while producing quality code
+Ability to work collaboratively on a cross-functional team with a wide range of experience levels
+Ability to write code that is technically sound, performant, scalable, and readable
+Ability to collaborate with business owners to understand and refine business requirements
+Ability and willingness to demonstrate ownership of an area of athenas technology
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=f658cd777bd64429,f658cd777bd64429,indeed,Athenahealth developer
+new,Lead Software Developer - Developer Software Services,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Developer to join the Developer Software Services team within our Engineering Enablement organization. We deliver the tools and systems that scale the effectiveness of engineering so that developers can spend more time doing what they do best: provide product features to our end users to unleash our collective potential to transform healthcare. But enough about us; lets talk about you.
+
+
+You are a developer with the experience and a passion for building tools, systems, and defining best practices to unleash the full potential of your development peers. You are an excellent communicator that is capable of both quickly picking up new technologies and passing on that knowledge to pave the way. You are a tenacious, but nimble learner, who demonstrates design & engineering excellence.
+
+
+Job Responsibilities
+Produce and evaluate technical design specifications at the appropriate level of detail
+Understand and follow coding conventions, architectural approaches, and best practices; hold other members of your team accountable for doing so
+Collaborate with and coach team members to promote productivity and effectiveness; share business and technical insights with the broader engineering and product organization
+Develop knowledge to act as a domain expert. Take ownership of what the team builds and collaborate across the organization to ensure alignment towards business goals
+Drive team self-organization; help determine how the team functions, in collaboration with your peers
+Typical Qualifications
+5+ years of software engineering experience; ideally you have acquired expertise in infrastructure or platform development
+Proficient in at least one modern object-oriented programming language; relational databases, with modern UI frameworks helpful
+We work in a Scrum environment developing microservices in AWS, so any Agile experience and CI/CD concepts are helpful
+Knowledge of Unix/Linux, RESTful API, cloud native, and distributed computing are helpful
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all .
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=afa4365222dd9408,afa4365222dd9408,indeed,Athenahealth developer
+new,Lead Software Developer - Database Scalability,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Software Developer - Database Scalability to join our Engineering Enablement team. Your job will be to re-architect our mission-critical, application-database interface.
+
+
+Be a part of a cutting-edge technology company that is transforming the healthcare industry by helping doctors better manage their practices, their patients, their clinical outcomes, and their cash flow. Our innovative cloud-enabled services have become the premier choice for tens of thousands of medical practices and health systems across the country. Our network covers 101 million patient lives and over 106,000 providers. But enough about us; lets talk about you.
+
+
+You are an Developer with experience building scalable and high availability applications, preferably in public and private cloud environments. You will have solid relational databases, RDBMSs like Oracle, with SQL.
+
+
+You will be a bridge between our Oracle Infrastructure and the larger product development teams.
+
+
+The Team: Our Engineering Enablement team within athena is primarily responsible for enhancing and maintaining the core infrastructure (CI/CD pipeline, database, development tools, etc.) upon which that the rest of the R&D organization rely.
+
+
+Responsibilities:
+Produce accurate, unambiguous technical design specifications.
+Deliver customer value with high quality software components and services
+
+Typical Qualifications
+About 5-8 years of experience; proficient in at least one modern programming language (Java, C++, Perl, Python, etc.)
+Solid relational databases, RDBMSs like Oracle, experience with SQL.
+Prior experience designing database architecture, and/or developing system level software a plus.
+Familiarity with Unix/Linux, exposure to object-oriented OOD OOA, RESTful API, and various other technologies is helpful
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all .
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=a958216c4736aed2,a958216c4736aed2,indeed,Athenahealth developer
+new,Software Engineer  Network Directory Team,Athenahealth,"Watertown, MA",2020-01-29,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Software Developer to join the Network Directory Team within our Platform Services Engineering division. Your job will be to deliver customer value in the form of high quality software components as part of a high-functioning team. But enough about us; lets talk about you!
+You are a software engineer with experience building full stack web applications, preferably in public and private cloud environments. You are an excellent communicator that is capable of quickly picking up the complicated healthcare space.
+The Team: The Platform team within athena is primarily responsible for developing, enhancing and maintaining all the core foundational components (messaging, database, file storage, faxing etc) that are required by all other development teams within athena to successfully build their products. As a key member of the platform team, you will work on a service that currently aggregates patient and provider data to enable functionality such as demographic search. This highly impactful work reduces human data curation efforts and provides high quality data for such purposes as deduplicating patients/providers or simply enabling doctors to send a referral to the right place.
+Job Responsibilities
+Design and develop code on an agile team of Engineers that typically includes a Scrum Master and a Product Owner
+Collaborate with team members to promote productivity and effectiveness; share business and technical insights with the broader engineering and product organization
+Develop knowledge and domain expertise. Take ownership of what you and the team builds and coordinate your efforts across the teams to ensure proper completion
+Typical Qualifications
+2+ years of software engineering experience with exact title for this role depending on demonstrated skills
+Proficient in at least one modern programming language and relational databases
+We work in Agile environment, so any Agile experience or CI/CD concepts is helpful
+Knowledge of Unix/Linux, Java, Javascript, AWS, Elasticsearch, Kafka, and various other technologies is helpful
+ About athenahealth
+Our Purpose: To unleash our collective potential to transform healthcare.
+Our Location : This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: If youre curious, passionate and want to connect with work that matters, youve come to the right place. At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. At the heart of athenahealth's culture is unconditional positive regard for one another, our customers, their patients and our community. We take time to celebrate diversity and our accomplishments and strive to be powerfully relevant and refreshingly candid in everything we do.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support (We were named one of the 2018 Best Workplaces for Commuters!), collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=689473ee6ae74046,689473ee6ae74046,indeed,Athenahealth developer
+new,Sr. Infrastructure Manager- Developer Services,Athenahealth,"Watertown, MA",2020-01-14,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Manager- R&D Lab Services to join our team within our Infrastructure as a Service division. IaaS ensures the continuous availability of the technologies and systems that are the foundation of athenahealths services. We are directly responsible for thousands of servers and petabytes of storage while handling thousands of web requests per second. At the same time, we are sustaining growth at a meteoric rate. We enable an operating system for the medical office that abstracts away administrative complexity, leaving doctors free to practice medicine. But enough about us; lets talk about you.
+
+Youre a technologist at heart and a leader with a passion for developing top talent. You are a curious team player, someone who loves to explore, learn, and make things better. You are excited to uncover inefficiencies in business processes, creative in finding ways to automate solutions, and relentless in your pursuit of creating the perfect fix. You love the technical work, but you recognize that growing a strong team is paramount when it comes to solving some of the organizations biggest challenges.
+
+The Team: We are a bunch of Site Reliability Engineers who are passionate about reliability, automation, and scalability. We use an agile based framework to execute our work, ensuring we are always focused on the most important and impactful needs of the business. We support systems in both private and public cloud, and make data-driven decisions for which one best suits the needs of the business. We are relentless in automating away manual, repetitive work so we can focus on projects that help move the business forward.
+
+Job Responsibilities
+Develop software-based, automated solutions to core business processes
+Act as a liaison between the development and infrastructure teams, ensuring developers have the systems and tools they need to drive the business forward
+Leading and developing a multidisciplinary team of Site Reliability Engineers responsible for ensuring product success through strategic use of technologies such as Linux, Windows, Oracle, private/public cloud, monitoring, storage, load balancing, and CI/CD
+Drive tri-annual release planning for teams within span of control; Contribute to the annual strategic planning process
+Typical Qualifications
+3-6 years of leading teams in a technical operations environment
+Proficiency with Windows and Linux operating systems
+Experience with VMware in a private cloud environment
+Expertise in monitoring and scaling environments
+Expertise in public/private cloud IT infrastructure
+Experience in building and consuming APIs a plus
+About athenahealth
+Our Vision : To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to several restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture : At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for a company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=a21840b619f40854,a21840b619f40854,indeed,Athenahealth developer
+new,Senior Back-End Java Developer,Athenahealth,"Austin, TX",2020-01-14,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Back End Java Developer to join our team within our US Development division. Your job will be to be part of a team of full-stack software developers building our next generation Patient Portal application. But enough about us; lets talk about you.
+
+
+If you have expertise with enterprise Java server development, responsive web app design, and a proven track record of delivery, we would love to hear from you.
+
+
+The Team : Our team works on industry-leading, patient-focused products that enable patients to easily schedule appointments, pay bills, review lab results, and submit medical forms online. Our software applications encourage consumers to be active and engaged participants in their own health care.
+
+
+Job Responsibilities
+Produce accurate, clear technical design specifications to the appropriate level of detail
+Collaborate successfully with developers, architects, UX Designers, and Product Managers
+Understand, follow, and reinforce Scrum methodologies, coding conventions, architectures, build processes, and best practices
+Deliver customer value in the form of high-quality software components and services in adherence with policies on security, performance, longevity and integration testing
+Help build a high-availability enterprise Java server that will support tens of thousands of concurrent users
+
+Typical Qualifications
+5+ years of experience in full-stack web application development (React, Redux, Node, Java, .Net)
+3+ years of experience in J2EE or similar enterprise-scale Java server development
+Recent of experience in Spring and/or SpringBoot preferred and Recent experience in Java and/or Node microservices development.
+Bachelors Degree in Computer Science or related field, or equivalent experience
+Comfortable working in a CI/CD (Continuous Integration/Continuous Deployment environment) where updates are deployed regularly to scalable cloud hosting platforms.
+About athenahealth
+Our Mission: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is located in downtown Austin, TX in the historic Seaholm Power Plant building.
+Our Culture: If you crave transparency, innovation and the ability to make an impact, youve come to the right place. Being an athenista is all about taking initiative, questioning the norm, making things radically simple and celebrating diversity. Our 5,100+ employees all work hard towards a cause that impacts every one of us, healthcare, and we take the time to celebrate company accomplishments and our people.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=04bf3a35fdedb3f8,04bf3a35fdedb3f8,indeed,Athenahealth developer
+new,Senior Software Engineer,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Engineer to join our Developer Software Services team within our Engineering Enablement organization. We deliver the tools and systems that scale the effectiveness of our product developers so that they can spend more time doing what they do best: provide product features to our end users to unbreak healthcare. But enough about us; lets talk about you.
+
+
+You are a developer with a passion and focus on efficiency such that you find yourself building tools and systems to increase your own productivity. You are a strong coder and an excellent communicator with the capability of quickly picking up new concepts. You are seeking an environment that supports your continued learning and celebrates efficiency at scale.
+
+
+
+Job Responsibilities
+Ability to write code that is technically sound, performant, and readable
+Understand and follow coding conventions, architectures, and best practices
+Collaborate with team members to promote productivity and effectiveness on a team with a wide range of experience levels
+Finds ways to explore and execute even when there is no historical context or known path forward
+Proven track record of following through on commitments and owning the outcome
+Ability to assess situations or problems from multiple angles to understand complete picture
+
+Typical Qualifications
+2+ years of software engineering experience, ideally with infrastructure or platform development expertise
+Proficient in at least one modern object-oriented programming language; relational databases, with modern UI frameworks helpful
+We work in a Scrum environment developing microservices in AWS, so any Agile experience and CI/CD concepts are helpful
+Knowledge of Unix/Linux, RESTful API, cloud native, and distributed computing are helpful
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all .
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=c3bb3c23bd510f6a,c3bb3c23bd510f6a,indeed,Athenahealth developer
+new,Principal Member Technical Staff,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Software Developer to join the athenaAPI Framework team within our Platform Services Engineering division. Your job will be to deliver customer value in the form of high quality software components as part of a high-functioning team. But enough about us; lets talk about you!
+
+
+You are a software engineer with experience building full stack web applications, preferably in public and private cloud environments. You are an excellent communicator that is capable of quickly picking up the complicated healthcare space.
+
+
+The Team: The Platform team within athena is primarily responsible for developing, enhancing and maintaining all the core foundational components (messaging, database, file storage, faxing etc) that are required by all other development teams within athena to successfully build their products. As a key member of the platform team, you will work on athenahealths developer API infrastructure to create a framework that makes it easy for other athena teams to generate, document, test, and deploy new APIs used by our application partners. This highly impactful work enables faster innovation by applications that use athenahealth data to enhance healthcare.
+
+
+Job Responsibilities
+Design and develop code on an agile team of Engineers that typically includes a Scrum Master, a Product Owner, and Experience Designer
+Collaborate with team members to promote productivity and effectiveness; share business and technical insights with the broader engineering and product organization
+Develop knowledge and domain expertise. Take ownership of what you and the team builds and coordinate your efforts across the teams to ensure proper completion
+Typical Qualifications
+2+ years of software engineering experience with exact title for this role depending on demonstrated skills
+Proficient in at least one modern programming language and relational databases
+We work in Agile environment, so any Agile experience or CI/CD concepts is helpful
+Knowledge of Unix/Linux, SQL, RESTful API, Perl, and various other technologies is helpful
+ About athenahealth
+Our Vision: : To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support (We were named one of the 2018 Best Workplaces for Commuters!), collaborative workspaces and dog-friendly offices - just to name a few.
+Location of Role :
+Watertown, MA
+Job Category :
+Operations
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=baae228979e684f6,baae228979e684f6,indeed,Athenahealth developer
+new,Lead Software Engineer,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Software Engineer to join our Collector team within our Core Services Engineering organization. In Collector, we diligently manage our clients revenue cycle so that doctors can focus on what matters: patients. But enough about us; lets talk about you.
+
+
+You are a developer with experience building full stack web applications, preferably in public and private cloud environments. You are an excellent communicator that is capable of quickly picking up the complicated healthcare space.
+
+
+As an engineer on the athenaCollector Product team, you have the opportunity to work on product components and workflows used to ensure providers get paid, such as medical claim submission, revenue reporting, medical coding, patient account management, denials prevention and patient access.
+
+
+You are a tenacious, but nimble learner, who demonstrates design & engineering excellence.
+
+
+The Team: Your future team shepherds the financial health of our clients; working to ensure that in our increasingly complex healthcare landscape our providers are reimbursed appropriately. You will build enterprise quality web applications, with an eye towards stability. You will innovate as we modernize our technology stack, building the healthcare internet. You will nurture the financial health of our clients as we navigate the immense industry change around provider reimbursement over the next few years.
+
+
+Job Responsibilities
+Lead, design and develop code on an agile team of Engineers, a Scrum Master, a Product Owner, and Experience Designer
+Collaborate, mentor and advise team members to promote productivity and effectiveness; share business and technical insights with the broader engineering and product organization
+Develop knowledge to act as a domain expert. Take ownership of what the team builds and coordinate efforts across the teams to ensure proper completion
+
+Typical Qualifications
+6-8 years of experience in an engineering role
+Significant software engineering skills and computer science experience
+Demonstrable UI/UX experience on a large-scale app and a strong understanding of JavaScript ecosystem
+Hands-on experience in React Native APIs, ReactJS, Javascript or ECMAScript (OOJS) and JSX.
+A strong candidate would additionally have experience with relational databases, RESTful API, WebUI (HTML 5), CI/CD concepts, and Agile development
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all .
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=639ff91b9ad69d73,639ff91b9ad69d73,indeed,Athenahealth developer
+new,Lead Software Engineer - Clinicals Product,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Engineer to join our Clinicals product team within our Core Services Engineering organization. We deliver technology that allows doctors to be doctors so that they can spend more time doing what they do best: provide patient care. But enough about us; lets talk about you.
+
+
+You are a developer with experience building full stack web applications, preferably in public and private cloud environments. You are an excellent communicator that is capable of quickly picking up the complicated healthcare space. You are a tenacious, but nimble learner, who demonstrates design & engineering excellence.
+
+
+The Team: Our athenaClinicals  Ambulatory team builds code that matters, working on the beating heart of doctors workflows that is used by over 100,000 healthcare providers daily. We build the interface that makes the interactions between these providers and the electronic health record as seamless as possible, and elevates what the doctor needs to see, when they need to see it. This team is innovative, passionate, and driven by our mission to help make an impact.
+
+
+Job Responsibilities
+Lead, design and develop code on an agile team of Engineers, a Scrum Master, a Product Owner, and Experience Designer
+Collaborate, mentor and advise team members to promote productivity and effectiveness; share business and technical insights with the broader engineering and product organization
+Develop knowledge to act as a domain expert. Take ownership of what the team builds and coordinate efforts across the teams to ensure proper completion
+ Typical Qualifications
+Ideally 5+ years of software engineering experience with significant product development expertise
+Proficient in at least one modern programming language; relational databases, with modern UI frameworks helpful
+We work in Agile TDD environments, so any Agile experience or CI/CD concepts is helpful
+Knowledge of Unix/Linux, SQL, RESTful API, and various other technologies is helpful
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all .
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=e6b34373d72ec1af,e6b34373d72ec1af,indeed,Athenahealth developer
+new,Web Product Manager,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Product Manager to join our Web Product Management team within our Enterprise division. Your job will be to be a central figure in influencing both the product strategy and roadmaps for external and internal facing athenahealth websites.But enough about us; lets talk about you.
+
+
+You are good at using qualitative and quantitative data drive execution and strategy. You move quickly and can manage stakeholder relationships effectively.
+
+
+The Team: Our Product Management team is responsible for maintaining and owning the platform that delivers the content and experiences to our company websites.
+
+
+Job Responsibilities
+Managing the backlog and roadmap for 2 of the properties we own
+Responsible for driving and managing the optimization platform
+Managing the stakeholders for the appropriate web properties
+Typical Qualifications
+Experience managing web platform products
+Proven track record of sucess
+Experience working in an Agile framework
+Experience working with Developers and JIRA
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: If youre curious, passionate and want to connect with work that matters, youve come to the right place. At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. At the heart of athenahealth's culture is unconditional positive regard for one another, our customers, their patients and our community. We take time to celebrate diversity and our accomplishments and strive to be powerfully relevant and refreshingly candid in everything we do
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support (We were named one of the 2018 Best Workplaces for Commuters!), collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=15346b86c880938d,15346b86c880938d,indeed,Athenahealth developer
+new,Office 365/SharePoint Solutions Architect,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+The Collaboration Solutions Architect is responsible for development and integration of athenahealths employee collaboration applications by partnering with business process owners and technology team members. This person will be part of a multidisciplinary team charged with implementing enterprise business applications for athenahealth.
+You are an experienced, high-energy, detail-oriented Software Engineer with experience in a high-tech software company. You have a background in enterprise business application design and implementation. You have strong attention to detail with a positive attitude and healthy sense of humor.
+Job Responsibilities
+Gather, analyze and document functional and technical requirements for new projects, enhancements to existing solutions and production issues reported by end users.
+Proactively identify and proposes new, alternative technology to create scalable implementations and achieve results.
+Lead stakeholder interviews to determine business needs, technical impact, and recommendations
+Manage the vision, long-term strategy, governance, roadmaps for collaboration technologies including Office 365 apps.
+Proactively identify opportunities for automation and process improvement that will potentially reduce incoming production support tickets.
+Advise and train members of the team to maximize overall productivity and effectiveness of the team.
+Evolving knowledge of cross-browser/platform issues, especially for performance and accessibility
+Build strong relationships with cross-functional team members and business stakeholders.
+Familiarity working with Git in a team or open source project.
+Provide technical leadership for development of innovative solutions for the business.
+Identify new Office 365 / SharePoint enhancements that may be relevant and make the appropriate recommendations to project stakeholders
+Typical Qualifications
+5+ years of experience implementing and supporting enterprise business applications.
+Knowledge of Office 365/SharePoint Online, Teams, Power platform is required
+Excellent problem-solving, analytical and investigative skills.
+Experience in Rapid Application development is preferred.
+Experience with Azure, Power BI or Tableau is preferred
+Exceptional communication and personal skills, both written, verbal and while presenting to groups, including C-level executives
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to several restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=1d38dbee4b151537,1d38dbee4b151537,indeed,Athenahealth developer
+new,Senior DevOps Engineer,Athenahealth,"Austin, TX",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior DevOps Engineer to join our team of developers building our next generation Scheduling, Practice Management, and Referral Management solutions. Your job will be to enable the creation of easy to use, powerful, cloud-based tools which allow medical professionals to focus on what they do best  treat patients. But, enough about us; lets talk about you.
+
+
+If you are passionate about the SDLC process and applying agile methods to enable the development of core web applications, we would love to hear from you.
+
+
+The Team: Our consumer-focused Scheduling application team aims to bring a marketplace experience to healthcare, allowing patients to feel empowered in their healthcare decisions.
+
+
+Job Responsibilities
+Identify, triage, and resolve issues in application environments and Cloud architecture
+Support development teams by improving build and infrastructure processes
+Potentially write, debug, and deploy code to production; deliver timely fixes
+Proactively identify and propose new, alternative technology in order to create scalable implementations and achieve results.
+
+Typical Qualifications
+Experience with Cloud Engineering, Infrastructure as Code, preferably Azure
+3+ years of experience in back end development, preferably using .Net framework
+Experience with Cloud Networking (VPNs, Peering, etc.), InfoSec concepts and working with CI/CD systems, preferably Jenkins
+Bachelors Degree or equivalent and experience in an Agile environment
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is located in downtown Austin, TX in the historic Seaholm Power Plant building.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=fe3379e6307018be,fe3379e6307018be,indeed,Athenahealth developer
+new,Lead Data Analyst/Developer  User Experience,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Lead Data Analyst/Developer to join our User Experience team within our Product division. Your job will be to analyze data analyses & develop applications that accelerate and standardize user research at athenahealth. But enough about us, lets talk about you.
+
+
+You are driven to improve the quality of experience measurement across a company, and excited about the opportunity to improve user research for hundreds of scrum teams with standard measurement.
+
+
+The Team: Our Experience Measurement team owns the quantitative user research systems at athenahealth, and builds databases and automation to accelerate and standardize our quantitative user research systems, which helps the company measure the business value that user experience brings to our customers. This team operates as a full-stack team, so we are looking for someone with expertise in one part of the stack who is interested in learning about other areas (e.g. may be an expert in JavaScript, and is interested in becoming an expert in databases, or vice versa, substituting any of the skills below).
+
+
+Job Responsibilities
+Develop data systems and applications as part of a full-stack data team
+Advise user experience designers on what research methods and/or experience measurement approaches will work best for their team
+Analyze data, create visualizations, and make recommendations to teams and to improve our research system
+Typical Qualifications
+Ability to do ETL, e.g. moving data from a source location to a centralized database
+Ability to analyze data
+Ability to write complex SQL queries, creating views to simplify repeated data access
+Ability to do front-end development in JavaScript, HTML, & CSS
+Ability to do back-end development
+Ability to create data visualizations and/or dashboards, and knowledge for best practices in data visualization and visual storytelling with data (We use Tableau, Vega, & D3.
+About athenahealth
+Our Mission: To unleash our collective potential to transform healthcare.
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to a number of restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture : At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support (We were named one of the 2018 Best Workplaces for Commuters!), tuition reimbursement, collaborative work spaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=1b107df61cd0497a,1b107df61cd0497a,indeed,Athenahealth developer
+new,Senior Product Manager-Healthcare Interoperability,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Product Manager to join our Product Management team within our Platform Services division. Your job will be to be a central figure in influencing API Strategy and working across athenahealth to unlock our data to further athenas place as a key player for interoperability across the health care ecosystem. But enough about us; lets talk about you.
+
+
+You are passionate about the possibilities that can be unlocked by using standards-based data exchange to truly change the game in healthcare. You not only know what the acronym FHIR stands for, but you also understand the transformational potential of it for healthcare! You are good at using qualitative and quantitative data to drive execution and strategy. You can make the tough trade off decisions between scope and schedule, while maintaining true focus on outcomes. You move quickly and can manage stakeholder relationships effectively.
+
+The Team: Our Product Management team is responsible for setting the direction for how world-class APIs are built within athena. We provide robust API frameworks, tools and standards, so teams can implement cohesive and consistent APIs.
+
+Job Responsibilities
+Understand the market, the customers, and the business and clinical outcomes that will require the free flow of information across systems and care settings and what would best serve our clients and the industry today as well as in the future
+Evangelize the benefits of FHIR and standards-based data exchange to technical and non-technical audiences
+Foster an API-first mentality and execution approach across our organization
+Contribute to a product vision, develop business cases, ensure a product or set of product features meets business requirements, and drive the creation and delivery of the product
+Define epics and user stories, clearly articulating business requirements for the problems were trying to solve - including UX/CX/Support requirements with a strong focus on outcomes
+Drive ongoing backlog allocations and prioritization of opportunities within area of responsibility
+Qualifications
+3+ years of healthcare industry experience
+Experience working with healthcare data integration and interoperability using HL7, FHIR, and other industry standards
+Understanding of Health IT interoperability technologies such as FHIR, CDS Hooks, OAuth2, SMART including experience in health terminology and interoperability standards (e.g., SNOMED, ICD 10, HL7, FHIR, CDA)
+Experience or familiarity with REST APIs is a plus
+Familiarity with any of the following a plus:
+Argonaut Project
+Da Vinci Project
+Experience working in an Agile framework
+Experience working with Developers and JIRA
+Proven track record of success
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location: This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and the campus, the Arsenal on the Charles, is home to several restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or athenistas) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=bc46c18283b0b394,bc46c18283b0b394,indeed,Athenahealth developer
+new,Senior Staff Software Engineer,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Staff Software Engineer to join our Engineering team. You will troubleshoot, debug and fix the issues escalated by our services teams. You will closely work with stakeholders from Product Management and services teams to ensure proper expectations are set in terms of delivery and resolution. You will work with other teams to ensure a coherent, forward looking product features.
+You are a passionate, solution-driven engineer who likes to troubleshoot and wear a detective hat to debug the complex issues at our customer sites . You have a can do attitude when facing a technical problem and are able to use your background with development experience in server - side tech stack to fix the issue.
+Job Responsibilities
+Troubleshoot issues escalated by our services teams that need engineering help. The issues are primarily on the server side.
+Understand the current design and deployment model of our products and fix issues escalated by the support team.
+Be accountable to the tasks assigned without any supervision.
+Work closely with cross functional groups and drive resolutions from Engineering
+Skilled in writing code that meets standards and delivers desired functionality using the technology selected for the project
+Typical Qualifications
+6-8 years of extensive experience with coding and troubleshooting issues in Java, J2EE, Spring and Hibernate tech stack.
+Ability to design, good knowledge of Design patterns, OOAD
+Experience using tools like Eclipse/Visual Studio/ Webstorm , VSTS
+Experience with Junit testing, Jmeter
+Experience in Agile development practices: Test Driven Development (TDD) and Scrum
+Experience in WebServices using SOAP and RESTful frameworks
+About athenahealth
+
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all
+Our Location : This role is ideally located in our Watertown, MA (Boston) corporate office.
+Our Culture: At athenahealth, our employees (or  athenistas ) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks: Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support (We were named one of the 2018 Best Workplaces for Commuters!), tuition reimbursement, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=c1c1d50165c2584f,c1c1d50165c2584f,indeed,Athenahealth developer
+new,Senior Software Engineer - Security Development,Athenahealth,"Watertown, MA",2020-01-12,"Connect with work that matters. Be a part of transforming the healthcare industry!
+We are looking for a Senior Software Engineer to join our Security Development team. This is a highly skilled team following Agile methodologies.
+
+
+We are looking for a developer with experience in designing and building applications, preferably in public and private cloud environments. You are a strong coder and an excellent communicator with the capability of quickly picking up new concepts.
+
+The Team: Security Development team owns development of security features which make access to data secure. We also own s ecurity communications: guidelines, policies and procedures.
+
+Job Responsibilities
+Produce accurate, unambiguous technical design specifications to the appropriate detail.
+Proactively identify and propose new, alternative technology in order to create scalable implementations and achieve results
+Deliver high-quality software components and services in adherence with security policies, performance, longevity and integration testing
+Typical Qualifications
+3+ years of experience in the software engineering role.
+Write, debug, test and deploy code to production; ability to deliver timely fixes.
+Knowledge of modern programming languages such as: C, C++, Perl, Java, Python, and JavaScript/jQuery.
+Knowledge of Unix/Linux, SQL, NOSQL, and various other technologies.
+Experience with object-oriented programming, relational database technologies, RESTful API, WebUI (HTML 5) and Modern JS frameworks.
+Interest in security is a must but we do not require experience within security group.
+About athenahealth
+Our Vision: To create a thriving ecosystem that delivers accessible, high-quality, and sustainable healthcare for all.
+Our Location : This role is based in Watertown, MA, just a few miles outside of Boston. Watertown is our Global Headquarters and our campus, the Arsenal on the Charles, is home to several restaurants, a local gym and large outdoor space. This office also has a cafeteria, coffee caf and food trucks that rotate every day.
+Our Culture: At athenahealth, our employees (or  athenistas ) are committed to making healthcare smarter. Our success is dependent on the diversity, collective spirit, and contributions of our people, clients and partners. We value teamwork and believe that the strength of our team comes from supporting each other and leveraging our specialized skills. If you are looking for company that will enable you to work outside of your comfort zone to transform the healthcare ecosystem, athenahealth is the place for you.
+Our Perks : Along with health & financial benefits, our athenistas are offered a variety of perks that promote employee wellbeing such as commuter support, collaborative workspaces and dog-friendly offices - just to name a few.
+athenahealth is committed to a policy of equal employment opportunitythats why we recruit and hire applicants without regard to race, color, religion, sex (including pregnancy), national origin, disability, age, sexual orientation, veteran status, genetic information, gender identity, gender expression, or any other factor prohibited by law. Were happy to provide a reasonable accommodation, for those with a disability, to complete any part of the application process. If you are unable to access or use this online application process and need an alternative method for applying, please contact us at
+taoperations@athenahealth.com for assistance.
+https://www.athenahealth.com/careers/equal-opportunity",,https://www.indeed.com/viewjob?jk=0de6188cea11a7d9,0de6188cea11a7d9,indeed,Athenahealth developer
