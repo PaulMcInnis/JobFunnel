@@ -20,6 +20,17 @@ import shutil
 from datetime import date
 today = date.today()
 
+stack_overflow_tags = dd(int)
+
+data_stack = pd.read_csv('QueryResults.csv')
+data_stack = pd.DataFrame(data_stack)
+
+
+for i in range(len(data_stack)):
+    stack_overflow_tags[data_stack.iloc[i][0]]=1
+
+
+
 
 
 
@@ -237,5 +248,5 @@ s3.upload_file(config['master_list_path'], S3_BUCKET_NAME, 'master_list.csv')
 os.system("ls /tmp/")'''
 
     
-lambda_handler(1,1)
+#lambda_handler(1,1)
 
