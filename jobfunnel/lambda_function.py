@@ -55,7 +55,7 @@ invalid_comp = []
 for i in range(len(df)):
     key = df.iloc[i][0]
     coun = df.iloc[i][1]
-    #print(key,coun)
+    print(key,coun)
 
     key = key.replace(' ','_')
     coun = coun.replace(' ','_')
@@ -107,7 +107,6 @@ def lambda_handler(event,context):
             continue 
         kword = func_params[0]
 
-        kword+=' developer'
 
 
         print('Keyword: ', kword)
@@ -141,7 +140,7 @@ def lambda_handler(event,context):
             temp_kword = kword.replace('_',' ')
             config =    {
                             'output_path': 'search',
-                            'providers': ['glassdoor'],
+                            'providers': providers_dict[curr],
                             'search_terms': {
                                                 'region': {
                                                                 'city': temp_ctry, 

@@ -246,12 +246,11 @@ class GlassDoor(JobFunnel):
                 job['company'] = s.find('div', attrs={
                     'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
 
-                riya = self.search_terms['keywords']
-                riya = str(riya[:riya.rfind('developer')-1])
-                print('riya',riya)
-                if(riya.lower()!=job['company'].lower()):
+                company_name = self.search_terms['keywords'][0]
+                company_name = company_name[:company_name.rfind(' developer')]
+                if(company_name.lower()!=job['company'].lower()):
                     log_info('No searches found on glassdoor')
-                    continue
+                    return 
                 job['location'] = s.get('data-job-loc')
             except AttributeError:
                 continue
