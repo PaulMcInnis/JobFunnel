@@ -33,24 +33,30 @@ providers_dict={
 
 get_prev_cache()
 
-print('glob',glob_cache)
-data  = pd.read_csv('/Users/riya/Desktop/data.csv')
+data  = pd.read_csv('/Users/satyam/Desktop/data.csv')
 
 
 df = pd.DataFrame(data)
 df = df[['Company','Country']]
 
-df.fillna('NA')
+#print('df',df)
+
+
+
+df = df.dropna(how='any',axis=0) 
 ct_date = today.strftime("%d-%m-%Y")
 cur_date = ''
 cur_date+=ct_date
 
 db = dd(dd)
+invalid_comp = []
 
 
 for i in range(len(df)):
     key = df.iloc[i][0]
     coun = df.iloc[i][1]
+    #print(key,coun)
+
     key = key.replace(' ','_')
     coun = coun.replace(' ','_')
     db[key][coun] = cur_date
@@ -63,17 +69,20 @@ for i in db.keys():
         keyword.append(i)
         countries.append(j)
 
-#keyword = ['hackerrank']
-
-
+invalid = ['hackerrank','self','qasir.id']
+valid = ['tcs','itc','kit','ibm']
 
 def clean(kword):
-    if ('.com Inc' in kword):
+    status = 0
+    if ('.com' in kword):
         kword = kword[:kword.index('.')+1]
+    if ('inc' in kword.lower()):
+        kword = kword[:kword.lower().index('inc')]
     if ('Encs' in kword):
         kword = kword[:kword.index('Encs')+1]
-  
-    return kword
+    if (kword.lower() in invalid):
+        status=1
+    return [kword,status]
 
 
 
@@ -89,9 +98,17 @@ def lambda_handler(event,context):
         kword = keyword[i]
         ctry = countries[i] 
        
-        if(len(kword) < 4):
+        if(len(kword) < 4 and (kword.lower() not in valid)):
+            invalid_comp.append(kword)
             continue
-        kword = clean(kword)
+        func_params =  clean(kword)
+        if(func_params[1]==1):
+            invalid_comp.append(func_params[0])
+            continue 
+        kword = func_params[0]
+
+        kword+=' developer'
+
 
         print('Keyword: ', kword)
         print('Country: ', ctry)
@@ -124,7 +141,7 @@ def lambda_handler(event,context):
             temp_kword = kword.replace('_',' ')
             config =    {
                             'output_path': 'search',
-                            'providers': providers_dict[curr],
+                            'providers': ['glassdoor'],
                             'search_terms': {
                                                 'region': {
                                                                 'city': temp_ctry, 
@@ -199,6 +216,10 @@ def lambda_handler(event,context):
             file.write(str(db[i][j]) + ' ')
     
     file.close()
+
+    print(invalid_comp)
+
+    
         
     
 '''s3 = boto3.client('s3')
