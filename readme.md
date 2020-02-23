@@ -66,7 +66,7 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
 * **Filtering Undesired Companies** <br />
   Filter jobs that are too old by providing your own `yaml` configuration and adding them to the black list (see `JobFunnel/jobfunnel/config/settings.yaml`).
   
-  * **Filtering Old Jobs**<br />
+* **Filtering Old Jobs**<br />
   Filter jobs that are too old by providing your own `yaml` configuration and setting the threshhold_days variable to your liking. Jobs older than thershhold_days will not be scraped. (see `JobFunnel/jobfunnel/config/settings.yaml`).
 
 
