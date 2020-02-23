@@ -1,10 +1,31 @@
 import nltk
 import logging
-
+import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
 from numpy import delete as np_delete, max as np_max, fill_diagonal
+
+
+def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
+    """Filter out jobs that are older than number_of_days
+        The assumed date format is yyyy-mm-dd
+        Args:
+        cur_dict: today's job scrape dict
+        number_of_days: how many days old a job can be
+    """
+    print("date_filter running")
+    cur_job_ids = [job['id'] for job in cur_dict.values()]
+    #calculate the oldest date a job can be
+    threshold_date  =  datetime.date.today() - datetime.timedelta(days=number_of_days)
+    for job_id in cur_job_ids:
+        print(f"date passed:{cur_dict[job_id]['date']}")
+        temp_date = cur_dict[job_id]['date'].split("-")
+        job_date  = datetime.date(int(temp_date[0]),int(temp_date[1]),int(temp_date[2]))
+        if job_date<threshold_date:
+            print(f"{cur_dict[job_id]['link']} has been filtered out by date_filter")
+            del cur_dict[job_id]
+
 
 
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):

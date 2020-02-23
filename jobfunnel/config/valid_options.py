@@ -13,6 +13,7 @@ CONFIG_TYPES = {
     },
     'black_list': [list],
     'log_level': [str],
+    'threshold_days' : [int],
     'similar': [bool],
     'no_scrape': [bool],
     'recover': [bool],
@@ -25,7 +26,7 @@ CONFIG_TYPES = {
         'converge': [bool]
     },
     'proxy': [
-        None, 
+        None,
         {
             'protocol': str,
             'ip_address': str,

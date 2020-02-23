@@ -18,7 +18,7 @@ from typing import Dict, List
 from requests import Session
 
 from .tools.delay import delay_alg
-from .tools.filters import tfidf_filter, id_filter
+from .tools.filters import tfidf_filter, id_filter, date_filter
 from .tools.tools import proxy_dict_to_url
 
 # setting job status to these words removes them from masterlist + adds to
@@ -39,6 +39,8 @@ class JobFunnel(object):
     filters """
 
     def __init__(self, args):
+        #threshold for days
+        self.threshold_days = args['threshold_days']
         # paths
         self.master_list_path = args['master_list_path']
         self.filterlist_path = args['filter_list_path']
@@ -230,6 +232,9 @@ class JobFunnel(object):
     def pre_filter(self, data: Dict[str, dict], provider):
         """function called by child classes that applies multiple filters
         before getting job blurbs"""
+        #call date_filter if it is turned on
+        if self.threshold_days is not None and self.threshold_days > -1:
+            date_filter(data, self.threshold_days)
         # call id_filter for master and duplicate lists, if they exist
         if os.path.isfile(self.master_list_path):
             id_filter(data, self.read_csv(self.master_list_path),
