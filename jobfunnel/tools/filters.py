@@ -1,6 +1,6 @@
 import nltk
 import logging
-import datetime
+from datetime import datetime, date, timedelta
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
@@ -16,19 +16,20 @@ def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
     """
     if number_of_days<0 or cur_dict is None:
         return
+    jons_filtered_count  = 0
     print("date_filter running")
     cur_job_ids = [job['id'] for job in cur_dict.values()]
     #calculate the oldest date a job can be
-    threshold_date  =  datetime.date.today() - datetime.timedelta(days=number_of_days)
+    threshold_date  = datetime.now() - timedelta(days=number_of_days)
     for job_id in cur_job_ids:
-        print(f"date passed:{cur_dict[job_id]['date']}")
         #get the date from job with job_id
-        temp_date = cur_dict[job_id]['date'].split("-")
-        job_date  = datetime.date(int(temp_date[0]),int(temp_date[1]),int(temp_date[2]))
+        job_date = datetime.strptime(cur_dict[job_id]['date'], '%Y-%m-%d')
         #if this job is older than the threshold, delete it from current scrape
         if job_date<threshold_date:
-            print(f"{cur_dict[job_id]['link']} has been filtered out by date_filter")
+            logging.info(f"{cur_dict[job_id]['link']} has been filtered out by date_filter because"
+                    f" it is older than {number_of_days} days")
             del cur_dict[job_id]
+
 
 
 

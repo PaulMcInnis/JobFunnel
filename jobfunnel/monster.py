@@ -211,8 +211,6 @@ class Monster(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-        # Do not change the order of the next three statements if you want date_filter to work
-
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
         # converts job date formats into a standard date format

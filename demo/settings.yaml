@@ -27,8 +27,8 @@ black_list:
 # logging level options are: critical, error, warning, info, debug, notset
 log_level: 'info'
 
-# The oldest number of days a job can be. To disbable this option set value to -1
-threshold_days: 10
+# The oldest number of days a job can be. To disable this option set value to -1
+threshold_days: 20
 
 # saves duplicates removed by tfidf filter to duplicate_list.csv
 save_duplicates: False
