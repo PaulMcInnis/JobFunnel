@@ -28,7 +28,8 @@ black_list:
 log_level: 'info'
 
 # The oldest number of days a job can be. To disable this option set value to -1
-threshold_days: 20
+#TODO make this a CLI option so it can be optional
+max_listing_age: 20
 
 # saves duplicates removed by tfidf filter to duplicate_list.csv
 save_duplicates: False
