@@ -68,3 +68,7 @@ def validate_config(config):
 
     # check validity of delay settings
     validate_delay(config['delay_config'])
+
+    #check the validity of date_filter settings
+    if(config['threshold_days'] is None):
+        raise ConfigError('threshold_days')
