@@ -13,7 +13,6 @@ CONFIG_TYPES = {
     },
     'black_list': [list],
     'log_level': [str],
-    'threshold_days' : [int],
     'similar': [bool],
     'no_scrape': [bool],
     'recover': [bool],
@@ -32,7 +31,9 @@ CONFIG_TYPES = {
             'ip_address': str,
             'port': str
         }
-    ]
+    ],
+    'max_listing_days':[int]
+
 }
 
 PROVIDERS = ['glassdoor', 'indeed', 'monster']

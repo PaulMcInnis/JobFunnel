@@ -24,7 +24,7 @@ def main():
     except ConfigError as e:
         print(e.strerror)
         sys.exit()
-    
+
 
     # init class + logging
     jf = JobFunnel(config)

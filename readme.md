@@ -67,7 +67,8 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
   Filter jobs that are too old by providing your own `yaml` configuration and adding them to the black list (see `JobFunnel/jobfunnel/config/settings.yaml`).
   
 * **Filtering Old Jobs**<br />
-  Filter jobs that are too old by providing your own `yaml` configuration and setting the threshhold_days variable to your liking. Jobs older than thershhold_days will not be scraped. (see `JobFunnel/jobfunnel/config/settings.yaml`).
+  Filter jobs that you think are too old:
+  `funnel -s JobFunnel/demo/settings.yaml --max_listing_days 30` will filter out job listings that are older than 30 days.
 
 
 * **Automating Searches** <br />

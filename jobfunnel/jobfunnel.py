@@ -39,8 +39,8 @@ class JobFunnel(object):
     filters """
 
     def __init__(self, args):
-        #threshold for days
-        self.threshold_days = args['threshold_days']
+        #The maximum number of days old a job can be
+        self.max_listing_days = args['max_listing_days']
         # paths
         self.master_list_path = args['master_list_path']
         self.filterlist_path = args['filter_list_path']
@@ -233,8 +233,8 @@ class JobFunnel(object):
         """function called by child classes that applies multiple filters
         before getting job blurbs"""
         #call date_filter if it is turned on
-        if self.threshold_days is not None and self.threshold_days > -1:
-            date_filter(data, self.threshold_days)
+        if self.max_listing_days is not None:
+            date_filter(data, self.max_listing_days)
         # call id_filter for master and duplicate lists, if they exist
         if os.path.isfile(self.master_list_path):
             id_filter(data, self.read_csv(self.master_list_path),

@@ -16,7 +16,6 @@ def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
     """
     if number_of_days<0 or cur_dict is None:
         return
-    jons_filtered_count  = 0
     print("date_filter running")
     cur_job_ids = [job['id'] for job in cur_dict.values()]
     #calculate the oldest date a job can be
@@ -24,7 +23,7 @@ def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
     for job_id in cur_job_ids:
         #get the date from job with job_id
         job_date = datetime.strptime(cur_dict[job_id]['date'], '%Y-%m-%d')
-        #if this job is older than the threshold, delete it from current scrape
+        #if this job is older than threshold_date, delete it from current scrape
         if job_date<threshold_date:
             logging.info(f"{cur_dict[job_id]['link']} has been filtered out by date_filter because"
                     f" it is older than {number_of_days} days")

@@ -29,10 +29,6 @@ black_list:
 # logging level options are: critical, error, warning, info, debug, notset
 log_level: 'info'
 
-# The oldest number of days a job can be. To disable this option set value to -1
-#TODO make this a CLI option so it can be optional
-threshold_days: 20
-
 # keep similar job postings
 similar: False
 
