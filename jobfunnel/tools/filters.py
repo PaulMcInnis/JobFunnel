@@ -30,8 +30,6 @@ def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
             del cur_dict[job_id]
 
 
-
-
 def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
     """ Filter duplicates on job id per provider.
 
