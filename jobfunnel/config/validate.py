@@ -68,3 +68,7 @@ def validate_config(config):
 
     # check validity of delay settings
     validate_delay(config['delay_config'])
+
+    #check the validity of max_listing_days settings
+    if(config['max_listing_days'] is not None and config['max_listing_days']<0):
+        raise ConfigError('max_listing_days')

@@ -64,7 +64,7 @@ def parse_cli():
                         dest='domain',
                         type=str,
                         required=False,
-                        help='domain value for a region ')   
+                        help='domain value for a region ')
 
     parser.add_argument('-r',
                         dest='random',
@@ -143,6 +143,13 @@ def parse_cli():
                         required=False,
                         default=None,
                         help='save duplicates popped by tf_idf filter to file')
+    parser.add_argument('--max_listing_days',
+                        dest='max_listing_days',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='The maximum number of days old a job can be.'
+                              '(i.e pass 30 to filter out jobs older than a month)')
 
     return parser.parse_args()
 
@@ -178,6 +185,8 @@ def cli_to_yaml(cli):
 
     if cli.proxy is not None:
         yaml['proxy'] = split_url(cli.proxy)
+    if cli.max_listing_days is not None:
+        yaml['max_listing_days'] = cli.max_listing_days
 
     return yaml
 
@@ -290,5 +299,7 @@ def parse_config():
     # check if proxy has not been set yet (optional)
     if 'proxy' not in config:
         config['proxy'] = None
+    if 'max_listing_days' not in config:
+        config['max_listing_days'] = None
 
     return config

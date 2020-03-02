@@ -25,13 +25,15 @@ CONFIG_TYPES = {
         'converge': [bool]
     },
     'proxy': [
-        None, 
+        None,
         {
             'protocol': str,
             'ip_address': str,
             'port': str
         }
-    ]
+    ],
+    'max_listing_days':[int]
+
 }
 
 PROVIDERS = ['glassdoor', 'indeed', 'monster']

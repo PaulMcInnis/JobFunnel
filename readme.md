@@ -64,7 +64,12 @@ __*Note*__: `rejected` jobs will be filtered out and will disappear from the out
   ```
 
 * **Filtering Undesired Companies** <br />
-  Filter undesired companies by providing your own `yaml` configuration and adding them to the black list (see `JobFunnel/jobfunnel/config/settings.yaml`).
+Filter undesired companies by providing your own `yaml` configuration and adding them to the black list(see `JobFunnel/jobfunnel/config/settings.yaml`).
+  
+* **Filtering Old Jobs**<br />
+  Filter jobs that you think are too old:
+  `funnel -s JobFunnel/demo/settings.yaml --max_listing_days 30` will filter out job listings that are older than 30 days.
+
 
 * **Automating Searches** <br />
   JobFunnel can be easily automated to run nightly with [crontab][cron] <br />

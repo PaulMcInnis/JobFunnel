@@ -25,6 +25,7 @@ def main():
         print(e.strerror)
         sys.exit()
 
+
     # init class + logging
     jf = JobFunnel(config)
     jf.init_logging()

@@ -282,14 +282,15 @@ class GlassDoor(JobFunnel):
 
             # key by id
             self.scrape_data[str(job['id'])] = job
-        # apply job pre-filter before scraping blurbs
-        super().pre_filter(self.scrape_data, self.provider)
 
+        # Do not change the order of the next three statements if you want date_filter to work
+        
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
-
         # converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
+        # apply job pre-filter before scraping blurbs
+        super().pre_filter(self.scrape_data, self.provider)
 
         # checks if delay is set or not, then extracts blurbs from job links
         if self.delay_config is not None:
