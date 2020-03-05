@@ -14,7 +14,7 @@ search_terms:
   region:
     province: 'ON'
     city:     'waterloo'
-    domain:   'ca'
+    domain:   
     radius:   10
 
   keywords:
