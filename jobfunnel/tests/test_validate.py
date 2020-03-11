@@ -32,8 +32,8 @@ attr_list = [
 
 configs = config_factory(config, attr_list)
 
-# Test all paths with invalid values
 
+# Test all paths with invalid values
 
 path_configs = config_factory(config, attr_list[12: 13])
 @pytest.mark.parametrize('config', path_configs)
@@ -86,8 +86,8 @@ def test_providers_fail(config):
         validate_config(config)
     assert str(e.value) == 'providers'
 
-# test with invalid regions and domains
 
+# test with invalid regions and domains
 
 region_config = config_factory(config, attr_list[2:3])
 
@@ -116,6 +116,7 @@ def test_region_pass():
 
 
 # generate config with invalid delay function name
+
 delay_configs = config_factory(config, attr_list[4: 5])
 
 
@@ -125,14 +126,14 @@ def test_delay_function_fail(config):
         validate_delay(config['delay_config'])
     assert str(e.value) == 'delay_function'
 
-# test delay_function with original configuration
 
+# test delay_function with original configuration
 
 def test_delay_function_pass():
     validate_delay(config['delay_config'])
 
-# generate config with invalid min delay value of -1
 
+# generate config with invalid min delay value of -1
 
 delay_configs = config_factory(config, attr_list[6: 7])
 
@@ -143,8 +144,8 @@ def test_delay_min_delay_fail(config):
         validate_delay(config['delay_config'])
     assert str(e.value) == '(min)_delay'
 
-# Test validate_delay with a min_delay greater than delay
 
+# Test validate_delay with a min_delay greater than delay
 
 delay_configs = config_factory(config, attr_list[5: 6])
 
@@ -155,8 +156,8 @@ def test_delay_min_delay_greater_than_delay_fail(config):
         validate_delay(config['delay_config'])
     assert str(e.value) == '(min)_delay'
 
-# Test validate_delay with a delay less than 10(the minimum)
 
+# Test validate_delay with a delay less than 10(the minimum)
 
 delay_configs = config_factory(config, attr_list[7: 8])
 
@@ -170,12 +171,11 @@ def test_delay_less_than_10_fail(config):
 
 # Test validate_delay with the original configuration
 
-
 def test_delay_pass():
     validate_delay(config['delay_config'])
 
-# test validate_delay with a max_listing_days value of -1
 
+# test validate_delay with a max_listing_days value of -1
 
 max_listing_days_config = config_factory(config, attr_list[8: 9])
 
@@ -188,7 +188,6 @@ def test_delay_max_listing_days_fail(config):
 
 
 # Test the integration of all parts with the config as a whole
-
 
 @pytest.mark.parametrize('config', configs)
 def test_config_fail(config):
