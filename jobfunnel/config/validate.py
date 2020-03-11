@@ -58,7 +58,6 @@ def validate_config(config):
     for path, pattern in check_paths.items():
         if not re.search(pattern, config[path]):
             raise ConfigError(path)
-
     # check if the provider list only consists of supported providers
     if not set(config['providers']).issubset(PROVIDERS):
         raise ConfigError('providers')
@@ -69,6 +68,6 @@ def validate_config(config):
     # check validity of delay settings
     validate_delay(config['delay_config'])
 
-    #check the validity of max_listing_days settings
-    if(config['max_listing_days'] is not None and config['max_listing_days']<0):
+    # check the validity of max_listing_days settings
+    if(config['max_listing_days'] is not None and config['max_listing_days'] < 0):
         raise ConfigError('max_listing_days')

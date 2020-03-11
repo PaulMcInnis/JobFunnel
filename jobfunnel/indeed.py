@@ -20,7 +20,7 @@ class Indeed(JobFunnel):
         self.max_results_per_page = 50
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
-                      'q=0.9,image/webp,*/*;q=0.8',
+            'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.indeed.{0}/'.format(
@@ -57,13 +57,14 @@ class Indeed(JobFunnel):
             # form job search url
             search = ('http://www.indeed.{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
-                self.search_terms['region']['domain'],
-                self.query,
-                self.search_terms['region']['city'],
-                self.search_terms['region']['province'],
-                self.convert_radius(self.search_terms['region']['radius']),
-                self.max_results_per_page,
-                int(self.similar_results)))
+                          self.search_terms['region']['domain'],
+                          self.query,
+                          self.search_terms['region']['city'],
+                          self.search_terms['region']['province'],
+                          self.convert_radius(
+                              self.search_terms['region']['radius']),
+                          self.max_results_per_page,
+                          int(self.similar_results)))
 
             return search
         elif method == 'post':
