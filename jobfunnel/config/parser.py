@@ -149,7 +149,7 @@ def parse_cli():
                         default=None,
                         required=False,
                         help='The maximum number of days old a job can be.'
-                              '(i.e pass 30 to filter out jobs older than a month)')
+                        '(i.e pass 30 to filter out jobs older than a month)')
 
     return parser.parse_args()
 
@@ -163,9 +163,9 @@ def cli_to_yaml(cli):
         'output_path': cli.output_path,
         'search_terms': {
             'region': {
-            'province': cli.province,
-            'city': cli.city,
-            'domain': cli.domain
+                'province': cli.province,
+                'city': cli.city,
+                'domain': cli.domain
             },
             'keywords': cli.keywords
         },
@@ -180,14 +180,12 @@ def cli_to_yaml(cli):
             'min_delay': cli.min_delay,
             'random': cli.random,
             'converge': cli.converge
-        }
+        },
+        'max_listing_days': cli.max_listing_days,
     }
 
     if cli.proxy is not None:
         yaml['proxy'] = split_url(cli.proxy)
-    if cli.max_listing_days is not None:
-        yaml['max_listing_days'] = cli.max_listing_days
-
     return yaml
 
 
@@ -198,6 +196,12 @@ def update_yaml(config, new_yaml):
     for k, v in new_yaml.items():
         # if v is a dict we need to dive deeper...
         if type(v) is dict:
+            # There might be times where this dictionary is not in config,
+            # but it still is a valid option inside of CONFIG_TYPES
+            # such as it is in the case of proxy
+            if k not in config:
+                config[k] = v
+
             update_yaml(config[k], v)
         else:
             if v is not None:
@@ -225,6 +229,7 @@ def check_config_types(config):
     types_check = recursive_check_config_types(config, CONFIG_TYPES)
 
     # Select all wrong types and throw error when there is such a value
+
     wrong_types = [k for k, v in types_check if v is False]
     if len(wrong_types) > 0:
         raise ConfigError(', '.join(wrong_types))
@@ -260,7 +265,6 @@ def parse_config():
     if given_yaml is not None:
         update_yaml(config, given_yaml)
     update_yaml(config, cli_yaml)
-
     # check if the config has valid attribute types
     check_config_types(config)
 
@@ -296,7 +300,7 @@ def parse_config():
     # parse the log level
     config['log_level'] = log_levels[config['log_level']]
 
-    # check if proxy has not been set yet (optional)
+    # check if proxy and max_listing_days have not been set yet (optional)
     if 'proxy' not in config:
         config['proxy'] = None
     if 'max_listing_days' not in config:

@@ -71,7 +71,7 @@ def post_date_from_relative_post_age(job_list):
                             logging.error(f"unknown date for job {job['id']}")
         # format date in standard format e.g. 2020-01-01
         job['date'] = post_date.strftime('%Y-%m-%d')
-   
+
 
 def split_url(url):
     # capture protocol, ip address and port from given url
@@ -100,7 +100,7 @@ def proxy_dict_to_url(proxy_dict):
         url_str += ip
     if port != '':
         url_str += ':' + port
-      
+
     return url_str
 
 
