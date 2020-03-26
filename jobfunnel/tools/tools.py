@@ -30,7 +30,6 @@ def post_date_from_relative_post_age(job_list):
             return job['date']
 
         post_date = None
-
         # supports almost all formats like 7 hours|days and 7 hr|d|+d
         try:
             # hours old
