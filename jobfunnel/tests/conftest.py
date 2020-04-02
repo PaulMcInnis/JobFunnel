@@ -34,8 +34,7 @@ def job_listings():
         [['key1', 'key2', 'keyN'], ['value']]
         """
         if len(attr_list) > 0:
-            for attr in attr_list:
-                return config_factory(job_format, attr_list)
+            return config_factory(job_format, attr_list)
         else:
             return job_format
     return setup
