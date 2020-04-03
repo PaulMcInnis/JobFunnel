@@ -22,8 +22,6 @@ def configure_options():
 @pytest.fixture()
 def job_listings():
     def setup(attr_list):
-        job_format = {'status': 'new', 'title': 'Python Engineer', 'company': 'Python Corp', 'location': 'Waterloo, ON', 'date': '10 days ago', 'blurb': '', 'tags': '',
-                      'link': 'https://job-openings.best-job-board.domain/python-engineer-waterloo-on-ca-procom/216808420', 'id': '216808420', 'provider': 'monster', 'query': 'Python'}
         """
         This function generates job listings.
         If attr_list is empty, then it returns a single job with
@@ -31,8 +29,12 @@ def job_listings():
         If attr_list is not empty, it returns a job listing for each  attribute pair on
         attr_list.
         The expected format for attr_list is
-        [['key1', 'key2', 'keyN'], ['value']]
+        [['key1', 'key2', 'keyN'], 'value']
         """
+        job_format = {'status': 'new', 'title': 'Python Engineer', 'company': 'Python Corp', 'location': 'Waterloo, ON', 'date': '10 days ago', 'blurb': '', 'tags': '',
+                      'link':
+                      'https://job-openings.best-job-board.domain/python-engineer-waterloo-on-ca-pro'
+                      'com/216808420', 'id': '216808420', 'provider': 'monster', 'query': 'Python'}
         if len(attr_list) > 0:
             return config_factory(job_format, attr_list)
         else:

@@ -29,40 +29,37 @@ attr_list = [
 
 
 def test_filter_list_path_fail(configure_options):
-    config = configure_options([''])
-    path_configs = config_factory(config, attr_list[12: 13])[0]
+    path_configs = config_factory(
+        configure_options(['']), attr_list[12: 13])[0]
     with pytest.raises(Exception) as e:
         validate_config(path_configs)
     assert str(e.value) == 'filter_list_path'
 
 
 def test_log_path_fail(configure_options):
-    config = configure_options([''])
-    path_configs = config_factory(config, attr_list[11:12])[0]
+    path_configs = config_factory(configure_options(['']), attr_list[11:12])[0]
     with pytest.raises(Exception) as e:
         validate_config(path_configs)
     assert str(e.value) == 'log_path'
 
 
 def test_duplicate_list_path_fail(configure_options):
-    config = configure_options([''])
-    path_configs = config_factory(config, attr_list[10: 11])[0]
+    path_configs = config_factory(
+        configure_options(['']), attr_list[10: 11])[0]
     with pytest.raises(Exception) as e:
         validate_config(path_configs)
     assert str(e.value) == 'duplicate_list_path'
 
 
 def test_data_path_fail(configure_options):
-    config = configure_options([''])
-    path_configs = config_factory(config, attr_list[9: 10])[0]
+    path_configs = config_factory(configure_options(['']), attr_list[9: 10])[0]
     with pytest.raises(Exception) as e:
         validate_config(path_configs)
     assert str(e.value) == 'data_path'
 
 
 def test_master_list_path_fail(configure_options):
-    config = configure_options([''])
-    path_configs = config_factory(config, attr_list[0: 1])[0]
+    path_configs = config_factory(configure_options(['']), attr_list[0: 1])[0]
     with pytest.raises(Exception) as e:
         validate_config(path_configs)
     assert str(e.value) == 'master_list_path'
@@ -70,10 +67,9 @@ def test_master_list_path_fail(configure_options):
 
 # test with invalid providers
 
-
 def test_providers_fail(configure_options):
-    config = configure_options([''])
-    providers_config = config_factory(config, attr_list[1: 2])[0]
+    providers_config = config_factory(
+        configure_options(['']), attr_list[1: 2])[0]
     with pytest.raises(Exception) as e:
         validate_config(providers_config)
     assert str(e.value) == 'providers'
@@ -81,18 +77,15 @@ def test_providers_fail(configure_options):
 
 # test with invalid regions and domains
 
-
 def test_domain_fail(configure_options):
-    config = configure_options([''])
-    region_config = config_factory(config, attr_list[2:3])[0]
+    region_config = config_factory(configure_options(['']), attr_list[2:3])[0]
     with pytest.raises(Exception) as e:
         validate_region(region_config['search_terms']['region'])
     assert str(e.value) == 'domain'
 
 
 def test_province_fail(configure_options):
-    config = configure_options([''])
-    region_config = config_factory(config, attr_list[3:4])[0]
+    region_config = config_factory(configure_options(['']), attr_list[3:4])[0]
     with pytest.raises(Exception) as e:
         validate_region(region_config['search_terms']['region'])
     assert str(e.value) == 'province'
@@ -106,10 +99,8 @@ def test_region_pass(configure_options):
 
 # generate config with invalid delay function name
 
-
 def test_delay_function_fail(configure_options):
-    config = configure_options([''])
-    delay_configs = config_factory(config, attr_list[4: 5])[0]
+    delay_configs = config_factory(configure_options(['']), attr_list[4: 5])[0]
     with pytest.raises(Exception) as e:
         validate_delay(delay_configs['delay_config'])
     assert str(e.value) == 'delay_function'
@@ -123,10 +114,8 @@ def test_delay_function_pass(configure_options):
 
 # generate config with invalid min delay value of -1
 
-
 def test_delay_min_delay_fail(configure_options):
-    config = configure_options([''])
-    delay_configs = config_factory(config, attr_list[6: 7])[0]
+    delay_configs = config_factory(configure_options(['']), attr_list[6: 7])[0]
     with pytest.raises(Exception) as e:
         validate_delay(delay_configs['delay_config'])
     assert str(e.value) == '(min)_delay'
@@ -135,8 +124,7 @@ def test_delay_min_delay_fail(configure_options):
 # Test validate_delay with a min_delay greater than delay
 
 def test_delay_min_delay_greater_than_delay_fail(configure_options):
-    config = configure_options([''])
-    delay_configs = config_factory(config, attr_list[5: 6])[0]
+    delay_configs = config_factory(configure_options(['']), attr_list[5: 6])[0]
     with pytest.raises(Exception) as e:
         validate_delay(delay_configs['delay_config'])
     assert str(e.value) == '(min)_delay'
@@ -145,8 +133,7 @@ def test_delay_min_delay_greater_than_delay_fail(configure_options):
 # Test validate_delay with a delay less than 10(the minimum)
 
 def test_delay_less_than_10_fail(configure_options):
-    config = configure_options([''])
-    delay_configs = config_factory(config, attr_list[7: 8])[0]
+    delay_configs = config_factory(configure_options(['']), attr_list[7: 8])[0]
     with pytest.raises(Exception) as e:
         validate_delay(delay_configs['delay_config'])
     assert str(e.value) == '(min)_delay'
@@ -161,8 +148,8 @@ def test_delay_pass(configure_options):
 # test validate_delay with a max_listing_days value of -1
 
 def test_delay_max_listing_days_fail(configure_options):
-    config = configure_options([''])
-    max_listing_days_config = config_factory(config, attr_list[8: 9])[0]
+    max_listing_days_config = config_factory(
+        configure_options(['']), attr_list[8: 9])[0]
     with pytest.raises(Exception) as e:
         validate_config(max_listing_days_config)
     assert str(e.value) == 'max_listing_days'
@@ -170,11 +157,11 @@ def test_delay_max_listing_days_fail(configure_options):
 
 # Test the integration of all parts with the config as a whole
 
-def test_config_fail(configure_options):
-    configs = config_factory(configure_options(['']), attr_list)
-    for config in configs:
-        with pytest.raises(Exception):
-            validate_config(config)
+@pytest.mark.parametrize('attribute', attr_list)
+def test_config_fail(configure_options, attribute):
+    config = config_factory(configure_options(['']), [attribute])[0]
+    with pytest.raises(Exception):
+        validate_config(config)
 
 
 def test_config_pass(configure_options):
