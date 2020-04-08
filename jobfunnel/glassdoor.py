@@ -107,7 +107,8 @@ class GlassDoor(JobFunnel):
 
         # get the location id for search location
         location_response = \
-            self.s.post(location_url, headers=self.location_headers, data=data).json()
+            self.s.post(location_url, headers=self.location_headers,
+                        data=data).json()
 
         if method == 'get':
             # @TODO implement get style for glassdoor
@@ -153,7 +154,7 @@ class GlassDoor(JobFunnel):
                 id='JobDescriptionContainer').text.strip()
         except AttributeError:
             job['blurb'] = ''
-
+        print('glassdoor blurb=', job['blurb'])
         filter_non_printables(job)
 
     # split apart above function into two so gotten blurbs can be parsed
@@ -284,7 +285,7 @@ class GlassDoor(JobFunnel):
             self.scrape_data[str(job['id'])] = job
 
         # Do not change the order of the next three statements if you want date_filter to work
-        
+
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
         # converts job date formats into a standard date format
