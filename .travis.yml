@@ -2,10 +2,10 @@ language: python
 python:
   - '3.6.9'
 install:
-  - 'pip install flake8 pipenv'
+  - 'pip install flake8 pipenv pytest-cov'
   - 'pipenv sync'
   - 'python -m nltk.downloader stopwords'
 before_script: 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
 script:
   - 'python -m jobfunnel -s demo/settings.yaml -o demo/'
-  - 'pytest'
+  - 'pytest --cov --cov-report=xml jobfunnel'
