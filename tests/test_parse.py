@@ -3,10 +3,11 @@ import sys
 import os
 import yaml
 
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
-from ..config.parser import parse_config, parse_cli, cli_to_yaml, update_yaml, check_config_types, log_levels
+from jobfunnel.config.parser import parse_config, parse_cli, cli_to_yaml, update_yaml, check_config_types, log_levels
+
 
 config_dict = {
     'output_path': 'fish',
@@ -25,7 +26,7 @@ config_dict_fail = {
 }
 
 cli_options = [
-    ['', '-s', 'settins.yaml'],
+    ['', '-s', 'settings.yaml'],
     ['', '-o', '.'],
     ['', '-kw', 'java', 'python'],
     ['', '-p', 'ON'],
@@ -70,7 +71,7 @@ def test_parse_cli_to_yaml_pass(option):
         cli_to_yaml(cli)
 
 
-# Create config fixture to avoid code duplication
+# create config fixture to avoid code duplication
 
 @pytest.fixture()
 def config_dependency():

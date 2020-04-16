@@ -10,11 +10,11 @@ from requests import get, post
 from typing import Union
 from unittest.mock import patch
 
-from ..config.parser import parse_config
+from jobfunnel.config.parser import parse_config
+from jobfunnel.indeed import Indeed
+from jobfunnel.monster import Monster
+from jobfunnel.glassdoor import GlassDoor
 
-from ..indeed import Indeed
-from ..monster import Monster
-from ..glassdoor import GlassDoor
 
 PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
 
