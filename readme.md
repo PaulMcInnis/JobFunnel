@@ -1,5 +1,6 @@
 <img src="images/jobfunnel_banner.png" alt="JobFunnel Banner" /> <br /> <br />
 <img src="https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master" alt="Build Status" >
+<img src="https://codecov.io/gh/studentbrad/JobFunnel/branch/studentbrad/codecov/graph/badge.svg" alt="Code Coverage">
 
 Automated tool for scraping job postings into a `.csv` file.
 
