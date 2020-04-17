@@ -87,7 +87,7 @@ def config_dependency():
         """
         # find the jobfunnel root dir
         jobfunnel_path = os.path.normpath(
-            os.path.join(os.path.dirname(__file__), '..'))
+            os.path.join(os.path.dirname(__file__), '../jobfunnel'))
 
         # load the default settings
         default_yaml_path = os.path.join(jobfunnel_path, default_path)
