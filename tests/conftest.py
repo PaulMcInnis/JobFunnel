@@ -1,8 +1,10 @@
 import pytest
-from unittest.mock import patch
-from ..config.parser import parse_config
-from ..tools.tools import config_factory
 import sys
+
+from unittest.mock import patch
+
+from jobfunnel.config.parser import parse_config
+from jobfunnel.tools.tools import config_factory
 
 
 @pytest.fixture()

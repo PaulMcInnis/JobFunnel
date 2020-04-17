@@ -3,9 +3,9 @@ import sys
 
 from unittest.mock import patch
 
-from ..config.parser import parse_config
-from ..config.validate import validate_config, validate_delay, validate_region
-from ..tools.tools import config_factory
+from jobfunnel.config.parser import parse_config
+from jobfunnel.config.validate import validate_config, validate_delay, validate_region
+from jobfunnel.tools.tools import config_factory
 
 
 # define config dictionaries that are not valid
@@ -25,8 +25,8 @@ attr_list = [
     [['log_path'], 'data/jobfunnel_.log'],
     [['filter_list_path'], 'data/filter_list_.json']
 ]
-# Test all paths with invalid values
 
+# test all paths with invalid values
 
 def test_filter_list_path_fail(configure_options):
     path_configs = config_factory(
@@ -121,7 +121,7 @@ def test_delay_min_delay_fail(configure_options):
     assert str(e.value) == '(min)_delay'
 
 
-# Test validate_delay with a min_delay greater than delay
+# test validate_delay with a min_delay greater than delay
 
 def test_delay_min_delay_greater_than_delay_fail(configure_options):
     delay_configs = config_factory(configure_options(['']), attr_list[5: 6])[0]
@@ -130,7 +130,7 @@ def test_delay_min_delay_greater_than_delay_fail(configure_options):
     assert str(e.value) == '(min)_delay'
 
 
-# Test validate_delay with a delay less than 10(the minimum)
+# test validate_delay with a delay less than 10(the minimum)
 
 def test_delay_less_than_10_fail(configure_options):
     delay_configs = config_factory(configure_options(['']), attr_list[7: 8])[0]
@@ -139,7 +139,7 @@ def test_delay_less_than_10_fail(configure_options):
     assert str(e.value) == '(min)_delay'
 
 
-# Test validate_delay with the original configuration
+# test validate_delay with the original configuration
 
 def test_delay_pass(configure_options):
     validate_delay(configure_options([''])['delay_config'])
@@ -155,7 +155,7 @@ def test_delay_max_listing_days_fail(configure_options):
     assert str(e.value) == 'max_listing_days'
 
 
-# Test the integration of all parts with the config as a whole
+# test the integration of all parts with the config as a whole
 
 @pytest.mark.parametrize('attribute', attr_list)
 def test_config_fail(configure_options, attribute):
