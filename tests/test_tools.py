@@ -110,13 +110,17 @@ def test_post_date_from_relative_post_age_today_pass(job_listings):
 def test_post_date_from_relative_post_age_1_hour_ago_pass(job_listings):
     job_list = job_listings(attr_list[6:7])
     post_date_from_relative_post_age(job_list)
-    assert datetime.now().strftime('%Y-%m-%d') == job_list[0]['date']
+    now = datetime.now()
+    assert now.strftime('%Y-%m-%d') == job_list[0]['date'] or \
+    (now - timedelta(days=int(1))).strftime('%Y-%m-%d') == job_list[0]['date']
 
 
 def test_post_date_from_relative_post_age_2_hours_ago_pass(job_listings):
     job_list = job_listings(attr_list[7:8])
     post_date_from_relative_post_age(job_list)
-    assert datetime.now().strftime('%Y-%m-%d') == job_list[0]['date']
+    now = datetime.now()
+    assert now.strftime('%Y-%m-%d') == job_list[0]['date'] or \
+    (now - timedelta(days=int(2))).strftime('%Y-%m-%d') == job_list[0]['date']
 
 
 def test_post_date_from_relative_ago_post_age_yesterday_ago_pass(job_listings):
