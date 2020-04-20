@@ -23,9 +23,9 @@ def _c_delay(list_len: int, delay: Union[int, float]):
     if delay < 1.5:
         # changes increment and offset, to prevent 0s and negative nums
         inc = delay / 8
-        offset = float(len(delays[0:8]))*inc
+        offset = float(len(delays[0:8])) * inc
     # division here is faster since they are both ints
-    delays[0:8] = [(x - offset) + i*inc for i, x in enumerate(delays[0:8])]
+    delays[0:8] = [(x - offset) + i * inc for i, x in enumerate(delays[0:8])]
     return delays
 
 
@@ -44,7 +44,7 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
             its = int(ceil(its))
         # create list of x values based on scrape list size
         delays = [*range(list_len)]
-        delays[0:its] = [x/5 for x in delays[0:its]]
+        delays[0:its] = [x / 5 for x in delays[0:its]]
         delays[its:] = [delay] * (len(delays) - its)
         return delays
 
@@ -72,7 +72,7 @@ def delay_alg(list_len, delay_config: Dict):
             list of delay time matching length of scrape job list
     """
     if isinstance(list_len, list):  # Prevents breaking if a list was passed
-        list_len == len(list_len)
+        list_len = len(list_len)
     try:
         # init and check numerical arguments
         delay = delay_config['delay']
