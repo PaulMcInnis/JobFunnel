@@ -1,3 +1,4 @@
+import pytest
 from jobfunnel.tools.tools import config_factory
 from jobfunnel.tools.delay import delay_alg
 
@@ -14,6 +15,81 @@ def mock_rand_uniform(a, b):
     return 5
 
 
+# test linear, constant and sigmoid delay a min_delay greater than the delay
+
+def test_delay_alg_linear_min_delay_greater_than_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'linear'
+    # Set the delay value to its default
+    config['delay_config']['delay'] = 10
+    config['delay_config']['min_delay'] = 15
+    delay_result = delay_alg(10, config['delay_config'])
+    assert delay_result == linear_delay
+
+
+def test_delay_alg_sigmoid_min_delay_greater_than_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'sigmoid'
+    # Set the delay value to its default
+    config['delay_config']['delay'] = 10
+    config['delay_config']['min_delay'] = 15
+    delay_result = delay_alg(10, config['delay_config'])
+    assert delay_result == sigmoid_delay
+
+
+def test_delay_alg_constant_min_delay_greater_than_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'constant'
+    # Set the delay value to its default
+    config['delay_config']['delay'] = 10
+    config['delay_config']['min_delay'] = 15
+    delay_result = delay_alg(10, config['delay_config'])
+    assert delay_result == constant_delay
+
+
+# test linear, constant and sigmoid delay with negative delay
+
+def test_delay_alg_linear_negative_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'linear'
+    config['delay_config']['min_delay'] = 0
+    config['delay_config']['delay'] = -2
+    with pytest.raises(ValueError) as e:
+        delay_result = delay_alg(10, config['delay_config'])
+    assert str(
+        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+
+
+def test_delay_alg_sigmoid_negative_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'sigmoid'
+    config['delay_config']['min_delay'] = 0
+    config['delay_config']['delay'] = -2
+    with pytest.raises(ValueError) as e:
+        delay_result = delay_alg(10, config['delay_config'])
+    assert str(
+        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+
+
+def test_delay_alg_constant_negative_delay(configure_options):
+    config = configure_options([''])
+    config['delay_config']['random'] = False
+    config['delay_config']['function'] = 'constant'
+    config['delay_config']['min_delay'] = 0
+    config['delay_config']['delay'] = -2
+    with pytest.raises(ValueError) as e:
+        delay_result = delay_alg(10, config['delay_config'])
+    assert str(
+        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+
+
+# test linear, constant and sigmoid delay with a negative min_delay
+
 def test_delay_alg_linear_negative_min_delay(configure_options):
     config = configure_options([''])
     config['delay_config']['random'] = False
@@ -27,7 +103,6 @@ def test_delay_alg_sigmoid_negative_min_delay(configure_options):
     config = configure_options([''])
     config['delay_config']['random'] = False
     config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['min_delay'] = 0
     config['delay_config']['min_delay'] = -2
     delay_result = delay_alg(10, config['delay_config'])
     assert delay_result == sigmoid_delay
@@ -37,7 +112,6 @@ def test_delay_alg_constant_negative_min_delay(configure_options):
     config = configure_options([''])
     config['delay_config']['random'] = False
     config['delay_config']['function'] = 'constant'
-    config['delay_config']['min_delay'] = 0
     config['delay_config']['min_delay'] = -2
     delay_result = delay_alg(10, config['delay_config'])
     assert delay_result == constant_delay

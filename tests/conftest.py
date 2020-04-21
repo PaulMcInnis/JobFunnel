@@ -9,7 +9,7 @@ from jobfunnel.tools.tools import config_factory
 
 @pytest.fixture()
 def configure_options():
-    def setup(options):
+    def setup(options: list):
         """Assigns the options to argv(as if JobFunnel were called from the command line with those options)
         and calls parse_config(). This fixture assumes that the test_parse module has been tested
         and passes.
@@ -23,7 +23,7 @@ def configure_options():
 
 @pytest.fixture()
 def job_listings():
-    def setup(attr_list):
+    def setup(attr_list: list):
         """
         This function generates job listings.
         If attr_list is empty, then it returns a single job with
@@ -46,7 +46,7 @@ def job_listings():
 
 @pytest.fixture()
 def per_id_job_listings(job_listings):
-    def setup(attr_list, first_job_id=0):
+    def setup(attr_list: list, first_job_id: int = 0):
         """
         This function generates job_listings in the {'job_id':{job_listing}}
         fashion. This is particularly useful for functions like tfidf_filter that expect job listings in this format.
