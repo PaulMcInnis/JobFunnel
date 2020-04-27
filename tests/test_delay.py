@@ -15,231 +15,72 @@ job_list = ['job1', 'job2', 'job3', 'job4', 'job5',
 
 # mock random.uniform to get constant values
 
+
 def mock_rand_uniform(a, b):
     return 5
 
 
-# test linear, constant and sigmoid delay a min_delay greater than the delay
+@pytest.mark.parametrize('function, expected_result', [('linear', linear_delay), ('sigmoid', sigmoid_delay), ('constant', constant_delay)])
+class TestClass:
 
-def test_delay_alg_linear_min_delay_greater_than_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'linear'
-    # Set the delay value to its default
-    config['delay_config']['delay'] = 10
-    config['delay_config']['min_delay'] = 15
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == linear_delay
-
-
-def test_delay_alg_sigmoid_min_delay_greater_than_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'sigmoid'
-    # Set the delay value to its default
-    config['delay_config']['delay'] = 10
-    config['delay_config']['min_delay'] = 15
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == sigmoid_delay
-
-
-def test_delay_alg_constant_min_delay_greater_than_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'constant'
-    # Set the delay value to its default
-    config['delay_config']['delay'] = 10
-    config['delay_config']['min_delay'] = 15
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == constant_delay
-
-
-# test linear, constant and sigmoid delay with negative delay
-
-def test_delay_alg_linear_negative_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'linear'
-    config['delay_config']['min_delay'] = 0
-    config['delay_config']['delay'] = -2
-    with pytest.raises(ValueError) as e:
+    # test linear, constant and sigmoid delay
+    # This test considers configurations with random and converge fields
+    @pytest.mark.parametrize('random,converge', [(True, True), (True, False), (False, False)])
+    def test_delay_alg(self, configure_options, function, expected_result, random, converge, monkeypatch):
+        config = configure_options([''])
+        config['delay_config']['random'] = random
+        config['delay_config']['function'] = function
+        config['delay_config']['converge'] = converge
+        if random:
+            monkeypatch.setattr(
+                'jobfunnel.tools.delay.uniform', mock_rand_uniform)
+            expected_result = random_delay
+        else:
+            config['delay_config']['min_delay'] = 0
         delay_result = delay_alg(10, config['delay_config'])
-    assert str(
-        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+        assert delay_result == expected_result
 
+    # test linear, constant and sigmoid delay with a negative min_delay
 
-def test_delay_alg_sigmoid_negative_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['min_delay'] = 0
-    config['delay_config']['delay'] = -2
-    with pytest.raises(ValueError) as e:
+    def test_delay_alg_negative_min_delay(self, configure_options, function, expected_result):
+        config = configure_options([''])
+        config['delay_config']['random'] = False
+        config['delay_config']['function'] = function
+        config['delay_config']['min_delay'] = -2
         delay_result = delay_alg(10, config['delay_config'])
-    assert str(
-        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+        assert delay_result == expected_result
 
+    # test linear, constant and sigmoid delay when min_delay is greater than the delay
 
-def test_delay_alg_constant_negative_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'constant'
-    config['delay_config']['min_delay'] = 0
-    config['delay_config']['delay'] = -2
-    with pytest.raises(ValueError) as e:
+    def test_delay_alg_min_delay_greater_than_delay(self, configure_options, function, expected_result):
+        config = configure_options([''])
+        config['delay_config']['random'] = False
+        config['delay_config']['function'] = function
+        # Set the delay value to its default
+        config['delay_config']['delay'] = 10
+        config['delay_config']['min_delay'] = 15
         delay_result = delay_alg(10, config['delay_config'])
-    assert str(
-        e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
+        assert delay_result == expected_result
 
+    # test linear, constant and sigmoid delay with negative delay
 
-# test linear, constant and sigmoid delay with a negative min_delay
+    def test_delay_alg_negative_delay(self, configure_options, function, expected_result):
+        config = configure_options([''])
+        config['delay_config']['random'] = False
+        config['delay_config']['function'] = function
+        config['delay_config']['min_delay'] = 0
+        config['delay_config']['delay'] = -2
+        with pytest.raises(ValueError) as e:
+            delay_result = delay_alg(10, config['delay_config'])
+        assert str(
+            e.value) == "\nYour delay is set to 0 or less.\nCancelling execution..."
 
-def test_delay_alg_linear_negative_min_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'linear'
-    config['delay_config']['min_delay'] = -2
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == linear_delay
+    # test linear, constant and sigmoid delay with random and a list as input
 
-
-def test_delay_alg_sigmoid_negative_min_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['min_delay'] = -2
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == sigmoid_delay
-
-
-def test_delay_alg_constant_negative_min_delay(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'constant'
-    config['delay_config']['min_delay'] = -2
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == constant_delay
-
-
-# test linear, constant and sigmoid delay with random delay off
-
-def test_delay_alg_linear(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'linear'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == linear_delay
-
-
-def test_delay_alg_sigmoid(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == sigmoid_delay
-
-
-def test_delay_alg_constant(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'constant'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == constant_delay
-
-
-# test linear, constant and sigmoid delay with random delay off and a list as input
-
-def test_delay_alg_list_linear(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'linear'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(job_list, config['delay_config'])
-    assert delay_result == linear_delay
-
-
-def test_delay_alg_list_sigmoid(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(job_list, config['delay_config'])
-    assert delay_result == sigmoid_delay
-
-
-def test_delay_alg_list_constant(configure_options):
-    config = configure_options([''])
-    config['delay_config']['random'] = False
-    config['delay_config']['function'] = 'constant'
-    config['delay_config']['min_delay'] = 0
-    delay_result = delay_alg(job_list, config['delay_config'])
-    assert delay_result == constant_delay
-
-
-# test linear, constant and sigmoid delay with random delay on
-
-def test_delay_alg_linear_random(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['function'] = 'linear'
-    # Fix the value returned random.uniform to a constant
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
-
-
-def test_delay_alg_constant_random(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['function'] = 'constant'
-    # Fix the value returned by random.uniform to a constant
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
-
-
-def test_delay_alg_sigmoid_random(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['function'] = 'sigmoid'
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
-
-
-# test linear, constant and sigmoid delay with random delay and converge on
-
-def test_delay_alg_linear_random_converge(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['converge'] = True
-    config['delay_config']['function'] = 'linear'
-    # Fix the value returned random.uniform to a constant
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
-
-
-def test_delay_alg_constant_random_converge(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['function'] = 'constant'
-    config['delay_config']['converge'] = True
-    # Fix the value returned by random.uniform to a constant
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
-
-
-def test_delay_alg_sigmoid_random_converge(configure_options, monkeypatch):
-    config = configure_options([''])
-    config['delay_config']['random'] = True
-    config['delay_config']['function'] = 'sigmoid'
-    config['delay_config']['converge'] = True
-    # Fix the value returned by random.uniform to a constant
-    monkeypatch.setattr('jobfunnel.tools.delay.uniform', mock_rand_uniform)
-    delay_result = delay_alg(10, config['delay_config'])
-    assert delay_result == random_delay
+    def test_delay_alg_list_linear(self, configure_options, function, expected_result):
+        config = configure_options([''])
+        config['delay_config']['random'] = False
+        config['delay_config']['function'] = function
+        config['delay_config']['min_delay'] = 0
+        delay_result = delay_alg(job_list, config['delay_config'])
+        assert delay_result == expected_result
