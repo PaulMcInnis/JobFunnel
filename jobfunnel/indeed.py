@@ -10,6 +10,7 @@ from time import sleep, time
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from .tools.filters import tfidf_filter_attrs
 
 
 class Indeed(JobFunnel):
@@ -168,25 +169,29 @@ class Indeed(JobFunnel):
             # scrape the post data
             job['status'] = 'new'
             try:
-                # jobs should at minimum have a title, company and location
-                job['title'] = s.find('a', attrs={
-                    'data-tn-element': 'jobTitle'}).text.strip()
-                job['company'] = s.find('span', attrs={
-                    'class': 'company'}).text.strip()
-                job['location'] = s.find('span', attrs={
-                    'class': 'location'}).text.strip()
+                for key_word in self.key_words:
+                    # jobs should at minimum have a title, company and location
+                    is_key, key, value = tfidf_filter_attrs(self.key_phrases[key_word],
+                                                            [a.attrs for a in s.find_all(self.html_tags)],
+                                                            max_similarity=0.6)
+                    if key and value:
+                        if is_key:
+                            job[key_word] = value
+                        else:
+                            job[key_word] = s.find(self.html_tags, attrs={key: value}).text.strip()
+                    else:
+                        if self.key_word_is_required[key_word]:
+                            raise AttributeError
+                        else:
+                            job[key_word] = ''
             except AttributeError:
                 continue
 
+            # set blurb to none for now
             job['blurb'] = ''
 
-            try:
-                table = s.find(
-                    'table', attrs={'class': 'jobCardShelfContainer'}). \
-                    find_all('td', attrs={'class': 'jobCardShelfItem'})
-                job['tags'] = "\n".join([td.text.strip() for td in table])
-            except AttributeError:
-                job['tags'] = ''
+            # TODO: extract a job tag from the soup
+            job['tags'] = ''
 
             try:
                 job['date'] = s.find('span', attrs={
@@ -200,7 +205,6 @@ class Indeed(JobFunnel):
                 job['link'] = (f"http://www.indeed."
                                f"{self.search_terms['region']['domain']}"
                                f"/viewjob?jk={job['id']}")
-
             except (AttributeError, IndexError):
                 job['id'] = ''
                 job['link'] = ''
@@ -211,12 +215,11 @@ class Indeed(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
+        # do not change the order of the next three statements if you want the date filter to work
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
-
         # converts job date formats into a standard date format
         post_date_from_relative_post_age(scrape_list)
-
         # apply job pre-filter before scraping blurbs
         super().pre_filter(self.scrape_data, self.provider)
 

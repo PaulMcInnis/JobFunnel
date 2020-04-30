@@ -9,6 +9,7 @@ from time import sleep, time
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
 from .tools.tools import post_date_from_relative_post_age
+from .tools.filters import tfidf_filter_attrs
 
 
 class Monster(JobFunnel):
@@ -166,6 +167,13 @@ class Monster(JobFunnel):
         job_soup_list = []
         job_soup_list.extend(jobs)
 
+        # tags to search through in html
+        tags = ['a', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'time']
+        keywords = ['title', 'company', 'location']
+        keyphrases = {keywords[0]: ['title', 'jobtitle', 'job-title'],
+                      keywords[1]: ['company', 'jobcompany', 'job-company'],
+                      keywords[2]: ['location', 'joblocation', 'job-location']}
+
         # id regex quantifiers
         id_regex = re.compile(r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f'
                               r']{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})|\d+)')
@@ -178,24 +186,35 @@ class Monster(JobFunnel):
             # scrape the post data
             job['status'] = 'new'
             try:
-                # jobs should at minimum have a title, company and location
-                job['title'] = s.find('h2', attrs={
-                    'class': 'title'}).text.strip()
-                job['company'] = s.find(
-                    'div', attrs={'class': 'company'}).text.strip()
-                job['location'] = s.find('div', attrs={
-                    'class': 'location'}).text.strip()
+                for key_word in self.key_words:
+                    # jobs should at minimum have a title, company and location
+                    is_key, key, value = tfidf_filter_attrs(self.key_phrases[key_word],
+                                                            [a.attrs for a in s.find_all(self.html_tags)],
+                                                            max_similarity=0.6)
+                    if key and value:
+                        if is_key:
+                            job[key_word] = value
+                        else:
+                            job[key_word] = s.find(self.html_tags, attrs={key: value}).text.strip()
+                    else:
+                        if self.key_word_is_required[key_word]:
+                            raise AttributeError
+                        else:
+                            job[key_word] = ''
             except AttributeError:
                 continue
 
-            # no blurb is available in monster job soups
+            # set blurb to none for now
             job['blurb'] = ''
+
             # tags are not supported in monster
             job['tags'] = ''
+
             try:
                 job['date'] = s.find('time').text.strip()
             except AttributeError:
                 job['date'] = ''
+
             # captures uuid or int ids, by extracting from url instead
             try:
                 job['link'] = str(s.find('a', attrs={
@@ -211,8 +230,7 @@ class Monster(JobFunnel):
             # key by id
             self.scrape_data[str(job['id'])] = job
 
-         # Do not change the order of the next three statements if you want date_filter to work
-         
+        # do not change the order of the next three statements if you want the date filter to work
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
         # converts job date formats into a standard date format

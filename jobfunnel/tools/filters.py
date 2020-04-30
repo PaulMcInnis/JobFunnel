@@ -145,3 +145,49 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
     # returns a dictionary of duplicates
     return duplicate_ids
+
+
+def tfidf_filter_attrs(words: list, list_of_dictionaries: list, max_similarity: float = 0.75):
+    # init vectorizer with ngram of (2, 2) to filter out single character matches
+    vectorizer = TfidfVectorizer(strip_accents='unicode', lowercase=True,
+                                 analyzer='char_wb', ngram_range=(2, 2))
+
+    ritem = (None, None)
+    rsim = 0
+    for dictionary in list_of_dictionaries:
+        values = [*dictionary.values()]
+        keys = [*dictionary.keys()]
+        if not (values and keys):
+            continue
+        flat_values = []
+        flat_keys = []
+        for i, value in enumerate(values):
+            if isinstance(value, list):
+                for subvalue in value:
+                    flat_values.append(subvalue)
+                    flat_keys.append(keys[i])
+            else:
+                flat_values.append(value)
+                flat_keys.append(keys[i])
+
+        # fit vectorizer to entire corpus
+        vectorizer.fit(flat_values + flat_keys)
+
+        # set reference tfidf for cosine similarity later
+        reference = vectorizer.transform(words)
+
+        # calculate cosine similarity between reference and current blurbs
+        similarities = cosine_similarity(
+            vectorizer.transform(flat_values + flat_keys), reference)
+
+        # get text with highest similarity
+        for i, (sim, item) in enumerate(zip(similarities, zip(flat_values + flat_keys, flat_keys + flat_values))):
+            max_sim = np_max(sim)
+            if max_sim >= max_similarity and max_sim > rsim:
+                if i < len(flat_values):
+                    ritem = (False, *reversed(item))
+                else:
+                    ritem = (True, *item)
+                rsim = max_sim
+
+    return ritem

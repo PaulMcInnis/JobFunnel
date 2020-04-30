@@ -33,6 +33,17 @@ MASTERLIST_HEADER = ['status', 'title', 'company', 'location', 'date',
 USER_AGENT_LIST = os.path.normpath(
     os.path.join(os.path.dirname(__file__), 'text/user_agent_list.txt'))
 
+# tags to search through in html
+HTML_TAGS = ['a', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span', 'time']
+KEY_WORDS = ['title', 'company', 'location']
+KEY_PHRASES = dict(zip(KEY_WORDS,
+                       [['title', 'jobtitle', 'job-title'],
+                        ['company', 'jobcompany', 'job-company',
+                         'employer', 'jobemployer', 'job-employer'],
+                        ['location', 'joblocation', 'job-location']]))
+KEY_WORD_IS_REQUIRED = dict(zip(KEY_WORDS,
+                            [True, True, True]))
+
 
 class JobFunnel(object):
     """class that writes pickles to master list path and applies search
@@ -71,6 +82,12 @@ class JobFunnel(object):
 
         # search term configuration data
         self.search_terms = args['search_terms']
+
+        # set html search configurations
+        self.html_tags = HTML_TAGS
+        self.key_words = KEY_WORDS
+        self.key_phrases = KEY_PHRASES
+        self.key_word_is_required = KEY_WORD_IS_REQUIRED
 
         # set delay settings if they exist
         self.delay_config = None
