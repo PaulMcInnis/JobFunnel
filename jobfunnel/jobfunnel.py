@@ -35,14 +35,13 @@ USER_AGENT_LIST = os.path.normpath(
 
 # tags to search through in html
 HTML_TAGS = ['a', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span', 'time']
-KEY_WORDS = ['title', 'company', 'location']
-KEY_PHRASES = dict(zip(KEY_WORDS,
-                       [['title', 'jobtitle', 'job-title'],
-                        ['company', 'jobcompany', 'job-company',
+KEYWORDS = {'title':    ['title', 'jobtitle', 'job-title'],
+            'company':  ['company', 'jobcompany', 'job-company',
                          'employer', 'jobemployer', 'job-employer'],
-                        ['location', 'joblocation', 'job-location']]))
-KEY_WORD_IS_REQUIRED = dict(zip(KEY_WORDS,
-                            [True, True, True]))
+            'location': ['location', 'joblocation', 'job-location']}
+KEYWORD_IS_REQUIRED = {'title': True,
+                       'company': True,
+                       'location': True}
 
 
 class JobFunnel(object):
@@ -85,9 +84,8 @@ class JobFunnel(object):
 
         # set html search configurations
         self.html_tags = HTML_TAGS
-        self.key_words = KEY_WORDS
-        self.key_phrases = KEY_PHRASES
-        self.key_word_is_required = KEY_WORD_IS_REQUIRED
+        self.keywords = KEYWORDS
+        self.keyword_is_required = KEYWORD_IS_REQUIRED
 
         # set delay settings if they exist
         self.delay_config = None

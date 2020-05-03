@@ -147,47 +147,55 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     return duplicate_ids
 
 
-def tfidf_filter_attrs(words: list, list_of_dictionaries: list, max_similarity: float = 0.75):
+def tfidf_filter_attrs(keywords: list, tags: list, max_similarity: float = 0.75):
     # init vectorizer with ngram of (2, 2) to filter out single character matches
     vectorizer = TfidfVectorizer(strip_accents='unicode', lowercase=True,
                                  analyzer='char_wb', ngram_range=(2, 2))
+    """ Fit a tfidf vectorizer to a corpus of attribute key and value pairs.
 
-    ritem = (None, None)
-    rsim = 0
-    for dictionary in list_of_dictionaries:
-        values = [*dictionary.values()]
-        keys = [*dictionary.keys()]
-        if not (values and keys):
-            continue
-        flat_values = []
-        flat_keys = []
-        for i, value in enumerate(values):
-            if isinstance(value, list):
-                for subvalue in value:
-                    flat_values.append(subvalue)
-                    flat_keys.append(keys[i])
+        Args:
+            keywords: a list of keywords to search for
+            tags: a list of tags
+            max_similarity: threshold above which keyword similarity = match
+
+        Returns:
+            tuple of (is_key, key, value) where is_key indicates if the match was
+            with the attribute key or value
+    """
+    values = [tag.values() for tag in tags]
+    keys = [tag.keys() for tag in tags]
+    flat_values = []
+    flat_keys = []
+    for i, value in enumerate(values):
+        for j, subvalue in enumerate(value):
+            if isinstance(subvalue, list):
+                for element in subvalue:
+                    flat_values.append(element)
+                    flat_keys.append([*keys[i]][j])
             else:
-                flat_values.append(value)
-                flat_keys.append(keys[i])
+                flat_values.append(subvalue)
+                flat_keys.append([*keys[i]][j])
 
-        # fit vectorizer to entire corpus
-        vectorizer.fit(flat_values + flat_keys)
+    # fit vectorizer to entire corpus
+    vectorizer.fit(flat_values + flat_keys)
 
-        # set reference tfidf for cosine similarity later
-        reference = vectorizer.transform(words)
+    # set reference tfidf for cosine similarity later
+    reference = vectorizer.transform(keywords)
 
-        # calculate cosine similarity between reference and current blurbs
-        similarities = cosine_similarity(
-            vectorizer.transform(flat_values + flat_keys), reference)
+    # calculate cosine similarity between reference and current tags
+    similarities = cosine_similarity(
+        vectorizer.transform(flat_values + flat_keys), reference)
 
-        # get text with highest similarity
-        for i, (sim, item) in enumerate(zip(similarities, zip(flat_values + flat_keys, flat_keys + flat_values))):
-            max_sim = np_max(sim)
-            if max_sim >= max_similarity and max_sim > rsim:
-                if i < len(flat_values):
-                    ritem = (False, *reversed(item))
-                else:
-                    ritem = (True, *item)
-                rsim = max_sim
+    # get text with highest similarity
+    ritem = (None, None, None)
+    rsim = 0
+    for i, (sim, item) in enumerate(zip(similarities, zip(flat_values + flat_keys, flat_keys + flat_values))):
+        max_sim = np_max(sim)
+        if max_sim >= max_similarity and max_sim > rsim:
+            if i < len(flat_values):
+                ritem = (False, *reversed(item))
+            else:
+                ritem = (True, *item)
+            rsim = max_sim
 
     return ritem

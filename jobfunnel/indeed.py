@@ -169,21 +169,21 @@ class Indeed(JobFunnel):
             # scrape the post data
             job['status'] = 'new'
             try:
-                for key_word in self.key_words:
+                for keyword in self.keywords.keys():
                     # jobs should at minimum have a title, company and location
-                    is_key, key, value = tfidf_filter_attrs(self.key_phrases[key_word],
+                    is_key, key, value = tfidf_filter_attrs(self.keywords[keyword],
                                                             [a.attrs for a in s.find_all(self.html_tags)],
-                                                            max_similarity=0.6)
+                                                            max_similarity=0.5)
                     if key and value:
                         if is_key:
-                            job[key_word] = value
+                            job[keyword] = value
                         else:
-                            job[key_word] = s.find(self.html_tags, attrs={key: value}).text.strip()
+                            job[keyword] = s.find(self.html_tags, attrs={key: value}).text.strip()
                     else:
-                        if self.key_word_is_required[key_word]:
+                        if self.keyword_is_required[keyword]:
                             raise AttributeError
                         else:
-                            job[key_word] = ''
+                            job[keyword] = ''
             except AttributeError:
                 continue
 
