@@ -155,7 +155,7 @@ class GlassDoor(JobFunnel):
                 id='JobDescriptionContainer').text.strip()
         except AttributeError:
             job['blurb'] = ''
-        print('glassdoor blurb=', job['blurb'])
+
         filter_non_printables(job)
 
     # split apart above function into two so gotten blurbs can be parsed
