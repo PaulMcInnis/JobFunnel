@@ -148,9 +148,6 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
 
 def tfidf_filter_attrs(keywords: list, tags: list, max_similarity: float = 0.75):
-    # init vectorizer with ngram of (2, 2) to filter out single character matches
-    vectorizer = TfidfVectorizer(strip_accents='unicode', lowercase=True,
-                                 analyzer='char_wb', ngram_range=(2, 2))
     """ Fit a tfidf vectorizer to a corpus of attribute key and value pairs.
 
         Args:
@@ -175,6 +172,10 @@ def tfidf_filter_attrs(keywords: list, tags: list, max_similarity: float = 0.75)
             else:
                 flat_values.append(subvalue)
                 flat_keys.append([*keys[i]][j])
+
+    # init vectorizer with ngram of (2, 2) to filter out single character matches
+    vectorizer = TfidfVectorizer(strip_accents='unicode', lowercase=True,
+                                 analyzer='char_wb', ngram_range=(2, 2))
 
     # fit vectorizer to entire corpus
     vectorizer.fit(flat_values + flat_keys)
