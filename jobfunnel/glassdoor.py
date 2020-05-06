@@ -7,6 +7,7 @@ from logging import info as log_info
 from math import ceil
 from requests import post
 from time import sleep, time
+from webdriver_manager.chrome import ChromeDriverManager
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
@@ -35,13 +36,15 @@ class GlassDoor(JobFunnel):
         self.query = '-'.join(self.search_terms['keywords'])
 
         # initialize the webdriver
-        try:
-            self.driver = webdriver.Chrome()
-        except FileNotFoundError:
-            try:
-                self.driver = webdriver.Firefox()
-            except FileNotFoundError:
-                raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
+        self.driver = webdriver.Chrome(ChromeDriverManager().install())
+        # try:
+        #     self.driver = webdriver.Chrome()
+        # except FileNotFoundError:
+        #     try:
+        #         self.driver = webdriver.Firefox()
+        #     except FileNotFoundError:
+        #         raise FileNotFoundError(
+        #             'Sorry, chromedriver or geckodriver must de installed to scrape')
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
@@ -112,11 +115,11 @@ class GlassDoor(JobFunnel):
             # form job search url
             search = ('https://www.glassdoor.{0}/Job/jobs.htm?'
                       'clickSource=searchBtn&sc.keyword={1}&locT=C&locId={2}&jobType=&radius={3}'.format(
-                self.search_terms['region']['domain'],
-                self.query,
-                location_response[0]['locationId'],
-                self.convert_radius(
-                    self.search_terms['region']['radius'])))
+                          self.search_terms['region']['domain'],
+                          self.query,
+                          location_response[0]['locationId'],
+                          self.convert_radius(
+                              self.search_terms['region']['radius'])))
 
             return search
         elif method == 'post':
@@ -195,16 +198,19 @@ class GlassDoor(JobFunnel):
         """function that scrapes job posting from glassdoor and pickles it"""
         log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
-        # get the search url
+        # get the se arch url
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
         self.driver.get(search)
-
+        print("It's very likely that Glassdoor might require you to fill out a CAPTCHA form. Follow these steps if it does ask you to complete a CAPTCHA:"
+              "\n 1.Refresh the glassdoor site in the new browser window that just popped up.\n" " 2.Then complete the CAPTCHA in the browser.\n 3.Press Enter to continue")
+        input()
         # create the soup base
         soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
+
         num_res = soup_base.find('p', attrs={
             'class', 'jobsCount'}).text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
@@ -251,9 +257,12 @@ class GlassDoor(JobFunnel):
             job['status'] = 'new'
             try:
                 # jobs should at minimum have a title, company and location
-                job['title'] = s.find_all('a', attrs={'class', 'jobTitle'})[1].text.strip()
-                job['company'] = s.find('div', attrs={'class', 'jobEmpolyerName'}).text.strip()
-                job['location'] = s.find('span', attrs={'class', 'loc'}).text.strip()
+                job['title'] = s.find_all('a', attrs={'class', 'jobTitle'})[
+                    1].text.strip()
+                job['company'] = s.find(
+                    'div', attrs={'class', 'jobEmpolyerName'}).text.strip()
+                job['location'] = s.find(
+                    'span', attrs={'class', 'loc'}).text.strip()
             except AttributeError:
                 continue
 
