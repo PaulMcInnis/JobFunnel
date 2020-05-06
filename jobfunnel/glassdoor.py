@@ -1,6 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
+from selenium import webdriver
 from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
 from math import ceil
@@ -19,18 +20,6 @@ class GlassDoor(JobFunnel):
         self.provider = 'glassdoor'
         self.max_results_per_page = 30
         self.delay = 0
-        self.headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;'
-                      'q=0.9,image/webp,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.glassdoor.{0}/'.format(
-                self.search_terms['region']['domain']),
-            'upgrade-insecure-requests': '1',
-            'user-agent': self.user_agent,
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        }
         self.location_headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
                       'image/webp,*/*;q=0.01',
@@ -44,6 +33,15 @@ class GlassDoor(JobFunnel):
             'Connection': 'keep-alive'
         }
         self.query = '-'.join(self.search_terms['keywords'])
+
+        # initialize the webdriver
+        try:
+            self.driver = webdriver.Chrome()
+        except FileNotFoundError:
+            try:
+                self.driver = webdriver.Firefox()
+            except FileNotFoundError:
+                raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
@@ -111,8 +109,16 @@ class GlassDoor(JobFunnel):
                         data=data).json()
 
         if method == 'get':
-            # @TODO implement get style for glassdoor
-            raise NotImplementedError()
+            # form job search url
+            search = ('https://www.glassdoor.{0}/Job/jobs.htm?'
+                      'clickSource=searchBtn&sc.keyword={1}&locT=C&locId={2}&jobType=&radius={3}'.format(
+                self.search_terms['region']['domain'],
+                self.query,
+                location_response[0]['locationId'],
+                self.convert_radius(
+                    self.search_terms['region']['radius'])))
+
+            return search
         elif method == 'post':
             # form the job search url
             search = (f"https://www.glassdoor."
@@ -133,12 +139,13 @@ class GlassDoor(JobFunnel):
         else:
             raise ValueError(f'No html method {method} exists')
 
-    def search_page_for_job_soups(self, data, page, url, job_soup_list):
+    def search_page_for_job_soups(self, page, url, job_soup_list):
         """function that scrapes the glassdoor page for a list of job soups"""
         log_info(f'getting glassdoor page {page} : {url}')
 
+        self.driver.get(url)
         job = BeautifulSoup(
-            self.s.post(url, headers=self.headers, data=data).text, self.bs4_parser).\
+            self.driver.page_source, self.bs4_parser).\
             find_all('li', attrs={'class', 'jl'})
         job_soup_list.extend(job)
 
@@ -146,8 +153,10 @@ class GlassDoor(JobFunnel):
         """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
         log_info(f'getting glassdoor search: {search}')
+
+        self.driver.get(search)
         job_link_soup = BeautifulSoup(
-            self.s.post(search, headers=self.location_headers).text, self.bs4_parser)
+            self.driver.page_source, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -166,7 +175,8 @@ class GlassDoor(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting glassdoor search: {search}')
 
-        res = self.s.post(search, headers=self.location_headers).text
+        self.driver.get(search)
+        res = self.driver.page_source
         return job, res
 
     def parse_blurb(self, job, html):
@@ -185,14 +195,14 @@ class GlassDoor(JobFunnel):
         """function that scrapes job posting from glassdoor and pickles it"""
         log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
 
-        # get the search url and data
-        search, data = self.get_search_url(method='post')
+        # get the search url
+        search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = self.s.post(search, headers=self.headers, data=data)
+        self.driver.get(search)
 
         # create the soup base
-        soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
+        soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         num_res = soup_base.find('p', attrs={
@@ -206,7 +216,7 @@ class GlassDoor(JobFunnel):
         # init list of job soups
         job_soup_list = []
         # init threads
-        threads = ThreadPoolExecutor(max_workers=8)
+        threads = ThreadPoolExecutor(max_workers=1)
         # init futures list
         fts = []
 
@@ -215,21 +225,21 @@ class GlassDoor(JobFunnel):
             if page == 1:
                 fts.append(  # append thread job future to futures list
                     threads.submit(self.search_page_for_job_soups,
-                                   data, page, request_html.url, job_soup_list)
+                                   page, self.driver.current_url, job_soup_list)
                 )
             else:
                 # gets partial url for next page
                 part_url = soup_base.find('li', attrs={
                     'class', 'next'}).find('a').get('href')
                 # uses partial url to construct next page url
-                page_url = re.sub(r'_IP\d+\.', "_IP" + str(page) + '.',
+                page_url = re.sub(r".htm", "IP" + str(page) + ".htm",
                                   f"https://www.glassdoor."
                                   f"{self.search_terms['region']['domain']}"
                                   f"{part_url}")
 
                 fts.append(  # append thread job future to futures list
                     threads.submit(self.search_page_for_job_soups,
-                                   data, page, page_url, job_soup_list))
+                                   page, page_url, job_soup_list))
         wait(fts)  # wait for all scrape jobs to finish
 
         # make a dict of job postings from the listing briefs
@@ -241,12 +251,9 @@ class GlassDoor(JobFunnel):
             job['status'] = 'new'
             try:
                 # jobs should at minimum have a title, company and location
-                job['title'] = s.find('div', attrs={'class', 'jobContainer'}).\
-                    find('a', attrs={'class', 'jobLink jobInfoItem jobTitle'},
-                         recursive=False).text.strip()
-                job['company'] = s.find('div', attrs={
-                    'class', 'jobInfoItem jobEmpolyerName'}).text.strip()
-                job['location'] = s.get('data-job-loc')
+                job['title'] = s.find_all('a', attrs={'class', 'jobTitle'})[1].text.strip()
+                job['company'] = s.find('div', attrs={'class', 'jobEmpolyerName'}).text.strip()
+                job['location'] = s.find('span', attrs={'class', 'loc'}).text.strip()
             except AttributeError:
                 continue
 
@@ -267,12 +274,9 @@ class GlassDoor(JobFunnel):
                 job['date'] = ''
 
             try:
-                part_url = s.find('div', attrs={
-                    'class', 'logoWrap'}).find('a').get('href')
                 job['id'] = s.get('data-id')
-                job['link'] = (f"https://www.glassdoor."
-                               f"{self.search_terms['region']['domain']}"
-                               f"{part_url}")
+                job['link'] = s.find('div', attrs={
+                    'class', 'logoWrap'}).find('a').get('href')
 
             except (AttributeError, IndexError):
                 job['id'] = ''
