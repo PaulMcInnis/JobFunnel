@@ -141,13 +141,19 @@ def config_factory(base_config, attr_list):
 
 
 def get_webdriver():
+    """Get whatever webdriver is availiable in the system.
+    webdriver_manager and selenium are currently being used for this.
+    Supported browsers:[Firefox, Chrome, Opera, Microsoft Edge, Internet Expolorer]
+    Returns:
+            a webdriver that can be used for scraping. Returns None if we don't find a supported webdriver.
+
+    """
     try:
         driver = webdriver.Firefox(
             executable_path=GeckoDriverManager().install())
     except Exception:
         try:
             webdriver.Chrome(ChromeDriverManager().install())
-            print('Chrome fails')
         except Exception:
             try:
                 driver = webdriver.Ie(IEDriverManager().install())

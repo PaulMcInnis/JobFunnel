@@ -197,14 +197,22 @@ class GlassDoor(JobFunnel):
         self.driver.get(search)
         print("It's very likely that Glassdoor might require you to fill out a CAPTCHA form. Follow these steps if it does ask you to complete a CAPTCHA:"
               "\n 1.Refresh the glassdoor site in the new browser window that just popped up.\n" " 2.Then complete the CAPTCHA in the browser.\n 3.Press Enter to continue")
+        # wait for user to complete CAPTCHA
         input()
+
         # create the soup base
         soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
-
+        num_res = soup_base.find('p', attrs={
+            'class', 'jobsCount'})
+        while(num_res is None):
+            print('Looks like something went wrong. \nMake sure you complete the CAPTCHA in the new browser window that just popped up. Try refreshing the page and attempt to complete the CAPTCHA again. ')
+            input()
+            soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
+            num_res = soup_base.find('p', attrs={
+                'class', 'jobsCount'})
         # scrape total number of results, and calculate the # pages needed
 
-        num_res = soup_base.find('p', attrs={
-            'class', 'jobsCount'}).text.strip()
+        num_res = num_res.text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
         log_info(f'Found {num_res} glassdoor results for query='
                  f'{self.query}')
@@ -239,7 +247,8 @@ class GlassDoor(JobFunnel):
                     threads.submit(self.search_page_for_job_soups,
                                    page, page_url, job_soup_list))
         wait(fts)  # wait for all scrape jobs to finish
-
+        # close and shutdown the web driver
+        self.driver.close()
         # make a dict of job postings from the listing briefs
         for s in job_soup_list:
             # init dict to store scraped data
