@@ -7,11 +7,11 @@ from logging import info as log_info
 from math import ceil
 from requests import post
 from time import sleep, time
-from webdriver_manager.chrome import ChromeDriverManager
+
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
 from .tools.tools import filter_non_printables
-from .tools.tools import post_date_from_relative_post_age
+from .tools.tools import post_date_from_relative_post_age, get_webdriver
 
 
 class GlassDoor(JobFunnel):
@@ -36,15 +36,7 @@ class GlassDoor(JobFunnel):
         self.query = '-'.join(self.search_terms['keywords'])
 
         # initialize the webdriver
-        self.driver = webdriver.Chrome(ChromeDriverManager().install())
-        # try:
-        #     self.driver = webdriver.Chrome()
-        # except FileNotFoundError:
-        #     try:
-        #         self.driver = webdriver.Firefox()
-        #     except FileNotFoundError:
-        #         raise FileNotFoundError(
-        #             'Sorry, chromedriver or geckodriver must de installed to scrape')
+        self.driver = get_webdriver()
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
