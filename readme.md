@@ -79,12 +79,11 @@ Filter undesired companies by providing your own `yaml` configuration and adding
   **NOTE ABOUT AUTOMATING:** As of right now, Glassdoor requires a human to complete a CAPTCHA. Therefore, in the case of automating with something like cron, you need to be **physically present** to complete the Glassdoor CAPTCHA. 
   
   You may also of course disable the Glassdoor scraper in your `settings.yaml` to not have to complete any CAPTCHA at all:
-  
- 
+``` 
 	#- 'GlassDoor' 
 	  - 'Indeed'
 	  - 'Monster'
-	
+```
 
 * **Reviewing Jobs in Terminal** <br />
   You can review the job list in the command line:
