@@ -8,8 +8,11 @@ from datetime import datetime, timedelta
 
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import IEDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.opera import OperaDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
+
+
 from selenium import webdriver
 
 
