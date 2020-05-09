@@ -80,9 +80,9 @@ Filter undesired companies by providing your own `yaml` configuration and adding
   
   You may also of course disable the Glassdoor scraper in your `settings.yaml` to not have to complete any CAPTCHA at all:
 ``` 
-	#- 'GlassDoor' 
-	  - 'Indeed'
-	  - 'Monster'
+#- 'GlassDoor' 
+- 'Indeed'
+- 'Monster'
 ```
 
 * **Reviewing Jobs in Terminal** <br />
