@@ -6,6 +6,14 @@ from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import IEDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from webdriver_manager.opera import OperaDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+
+from selenium import webdriver
+
 
 def filter_non_printables(job):
     """function that filters trailing characters in scraped strings"""
@@ -132,3 +140,36 @@ def config_factory(base_config, attr_list):
         configs.append(config_cp)
 
     return configs
+
+
+def get_webdriver():
+    """Get whatever webdriver is availiable in the system.
+    webdriver_manager and selenium are currently being used for this.
+    Supported browsers:[Firefox, Chrome, Opera, Microsoft Edge, Internet Expolorer]
+    Returns:
+            a webdriver that can be used for scraping. Returns None if we don't find a supported webdriver.
+
+    """
+    try:
+        driver = webdriver.Firefox(
+            executable_path=GeckoDriverManager().install())
+    except Exception:
+        try:
+            webdriver.Chrome(ChromeDriverManager().install())
+        except Exception:
+            try:
+                driver = webdriver.Ie(IEDriverManager().install())
+            except Exception:
+                try:
+                    driver = webdriver.Opera(
+                        executable_path=OperaDriverManager().install())
+                except Exception:
+                    try:
+                        driver = webdriver.Edge(
+                            EdgeChromiumDriverManager().install())
+                    except Exception:
+                        driver = None
+                        logging.error(
+                            "Your browser is not supported. Must have one of the following installed to scrape: [Firefox, Chrome, Opera, Microsoft Edge, Internet Expolorer]")
+
+    return driver

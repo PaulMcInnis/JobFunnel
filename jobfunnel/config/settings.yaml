@@ -9,7 +9,7 @@ output_path: 'search'
 providers:
   - 'Indeed'
   - 'Monster'
-  - 'GlassDoor'
+  # - 'GlassDoor'
 
 # filters
 search_terms:
