@@ -12,25 +12,26 @@ requires = ['beautifulsoup4>=4.6.3',
             'scikit-learn>=0.21.2',
             'nltk>=3.4.1',
             'scipy>=1.4.1',
-            'pytest>=5.3.1'
-            'selenium>=3.141.0'
+            'pytest>=5.3.1',
+            'selenium>=3.141.0',
+            'webdriver-manager>=2.4.0'
             ]
 
 with open('readme.md', 'r') as f:
     readme = f.read()
 
 setup(
-    name                          = 'JobFunnel',
-    version                       = version,
-    description                   = description,
-    long_description              = readme,
-    long_description_content_type = 'text/markdown',
-    author                        = 'Paul McInnis, Bradley Kohler, Jose Alarcon, Erich Mengore, Mark van der Broek',
-    author_email                  = 'paulmcinnis99@gmail.com',
-    url                           = url,
-    license                       = 'MIT License',
-    python_requires               = '>=3.6.0',
-    install_requires              = requires,
-    packages                      = find_packages(exclude=('demo', 'tests')),
-    include_package_data          = True,
-    entry_points                  = {'console_scripts': ['funnel = jobfunnel.__main__:main']})
+    name='JobFunnel',
+    version=version,
+    description=description,
+    long_description=readme,
+    long_description_content_type='text/markdown',
+    author='Paul McInnis, Bradley Kohler, Jose Alarcon, Erich Mengore, Mark van der Broek',
+    author_email='paulmcinnis99@gmail.com',
+    url=url,
+    license='MIT License',
+    python_requires='>=3.6.0',
+    install_requires=requires,
+    packages=find_packages(exclude=('demo', 'tests')),
+    include_package_data=True,
+    entry_points={'console_scripts': ['funnel = jobfunnel.__main__:main']})
