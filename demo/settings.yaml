@@ -5,7 +5,7 @@ output_path: './'
 
 # providers from which to search (case insensitive)
 providers:
-        #- 'GlassDoor' 
+  - 'GlassDoor' 
   - 'Indeed'
   - 'Monster'
 
