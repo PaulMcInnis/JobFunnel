@@ -79,6 +79,7 @@ def post_date_from_relative_post_age(job_list):
                             logging.error(f"unknown date for job {job['id']}")
         # format date in standard format e.g. 2020-01-01
         job['date'] = post_date.strftime('%Y-%m-%d')
+        # print('job['date']'')
 
 
 def split_url(url):

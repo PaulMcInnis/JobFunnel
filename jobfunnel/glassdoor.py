@@ -33,6 +33,18 @@ class GlassDoor(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
+        self.location_headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
+            'image/webp,*/*;q=0.01',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.glassdoor.{0}/'.format(
+                self.search_terms['region']['domain']),
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        }
         self.query = '-'.join(self.search_terms['keywords'])
 
         # initialize the webdriver
