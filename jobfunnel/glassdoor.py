@@ -25,19 +25,7 @@ class GlassDoor(JobFunnel):
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
                       'image/webp,*/*;q=0.01',
             'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.glassdoor.{0}/'.format(
-                self.search_terms['region']['domain']),
-            'upgrade-insecure-requests': '1',
-            'user-agent': self.user_agent,
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        }
-        self.location_headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
-            'image/webp,*/*;q=0.01',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'accept-language': 'en-GB,en-CA,en-US;q=0.8,en;q=0.6',
             'referer': 'https://www.glassdoor.{0}/'.format(
                 self.search_terms['region']['domain']),
             'upgrade-insecure-requests': '1',
@@ -288,10 +276,6 @@ class GlassDoor(JobFunnel):
                 job['tags'] = ''
 
             try:
-                # static way of fetching date
-                # job['date'] = s.find('div', attrs={'class', 'jobLabels'}).find(
-                # 'span', attrs={'class', 'jobLabel nowrap'}).text.strip()
-
                 # dynamic way of fetching date
                 job['date'] = s.find('div', attrs={
                                      'class', 'd-flex align-items-end pl-std minor css-65p68w'}).text.strip()

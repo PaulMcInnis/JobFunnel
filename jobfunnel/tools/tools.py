@@ -156,7 +156,7 @@ def get_webdriver():
             executable_path=GeckoDriverManager().install())
     except Exception:
         try:
-            webdriver.Chrome(ChromeDriverManager().install())
+            driver = webdriver.Chrome(ChromeDriverManager().install())
         except Exception:
             try:
                 driver = webdriver.Ie(IEDriverManager().install())
