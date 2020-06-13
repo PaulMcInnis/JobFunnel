@@ -16,6 +16,8 @@ from .glassdoor_base import GlassDoorBase
 
 
 class GlassDoorDynamic(GlassDoorBase):
+    """The Dynamic Version of the GlassDoor scraper, that uses selenium to scrape job postings."""
+
     def __init__(self, args):
         super().__init__(args)
         self.provider = 'glassdoordynamic'
