@@ -9,7 +9,8 @@ output_path: 'search'
 providers:
   - 'Indeed'
   - 'Monster'
-  # - 'GlassDoor'
+  # - 'GlassDoorDynamic'
+  - 'GlassDoorStatic'
 
 # filters
 search_terms:
