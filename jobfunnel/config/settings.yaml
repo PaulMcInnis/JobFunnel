@@ -7,10 +7,11 @@ output_path: 'search'
 
 # providers from which to search (case insensitive)
 providers:
+  - 'GlassDoorStatic'
   - 'Indeed'
   - 'Monster'
-  # - 'GlassDoorDynamic'
-  - 'GlassDoorStatic'
+
+
 
 # filters
 search_terms:
