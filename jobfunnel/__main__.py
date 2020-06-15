@@ -15,6 +15,8 @@ from .glassdoor_base import GlassDoorBase
 from .glassdoor_dynamic import GlassDoorDynamic
 from .glassdoor_static import GlassDoorStatic
 
+# TODO: Test GlassdoorDynamic Provider
+
 PROVIDERS = {
     'indeed': Indeed,
     'monster': Monster,

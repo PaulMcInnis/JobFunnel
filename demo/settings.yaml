@@ -6,10 +6,10 @@ output_path: './'
 # providers from which to search (case insensitive)
 providers:
 
-  - 'GlassDoorDynamic'
   - 'Indeed'
-  # - 'Monster'
-  # - 'GlassDoorStatic'
+  - 'Monster'
+  - 'GlassDoorStatic'
+  # - 'GlassDoorDynamic'
 
 # filters
 search_terms:
