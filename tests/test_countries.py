@@ -19,6 +19,8 @@ from jobfunnel.glassdoor_static import GlassDoorStatic
 PROVIDERS = {'indeed': Indeed, 'monster': Monster,
              'glassdoorstatic': GlassDoorStatic}
 
+# TODO: Test GlassdoorDynamic Provider
+
 DOMAINS = {'America': 'com', 'Canada': 'ca'}
 
 cities_america = os.path.normpath(
