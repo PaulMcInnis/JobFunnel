@@ -29,10 +29,10 @@ CONFIG_TYPES = {
         'ip_address': [str],
         'port': [str]
     },
-    'max_listing_days': [int]
+    'max_listing_days': [int],
 
 }
 
-PROVIDERS = ['glassdoor', 'indeed', 'monster']
+PROVIDERS = ['glassdoordynamic', 'glassdoorstatic', 'indeed', 'monster']
 DOMAINS = ['com', 'ca']
 DELAY_FUN = ['constant', 'linear', 'sigmoid']

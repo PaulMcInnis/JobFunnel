@@ -11,9 +11,16 @@ from .config.validate import validate_config
 from .jobfunnel import JobFunnel
 from .indeed import Indeed
 from .monster import Monster
-from .glassdoor import GlassDoor
+from .glassdoor_base import GlassDoorBase
+from .glassdoor_dynamic import GlassDoorDynamic
+from .glassdoor_static import GlassDoorStatic
 
-PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
+PROVIDERS = {
+    'indeed': Indeed,
+    'monster': Monster,
+    'glassdoorstatic': GlassDoorStatic,
+    'glassdoordynamic': GlassDoorDynamic
+}
 
 
 def main():
@@ -21,10 +28,10 @@ def main():
     try:
         config = parse_config()
         validate_config(config)
+
     except ConfigError as e:
         print(e.strerror)
         sys.exit()
-
 
     # init class + logging
     jf = JobFunnel(config)
@@ -40,13 +47,18 @@ def main():
         jf.load_pickle(config)
     else:
         for p in config['providers']:
-            provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
+            # checks to see if provider is glassdoor
+            provider: Union[Monster,
+                            Indeed, GlassDoorDynamic, GlassDoorStatic] = PROVIDERS[p](config)
+
             provider_id = provider.__class__.__name__
+
             try:
                 provider.scrape()
                 jf.scrape_data.update(provider.scrape_data)
             except Exception as e:
-                jf.logger.error(f'failed to scrape {provider_id}: {str(e)}')
+                jf.logger.error(
+                    f'failed to scrape {provider_id}: {str(e)}')
 
         # dump scraped data to pickle
         jf.dump_pickle()
@@ -55,8 +67,8 @@ def main():
     jf.update_masterlist()
 
     # done!
-    jf.logger.info(
-        "done. see un-archived jobs in " + config['master_list_path'])
+    jf.logger.info('done. see un-archived jobs in ' +
+                   config['master_list_path'])
 
 
 if __name__ == '__main__':

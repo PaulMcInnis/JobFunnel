@@ -13,10 +13,13 @@ from unittest.mock import patch
 from jobfunnel.config.parser import parse_config
 from jobfunnel.indeed import Indeed
 from jobfunnel.monster import Monster
-from jobfunnel.glassdoor import GlassDoor
+from jobfunnel.glassdoor_static import GlassDoorStatic
 
 
-PROVIDERS = {'indeed': Indeed, 'monster': Monster, 'glassdoor': GlassDoor}
+PROVIDERS = {'indeed': Indeed, 'monster': Monster,
+             'glassdoorstatic': GlassDoorStatic}
+
+# TODO: Test GlassdoorDynamic Provider
 
 DOMAINS = {'America': 'com', 'Canada': 'ca'}
 
@@ -42,13 +45,15 @@ cities = random.sample(cities, test_size)
 with patch.object(sys, 'argv', ['']):
     config = parse_config()
 
+
 @pytest.mark.xfail(strict=False)
 @pytest.mark.parametrize('city', cities)
 def test_cities(city, delay=1):
     """tests american city"""
     count = 0  # a count of providers with successful test cases
     for p in config['providers']:
-        provider: Union[GlassDoor, Monster, Indeed] = PROVIDERS[p](config)
+        provider: Union[GlassDoorStatic, Monster,
+                        Indeed] = PROVIDERS[p](config)
         provider.search_terms['region']['domain'] = DOMAINS[city['country']]
         provider.search_terms['region']['province'] = city['abbreviation']
         provider.search_terms['region']['city'] = city['city']
@@ -64,7 +69,7 @@ def test_cities(city, delay=1):
 
             # get the html data, initialize bs4 with lxml
             request_html = get(search, headers=provider.headers)
-        elif isinstance(provider, GlassDoor):
+        elif isinstance(provider, GlassDoorStatic):
             try:
                 # get search url
                 search, data = provider.get_search_url(method='post')
@@ -75,7 +80,8 @@ def test_cities(city, delay=1):
             # get the html data, initialize bs4 with lxml
             request_html = post(search, headers=provider.headers, data=data)
         else:
-            raise TypeError(f'Type {type(provider)} does not match any of the providers.')
+            raise TypeError(
+                f'Type {type(provider)} does not match any of the providers.')
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, provider.bs4_parser)
@@ -88,7 +94,7 @@ def test_cities(city, delay=1):
             where = soup_base.find(id='where')['value'].strip()
         elif isinstance(provider, Monster):
             where = soup_base.find(id='location')['value'].strip()
-        elif isinstance(provider, GlassDoor):
+        elif isinstance(provider, GlassDoorStatic):
             where = soup_base.find(id='sc.location')['value']
 
         if where.lower() == location.lower():
