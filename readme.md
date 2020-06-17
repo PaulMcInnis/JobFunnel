@@ -76,7 +76,7 @@ Filter undesired companies by providing your own `yaml` configuration and adding
   JobFunnel can be easily automated to run nightly with [crontab][cron] <br />
   For more information see the [crontab document][cron_doc].
   
-  **NOTE ABOUT AUTOMATING:** As of right now, Glassdoor requires a human to complete a CAPTCHA. Therefore, in the case of automating with something like cron, you need to be **physically present** to complete the Glassdoor CAPTCHA. 
+  **NOTE ABOUT AUTOMATING:** As of right now, Glassdoor **might** require a human to complete a CAPTCHA. Therefore, in the case of automating with something like cron, you **might** need to be **physically present** to complete the Glassdoor CAPTCHA. 
   
   You may also of course disable the Glassdoor scraper in your `settings.yaml` to not have to complete any CAPTCHA at all:
 ``` 

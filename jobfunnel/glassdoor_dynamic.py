@@ -121,21 +121,15 @@ class GlassDoorDynamic(GlassDoorBase):
 
         # get the html data, initialize bs4 with lxml
         self.driver.get(search)
-        print(
-            "It's very likely that Glassdoor might require you to fill out a CAPTCHA form. Follow these steps if it does ask you to complete a CAPTCHA: "
-            '\n 1.Refresh the glassdoor site in the new browser window that just popped up.\n'
-            ' 2.Then complete the CAPTCHA in the browser.\n 3.Press Enter to continue'
-        )
-        # wait for user to complete CAPTCHA
-        input()
 
         # create the soup base
         soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
-        num_res = soup_base.find('p', attrs={'class', 'jobsCount'})
-        while num_res is None:
-            print(
-                'Looks like something went wrong. \nMake sure you complete the CAPTCHA in the new browser window that just popped up. Try refreshing the page and attempt to complete the CAPTCHA again. '
-            )
+        num_res = soup_base.find('p', attrs={
+            'class', 'jobsCount'})
+        while(num_res is None):
+            print("It looks like that Glassdoor might require you to fill out a CAPTCHA form. Follow these steps if it does ask you to complete a CAPTCHA:"
+                  "\n 1.Refresh the glassdoor site in the new browser window that just popped up.\n" " 2.Then complete the CAPTCHA in the browser.\n 3.Press Enter to continue")
+        # wait for user to complete CAPTCHA
             input()
             soup_base = BeautifulSoup(self.driver.page_source, self.bs4_parser)
             num_res = soup_base.find('p', attrs={'class', 'jobsCount'})
@@ -221,11 +215,9 @@ class GlassDoorDynamic(GlassDoorBase):
                 job['tags'] = ''
 
             try:
-                job['date'] = (
-                    s.find('div', attrs={'class', 'jobLabels'})
-                    .find('span', attrs={'class', 'jobLabel nowrap'})
-                    .text.strip()
-                )
+                # dynamic way of fetching date
+                job['date'] = s.find('div', attrs={
+                                     'class', 'd-flex align-items-end pl-std minor css-65p68w'}).text.strip()
             except AttributeError:
                 job['date'] = ''
 
