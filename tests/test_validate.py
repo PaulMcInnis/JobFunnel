@@ -28,6 +28,7 @@ attr_list = [
 
 # test all paths with invalid values
 
+
 def test_filter_list_path_fail(configure_options):
     path_configs = config_factory(
         configure_options(['']), attr_list[12: 13])[0]

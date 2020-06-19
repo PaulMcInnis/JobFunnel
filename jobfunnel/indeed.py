@@ -126,7 +126,8 @@ class Indeed(JobFunnel):
         """
         Calculates the number of pages to be scraped.
         Args:
-        soup_base: a BeautifulSoup object with the html data. At the moment this method assumes that the soup_base was prepared statically.
+        soup_base: a BeautifulSoup object with the html data. 
+        At the moment this method assumes that the soup_base was prepared statically.
         max: the maximum number of pages to be scraped.
         Returns:
             The number of pages to be scraped.
@@ -148,7 +149,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the title from.
         Returns:
-            The job title scraped from soup. Note that this function may throw an AttributeError if it cannot find the title. The caller is expected to handle this exception.
+            The job title scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the title. 
+            The caller is expected to handle this exception.
         """
         return soup.find('a', attrs={
             'data-tn-element': 'jobTitle'}).text.strip()
@@ -159,7 +162,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the company from.
         Returns:
-            The company scraped from soup. Note that this function may throw an AttributeError if it cannot find the company. The caller is expected to handle this exception.
+            The company scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the company. 
+            The caller is expected to handle this exception.
         """
         return soup.find('span', attrs={
             'class': 'company'}).text.strip()
@@ -170,7 +175,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the location from.
         Returns:
-            The job location scraped from soup. Note that this function may throw an AttributeError if it cannot find the location. The caller is expected to handle this exception.
+            The job location scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the location. 
+            The caller is expected to handle this exception.
         """
         return soup.find('span', attrs={
             'class': 'location'}).text.strip()
@@ -181,7 +188,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the location from.
         Returns:
-            The job location scraped from soup. Note that this function may throw an AttributeError if it cannot find the location. The caller is expected to handle this exception.
+            The job location scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the location. 
+            The caller is expected to handle this exception.
         """
         table = soup.find(
             'table', attrs={'class': 'jobCardShelfContainer'}). \
@@ -194,7 +203,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the date from.
         Returns:
-            The job date scraped from soup. Note that this function may throw an AttributeError if it cannot find the date. The caller is expected to handle this exception.
+            The job date scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the date. 
+            The caller is expected to handle this exception.
         """
         return soup.find('span', attrs={
             'class': 'date'}).text.strip()
@@ -205,7 +216,9 @@ class Indeed(JobFunnel):
         Args:
         soup: BeautifulSoup base to scrape the id from.
         Returns:
-            The job id scraped from soup. Note that this function may throw an AttributeError if it cannot find the id. The caller is expected to handle this exception.
+            The job id scraped from soup. 
+            Note that this function may throw an AttributeError if it cannot find the id. 
+            The caller is expected to handle this exception.
         """
         # id regex quantifiers
         id_regex = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
@@ -218,7 +231,9 @@ class Indeed(JobFunnel):
         Args:
         job_id: The id to be used to construct the link for this job.
         Returns:
-                The constructed job link. Note that this function does not check the correctness of this link. The caller is responsible for checking correcteness.
+                The constructed job link. 
+                Note that this function does not check the correctness of this link. 
+                The caller is responsible for checking correcteness.
         """
         return (f"http://www.indeed."
                 f"{self.search_terms['region']['domain']}"
