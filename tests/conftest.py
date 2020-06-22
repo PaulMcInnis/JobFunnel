@@ -13,7 +13,7 @@ search_term_configs = [{'region': {'province': 'ON', 'city': 'waterloo', 'domain
     'region': {'province': '', 'city': 'new york', 'domain': 'com', 'radius': 25}}]
 
 
-@ pytest.fixture()
+@pytest.fixture()
 def configure_options():
     def setup(options: list):
         """Assigns the options to argv(as if JobFunnel were called from the command line with those options)
@@ -26,7 +26,7 @@ def configure_options():
     return setup
 
 
-@ pytest.fixture()
+@pytest.fixture()
 def job_listings():
     def setup(attr_list: list):
         """
@@ -48,7 +48,7 @@ def job_listings():
     return setup
 
 
-@ pytest.fixture()
+@pytest.fixture()
 def per_id_job_listings(job_listings):
     def setup(attr_list: list, first_job_id: int = 0):
         """

@@ -11,11 +11,20 @@ def get_number_of_pages_mock(mock_soup, mock_max):
     """
     mock get_number_of_pages to ensure we only scrape no more than 1 page.
     """
-    return 1
+    return 	
+	
 
+#test the correctness of search_tems since our tests depend on it    
 
+def test_search_terms(init_scraper):
+    indeed = init_scraper('indeed')
+        
+	
 @pytest.mark.parametrize('search_terms_config', search_term_configs)
 class TestClass():
+
+
+
     def test_convert_radius(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
         provider.search_terms = search_terms_config
@@ -144,6 +153,8 @@ class TestClass():
                 return
         assert False
 
+#TODO: Have more strict tests for job id and link
+
     def test_get_id(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
         job_soup_list = scraper['job_list']
@@ -154,9 +165,9 @@ class TestClass():
             try:
                 job['id'] = provider.get_id(soup)
             except:
-                pass
-        #Temporary fix
-        assert True 
+                job['id'] = ''
+                assert False
+        assert True
 
 # test the process of fetching the link to a job
 
@@ -172,7 +183,7 @@ class TestClass():
                 job['link'] = provider.get_link(job['id'])
             except AttributeError:
                 continue
-            # TODO:Maybe the testing for links could be made for realiable
+            # TODO:Maybe the testing for links could be made more realiable
             # by having statistics on them such as '8/10 links passed' given that the link is probably the
             # most essential piece of data for users
             if(0 < len(job['link'])):
