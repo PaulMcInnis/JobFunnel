@@ -71,6 +71,16 @@ def per_id_job_listings(job_listings):
         return per_id_job_list
     return setup
 
+@pytest.fixture()
+def get_number_of_pages_mock():
+	def setup(mock_soup, mock_max):
+		"""
+		mock get_number_of_pages to ensure we only scrape no more than 1 page.
+		"""
+		return 1
+	return setup
+   
+
 
 @ pytest.fixture()
 def init_scraper(configure_options):
@@ -90,7 +100,7 @@ def init_scraper(configure_options):
     return setup
 
 
-@pytest.fixture
+@pytest.fixture()
 def setup_scraper(init_scraper):
     def setup(scraper: str):
         """

@@ -70,7 +70,6 @@ attr_list = [
 
 # test clean/dirty characters that may be on title and blurb fields
 
-
 def test_filter_non_printables_clean_title(job_listings):
     job_list = job_listings(attr_list[0:1])
     filter_non_printables(job_list[0])
@@ -96,7 +95,6 @@ def test_filter_non_printables_diryt_blurb(job_listings):
 
 # test job_listing dates with all possible formats
 
-
 def test_post_date_from_relative_post_age_just_posted_pass(job_listings):
     job_list = job_listings(attr_list[4:5])
     post_date_from_relative_post_age(job_list)
@@ -114,8 +112,7 @@ def test_post_date_from_relative_post_age_1_hour_ago_pass(job_listings):
     post_date_from_relative_post_age(job_list)
     now = datetime.now()
     assert now.strftime('%Y-%m-%d') == job_list[0]['date'] or \
-        (now - timedelta(days=int(1))
-         ).strftime('%Y-%m-%d') == job_list[0]['date']
+    (now - timedelta(days=int(1))).strftime('%Y-%m-%d') == job_list[0]['date']
 
 
 def test_post_date_from_relative_post_age_2_hours_ago_pass(job_listings):
@@ -123,8 +120,7 @@ def test_post_date_from_relative_post_age_2_hours_ago_pass(job_listings):
     post_date_from_relative_post_age(job_list)
     now = datetime.now()
     assert now.strftime('%Y-%m-%d') == job_list[0]['date'] or \
-        (now - timedelta(days=int(1))
-         ).strftime('%Y-%m-%d') == job_list[0]['date']
+    (now - timedelta(days=int(1))).strftime('%Y-%m-%d') == job_list[0]['date']
 
 
 def test_post_date_from_relative_ago_post_age_yesterday_ago_pass(job_listings):

@@ -126,9 +126,9 @@ class Indeed(JobFunnel):
         """
         Calculates the number of pages to be scraped.
         Args:
-        soup_base: a BeautifulSoup object with the html data. 
-        At the moment this method assumes that the soup_base was prepared statically.
-        max: the maximum number of pages to be scraped.
+			soup_base: a BeautifulSoup object with the html data. 
+			At the moment this method assumes that the soup_base was prepared statically.
+			max: the maximum number of pages to be scraped.
         Returns:
             The number of pages to be scraped.
             If the number of pages that soup_base yields is higher than max, then max is returned.
@@ -147,7 +147,7 @@ class Indeed(JobFunnel):
         """
         Fetches the title from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the title from.
+			soup: BeautifulSoup base to scrape the title from.
         Returns:
             The job title scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the title. 
@@ -160,7 +160,7 @@ class Indeed(JobFunnel):
         """
         Fetches the company from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the company from.
+			soup: BeautifulSoup base to scrape the company from.
         Returns:
             The company scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the company. 
@@ -173,7 +173,7 @@ class Indeed(JobFunnel):
         """
         Fetches the job location from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the location from.
+			soup: BeautifulSoup base to scrape the location from.
         Returns:
             The job location scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the location. 
@@ -186,7 +186,7 @@ class Indeed(JobFunnel):
         """
         Fetches the job location from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the location from.
+			soup: BeautifulSoup base to scrape the location from.
         Returns:
             The job location scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the location. 
@@ -201,7 +201,7 @@ class Indeed(JobFunnel):
         """
         Fetches the job date from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the date from.
+			soup: BeautifulSoup base to scrape the date from.
         Returns:
             The job date scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the date. 
@@ -214,7 +214,7 @@ class Indeed(JobFunnel):
         """
         Fetches the job id from a BeautifulSoup base.
         Args:
-        soup: BeautifulSoup base to scrape the id from.
+			soup: BeautifulSoup base to scrape the id from.
         Returns:
             The job id scraped from soup. 
             Note that this function may throw an AttributeError if it cannot find the id. 
@@ -229,7 +229,7 @@ class Indeed(JobFunnel):
         """
         Constructs the link with the given job_id.
         Args:
-        job_id: The id to be used to construct the link for this job.
+			job_id: The id to be used to construct the link for this job.
         Returns:
                 The constructed job link. 
                 Note that this function does not check the correctness of this link. 

@@ -81,12 +81,12 @@ class Monster(JobFunnel):
         if method == 'get':
             search = ('https://www.monster.{0}/jobs/search/?'
                       'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
-                          self.search_terms['region']['domain'],
-                          self.query,
-                          self.search_terms['region']['city'],
-                          self.search_terms['region']['province'],
-                          'skr_navigation_nhpso_searchMain',
-                          self.convert_radius(self.search_terms['region']['radius'])))
+                self.search_terms['region']['domain'],
+                self.query,
+                self.search_terms['region']['city'],
+                self.search_terms['region']['province'],
+                'skr_navigation_nhpso_searchMain',
+                self.convert_radius(self.search_terms['region']['radius'])))
 
             return search
         elif method == 'post':
@@ -212,7 +212,7 @@ class Monster(JobFunnel):
             self.scrape_data[str(job['id'])] = job
 
          # Do not change the order of the next three statements if you want date_filter to work
-
+         
         # stores references to jobs in list to be used in blurb retrieval
         scrape_list = [i for i in self.scrape_data.values()]
         # converts job date formats into a standard date format

@@ -6,14 +6,6 @@ import re
 from .conftest import search_term_configs
 
 
-# I think I should move this fixture to conftest
-def get_number_of_pages_mock(mock_soup, mock_max):
-    """
-    mock get_number_of_pages to ensure we only scrape no more than 1 page.
-    """
-    return 1
-	
-
 #test the correctness of search_tems since our tests depend on it    
 
 def test_search_terms(init_scraper):
@@ -23,8 +15,6 @@ def test_search_terms(init_scraper):
 	
 @pytest.mark.parametrize('search_terms_config', search_term_configs)
 class TestClass():
-
-
 
     def test_convert_radius(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
@@ -38,6 +28,7 @@ class TestClass():
         assert 50 == provider.convert_radius(75)
         assert 100 == provider.convert_radius(300)
 
+
     def test_get_search_url(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
         provider.search_terms = search_terms_config
@@ -48,6 +39,7 @@ class TestClass():
         assert str(e.value) == 'No html method panda exists'
         with pytest.raises(NotImplementedError) as e:
             provider.get_search_url('post')
+
 
     def test_get_number_of_pages(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
@@ -61,6 +53,7 @@ class TestClass():
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, provider.bs4_parser)
         assert provider.get_number_of_pages(soup_base, max=3) <= 3
+
 
     def test_search_page_for_job_soups(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
@@ -76,7 +69,6 @@ class TestClass():
 
 
 # test the process of fetching title data from a job
-
 
     def test_get_title(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
@@ -97,7 +89,6 @@ class TestClass():
 
 # test the process of fetching company data from a job
 
-
     def test_get_company(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
         job_soup_list = scraper['job_list']
@@ -116,7 +107,6 @@ class TestClass():
 
 
 # test the process of fetching location data from a job
-
 
     def test_get_location(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
@@ -137,7 +127,6 @@ class TestClass():
 
 # test the process of fetching date data from a job
 
-
     def test_get_date(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
         job_soup_list = scraper['job_list']
@@ -154,8 +143,8 @@ class TestClass():
                 return
         assert False
 
-#TODO: Have more strict tests for job id and link
-
+# Test the id with a strict assertion because without a job id we have 
+# no job link, and without job link, we have no job to apply to
     def test_get_id(self, setup_scraper, search_terms_config):
         scraper = setup_scraper('indeed')
         job_soup_list = scraper['job_list']
@@ -168,6 +157,7 @@ class TestClass():
             except:
                 assert False
         assert True
+
 
 # test the process of fetching the link to a job
 
@@ -188,6 +178,7 @@ class TestClass():
                 return
 
         assert False
+
 
 # test the process of fetching the blurb from a job
 
@@ -215,6 +206,7 @@ class TestClass():
 
         assert False
 
+
          
     def test_search_joblink_for_blurb(self, setup_scraper, search_terms_config):
         """
@@ -240,9 +232,11 @@ class TestClass():
 
         assert False
 
+
     # Test the entire integration
 
-    def test_scrape(self, init_scraper, monkeypatch, search_terms_config):
+    def test_scrape(self, init_scraper, monkeypatch, 
+    search_terms_config, get_number_of_pages_mock):
         # ensure that we don't scrape more than one page
         monkeypatch.setattr(
             Indeed, 'get_number_of_pages', get_number_of_pages_mock)
