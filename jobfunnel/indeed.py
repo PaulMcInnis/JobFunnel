@@ -122,7 +122,7 @@ class Indeed(JobFunnel):
 
         filter_non_printables(job)
 
-    def get_number_of_pages(self, soup_base, max=0):
+    def get_num_pages_to_scrape(self, soup_base, max=0):
         """
         Calculates the number of pages to be scraped.
         Args:
@@ -253,7 +253,7 @@ class Indeed(JobFunnel):
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # parse total results, and calculate the # of pages needed
-        pages = self.get_number_of_pages(soup_base)
+        pages = self.get_num_pages_to_scrape(soup_base)
         log_info(f'Found {pages} indeed results for query='
                  f'{self.query}')
 

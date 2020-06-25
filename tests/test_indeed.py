@@ -41,7 +41,7 @@ class TestClass():
             provider.get_search_url('post')
 
 
-    def test_get_number_of_pages(self, init_scraper, search_terms_config):
+    def test_get_num_pages_to_scrape(self, init_scraper, search_terms_config):
         provider = init_scraper('indeed')
         provider.search_terms = search_terms_config
         # get the search url
@@ -52,7 +52,7 @@ class TestClass():
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, provider.bs4_parser)
-        assert provider.get_number_of_pages(soup_base, max=3) <= 3
+        assert provider.get_num_pages_to_scrape(soup_base, max=3) <= 3
 
 
     def test_search_page_for_job_soups(self, init_scraper, search_terms_config):
@@ -235,11 +235,10 @@ class TestClass():
 
     # Test the entire integration
 
-    def test_scrape(self, init_scraper, monkeypatch, 
-    search_terms_config, get_number_of_pages_mock):
+    def test_scrape(self, init_scraper, mocker, 
+    search_terms_config):
         # ensure that we don't scrape more than one page
-        monkeypatch.setattr(
-            Indeed, 'get_number_of_pages', get_number_of_pages_mock)
+        mocker.patch('jobfunnel.indeed.Indeed.get_num_pages_to_scrape', return_value=1)
         provider = init_scraper('indeed')
         provider.search_terms = search_terms_config
         provider.scrape()
