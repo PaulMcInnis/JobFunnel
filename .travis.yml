@@ -2,7 +2,7 @@ language: python
 python:
   - '3.6.9'
 install:
-  - 'pip install flake8 pipenv pytest-cov'
+  - 'pip install flake8 pipenv pytest-cov pytest-mock'
   - 'pipenv sync'
   - 'python -m nltk.downloader stopwords'
 before_script: 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'

@@ -39,7 +39,7 @@ class JobFunnel(object):
     filters """
 
     def __init__(self, args):
-        #The maximum number of days old a job can be
+        # The maximum number of days old a job can be
         self.max_listing_days = args['max_listing_days']
         # paths
         self.master_list_path = args['master_list_path']
@@ -103,6 +103,38 @@ class JobFunnel(object):
         self.logger.info(f'jobfunnel initialized at {self.date_string}')
 
     def get_search_url(self, method='get'):
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_title():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_company():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_location():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_tags():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_date():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_id():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_link():
+        """function to be implemented by child classes"""
+        raise NotImplementedError()
+
+    def get_number_of_pages():
         """function to be implemented by child classes"""
         raise NotImplementedError()
 
@@ -232,7 +264,7 @@ class JobFunnel(object):
     def pre_filter(self, data: Dict[str, dict], provider):
         """function called by child classes that applies multiple filters
         before getting job blurbs"""
-        #call date_filter if it is turned on
+        # call date_filter if it is turned on
         if self.max_listing_days is not None:
             date_filter(data, self.max_listing_days)
         # call id_filter for master and duplicate lists, if they exist

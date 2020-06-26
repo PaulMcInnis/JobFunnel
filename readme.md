@@ -76,13 +76,17 @@ Filter undesired companies by providing your own `yaml` configuration and adding
   JobFunnel can be easily automated to run nightly with [crontab][cron] <br />
   For more information see the [crontab document][cron_doc].
   
-  **NOTE ABOUT AUTOMATING:** As of right now, Glassdoor **might** require a human to complete a CAPTCHA. Therefore, in the case of automating with something like cron, you **might** need to be **physically present** to complete the Glassdoor CAPTCHA. 
+  * **Glassdoor Notes** <br /> 
+  The `GlassDoor` scraper has two versions: `GlassDoorStatic` and `GlassDoorDynamic`. Both of these give you the same end result: they scrape GlassDoor and dump your job listings onto your `master_list.csv`. We recommend to *always* run `GlassDoorStatic` (this is the default preset we have on our demo `settings.yaml` file) because it is *a lot* faster than `GlassDoorDynamic`. However, given the event that `GlassDoorStatic` fails, you may use `GlassDoorDynamic`. It is very slow, but you'll still be able to scrape GlassDoor.
   
-  You may also of course disable the Glassdoor scraper in your `settings.yaml` to not have to complete any CAPTCHA at all:
+	 When using `GlassDoorDynamic` Glassdoor **might** require a human to complete a CAPTCHA. Therefore, in the case of automating with something like cron, you **might** need to be **physically present** to complete the Glassdoor CAPTCHA. 
+  
+  	You may also of course disable the Glassdoor scraper when using `GlassDoorDynamic` in your `settings.yaml` to not have to complete any CAPTCHA at all:
 ``` 
-#- 'GlassDoor' 
-- 'Indeed'
-- 'Monster'
+  - 'Indeed'
+  - 'Monster'
+  #- 'GlassDoorStatic'
+  # - 'GlassDoorDynamic'
 ```
 
 * **Reviewing Jobs in Terminal** <br />

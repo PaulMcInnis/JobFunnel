@@ -13,6 +13,7 @@ requires = ['beautifulsoup4>=4.6.3',
             'nltk>=3.4.1',
             'scipy>=1.4.1',
             'pytest>=5.3.1',
+            'pytest-mock>=3.1.1',
             'selenium>=3.141.0',
             'webdriver-manager>=2.4.0'
             ]
