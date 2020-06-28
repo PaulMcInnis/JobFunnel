@@ -30,6 +30,8 @@ class GlassDoorStatic(GlassDoorBase):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
         }
+        # Concatenates keywords with '-'
+        self.query = ' '.join(self.search_terms['keywords'])
 
     def get_search_url(self, method='get'):
         """gets the glassdoor search url"""

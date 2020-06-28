@@ -29,7 +29,8 @@ class Monster(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
-        self.query = '-'.join(self.search_terms['keywords'])
+        # Concatenates keywords with '-' and encodes spaces as '-'
+        self.query = '-'.join(self.search_terms['keywords']).replace(' ', '-')
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
@@ -83,7 +84,7 @@ class Monster(JobFunnel):
                       'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
                 self.search_terms['region']['domain'],
                 self.query,
-                self.search_terms['region']['city'],
+                self.search_terms['region']['city'].replace(' ', "-"),
                 self.search_terms['region']['province'],
                 'skr_navigation_nhpso_searchMain',
                 self.convert_radius(self.search_terms['region']['radius'])))

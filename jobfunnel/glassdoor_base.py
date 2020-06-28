@@ -32,7 +32,6 @@ class GlassDoorBase(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
         }
-        self.query = '-'.join(self.search_terms['keywords'])
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
