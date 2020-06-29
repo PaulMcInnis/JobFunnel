@@ -48,7 +48,7 @@ class Indeed(JobFunnel):
             radius = 25
         elif 50 <= radius < 100:
             radius = 50
-        elif 100 <= radius:
+        elif radius >= 100:
             radius = 100
         return radius
 

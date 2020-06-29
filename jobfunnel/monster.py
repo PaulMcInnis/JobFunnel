@@ -58,7 +58,7 @@ class Monster(JobFunnel):
                 radius = 100
             elif 150 <= radius < 200:
                 radius = 150
-            elif 200 <= radius:
+            elif radius >= 200:
                 radius = 200
         else:
             if radius < 5:
@@ -71,7 +71,7 @@ class Monster(JobFunnel):
                 radius = 20
             elif 50 <= radius < 100:
                 radius = 50
-            elif 100 <= radius:
+            elif radius >= 100:
                 radius = 100
 
         return radius
