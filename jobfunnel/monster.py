@@ -29,6 +29,8 @@ class Monster(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
+        # Sets headers as default on Session object
+        self.s.headers.update(self.headers)
         # Concatenates keywords with '-' and encodes spaces as '-'
         self.query = '-'.join(self.search_terms['keywords']).replace(' ', '-')
 
@@ -102,7 +104,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster search: {search}')
 
         job_link_soup = BeautifulSoup(
-            self.s.get(search, headers=self.headers).text, self.bs4_parser)
+            self.s.get(search).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -121,7 +123,7 @@ class Monster(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting monster search: {search}')
 
-        res = self.s.get(search, headers=self.headers).text
+        res = self.s.get(search).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -144,7 +146,7 @@ class Monster(JobFunnel):
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = self.s.get(search, headers=self.headers)
+        request_html = self.s.get(search)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
@@ -161,7 +163,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster pages 1 to {pages} : {page_url}')
 
         jobs = BeautifulSoup(
-            self.s.get(page_url, headers=self.headers).text, self.bs4_parser). \
+            self.s.get(page_url).text, self.bs4_parser). \
             find_all('div', attrs={'class': 'flex-row'})
 
         job_soup_list = []

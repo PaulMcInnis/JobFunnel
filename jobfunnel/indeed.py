@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
 from math import ceil
-from requests import get
 from time import sleep, time
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -30,6 +29,8 @@ class Indeed(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
+        # Sets headers as default on Session object
+        self.s.headers.update(self.headers)
         # Concatenates keywords with '+' and encodes spaces as '+'
         self.query = '+'.join(self.search_terms['keywords']).replace(' ', '+')
 
@@ -56,7 +57,7 @@ class Indeed(JobFunnel):
         """gets the indeed search url"""
         if method == 'get':
             # form job search url
-            search = ('http://www.indeed.{0}/jobs?'
+            search = ('https://www.indeed.{0}/jobs?'
                       'q={1}&l={2}%2C+{3}&radius={4}&limit={5}&filter={6}'.format(
                           self.search_terms['region']['domain'],
                           self.query,
@@ -80,7 +81,7 @@ class Indeed(JobFunnel):
         log_info(f'getting indeed page {page} : {url}')
 
         jobs = BeautifulSoup(
-            self.s.get(url, headers=self.headers).text, self.bs4_parser). \
+            self.s.get(url).text, self.bs4_parser). \
             find_all('div', attrs={'data-tn-component': 'organicJob'})
 
         job_soup_list.extend(jobs)
@@ -91,7 +92,7 @@ class Indeed(JobFunnel):
         log_info(f'getting indeed page: {search}')
 
         job_link_soup = BeautifulSoup(
-            self.s.get(search, headers=self.headers).text, self.bs4_parser)
+            self.s.get(search).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -108,7 +109,7 @@ class Indeed(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting indeed search: {search}')
 
-        res = self.s.get(search, headers=self.headers).text
+        res = self.s.get(search).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -248,7 +249,7 @@ class Indeed(JobFunnel):
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = self.s.get(search, headers=self.headers)
+        request_html = self.s.get(search)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
