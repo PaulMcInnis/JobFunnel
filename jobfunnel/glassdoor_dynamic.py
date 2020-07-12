@@ -22,6 +22,8 @@ class GlassDoorDynamic(GlassDoorBase):
         super().__init__(args)
         self.provider = 'glassdoordynamic'
 
+        # Keeping old query function so this class does not break.
+        self.query = '-'.join(self.search_terms['keywords'])
         # initialize the webdriver
         self.driver = get_webdriver()
 

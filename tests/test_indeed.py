@@ -33,7 +33,7 @@ class TestClass():
         provider = init_scraper('indeed')
         provider.search_terms = search_terms_config
         if(provider.search_terms['region']['domain'] == 'ca'):
-            assert'http://www.indeed.ca/jobs?q=Python&l=waterloo%2C+ON&radius=25&limit=50&filter=0' == provider.get_search_url()
+            assert'https://www.indeed.ca/jobs?q=Python&l=waterloo%2C+ON&radius=25&limit=50&filter=0' == provider.get_search_url()
         with pytest.raises(ValueError) as e:
             provider.get_search_url('panda')
         assert str(e.value) == 'No html method panda exists'

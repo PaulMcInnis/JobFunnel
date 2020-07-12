@@ -32,7 +32,6 @@ class GlassDoorBase(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
         }
-        self.query = '-'.join(self.search_terms['keywords'])
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
@@ -50,7 +49,7 @@ class GlassDoorBase(JobFunnel):
                 radius = 25
             elif 50 <= radius < 100:
                 radius = 50
-            elif 100 <= radius:
+            elif radius >= 100:
                 radius = 100
             return radius
 
@@ -70,10 +69,15 @@ class GlassDoorBase(JobFunnel):
             elif radius >= 200:
                 radius = 200
 
-        glassdoor_radius = {0: 0, 10: 6, 20: 12,
-                            30: 19, 50: 31, 100: 62, 200: 124}
+            glassdoor_radius = {0: 0,
+                                10: 6,
+                                20: 12,
+                                30: 19,
+                                50: 31,
+                                100: 62,
+                                200: 124}
 
-        return glassdoor_radius[radius]
+            return glassdoor_radius[radius]
 
     def parse_blurb(self, job, html):
         """parses and stores job description into dict entry"""

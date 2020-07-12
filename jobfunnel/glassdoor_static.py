@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
 from logging import info as log_info
 from math import ceil
-from requests import post
 from time import sleep, time
 
 from .jobfunnel import JobFunnel, MASTERLIST_HEADER
@@ -30,6 +29,10 @@ class GlassDoorStatic(GlassDoorBase):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
         }
+        # Sets headers as default on Session object
+        self.s.headers.update(self.headers)
+        # Concatenates keywords with '-'
+        self.query = ' '.join(self.search_terms['keywords'])
 
     def get_search_url(self, method='get'):
         """gets the glassdoor search url"""
@@ -40,8 +43,9 @@ class GlassDoorStatic(GlassDoorBase):
         # form the location lookup url
         location_url = 'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
 
-        # get the location id for search location
+        # get location id for search location
         location_response = self.s.post(
+            # set location headers to override default session headers
             location_url, headers=self.location_headers, data=data
         ).json()
 
@@ -69,13 +73,12 @@ class GlassDoorStatic(GlassDoorBase):
         else:
             raise ValueError(f'No html method {method} exists')
 
-    def search_page_for_job_soups(self, data, page, url, job_soup_list):
+    def search_page_for_job_soups(self, page, url, job_soup_list):
         """function that scrapes the glassdoor page for a list of job soups"""
         log_info(f'getting glassdoor page {page} : {url}')
 
         job = BeautifulSoup(
-            self.s.post(url, headers=self.headers,
-                        data=data).text, self.bs4_parser
+            self.s.get(url).text, self.bs4_parser
         ).find_all('li', attrs={'class', 'jl'})
         job_soup_list.extend(job)
 
@@ -83,9 +86,9 @@ class GlassDoorStatic(GlassDoorBase):
         """function that scrapes the glassdoor job link for the blurb"""
         search = job['link']
         log_info(f'getting glassdoor search: {search}')
+
         job_link_soup = BeautifulSoup(
-            self.s.post(
-                search, headers=self.location_headers).text, self.bs4_parser
+            self.s.get(search).text, self.bs4_parser
         )
 
         try:
@@ -105,7 +108,7 @@ class GlassDoorStatic(GlassDoorBase):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting glassdoor search: {search}')
 
-        res = self.s.post(search, headers=self.location_headers).text
+        res = self.s.get(search).text
         return job, res
 
     def scrape(self):
@@ -116,7 +119,7 @@ class GlassDoorStatic(GlassDoorBase):
         search, data = self.get_search_url(method='post')
 
         # get the html data, initialize bs4 with lxml
-        request_html = self.s.post(search, headers=self.headers, data=data)
+        request_html = self.s.post(search, data=data)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
@@ -143,7 +146,6 @@ class GlassDoorStatic(GlassDoorBase):
                 fts.append(  # append thread job future to futures list
                     threads.submit(
                         self.search_page_for_job_soups,
-                        data,
                         page,
                         request_html.url,
                         job_soup_list,
@@ -167,7 +169,6 @@ class GlassDoorStatic(GlassDoorBase):
                 fts.append(  # append thread job future to futures list
                     threads.submit(
                         self.search_page_for_job_soups,
-                        data,
                         page,
                         page_url,
                         job_soup_list,

@@ -308,9 +308,12 @@ class JobFunnel(object):
                 try:
                     job, html = future.result()
                     parse_fn(job, html)
-                except Exception:
+                    del results[future]
+                    del html
+                except Exception as e:
+                    self.logger.error(f'Blurb Future Error: {e}')
                     pass
-                del results[future]
+
 
         threads.shutdown()  # clean up threads when done
         # end and print recorded time

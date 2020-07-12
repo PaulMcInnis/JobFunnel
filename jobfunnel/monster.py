@@ -29,7 +29,10 @@ class Monster(JobFunnel):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         }
-        self.query = '-'.join(self.search_terms['keywords'])
+        # Sets headers as default on Session object
+        self.s.headers.update(self.headers)
+        # Concatenates keywords with '-' and encodes spaces as '-'
+        self.query = '-'.join(self.search_terms['keywords']).replace(' ', '-')
 
     def convert_radius(self, radius):
         """function that quantizes the user input radius to a valid radius
@@ -57,7 +60,7 @@ class Monster(JobFunnel):
                 radius = 100
             elif 150 <= radius < 200:
                 radius = 150
-            elif 200 <= radius:
+            elif radius >= 200:
                 radius = 200
         else:
             if radius < 5:
@@ -70,7 +73,7 @@ class Monster(JobFunnel):
                 radius = 20
             elif 50 <= radius < 100:
                 radius = 50
-            elif 100 <= radius:
+            elif radius >= 100:
                 radius = 100
 
         return radius
@@ -83,7 +86,7 @@ class Monster(JobFunnel):
                       'q={1}&where={2}__2C-{3}&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
                 self.search_terms['region']['domain'],
                 self.query,
-                self.search_terms['region']['city'],
+                self.search_terms['region']['city'].replace(' ', "-"),
                 self.search_terms['region']['province'],
                 'skr_navigation_nhpso_searchMain',
                 self.convert_radius(self.search_terms['region']['radius'])))
@@ -101,7 +104,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster search: {search}')
 
         job_link_soup = BeautifulSoup(
-            self.s.get(search, headers=self.headers).text, self.bs4_parser)
+            self.s.get(search).text, self.bs4_parser)
 
         try:
             job['blurb'] = job_link_soup.find(
@@ -120,7 +123,7 @@ class Monster(JobFunnel):
         search = job['link']
         log_info(f'delay of {delay:.2f}s, getting monster search: {search}')
 
-        res = self.s.get(search, headers=self.headers).text
+        res = self.s.get(search).text
         return job, res
 
     def parse_blurb(self, job, html):
@@ -143,7 +146,7 @@ class Monster(JobFunnel):
         search = self.get_search_url()
 
         # get the html data, initialize bs4 with lxml
-        request_html = self.s.get(search, headers=self.headers)
+        request_html = self.s.get(search)
 
         # create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
@@ -160,7 +163,7 @@ class Monster(JobFunnel):
         log_info(f'getting monster pages 1 to {pages} : {page_url}')
 
         jobs = BeautifulSoup(
-            self.s.get(page_url, headers=self.headers).text, self.bs4_parser). \
+            self.s.get(page_url).text, self.bs4_parser). \
             find_all('div', attrs={'class': 'flex-row'})
 
         job_soup_list = []
