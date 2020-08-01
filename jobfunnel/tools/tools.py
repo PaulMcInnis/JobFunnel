@@ -1,18 +1,25 @@
+"""Assorted tools for all aspects of funnelin''
+"""
+# FIXME sort these
 import logging
+import os
 import re
+import random
 import string
-
 from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
-
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.opera import OperaDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
-
 from selenium import webdriver
+
+
+# def get_random_user_agent() -> str:
+#     """The user agent should be randomized per-Scraper to help with spam det.
+#     """ FIXME... should go here maybe?
 
 
 def filter_non_printables(job):
