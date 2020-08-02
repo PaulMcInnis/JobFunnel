@@ -1,18 +1,19 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
 """
 from abc import ABC, abstractmethod
+import logging
 import os
 from typing import Dict, List
 import random
 from requests import Session
 
 from jobfunnel import USER_AGENT_LIST
-from jobfunnel.job import Job
-from jobfunnel.search_terms import SearchTerms
-from jobfunnel.localization import Locale
+from jobfunnel.backend import Job
+from jobfunnel.backend.localization import Locale
+from jobfunnel.config import SearchTerms
 
 
-class Scraper(ABC):
+class BaseScraper(ABC):
     """Base scraper object, for generating List[Job] from a specific job source
 
     TODO: accept filters: List[Filter] here if we have Filter(ABC)
@@ -20,7 +21,9 @@ class Scraper(ABC):
     """
 
     @abstractmethod
-    def __init__(self, session: Session, search_terms: SearchTerms) -> None:
+    def __init__(self, session: Session, search_terms: SearchTerms,
+                 logger: logging.Logger) -> None:
+        # TODO: can we set self.session etc so inherited classes don't have to?
         pass
 
     @property
@@ -53,7 +56,7 @@ class Scraper(ABC):
         pass
 
     @abstractmethod
-    def scrape(self) -> List[Job]:
+    def scrape(self) -> Dict[str, Job]:
         """Scrapes raw data from a job source into a list of Job objects
 
         Returns:
@@ -61,7 +64,7 @@ class Scraper(ABC):
         """
         pass
 
-    @abstractmethod
+    # TODO: we need to filter jobs here.
     def filter_jobs(self, jobs: List[Job]) -> List[Job]:
         """Descriminate each Job in jobs using filters
 

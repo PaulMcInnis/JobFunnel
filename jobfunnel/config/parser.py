@@ -22,7 +22,7 @@ class ConfigError(ValueError):
 
 def parse_cli():
     """ Parse the command line arguments.
-
+    FIXME: way too
     """
     parser = argparse.ArgumentParser(
         'CLI options take precedence over settings in the yaml file'
