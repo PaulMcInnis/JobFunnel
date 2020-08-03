@@ -25,6 +25,8 @@ class JobStatus(Enum):
     ACCEPTED = 7
     DELETE = 8
     INTERESTED = 9
+    APPLIED = 10
+    APPLY = 11
 
 
 REMOVE_STATUSES = [JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED]
