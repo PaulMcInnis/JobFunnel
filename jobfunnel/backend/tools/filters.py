@@ -1,3 +1,6 @@
+"""Filters that are used in jobfunnel's filter() method or as intermediate
+filters to reduce un-necessesary scraping
+"""
 import nltk
 import logging
 from datetime import datetime, date, timedelta
@@ -6,51 +9,28 @@ from sklearn.metrics.pairwise import cosine_similarity
 from typing import Dict, Optional
 from numpy import delete as np_delete, max as np_max, fill_diagonal
 
-
-def date_filter(cur_dict: Dict[str, dict], number_of_days: int):
-    """Filter out jobs that are older than number_of_days
-        The assumed date format is yyyy-mm-dd
-        Args:
-        cur_dict: today's job scrape dict
-        number_of_days: how many days old a job can be
-    """
-    if number_of_days < 0 or cur_dict is None:
-        return
-    print("date_filter running")
-    cur_job_ids = [job['id'] for job in cur_dict.values()]
-    # calculate the oldest date a job can be
-    threshold_date = datetime.now() - timedelta(days=number_of_days)
-    for job_id in cur_job_ids:
-        # get the date from job with job_id
-        job_date = datetime.strptime(cur_dict[job_id]['date'], '%Y-%m-%d')
-        # if this job is older than threshold_date, delete it from current scrape
-        if job_date < threshold_date:
-            logging.info(f"{cur_dict[job_id]['link']} has been filtered out by date_filter because"
-                         f" it is older than {number_of_days} days")
-            del cur_dict[job_id]
+from jobfunnel.backend import Job
 
 
-def id_filter(cur_dict: Dict[str, dict], prev_dict: Dict[str, dict], provider):
-    """ Filter duplicates on job id per provider.
+T_NOW = datetime.now()
+
+
+def job_is_old(job: Job, number_of_days: int) -> bool:
+    """Identify if a job is older than number_of_days from today
+
+    NOTE: modifies job_dict in-place
 
         Args:
-            cur_dict: today's job scrape dict
-            prev_dict: the existing master list job dict
-            provider: job board used
+            job_dict: today's job scrape dict
+            number_of_days: how many days old a job can be
 
+        Returns:
+            True if it's older than number of days
+            False if it's fresh enough to keep
     """
-    # get job ids from scrape and master list by provider as lists
-    cur_job_ids = [job['id'] for job in cur_dict.values()]
-    prev_job_ids = [job['id'] for job in prev_dict.values()
-                    if job['provider'] == provider]
-
-    # pop duplicate job ids from current scrape
-    duplicate_ids = [cur_dict.pop(job_id)['id'] for job_id in cur_job_ids
-                     if job_id in prev_job_ids]
-
-    # log duplicate ids
-    logging.info(f'found {len(cur_dict.keys())} unique job ids and '
-                 f'{len(duplicate_ids)} duplicates from {provider}')
+    assert number_of_days > 0
+    # Calculate the oldest date a job can be
+    return job.post_date < (T_NOW - timedelta(days=number_of_days))
 
 
 def tfidf_filter(cur_dict: Dict[str, dict],
@@ -82,8 +62,8 @@ def tfidf_filter(cur_dict: Dict[str, dict],
 
     if prev_dict is None:
         # get query words and ids as lists
-        query_ids = [job['id'] for job in cur_dict.values()]
-        query_words = [job['blurb'] for job in cur_dict.values()]
+        query_ids = [job.key_id for job in cur_dict.values()]
+        query_words = [job.description for job in cur_dict.values()]
 
         # returns cosine similarity between jobs as square matrix (n,n)
         similarities = cosine_similarity(vectorizer.fit_transform(query_words))
@@ -117,11 +97,11 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         duplicate_ids = tfidf_filter(cur_dict)
 
         # get query words and ids as lists
-        query_ids = [job['id'] for job in cur_dict.values()]
-        query_words = [job['blurb'] for job in cur_dict.values()]
+        query_ids = [job.key_id for job in cur_dict.values()]
+        query_words = [job.description for job in cur_dict.values()]
 
         # get reference words as list
-        reference_words = [job['blurb'] for job in prev_dict.values()]
+        reference_words = [job.description for job in prev_dict.values()]
 
         # fit vectorizer to entire corpus
         vectorizer.fit(query_words + reference_words)
@@ -139,9 +119,11 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 duplicate_ids.update({query_id: cur_dict.pop(query_id)})
 
         # log something
-        logging.info(f'found {len(cur_dict.keys())} unique listings and '
-                     f'{len(duplicate_ids.keys())} duplicates '
-                     f'via TFIDF cosine similarity')
+        logging.info(
+            f'Found {len(cur_dict.keys())} unique listings and '
+            f'{len(duplicate_ids.keys())} duplicates '
+            f'via TFIDF cosine similarity'
+        )
 
-    # returns a dictionary of duplicates
+    # returns a dictionary of duplicate key_ids
     return duplicate_ids

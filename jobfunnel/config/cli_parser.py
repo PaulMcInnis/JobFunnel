@@ -1,28 +1,15 @@
-"""Configuration parsing module.
-
+"""tools to parse CLI --> JobFunnelConfig
 """
 import argparse
-import logging
-import os
 import yaml
 
-from .valid_options import CONFIG_TYPES
-from ..tools.tools import split_url
+from jobfunnel.config import (
+    JobFunnelConfig, SearchConfig, ProxyConfig, DelayConfig)
 
-log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
-              'warning': logging.WARNING, 'info': logging.INFO,
-              'debug': logging.DEBUG, 'notset': logging.NOTSET}
-
-
-class ConfigError(ValueError):
-    def __init__(self, arg):
-        self.strerror = f"ConfigError: '{arg}' has an invalid value"
-        self.args = {arg}
-
+# FIXME: implement cereberus to validate YAML with a schema
 
 def parse_cli():
     """ Parse the command line arguments.
-    FIXME: way too
     """
     parser = argparse.ArgumentParser(
         'CLI options take precedence over settings in the yaml file'
@@ -187,123 +174,3 @@ def cli_to_yaml(cli):
     if cli.proxy is not None:
         yaml['proxy'] = split_url(cli.proxy)
     return yaml
-
-
-def update_yaml(config, new_yaml):
-    """ Update fields of current yaml with new yaml.
-
-    """
-    for k, v in new_yaml.items():
-        # if v is a dict we need to dive deeper...
-        if type(v) is dict:
-            # There might be times where this dictionary is not in config,
-            # but it still is a valid option inside of CONFIG_TYPES
-            # such as it is in the case of proxy
-            if k not in config:
-                config[k] = v
-
-            update_yaml(config[k], v)
-        else:
-            if v is not None:
-                config[k] = v
-
-
-def recursive_check_config_types(config, types):
-    """ Recursively check type of setting vars.
-
-    """
-    for k, v in config.items():
-        # if type is dict than we have to recursively handle this
-        if type(v) is dict:
-            yield from recursive_check_config_types(v, types[k])
-        else:
-            yield (k, type(v) in types[k])
-
-
-def check_config_types(config):
-    """ Check if no settings have a wrong type and if we do not have unsupported
-    options.
-
-    """
-    # Get a dictionary of all types and boolean if it's the right type
-    types_check = recursive_check_config_types(config, CONFIG_TYPES)
-
-    # Select all wrong types and throw error when there is such a value
-
-    wrong_types = [k for k, v in types_check if v is False]
-    if len(wrong_types) > 0:
-        raise ConfigError(', '.join(wrong_types))
-
-
-def parse_config():
-    """ Parse the JobFunnel configuration settings.
-
-    """
-    # find the jobfunnel root dir
-    jobfunnel_path = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), '..'))
-
-    # load the default settings
-    default_yaml_path = os.path.join(jobfunnel_path, 'config/settings.yaml')
-    default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
-
-    # parse the command line arguments
-    cli = parse_cli()
-    cli_yaml = cli_to_yaml(cli)
-
-    # parse the settings file for the line arguments
-    given_yaml = None
-    given_yaml_path = None
-    if cli.settings is not None:
-        given_yaml_path = os.path.dirname(cli.settings)
-        given_yaml = yaml.safe_load(open(cli.settings, 'r'))
-
-    # combine default, given and argument yamls into one. Note that we update
-    # the values of the default_yaml, so we use this for the rest of the file.
-    # We could make a deep copy if necessary.
-    config = default_yaml
-    if given_yaml is not None:
-        update_yaml(config, given_yaml)
-    update_yaml(config, cli_yaml)
-    # check if the config has valid attribute types
-    check_config_types(config)
-
-    # create output path and corresponding (children) data paths
-    # I feel like this is not in line with the rest of the file's philosophy
-    if cli.output_path is not None:
-        output_path = cli.output_path
-    elif given_yaml_path is not None:
-        output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
-    else:
-        output_path = default_yaml['output_path']
-
-    # define paths and normalise
-    config['data_path'] = os.path.join(output_path, 'data')
-    config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
-    config['duplicate_list_path'] = os.path.join(
-        output_path, 'duplicate_list.csv')
-    config['filter_list_path'] = os.path.join(
-        config['data_path'], 'filter_list.json')
-    config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
-
-    # normalize paths
-    for p in ['data_path', 'master_list_path', 'duplicate_list_path',
-              'log_path', 'filter_list_path']:
-        config[p] = os.path.normpath(config[p])
-
-    # lower provider and delay function
-    for i, p in enumerate(config['providers']):
-        config['providers'][i] = p.lower()
-    config['delay_config']['function'] = \
-        config['delay_config']['function'].lower()
-
-    # parse the log level
-    config['log_level'] = log_levels[config['log_level']]
-
-    # check if proxy and max_listing_days have not been set yet (optional)
-    if 'proxy' not in config:
-        config['proxy'] = None
-    if 'max_listing_days' not in config:
-        config['max_listing_days'] = None
-
-    return config

@@ -2,7 +2,8 @@
 """
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
-import datetime
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import logging
 from math import ceil
 from time import sleep, time
@@ -15,21 +16,31 @@ from bs4 import BeautifulSoup
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.localization import Locale, get_domain_from_locale
 from jobfunnel.backend.scrapers import BaseScraper
-from jobfunnel.config import SearchTerms
+from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
+#from jobfunnel.config import JobFunnelConfig
+
+
+# Initialize list and store regex objects of date quantifiers TODO: refactor
+HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)')
+DAY_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)')
+MONTH_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?month')
+YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year')
+RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
+RECENT_REGEX_B = re.compile(r'[yY]esterday')
 
 
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
     """
-    def __init__(self, session: Session, search_terms: SearchTerms,
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
         """Init that contains indeed specific stuff
         """
         self.session = session
-        self.search_terms = search_terms
+        self.config = config
         self.logger = logger
         self.max_results_per_page = 50
-        self.query = '+'.join(self.search_terms.keywords)
+        self.query = '+'.join(self.config.search_terms.keywords)
 
     def scrape(self) -> Dict[str, Job]:
         """Scrapes raw data from a job source into a list of Job objects
@@ -96,50 +107,115 @@ class BaseIndeedScraper(BaseScraper):
                 self.logger.warning(f"Unable to scrape job tags for {key_id}")
 
             try:
-                post_date = self.get_date(s)
-            except AttributeError:
-                self.logger.warning(
-                    f"Unable to scrape job post date for {key_id}"
+                date_string = self.get_date_str(s)
+                post_date = self.calc_post_date_from_relative_str(
+                    date_string
                 )
+            except (AttributeError, ValueError):
+                self.logger.error(
+                    f"Unknown date for job {key_id}, setting to datetime.now()."
+                )
+                post_date = datetime.now()
 
-            # Init a new job
-            job = Job(
-                title=title,
-                company=company,
-                location=location,
-                description='',  # We will populate this later
-                key_id=key_id,
-                url=url,
-                locale=self.locale,
-                query=self.query,
-                status=status,
-                provider='indeed',  # FIXME: should inherit this?
-                short_description=short_description,
-                post_date=post_date,
-                raw=s,
-                tags=tags,
-            )
-
-            # FIXME: This doesn't work, and adding it would break existing csvs
+            # FIXME: impl.
             # try:
             #     self.set_short_description(job, s)
             # except AttributeError:
             #     self.logger.warning("Unable to scrape job short description.")
 
-            # Fix the date to not be relative
-            try:
-                job.set_post_date_from_relative_date()
-            except ValueError:
-                self.logger.error(
-                    f"Unknown date for job {key_id}, setting to epoch date."
-                )
-                job.post_date = datetime.datetime(1970, 1, 1)
+            # Init a new job from scraped data
+            job = Job(
+                title=title,
+                company=company,
+                location=location,
+                description='',  # We will populate this later per-job-page
+                key_id=key_id,
+                url=url,
+                locale=self.locale,
+                query=self.query,
+                status=status,
+                provider='indeed',  # FIXME: we should inherit this
+                short_description=short_description,
+                post_date=post_date,
+                raw='',  # FIXME: we cannot pickle the soup object (s)
+                tags=tags,
+            )
 
             # Key by id to prevent duplicate key_ids TODO: add a warning
             jobs_dict[job.key_id] = job
 
-        # FIXME: get the long descriptions
+        # Get the detailed description with delayed scraping
+        if jobs_dict:
+            jobs_list = list(jobs_dict.values())
+            delays = calculate_delays(len(jobs_list), self.config.delay_config)
+            delay_threader(
+                jobs_list, self.get_blurb_with_delay, self.parse_blurb, threads,
+                self.logger, delays,
+            )
+
         return jobs_dict
+
+    def get_blurb_with_delay(self, job: Job, delay: float) -> Tuple[Job, str]:
+        """Gets blurb from indeed job link and sets delays for requests
+        """
+        sleep(delay)
+        self.logger.info(
+            f'Delay of {delay:.2f}s, getting indeed search: {job.url}'
+        )
+        return job, self.session.get(job.url).text
+
+    def parse_blurb(self, job: Job, html: str) -> None:
+        """Parses and stores job description html and sets Job.description
+        """
+        job_link_soup = BeautifulSoup(html, self.bs4_parser)
+
+        try:
+            job.description = job_link_soup.find(
+                id='jobDescriptionText'
+            ).text.strip()
+        except AttributeError:
+            job.description = ''
+        job.clean_strings()
+
+    def calc_post_date_from_relative_str(self, date_str: str) -> date:
+        """Identifies a job's post date via post age, updates in-place
+        """
+        post_date = datetime.now()  # type: date
+        # Supports almost all formats like 7 hours|days and 7 hr|d|+d
+        try:
+            # hours old
+            hours_ago = HOUR_REGEX.findall(date_str)[0]
+            post_date -= timedelta(hours=int(hours_ago))
+        except IndexError:
+            # days old
+            try:
+                days_ago = DAY_REGEX.findall(date_str)[0]
+                post_date -= timedelta(days=int(days_ago))
+            except IndexError:
+                # months old
+                try:
+                    months_ago = MONTH_REGEX.findall(date_str)[0]
+                    post_date -= relativedelta(
+                        months=int(months_ago))
+                except IndexError:
+                    # years old
+                    try:
+                        years_ago = YEAR_REGEX.findall(date_str)[0]
+                        post_date -= relativedelta(
+                            years=int(years_ago))
+                    except IndexError:
+                        # try phrases like today, just posted, or yesterday
+                        if (RECENT_REGEX_A.findall(date_str) and
+                                not post_date):
+                            # today
+                            post_date = datetime.now()
+                        elif RECENT_REGEX_B.findall(date_str):
+                            # yesterday
+                            post_date -= timedelta(days=int(1))
+                        elif not post_date:
+                            # we have failed.
+                            raise ValueError("Unable to calculate date")
+        return post_date
 
     def convert_radius(self, radius: int) -> int:
         """function that quantizes the user input radius to a valid radius
@@ -164,18 +240,14 @@ class BaseIndeedScraper(BaseScraper):
     @abstractmethod
     def get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
+        NOTE: different indeed localizations implement this
         """
         pass
 
     @abstractmethod
     def get_link(self, job_id) -> str:
         """Constructs the link with the given job_id.
-        Args:
-			job_id: The id to be used to construct the link for this job.
-        Returns:
-                The constructed job link.
-                Note that this function does not check the correctness of this link.
-                The caller is responsible for checking correcteness.
+        NOTE: different indeed localizations implement this
         """
         pass
 
@@ -302,7 +374,7 @@ class BaseIndeedScraper(BaseScraper):
             'table', attrs={'class': 'jobCardShelfContainer'}
         ).find_all('td', attrs={'class': 'jobCardShelfItem'})]
 
-    def get_date(self, soup) -> str:
+    def get_date_str(self, soup) -> str:
         """Fetches the job date from a BeautifulSoup base.
         Args:
 			soup: BeautifulSoup base to scrape the date from.
@@ -363,11 +435,11 @@ class IndeedScraperCAEng(BaseIndeedScraper):
                 "limit={5}&filter={6}".format(
                     get_domain_from_locale(self.locale),
                     self.query,
-                    self.search_terms.city.replace(' ', '+'),
-                    self.search_terms.province,
-                    self.convert_radius(self.search_terms.radius),
+                    self.config.search_terms.city.replace(' ', '+'),
+                    self.config.search_terms.province,
+                    self.convert_radius(self.config.search_terms.radius),
                     self.max_results_per_page,
-                    int(self.search_terms.return_similar_results)
+                    int(self.config.search_terms.return_similar_results)
                 )
             )
             return search
@@ -426,11 +498,11 @@ class IndeedScraperUSAEng(BaseIndeedScraper):
                 "limit={5}&filter={6}".format(
                     get_domain_from_locale(self.locale),
                     self.query,
-                    self.search_terms.city.replace(' ', '+'),
-                    self.search_terms.state,
-                    self.convert_radius(self.search_terms.region.radius),
+                    self.config.search_terms.city.replace(' ', '+'),
+                    self.config.search_terms.state,
+                    self.convert_radius(self.config.search_terms.region.radius),
                     self.max_results_per_page,
-                    int(self.search_terms.return_similar_results)
+                    int(self.config.search_terms.return_similar_results)
                 )
             )
             return search

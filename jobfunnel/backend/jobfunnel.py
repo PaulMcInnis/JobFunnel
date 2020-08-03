@@ -1,7 +1,6 @@
 """Paul McInnis 2018
 Scrapes jobs, applies search filters and writes pickles to master list
 """
-
 import csv
 from collections import OrderedDict
 from datetime import date, datetime
@@ -15,8 +14,9 @@ from typing import Dict, List, Union
 from time import time
 
 from jobfunnel.config import JobFunnelConfig
-from jobfunnel.backend import Job
-from jobfunnel.resources.resources import CSV_HEADER, REMOVE_STATUSES
+from jobfunnel.backend import Job, JobStatus, Locale
+from jobfunnel.resources.resources import CSV_HEADER
+from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
 
 
 class JobFunnel(object):
@@ -32,8 +32,8 @@ class JobFunnel(object):
         self.config = config
         self.config.create_dirs()
         self.config.validate()
-        self.date_string = date.today().strftime("%Y-%m-%d")
         self.logger = None
+        self.__date_string = date.today().strftime("%Y-%m-%d")
         self.init_logging()
 
         # Open a session with/out a proxy configured
@@ -43,40 +43,57 @@ class JobFunnel(object):
                 self.config.proxy_config.protocol: self.config.proxy_config.url
             }
 
+    @property
+    def daily_cache_file(self) -> str:
+        """The name for for pickle file containing the scraped data ran today
+        """
+        return os.path.join(
+            self.config.cache_folder, f"jobs_{self.__date_string}.pkl",
+        )
+
     def run(self) -> None:
         """Scrape, update lists and save to CSV.
+        NOTE: we are assuming the user has distinct cache folder per-search,
+        otherwise we will load the cache for today, for a different search!
         """
-        # Parse the master list path to update filter list
-        self.update_user_deny_list()
+        # Parse the master list path to update our block list
+        # NOTE: we want to do this first to ensure scraping is efficient when
+        # we are getting detailed job information (per-job)
+        self.update_block_list()
 
-        # Get new jobs keyed by their unique ID
-        jobs_dict = self.scrape()  # type: Dict[str, Job]
+        # Get jobs keyed by their unique ID, use cache if we scraped today
+        if self.config.no_scrape:
+            jobs_dict = self.load_cache(self.daily_cache_file)
+        else:
+            if os.path.exists(self.daily_cache_file):
+                jobs_dict = self.load_cache(self.daily_cache_file)
+            else:
+                jobs_dict = self.scrape()  # type: Dict[str, Job]
+                self.write_cache(jobs_dict)
 
-        # Filter out scraped jobs we have rejected, archived or blacklisted
+        # Filter out scraped jobs we have rejected, archived or block-listed
         # (before we add them to the CSV)
-        self.filter_excluded_jobs(jobs_dict)
+        self.filter(jobs_dict)
 
         # Load and update existing masterlist
         if os.path.exists(self.config.master_csv_file):
-            # open masterlist if it exists & init updated masterlist
+
+            # Identify duplicate jobs using the existing masterlist
             masterlist = self.read_master_csv()  # type: Dict[str, Job]
+            self.filter(masterlist)  # NOTE: reduces size of masterlist
+            # FIXME: this doesn't handle empty descriptions or masterlist well
+            tfidf_filter(jobs_dict, masterlist)
 
-            # update masterlist to remove filtered/blacklisted jobs
-            self.filter_excluded_jobs(jobs_dict)
-            # n_filtered += tfidf_filter(jobs_dict, masterlist)  # FIXME
+            # Expand the masterlist with filteres, non-duplicated jobs & save
             masterlist.update(jobs_dict)
-
-            # save
-            self.write_master_csv(jobs_dict)
+            self.write_master_csv(masterlist)
 
         else:
-            # run tfidf filter on initial scrape
-            # n_filtered += tfidf_filter(jobs_dict, masterlist)  # FIXME
-
-            # dump the results into the data folder as the masterlist
+            # FIXME: we should still remove duplicates (TFIDF) within jobs_dict
+            # Dump the results into the data folder as the masterlist
             self.write_master_csv(jobs_dict)
             self.logger.info(
-                f'no masterlist detected, added {len(jobs_dict.keys())}'
+                f'No masterlist detected, added {len(jobs_dict.keys())}'
                 f' jobs to {self.config.master_csv_file}'
             )
 
@@ -98,7 +115,7 @@ class JobFunnel(object):
             logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         else:
             logging.getLogger().addHandler(logging.StreamHandler())
-        self.logger.info(f"jobfunnel initialized at {self.date_string}")
+        self.logger.info(f"JobFunnel initialized at {self.__date_string}")
 
     def scrape(self) ->Dict[str, Job]:
         """Run each of the desired Scraper.scrape() with threading and delaying
@@ -111,12 +128,10 @@ class JobFunnel(object):
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
         for scraper_cls in self.config.scrapers:
-            # FIXME: need the threader and delay here
+            # FIXME: need to add the threader and delaying here
             start = time()
-            scraper = scraper_cls(
-                self.session, self.config.search_terms, self.logger
-            )
-            # TODO: warning for overwriting different jobs with same key
+            scraper = scraper_cls(self.session, self.config, self.logger)
+            # TODO: add a warning for overwriting different jobs with same key
             jobs.update(scraper.scrape())
             end = time()
             self.logger.info(
@@ -129,41 +144,45 @@ class JobFunnel(object):
 
     def recover(self):
         """Build a new master CSV from all the available pickles in our cache
+        NOTE: maybe we can warn user that this will throw away their current
+        masterlist, since we are assuming it's corrupted somehow
         """
-        # FIXME: impl. should read all the pickles and make a new masterlist
-        pass
+        self.logger.info("Recovering jobs from all cache files in cache folder")
+        if os.path.exists(self.config.user_block_list_file):
+            self.logger.warning(
+                "Running recovery mode, but with existing block-list, delete "
+                f"{self.config.user_block_list_file} if you want to start fresh"
+                " from the cached data and not filter any jobs away."
+            )
+        all_jobs_dict = {}
+        for file in os.listdir(self.config.cache_folder):
+            if '.pkl' in file:
+                all_jobs_dict.update(self.load_cache(file))
+        self.write_master_csv(all_jobs_dict)
 
-    @property
-    def daily_pickle_file(self) -> str:
-        """The name for for pickle file containing the scraped data ran today
-        """
-        return os.path.join(
-            self.config.data_path, f"jobs_{self.date_string}.pkl",
-        )
-
-    def load_pickle(self) -> Dict[str, Job]:
+    def load_cache(self, cache_file: str) -> Dict[str, Job]:
         """Load today's scrape data from pickle via date string
         """
         try:
-            jobs_dict = pickle.load(open(self.daily_pickle_file, 'rb'))
+            jobs_dict = pickle.load(open(cache_file, 'rb'))
         except FileNotFoundError as e:
             self.logger.error(
-                f"{self.daily_pickle_file} not found! Have you scraped any jobs"
-                " today?"
+                f"{cache_file} not found! Have you scraped any jobs today?"
             )
             raise e
         self.logger.info(
-            f"Loaded {len(jobs_dict.keys())} jobs from {self.daily_pickle_file}"
+            f"Read {len(jobs_dict.keys())} jobs from {cache_file}"
         )
         return jobs_dict
 
-    def dump_pickle(self, jobs_dict: Dict[str, Job]) -> None:
-        """Dump a pickle of the daily scrape dict
+    def write_cache(self, jobs_dict: Dict[str, Job],
+                    cache_file: str = None) -> None:
+        """Dump a jobs_dict into a pickle
         """
-        pickle.dump(jobs_dict, open(self.daily_pickle_file, 'wb'))
-        n_jobs = 2 # FIXME
+        cache_file = cache_file if cache_file else self.daily_cache_file
+        pickle.dump(jobs_dict, open(cache_file, 'wb'))
         self.logger.info(
-            f"Dumped {n_jobs} jobs to {self.daily_pickle_file}"
+            f"Dumped {len(jobs_dict.keys())} jobs to {cache_file}"
         )
 
     def read_master_csv(self) -> Dict[str, Job]:
@@ -178,25 +197,56 @@ class JobFunnel(object):
         Returns:
             Dict[str, Job]: unique Job objects in the CSV
         """
+        jobs_dict = {}  # type: Dict[str, Job]
         with open(self.config.master_csv_file, 'r', encoding='utf8',
                   errors='ignore') as csvfile:
-
-            jobs_dict = {}  # type: Dict[str, Job]
             for row in csv.DictReader(csvfile):
-                # NOTE: this is for legacy support:
-                locale = row['locale'] if 'locale' in row else ''
+                # NOTE: we are doing legacy support here with 'blurb' etc.
                 if 'description' in row:
                     short_description = row['description']
                 else:
                     short_description = ''
+                post_date = datetime.strptime(row['date'], '%Y-%m-%d')
                 if 'scrape_date' in row:
-                    scrape_date = datetime.fromisoformat(row['scrape_date'])
+                    scrape_date = datetime.strptime(
+                        row['scrape_date'], '%Y-%m-%d'
+                    )
                 else:
-                    scrape_date = datetime(1970, 1, 1)
+                    scrape_date = post_date
                 if 'raw' in row:
                     raw = row['raw']
                 else:
                     raw = None
+
+                # We need to convert from user statuses
+                # TODO: put this in Job?
+                status = None
+                if 'status' in row:
+                    status_str = row['status'].strip()
+                    for p_status in JobStatus:
+                        if status_str.lower() == p_status.name.lower():
+                            status = p_status
+                            break
+                if not status:
+                    self.logger.warning(
+                        f"Unknown status {status_str}, setting to UNKNOWN"
+                    )
+                    status = JobStatus.UNKNOWN
+
+                # NOTE: this is for legacy support:
+                locale = None
+                if 'locale' in row:
+                    locale_str = row['locale'].strip()
+                    for p_locale in Locale:
+                        if locale_str.lower() == p_locale.name.lower():
+                            locale = p_locale
+                            break
+                if not locale:
+                    self.logger.warning(
+                        f"Unknown locale {locale_str}, setting to UNKNOWN"
+                    )
+                    locale = locale.UNKNOWN
+
                 job = Job(
                     title=row['title'],
                     company=row['company'],
@@ -206,10 +256,10 @@ class JobFunnel(object):
                     url=row['link'],
                     locale=locale,
                     query=row['query'],
-                    status=row['status'],
+                    status=status,
                     provider=row['provider'],
                     short_description=short_description,
-                    post_date=row['date'],
+                    post_date=post_date,
                     scrape_date=scrape_date,
                     raw=raw,
                     tags=row['tags'].split(','),
@@ -218,7 +268,7 @@ class JobFunnel(object):
                 jobs_dict[job.key_id] = job
 
         self.logger.info(
-            f"Read out {len(jobs_dict.keys())} jobs from "
+            f"Read {len(jobs_dict.keys())} jobs from master-CSV: "
             f"{self.config.master_csv_file}"
         )
         return jobs_dict
@@ -234,40 +284,98 @@ class JobFunnel(object):
             writer.writeheader()
             for job in jobs.values():
                 job.validate()
-                writer.writerow(job.get_csv_row())
+                writer.writerow(job.as_row)
         n_jobs = len(jobs)
         self.logger.info(
             f"Wrote out {n_jobs} jobs to {self.config.master_csv_file}"
         )
 
-    def update_user_deny_list(self):
-        """Read the master CSV file and pop jobs by status into our user deny
-        list (which is a JSON)
-        """
-        # FIXME: impl.
-        self.logger.info(f"Updated {self.config.user_deny_list_file}")
+    def update_block_list(self):
+        """Read the master CSV file and pop jobs by status into our user block
+        list (which is a JSON).
 
-    def filter_excluded_jobs(self, jobs_dict: Dict[str, Job]) -> int:
-        """Load the user's deny-list if it exists and pop any matching jobs by
-        key
-        Returns the number of filtered jobs
-        NOTE: modifies in-place
-        FIXME: load the company deny-list as well
+        NOTE: adding jobs to block list will result in filter() removing them
+        from all scraped & cached jobs in the future.
         """
-        n_filtered = 0
-        if os.path.isfile(self.config.user_deny_list_file):
-            deny_dict = json.load(
-                open(self.config.user_deny_list_file, 'r')
-            )
-            for jobid in deny_dict:
-                if jobid in jobs_dict:
-                    jobs_dict.pop(jobid)
-                    n_filtered += 1
+        if os.path.isfile(self.config.master_csv_file):
+
+            # Load existing filtered jobs, if any
+            if os.path.isfile(self.config.user_block_list_file):
+                blocked_jobs_dict = json.load(
+                    open(self.config.user_block_list_file, 'r')
+                )
+            else:
+                blocked_jobs_dict = {}
+
+            # Add jobs from csv that need to be filtered away, if any
+            n_jobs_added = 0
+            for job in self.read_master_csv().values():
+                if job.is_remove_status and job.key_id not in blocked_jobs_dict:
+                    n_jobs_added += 1
+                    logging.info(
+                        f'Added {job.key_id} to '
+                        f'{self.config.user_block_list_file}'
+                    )
+                    blocked_jobs_dict[job.key_id] = {
+                        'title': job.title,
+                        'post_date': job.post_date.strftime('%Y-%m-%d'),
+                        'description': job.description,
+                        'status': job.status,
+                    }
+
+            # Write out complete list with any additions from the masterlist
+            # NOTE: we use indent=4 so that it stays human-readable.
+            with open(self.config.user_block_list_file, 'w',
+                      encoding='utf8') as outfile:
+                outfile.write(
+                    json.dumps(
+                        blocked_jobs_dict,
+                        indent=4,
+                        sort_keys=True,
+                        separators=(',', ': '),
+                        ensure_ascii=False,
+                    )
+                )
             self.logger.info(
-                f'removed {n_filtered} jobs present in filter-list'
+                f"Added {n_jobs_added} jobs to block-list: "
+                f"{self.config.user_block_list_file}"
             )
         else:
-            self.logger.warning(
-                f'No jobs filtered, missing: {self.config.user_deny_list_file}'
+            logging.info(
+                "No master-CSV present, did not update block-list: "
+                f"{self.config.user_block_list_file}"
             )
+
+    def filter(self, jobs_dict: Dict[str, Job]) -> int:
+        """Remove jobs from jobs_dict if they are:
+            1. in our block-list
+            2. status == DELETE,
+        Returns the number of filtered jobs
+        NOTE: modifies in-place
+        TODO: would be cool if we could run TFIDF in here too
+        FIXME: load the global block-list as well
+        """
+        if os.path.isfile(self.config.user_block_list_file):
+            block_dict = json.load(
+                open(self.config.user_block_list_file, 'r')
+            )
+        else:
+            block_dict = {}
+
+        filter_jobs_ids = []
+        for key_id, job in jobs_dict.items():
+            if (key_id in block_dict
+                or job_is_old(job, self.config.search_terms.max_listing_days)
+                or job.is_remove_status):
+                filter_jobs_ids.append(key_id)
+
+        for key_id in filter_jobs_ids:
+            jobs_dict.pop(key_id)
+
+        n_filtered = len(filter_jobs_ids)
+        if n_filtered > 0:
+            self.logger.info(f'Filtered-out {n_filtered} jobs from results.')
+        else:
+            self.logger.info(f'No jobs filtered.')
+
         return n_filtered

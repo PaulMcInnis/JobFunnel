@@ -6,10 +6,10 @@ from jobfunnel.config import BaseConfig
 
 
 DEFAULT_SEARCH_RADIUS_KM = 25
-DEFAULT_MAX_LISTING_DAYS = 10
+DEFAULT_MAX_LISTING_DAYS = 45
 
 
-class SearchTerms(BaseConfig):
+class SearchConfig(BaseConfig):
     """Config object to contain region of interest for a Locale
 
     NOTE: ideally we'd have one of these per-locale, per-website, but then

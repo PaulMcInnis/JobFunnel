@@ -1,8 +1,7 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
-from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date, datetime
 from enum import Enum
 import re
 import string
@@ -14,24 +13,21 @@ from jobfunnel.resources.resources import CSV_HEADER
 
 PRINTABLE_STRINGS = set(string.printable)
 
-# Initialize list and store regex objects of date quantifiers TODO: refactor
-HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)')
-DAY_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)')
-MONTH_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?month')
-YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year')
-RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
-RECENT_REGEX_B = re.compile(r'[yY]esterday')
-
-
 class JobStatus(Enum):
     """Job statuses that are built-into jobfunnel
     """
-    NEW = 1
-    ARCHIVE = 2
-    INTERVIEWING = 3
-    INTERVIEWED = 4
-    REJECTED = 5
-    ACCEPTED = 6
+    UNKNOWN = 1
+    NEW = 2
+    ARCHIVE = 3
+    INTERVIEWING = 4
+    INTERVIEWED = 5
+    REJECTED = 6
+    ACCEPTED = 7
+    DELETE = 8
+    INTERESTED = 9
+
+
+REMOVE_STATUSES = [JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED]
 
 
 class Job():
@@ -106,10 +102,17 @@ class Job():
         # Semi-private attrib for debugging
         self._raw_scrape_data = raw
 
-    def get_csv_row(self) -> Dict[str, str]:
-        """Builds a CSV row for this job entry
+    @property
+    def is_remove_status(self) -> bool:
+        """Return True if the job's status is one of our removal statuses.
+        """
+        return self.status in REMOVE_STATUSES
 
-        TODO: this is legacy, no support for short_description/raw rn.
+    @property
+    def as_row(self) -> Dict[str, str]:
+        """Builds a CSV row dict for this job entry
+
+        TODO: this is legacy, no support for short_description/raw yet.
         """
         return dict([
             (h, v) for h,v in zip(
@@ -119,7 +122,7 @@ class Job():
                     self.title,
                     self.company,
                     self.location,
-                    self.post_date,
+                    self.post_date.strftime('%Y-%m-%d'),
                     self.description,
                     ', '.join(self.tags),
                     self.url,
@@ -133,57 +136,14 @@ class Job():
 
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
-        TODO: do this automatically upon assignment (override assignment)
+        FIXME: do this automatically upon assignment (override assignment)
+        ...This way of doing it is janky and might not work right...
         """
-        for attr in vars(self):
-            if type(attr) == str:
-                self.attr = ''.join(
-                    filter(lambda x: x in PRINTABLE_STRINGS, self.title)
-                )
-
-    def set_post_date_from_relative_date(self) -> None:
-        """Identifies a job's post date via post age, updates in-place
-        """
-        post_date = None
-        # Supports almost all formats like 7 hours|days and 7 hr|d|+d
-        try:
-            # hours old
-            hours_ago = HOUR_REGEX.findall(self.post_date)[0]
-            post_date = datetime.now() - timedelta(hours=int(hours_ago))
-        except IndexError:
-            # days old
-            try:
-                days_ago = DAY_REGEX.findall(self.post_date)[0]
-                post_date = datetime.now() - timedelta(days=int(days_ago))
-            except IndexError:
-                # months old
-                try:
-                    months_ago = MONTH_REGEX.findall(self.post_date)[0]
-                    post_date = datetime.now() - relativedelta(
-                        months=int(months_ago))
-                except IndexError:
-                    # years old
-                    try:
-                        years_ago = YEAR_REGEX.findall(self.post_date)[0]
-                        post_date = datetime.now() - relativedelta(
-                            years=int(years_ago))
-                    except IndexError:
-                        # try phrases like today, just posted, or yesterday
-                        if (RECENT_REGEX_A.findall(self.post_date) and
-                                not post_date):
-                            # today
-                            post_date = datetime.now()
-                        elif RECENT_REGEX_B.findall(self.post_date):
-                            # yesterday
-                            post_date = datetime.now() - timedelta(days=int(1))
-                        elif not post_date:
-                            # we have failed.
-                            raise ValueError(
-                                f"Unable to calculate date for {self.title}"
-                            )
-
-        # Format date in standard format e.g. 2020-01-01
-        self.post_date = post_date.strftime('%Y-%m-%d')
+        for attr in [self.title, self.company, self.description, self.tags,
+                     self.url, self.key_id, self.provider, self.query]:
+            attr = ''.join(
+                filter(lambda x: x in PRINTABLE_STRINGS, self.title)
+            )
 
     def validate(self) -> None:
         """TODO: implement this just to ensure that the metadata is good"""
