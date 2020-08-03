@@ -15,7 +15,7 @@ from time import time
 
 from jobfunnel.config import JobFunnelConfig
 from jobfunnel.backend import Job, JobStatus, Locale
-from jobfunnel.resources.resources import CSV_HEADER
+from jobfunnel.resources import CSV_HEADER
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
 
 
@@ -320,7 +320,7 @@ class JobFunnel(object):
                         'title': job.title,
                         'post_date': job.post_date.strftime('%Y-%m-%d'),
                         'description': job.description,
-                        'status': job.status,
+                        'status': job.status.name,
                     }
 
             # Write out complete list with any additions from the masterlist

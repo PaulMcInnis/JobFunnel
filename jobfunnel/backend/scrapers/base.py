@@ -7,7 +7,7 @@ from typing import Dict, List
 import random
 from requests import Session
 
-from jobfunnel import USER_AGENT_LIST
+from jobfunnel.resources import USER_AGENT_LIST
 from jobfunnel.backend import Job
 from jobfunnel.backend.localization import Locale
 #from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
