@@ -1,25 +1,26 @@
 """Config object to run JobFunnel
 """
+import logging
 from typing import Optional, List
 import os
 
 from jobfunnel.backend.scrapers import BaseScraper
-from jobfunnel.config import BaseConfig, ProxyConfig, SearchTerms, DelayConfig
+from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
 
 
 class JobFunnelConfig(BaseConfig):
-    """Simple config object to contain paths and sub-configs
+    """Master config containing all the information we need to run jobfunnel
     """
 
     def __init__(self,
                  master_csv_file: str,
-                 user_deny_list_file: str,
-                 global_dely_list_file: str,
+                 user_block_list_file: str,
+                 company_block_list_file: str,
                  cache_folder: str,
-                 search_terms: SearchTerms,
+                 search_terms: SearchConfig,
                  scrapers: List[BaseScraper],
                  log_file: str,
-                 log_level: Optional[int] = 0,
+                 log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
                  delay_config: Optional[DelayConfig] = None,
                  proxy_config: Optional[ProxyConfig] = None) -> None:
@@ -28,16 +29,17 @@ class JobFunnelConfig(BaseConfig):
 
         Args:
             master_csv_file (str): path to the .csv file that user interacts w/
-            user_deny_list_file (str): path to a JSON that contains jobs user
+            user_block_list_file (str): path to a JSON that contains jobs user
                 has decided to omit from their .csv file (i.e. archive status)
-            global_dely_list_file (str): path to a JSON containing companies
-                that the user wants to never see in their .csv file
+            company_block_list_file (str): path to a JSON containing companies
+                that the user wants to never see in their .csv file for all
+                their searches
             cache_folder (str): folder where all scrape data will be stored
             search_terms (SearchTerms): SearchTerms config which contains the
                 desired job search information (i.e. keywords)
             scrapers (List[BaseScraper]): List of scrapers we will scrape from
             log_file (str): file to log all logger calls to
-            log_level (int): level to log at, use 20 for debugging
+            log_level (int): level to log at, use 10 logging.DEBUG for more data
             no_scrape (Optional[bool], optional): If True, will not scrape data
                 at all, instead will only update filters and CSV. Defaults to
                 False.
@@ -47,8 +49,8 @@ class JobFunnelConfig(BaseConfig):
                  Defaults to None, which will result in no proxy being used
         """
         self.master_csv_file = master_csv_file
-        self.user_deny_list_file = user_deny_list_file
-        self.global_dely_list_file = global_dely_list_file
+        self.user_block_list_file = user_block_list_file
+        self.company_block_list_file = company_block_list_file
         self.cache_folder = cache_folder
         self.search_terms = search_terms
         self.scrapers = scrapers
@@ -56,7 +58,7 @@ class JobFunnelConfig(BaseConfig):
         self.log_level = log_level
         self.no_scrape = no_scrape
         if not delay_config:
-            self.delay_config = DelayConfig()
+            self.delay_config = DelayConfig(5.0, 1.0, 'linear')
         else:
             self.delay_config = delay_config
         self.proxy_config = proxy_config

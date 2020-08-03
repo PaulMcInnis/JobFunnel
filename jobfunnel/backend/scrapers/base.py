@@ -10,7 +10,7 @@ from requests import Session
 from jobfunnel import USER_AGENT_LIST
 from jobfunnel.backend import Job
 from jobfunnel.backend.localization import Locale
-from jobfunnel.config import SearchTerms
+#from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
 
 class BaseScraper(ABC):
@@ -21,7 +21,7 @@ class BaseScraper(ABC):
     """
 
     @abstractmethod
-    def __init__(self, session: Session, search_terms: SearchTerms,
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
         # TODO: can we set self.session etc so inherited classes don't have to?
         pass
@@ -61,19 +61,5 @@ class BaseScraper(ABC):
 
         Returns:
             List[Job]: list of jobs scraped from the job source
-        """
-        pass
-
-    # TODO: we need to filter jobs here.
-    def filter_jobs(self, jobs: List[Job]) -> List[Job]:
-        """Descriminate each Job in jobs using filters
-
-        TODO: use self.filters: List[Filter]
-
-        Args:
-            jobs (List[job]): input jobs
-
-        Returns:
-            List[Job]: output jobs
         """
         pass

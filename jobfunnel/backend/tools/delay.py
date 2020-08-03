@@ -1,14 +1,18 @@
+"""Module for calculating random or non-random delay
 """
-Module for calculating random or non-random delay
-"""
-import sys
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from math import ceil, log, sqrt
 from numpy import arange
 from random import uniform
+import sys
+from typing import Dict, Union, List
+from time import time
+from logging import warning, Logger
+
 from scipy.special import expit
-from typing import Dict, Union
-from logging import warning
+
+from jobfunnel.config import DelayConfig
+from jobfunnel.backend import Job
 
 
 def _c_delay(list_len: int, delay: Union[int, float]):
@@ -61,62 +65,83 @@ def _sig_delay(list_len: int, delay: Union[int, float]):
     return delays.tolist()  # convert np array back to list
 
 
-def delay_alg(list_len, delay_config: Dict):
+def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
     """ Checks delay config and returns calculated delay list.
 
-        Args:
-            list_len: length of scrape job list
-            delay_config: Delay configuration dictionary
+    NOTE: we do this to be respectful to online job sources
 
-        Returns:
-            list of delay time matching length of scrape job list
+    Args:
+        list_len: length of scrape job list
+        delay_config: Delay configuration dictionary
+
+    Returns:
+        list of delay time matching length of scrape job list
     """
-    if isinstance(list_len, list):  # Prevents breaking if a list was passed
-        list_len = len(list_len)
+    delay_config.validate()
 
-    # init and check numerical arguments
-    delay = delay_config['delay']
-    if delay <= 0:
-        raise ValueError("\nYour delay is set to 0 or less.\nCancelling "
-                         "execution...")
+    # Delay calculations using specified equations
+    if delay_config.function_name == 'constant':
+        delay_vals = _c_delay(list_len, delay_config.duration)
+    elif delay_config.function_name == 'linear':
+        delay_vals = _lin_delay(list_len, delay_config.duration)
+    elif delay_config.function_name == 'sigmoid':
+        delay_vals = _sig_delay(list_len, delay_config.duration)
 
-    min_delay = delay_config['min_delay']
-    if min_delay < 0 or min_delay >= delay:
-        warning(
-            "\nMinimum delay is below 0, or more than or equal to delay."
-            "\nSetting to 0 and continuing execution."
-            "\nIf this was a mistake, check your command line"
-            " arguments or settings file. \n")
-        min_delay = 0
-
-    # delay calculations using specified equations
-    if delay_config['function'] == 'constant':
-        delay_calcs = _c_delay(list_len, delay)
-    elif delay_config['function'] == 'linear':
-        delay_calcs = _lin_delay(list_len, delay)
-    elif delay_config['function'] == 'sigmoid':
-        delay_calcs = _sig_delay(list_len, delay)
-
-    # check if minimum delay is above 0 and less than last element
-    if 0 < min_delay:
-        # sets min_delay to values greater than itself in delay_calcs
-        for i, n in enumerate(delay_calcs):
-            if n > min_delay:
+    # Check if minimum delay is above 0 and less than last element
+    if 0 < delay_config.min_delay:
+        # sets min_delay to values greater than itself in delay_vals
+        for i, n in enumerate(delay_vals):
+            if n > delay_config.min_delay:
                 break
-            delay_calcs[i] = min_delay
+            delay_vals[i] = delay_config.min_delay
 
-    # outputs final list of delays rounded up to 3 decimal places
-    if delay_config['random']:  # check if random delay was specified
+    # Outputs final list of delays rounded up to 3 decimal places
+    if delay_config.random:  # check if random delay was specified
         # random.uniform(a, b) a = lower bound, b = upper bound
-        if delay_config['converge']:  # checks if converging delay is True
-            # delay_calcs = lower bound, delay = upper bound
-            delays = [round(uniform(x, delay), 3) for x in delay_calcs]
+        if delay_config.converge:  # checks if converging delay is True
+            # delay_vals = lower bound, delay = upper bound
+            durations = [
+                round(uniform(x, delay_config.duration), 3) for x in delay_vals
+            ]
         else:
-            # lb = lower bounds, delay_calcs = upper bound
-            delays = [round(uniform(min_delay, x), 3) for x in delay_calcs]
+            # lb = lower bounds, delay_vals = upper bound
+            durations = [
+                round(uniform(delay_config.min_delay, x), 3) for x in delay_vals
+            ]
 
     else:
-        delays = [round(i, 3) for i in delay_calcs]
-    # set first element to 0 so scrape starts right away
-    delays[0] = 0
-    return delays
+        durations = [round(i, 3) for i in delay_vals]
+
+    # Always set first element to 0 so scrape starts right away
+    durations[0] = 0
+
+    return durations
+
+
+def delay_threader(jobs_list: List[Job], scrape_fn: object,
+                   parse_fn: object, threads: ThreadPoolExecutor,
+                   logger: Logger, delays: List[float]) -> None:
+    """Method to scrape descriptions from individual indeed postings.
+    with respectful-delaying
+    """
+    scrape_jobs = zip(jobs_list, delays)
+
+    # Submits jobs and stores futures in dict
+    start = time()
+    results = {
+        threads.submit(scrape_fn, job, delays): job.key_id
+        for job, delays in scrape_jobs
+    }
+
+    # Loops through futures as completed and removes each if successfully parsed
+    while results:
+        for future in as_completed(results):
+            job, html = future.result()
+            parse_fn(job, html)
+            del results[future]
+            del html
+
+    # Cleanup + log
+    threads.shutdown()
+    end = time()
+    logger.info(f'Scrape delay took {(end - start):.3f}s')

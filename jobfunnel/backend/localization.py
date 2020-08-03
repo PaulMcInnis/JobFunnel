@@ -10,9 +10,10 @@ class Locale(Enum):
 
     TODO: better way using the locale module?
     """
-    CANADA_ENGLISH = 1
-    CANADA_FRENCH = 2
-    USA_ENGLISH = 3
+    UNKNOWN = 1
+    CANADA_ENGLISH = 2
+    CANADA_FRENCH = 3
+    USA_ENGLISH = 4
 
 
 def get_domain_from_locale(locale: Locale) -> str:
