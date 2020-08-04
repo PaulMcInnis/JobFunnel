@@ -19,6 +19,9 @@ from jobfunnel.resources import CSV_HEADER
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
 
 
+MAX_BLOCK_LIST_DESC_CHARS = 150  # maximum len of description in block_list JSON
+
+
 class JobFunnel(object):
     """Class that initializes a Scraper and scrapes a website to get jobs
     """
@@ -319,7 +322,8 @@ class JobFunnel(object):
                     blocked_jobs_dict[job.key_id] = {
                         'title': job.title,
                         'post_date': job.post_date.strftime('%Y-%m-%d'),
-                        'description': job.description,
+                        'description': '{0:<MAX_BLOCK_LIST_DESC_CHARS}'.format(
+                            job.description),
                         'status': job.status.name,
                     }
 
@@ -349,9 +353,11 @@ class JobFunnel(object):
     def filter(self, jobs_dict: Dict[str, Job]) -> int:
         """Remove jobs from jobs_dict if they are:
             1. in our block-list
-            2. status == DELETE,
+            2. status == a removal status string (i.e. DELETE)
+            3. job.company == one of our blocked company names
+
         Returns the number of filtered jobs
-        NOTE: modifies in-place
+
         TODO: would be cool if we could run TFIDF in here too
         FIXME: load the global block-list as well
         """
@@ -360,13 +366,15 @@ class JobFunnel(object):
                 open(self.config.user_block_list_file, 'r')
             )
         else:
-            block_dict = {}
+            block_dict = {}  # type: Dict[str, Job]
 
         filter_jobs_ids = []
         for key_id, job in jobs_dict.items():
             if (key_id in block_dict
                 or job_is_old(job, self.config.search_terms.max_listing_days)
-                or job.is_remove_status):
+                or job.is_remove_status
+                or job.company in self.config.search_terms.blocked_company_names
+                ):
                 filter_jobs_ids.append(key_id)
 
         for key_id in filter_jobs_ids:

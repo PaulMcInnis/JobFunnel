@@ -15,6 +15,7 @@ PRINTABLE_STRINGS = set(string.printable)
 
 class JobStatus(Enum):
     """Job statuses that are built-into jobfunnel
+    NOTE: these are the only valid values for entries in 'status' in our CSV
     """
     UNKNOWN = 1
     NEW = 2
@@ -27,9 +28,12 @@ class JobStatus(Enum):
     INTERESTED = 9
     APPLIED = 10
     APPLY = 11
+    OLD = 12
 
 
-REMOVE_STATUSES = [JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED]
+REMOVE_STATUSES = [
+    JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED, JobStatus.OLD
+]
 
 
 class Job():

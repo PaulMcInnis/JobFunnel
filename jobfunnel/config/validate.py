@@ -1,7 +1,7 @@
 import re
 
-from .valid_options import DOMAINS, PROVIDERS, DELAY_FUN
-from .parser import ConfigError
+from jobfunnel.config.valid_options import DOMAINS, PROVIDERS, DELAY_FUN
+from jobfunnel.config import ConfigError
 
 
 def validate_region(region):

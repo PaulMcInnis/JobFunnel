@@ -4,7 +4,7 @@ CONFIG_TYPES = {
     'search_terms': {
         'region': {
             'province': [str],
-            'state': [str],
+            #'state': [str], # FIXME: region needs to respect localization
             'city': [str],
             'domain': [str],
             'radius': [int]

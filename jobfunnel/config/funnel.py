@@ -1,11 +1,21 @@
 """Config object to run JobFunnel
 """
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import os
 
-from jobfunnel.backend.scrapers import BaseScraper
+from jobfunnel.backend.scrapers import (
+    BaseScraper, IndeedScraperCAEng, IndeedScraperUSAEng)
 from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
+
+
+SCRAPER_MAP = {
+    'indeed': IndeedScraperCAEng,  # TODO: deprecate and enforce below options
+    'INDEED_CANADA_ENG': IndeedScraperCAEng,
+    'INDEED_USA_ENG': IndeedScraperUSAEng,
+    #'monster': MonsterScraperCAEng,  FIXME
+    #'MONSTER_CANADA_ENG': MonsterScraperCAEng,
+}
 
 
 class JobFunnelConfig(BaseConfig):
@@ -15,7 +25,6 @@ class JobFunnelConfig(BaseConfig):
     def __init__(self,
                  master_csv_file: str,
                  user_block_list_file: str,
-                 company_block_list_file: str,
                  cache_folder: str,
                  search_terms: SearchConfig,
                  scrapers: List[BaseScraper],
@@ -31,9 +40,6 @@ class JobFunnelConfig(BaseConfig):
             master_csv_file (str): path to the .csv file that user interacts w/
             user_block_list_file (str): path to a JSON that contains jobs user
                 has decided to omit from their .csv file (i.e. archive status)
-            company_block_list_file (str): path to a JSON containing companies
-                that the user wants to never see in their .csv file for all
-                their searches
             cache_folder (str): folder where all scrape data will be stored
             search_terms (SearchTerms): SearchTerms config which contains the
                 desired job search information (i.e. keywords)
@@ -50,7 +56,6 @@ class JobFunnelConfig(BaseConfig):
         """
         self.master_csv_file = master_csv_file
         self.user_block_list_file = user_block_list_file
-        self.company_block_list_file = company_block_list_file
         self.cache_folder = cache_folder
         self.search_terms = search_terms
         self.scrapers = scrapers
@@ -62,6 +67,16 @@ class JobFunnelConfig(BaseConfig):
         else:
             self.delay_config = delay_config
         self.proxy_config = proxy_config
+
+        # Create folder that out output files are within, if it doesn't exist
+        for path_attr in [self.master_csv_file, self.user_block_list_file,
+                          self.cache_folder]:
+            if path_attr:
+                output_dir = os.path.dirname(os.path.abspath(path_attr))
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+
+        self.validate()
 
     @property
     def scraper_names(self) -> str:
@@ -85,3 +100,50 @@ class JobFunnelConfig(BaseConfig):
         if self.proxy_config:
             self.proxy_config.validate()
         self.delay_config.validate()
+
+
+def build_funnel_cfg_from_legacy(config: Dict[str, Any]):
+    """Build config objects from legacy config dict
+    FIXME: when we implement a yaml parser with localization we can have it
+    """
+    search_cfg = SearchConfig(
+        keywords=config['search_terms']['keywords'],
+        province=config['search_terms']['region']['province'],
+        state=None,
+        city=config['search_terms']['region']['city'],
+        distance_radius_km=config['search_terms']['region']['radius'],
+        return_similar_results=False,
+        max_listing_days=config['max_listing_days'],
+        blocked_company_names=config['black_list'],
+    )
+
+    delay_cfg = DelayConfig(
+        duration=config['delay_config']['delay'],
+        min_delay=config['delay_config']['min_delay'],
+        function_name=config['delay_config']['function'],
+        random=config['delay_config']['random'],
+        converge=config['delay_config']['converge'],
+    )
+
+    if config['proxy']:
+        proxy_cfg = ProxyConfig(
+            protocol=config['proxy']['protocol'],
+            ip_address=config['proxy']['ip_address'],
+            port=config['proxy']['port'],
+        )
+    else:
+        proxy_cfg = None
+
+    funnel_cfg = JobFunnelConfig(
+        master_csv_file=config['master_list_path'],
+        user_block_list_file=config['filter_list_path'],
+        cache_folder=config['data_path'],
+        search_terms=search_cfg,
+        scrapers=[SCRAPER_MAP[sc_name] for sc_name in config['providers']],
+        log_file=config['log_path'],
+        log_level=config['log_level'],
+        no_scrape=config['no_scrape'],
+        delay_config=delay_cfg,
+        proxy_config=proxy_cfg,
+    )
+    return funnel_cfg
