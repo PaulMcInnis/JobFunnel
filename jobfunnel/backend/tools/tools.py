@@ -1,5 +1,7 @@
 """Assorted tools for all aspects of funnelin' that don't fit elsewhere
 """
+import re
+
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
@@ -43,3 +45,18 @@ def get_webdriver():
                             "Chrome, Opera, Microsoft Edge, Internet Explorer]"
                         )
     return driver
+
+
+def split_url(url):
+    # capture protocol, ip address and port from given url
+    match = re.match(r'^(http[s]?):\/\/([A-Za-z0-9.]+):([0-9]+)?(.*)$', url)
+
+    # if not all groups have a match, match will be None
+    if match is not None:
+        return {
+            'protocol': match.group(1),
+            'ip_address': match.group(2),
+            'port': match.group(3),
+        }
+    else:
+        return None

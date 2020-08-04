@@ -11,5 +11,6 @@ class BaseConfig(ABC):
 
     def validate(self) -> None:
         """This should raise Exceptions if self.attribs are bad
+        FIXME: some way to run this on object creation would be nice
         """
         pass

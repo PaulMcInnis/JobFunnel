@@ -30,6 +30,7 @@ def job_is_old(job: Job, number_of_days: int) -> bool:
     """
     assert number_of_days > 0
     # Calculate the oldest date a job can be
+    # NOTE: we may want to just set job.status = JobStatus.OLD
     return job.post_date < (T_NOW - timedelta(days=number_of_days))
 
 

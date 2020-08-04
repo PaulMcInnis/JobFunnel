@@ -7,34 +7,28 @@ TODO/FIXME:
     * make it easier to continue an existing search
     * make it easier to run multiple searches at once w.r.t caching
     * simplified CLI args with new --recover and --clean options
-    * impl Cereberus for YAML validation
     * add warning around seperate cache folders blocklists per search
     * document API usage in readme
     ** add back the duplicates JSON
 """
+import argparse
 import sys
 from typing import Union
 import logging
 
 from .backend.jobfunnel import JobFunnel
-from .config import JobFunnelConfig, SearchConfig
-from .backend.scrapers import IndeedScraperCAEng
+from .config import parse_config, validate_config, build_funnel_cfg_from_legacy
 
 
 def main():
     """Parse CLI and call jobfunnel() to manage scrapers and lists
     """
-    # TODO: need to warn user to use seperate cache folder and
-    # block list per search
-
-    # Init TODO: parse CLI to do this.
-    search_terms = SearchConfig(['Python', 'Scientist'], 'ON', None, 'waterloo', 25)
-    config = JobFunnelConfig(
-        't_m.csv', 't_udnl.json', 't_gdnl.json', './t_cache',
-        search_terms, [IndeedScraperCAEng], 't_log.log',
-        log_level=logging.INFO,
-    )
-    JobFunnel(config).run()
+    # Parse CLI into a dict
+    config = parse_config()
+    validate_config(config)
+    funnel_cfg = build_funnel_cfg_from_legacy(config)
+    job_funnel = JobFunnel(funnel_cfg)
+    job_funnel.run()
 
 
 if __name__ == '__main__':
