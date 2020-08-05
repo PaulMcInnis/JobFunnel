@@ -19,12 +19,11 @@ class BaseScraper(ABC):
     TODO: accept filters: List[Filter] here if we have Filter(ABC)
     NOTE: we want to use filtering here because scraping blurbs can be slow.
     """
-
-    @abstractmethod
     def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
-        # TODO: can we set self.session etc so inherited classes don't have to?
-        pass
+        self.session = session
+        self.config = config
+        self.logger = logger
 
     @property
     def bs4_parser(self) -> str:

@@ -7,9 +7,9 @@ output_path: 'search'
 
 # providers from which to search (case insensitive)
 providers:
-  - 'Indeed'
-#  - 'GlassDoorStatic'  # FIXME
- # - 'Monster'
+ # - 'glassdoor'
+  - 'indeed'
+ # - 'Monster_CANADA_ENG'
 
 
 

@@ -7,6 +7,7 @@ import yaml
 
 from jobfunnel.config.valid_options import CONFIG_TYPES
 from jobfunnel.backend.tools.tools import split_url
+from jobfunnel.resources import DEFAULT_YAML_PATH
 
 
 log_levels = {'critical': logging.CRITICAL, 'error': logging.ERROR,
@@ -243,10 +244,7 @@ def parse_config():
 
     """
     # load the default settings
-    default_yaml_path = os.path.join(
-        os.path.normpath(os.path.dirname(__file__)), 'settings.yaml'
-    )
-    default_yaml = yaml.safe_load(open(default_yaml_path, 'r'))
+    default_yaml = yaml.safe_load(open(DEFAULT_YAML_PATH, 'r'))
 
     # parse the command line arguments
     cli = parse_cli()
