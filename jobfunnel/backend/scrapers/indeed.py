@@ -28,6 +28,8 @@ YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year')
 RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
 RECENT_REGEX_B = re.compile(r'[yY]esterday')
 
+MAX_RESULTS_PER_INDEED_PAGE = 50
+
 
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
@@ -36,10 +38,8 @@ class BaseIndeedScraper(BaseScraper):
                  logger: logging.Logger) -> None:
         """Init that contains indeed specific stuff
         """
-        self.session = session
-        self.config = config
-        self.logger = logger
-        self.max_results_per_page = 50
+        super().__init__(session, config, logger)
+        self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
         self.query = '+'.join(self.config.search_terms.keywords)
 
     def scrape(self) -> Dict[str, Job]:

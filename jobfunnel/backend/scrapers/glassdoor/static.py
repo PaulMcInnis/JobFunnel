@@ -1,134 +1,85 @@
-import re
-
+"""
+"""
+from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, wait
-from logging import info as log_info
-from math import ceil
-from time import sleep, time
+import logging
+from requests import post, Session
+import re
+from typing import Dict, List, Tuple, Optional
+import time
 
-from .jobfunnel import JobFunnel, MASTERLIST_HEADER
-from .tools.tools import filter_non_printables
-from .tools.tools import post_date_from_relative_post_age
-from .glassdoor_base import GlassDoorBase
+from jobfunnel.backend import Job
+from jobfunnel.backend.localization import Locale, get_domain_from_locale
+from jobfunnel.backend.scrapers.glassdoor.base import GlassDoorBase
 
 
 class GlassDoorStatic(GlassDoorBase):
-    def __init__(self, args):
-        super().__init__(args)
-        self.provider = 'glassdoorstatic'
-        self.headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;'
-            'q=0.9,image/webp,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer': 'https://www.glassdoor.{0}/'.format(
-                self.search_terms['region']['domain']
-            ),
-            'upgrade-insecure-requests': '1',
-            'user-agent': self.user_agent,
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-        }
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
+                 logger: logging.Logger):
+        """Init
+        """
+        super().__init__(session, config, logger)
         # Sets headers as default on Session object
-        self.s.headers.update(self.headers)
+        self.session.headers.update(self.headers)
         # Concatenates keywords with '-'
-        self.query = ' '.join(self.search_terms['keywords'])
+        self.query_string = ' '.join(self.search_terms['keywords'])
 
-    def get_search_url(self, method='get'):
-        """gets the glassdoor search url"""
-        # form the location lookup request data
-        data = {'term': self.search_terms['region']
-                ['city'], 'maxLocationsToReturn': 10}
-
-        # form the location lookup url
-        location_url = 'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
-
-        # get location id for search location
-        location_response = self.s.post(
-            # set location headers to override default session headers
-            location_url, headers=self.location_headers, data=data
-        ).json()
-
-        if method == 'get':
-            # @TODO implement get style for glassdoor
-            raise NotImplementedError()
-        elif method == 'post':
-            # form the job search url
-            search = (
-                f'https://www.glassdoor.'
-                f"{self.search_terms['region']['domain']}/Job/jobs.htm"
-            )
-
-            # form the job search data
-            data = {
-                'clickSource': 'searchBtn',
-                'sc.keyword': self.query,
-                'locT': 'C',
-                'locId': location_response[0]['locationId'],
-                'jobType': '',
-                'radius': self.convert_radius(self.search_terms['region']['radius']),
-            }
-
-            return search, data
-        else:
-            raise ValueError(f'No html method {method} exists')
-
-    def search_page_for_job_soups(self, page, url, job_soup_list):
-        """function that scrapes the glassdoor page for a list of job soups"""
-        log_info(f'getting glassdoor page {page} : {url}')
-
+    def search_page_for_job_soups(self, page, url, job_soup_list) -> None:
+        """Scrapes the glassdoor page for a list of job soups
+        TODO: document
+        """
+        self.logger.info(f'Getting glassdoor page {page} : {url}')
         job = BeautifulSoup(
-            self.s.get(url).text, self.bs4_parser
+            self.session.get(url).text, self.bs4_parser
         ).find_all('li', attrs={'class', 'jl'})
         job_soup_list.extend(job)
 
-    def search_joblink_for_blurb(self, job):
-        """function that scrapes the glassdoor job link for the blurb"""
-        search = job['link']
-        log_info(f'getting glassdoor search: {search}')
-
+    def set_description(self, job: Job) -> None:
+        """Scrapes the glassdoor job link for the description
+        TODO: document
+        """
+        self.logger.info(f'Getting glassdoor search: {job.url}')
         job_link_soup = BeautifulSoup(
-            self.s.get(search).text, self.bs4_parser
+            self.session.get(job.url).text, self.bs4_parser
         )
-
         try:
-            job['blurb'] = job_link_soup.find(
-                id='JobDescriptionContainer').text.strip()
+            job.description = job_link_soup.find(
+                id='JobDescriptionContainer'
+            ).text.strip()
+            job.clean_strings()
         except AttributeError:
-            job['blurb'] = ''
+            self.logger.error(f"Unable to scrape description for: {job.url}")
+            job.description = ''
 
-        filter_non_printables(job)
+    def get_description_with_delay(self, job: Job,
+                                   delay: float) -> Tuple[Job, str]:
+        """Gets description from glassdoor job link with a request delay
+        NOTE: this is per-job
+        """
+        time.sleep(delay)
+        self.logger.info(
+            f'Delay of {delay:.2f}s, getting glassdoor search: {job.url}'
+        )
+        return job, self.session.get(job.url).text
 
-    # split apart above function into two so gotten blurbs can be parsed
-    # while others blurbs are being obtained
-    def get_blurb_with_delay(self, job, delay):
-        """gets blurb from glassdoor job link and sets delays for requests"""
-        sleep(delay)
-
-        search = job['link']
-        log_info(f'delay of {delay:.2f}s, getting glassdoor search: {search}')
-
-        res = self.s.get(search).text
-        return job, res
-
-    def scrape(self):
-        """function that scrapes job posting from glassdoor and pickles it"""
-        log_info(f'jobfunnel glassdoor to pickle running @ {self.date_string}')
-
-        # get the search url and data
+    def scrape(self) -> Dict[str, Job]:
+        """Scrapes job posting from glassdoor and pickles it
+        """
+        # Get the search url and data
         search, data = self.get_search_url(method='post')
 
-        # get the html data, initialize bs4 with lxml
-        request_html = self.s.post(search, data=data)
+        # Get the html data
+        request_html = self.session.post(search, data=data)
 
-        # create the soup base
+        # Create the soup base
         soup_base = BeautifulSoup(request_html.text, self.bs4_parser)
 
         # scrape total number of results, and calculate the # pages needed
         num_res = soup_base.find(
             'p', attrs={'class', 'jobsCount'}).text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
-        log_info(
+        self.logger.info(
             f'Found {num_res} glassdoor results for query=' f'{self.query}')
 
         pages = int(ceil(num_res / self.max_results_per_page))
@@ -256,7 +207,7 @@ class GlassDoorStatic(GlassDoorBase):
         if self.delay_config is not None:
             # calls super class to run delay specific threading logic
             super().delay_threader(
-                scrape_list, self.get_blurb_with_delay, self.parse_blurb, threads
+                scrape_list, self.get_description_with_delay, self.parse_blurb, threads
             )
 
         else:  # maps jobs to threads and cleans them up when done
@@ -264,9 +215,62 @@ class GlassDoorStatic(GlassDoorBase):
             start = time()
 
             # maps jobs to threads and cleans them up when done
-            threads.map(self.search_joblink_for_blurb, scrape_list)
+            threads.map(self.set_description, scrape_list)
             threads.shutdown()
 
             # end and print recorded time
             end = time()
             print(f'{self.provider} scrape job took {(end - start):.3f}s')
+
+
+
+class GlassDoorStaticCAEng(GlassDoorStatic):
+
+    @property
+    def locale(self) -> Locale:
+        """Get the localizations that this scraper was built for
+        We will use this to put the right filters & scrapers together
+        """
+        return Locale.CANADA_ENGLISH
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        return{
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+            'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.glassdoor.{0}/'.format(
+                get_domain_from_locale(self.locale)
+            ),
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+        }
+
+
+class GlassDoorStaticUSAEng(GlassDoorStatic):
+
+    @property
+    def locale(self) -> Locale:
+        """Get the localizations that this scraper was built for
+        We will use this to put the right filters & scrapers together
+        """
+        return Locale.CANADA_ENGLISH
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        return{
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+            'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-US;q=0.8,en;q=0.6',
+            'referer': 'https://www.glassdoor.{0}/'.format(
+                get_domain_from_locale(self.locale)
+            ),
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+        }

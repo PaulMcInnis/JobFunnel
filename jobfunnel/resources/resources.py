@@ -2,7 +2,6 @@
 """
 import os
 
-
 CSV_HEADER = [
     'status', 'title', 'company', 'location', 'date', 'blurb', 'tags', 'link',
     'id', 'provider', 'query', 'locale'
@@ -20,3 +19,7 @@ with open(USER_AGENT_LIST_FILE) as file:
         li = line.strip()
         if li and not li.startswith("#"):
             USER_AGENT_LIST.append(line.rstrip('\n'))
+
+DEFAULT_YAML_PATH = os.path.join(
+    os.path.normpath(os.path.dirname(__file__)), 'default_settings.yaml'
+)

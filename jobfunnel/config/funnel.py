@@ -10,10 +10,13 @@ from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
 
 
 SCRAPER_MAP = {
+    # FIXME: make user say 'indeed' and then have it figure out via their
+    # search terms which one to use
     'indeed': IndeedScraperCAEng,  # TODO: deprecate and enforce below options
     'INDEED_CANADA_ENG': IndeedScraperCAEng,
     'INDEED_USA_ENG': IndeedScraperUSAEng,
-    #'monster': MonsterScraperCAEng,  FIXME
+    #'glassdoor':
+    # 'monster': MonsterScraperCAEng,  FIXME
     #'MONSTER_CANADA_ENG': MonsterScraperCAEng,
 }
 
