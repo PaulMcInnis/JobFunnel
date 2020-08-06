@@ -4,21 +4,32 @@ import logging
 from typing import Optional, List, Dict, Any
 import os
 
+from jobfunnel.backend.localization import Locale
 from jobfunnel.backend.scrapers import (
-    BaseScraper, IndeedScraperCAEng, IndeedScraperUSAEng)
+    BaseScraper, IndeedScraperCAEng, IndeedScraperUSAEng, GlassDoorStaticCAEng,
+    GlassDoorStaticUSAEng,
+)
 from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
 
 
+# FIXME make enum
+PROVIDERS_LIST = ['indeed', 'glassdoor', 'monster']
+
+# NOTE: if you add a scraper you need to add it here
 SCRAPER_MAP = {
     # FIXME: make user say 'indeed' and then have it figure out via their
     # search terms which one to use
-    'indeed': IndeedScraperCAEng,  # TODO: deprecate and enforce below options
-    'INDEED_CANADA_ENG': IndeedScraperCAEng,
-    'INDEED_USA_ENG': IndeedScraperUSAEng,
-    #'glassdoor':
+    'indeed': {
+        Locale.CANADA_ENGLISH: IndeedScraperCAEng,
+        Locale.USA_ENGLISH: IndeedScraperUSAEng,
+    },
+    'glassdoor': {
+        Locale.CANADA_ENGLISH: GlassDoorStaticCAEng,
+        Locale.CANADA_ENGLISH: GlassDoorStaticUSAEng,
+    },
     # 'monster': MonsterScraperCAEng,  FIXME
     #'MONSTER_CANADA_ENG': MonsterScraperCAEng,
-}
+}  # type:
 
 
 class JobFunnelConfig(BaseConfig):
@@ -30,7 +41,8 @@ class JobFunnelConfig(BaseConfig):
                  user_block_list_file: str,
                  cache_folder: str,
                  search_terms: SearchConfig,
-                 scrapers: List[BaseScraper],
+                 locale: Locale,
+                 provider_names: List[str],
                  log_file: str,
                  log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
@@ -46,7 +58,9 @@ class JobFunnelConfig(BaseConfig):
             cache_folder (str): folder where all scrape data will be stored
             search_terms (SearchTerms): SearchTerms config which contains the
                 desired job search information (i.e. keywords)
-            scrapers (List[BaseScraper]): List of scrapers we will scrape from
+            provider_names (List[str]): names of job providers / websites that
+                we want to scrape. Must be defined in our PROVIDERS_LIST
+            locale (Locale): the locale we will use for the desired scrapers
             log_file (str): file to log all logger calls to
             log_level (int): level to log at, use 10 logging.DEBUG for more data
             no_scrape (Optional[bool], optional): If True, will not scrape data
@@ -61,10 +75,11 @@ class JobFunnelConfig(BaseConfig):
         self.user_block_list_file = user_block_list_file
         self.cache_folder = cache_folder
         self.search_terms = search_terms
-        self.scrapers = scrapers
+        self.provider_names = provider_names
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
+        self.locale = locale
         if not delay_config:
             self.delay_config = DelayConfig(5.0, 1.0, 'linear')
         else:
@@ -80,6 +95,15 @@ class JobFunnelConfig(BaseConfig):
                     os.makedirs(output_dir)
 
         self.validate()
+
+    @property
+    def scrapers(self) -> BaseScraper:
+        """All the compatible scrapers for the provider_name
+        """
+        return [
+            s for s in SCRAPER_MAP[pn[self.locale]]
+             for pn in self.provider_names
+        ]
 
     @property
     def scraper_names(self) -> str:
@@ -98,6 +122,8 @@ class JobFunnelConfig(BaseConfig):
         NOTE: will raise exceptions if issues are encountered.
         FIXME: impl. more validation here
         """
+        for prov in self.provider_names:
+            assert prov in PROVIDERS_LIST
         assert os.path.exists(self.cache_folder)
         self.search_terms.validate()
         if self.proxy_config:
@@ -142,7 +168,8 @@ def build_funnel_cfg_from_legacy(config: Dict[str, Any]):
         user_block_list_file=config['filter_list_path'],
         cache_folder=config['data_path'],
         search_terms=search_cfg,
-        scrapers=[SCRAPER_MAP[sc_name] for sc_name in config['providers']],
+        provider_names=config['providers'],
+        locale=config['locale'], #FIXME: impl.
         log_file=config['log_path'],
         log_level=config['log_level'],
         no_scrape=config['no_scrape'],

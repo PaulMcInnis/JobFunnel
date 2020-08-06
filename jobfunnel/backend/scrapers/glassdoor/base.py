@@ -31,6 +31,20 @@ class GlassDoorBase(BaseScraper):
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
         self.query_string = '-'.join(self.config.search_terms.keywords)
 
+    @property
+    def headers(self) -> Dict[str, str]:
+        return{
+            'accept': 'text/html,application/xhtml+xml,application/xml;'
+            'q=0.9,image/webp,*/*;q=0.8',
+            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
+            'referer': f'https://www.glassdoor.{self.domain}/',
+            'upgrade-insecure-requests': '1',
+            'user-agent': self.user_agent,
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+        }
+
     def get_search_url(self,
                        method='get') -> Union[str, Tuple[str, Dict[str,str]]]:
         """Gets the glassdoor search url
@@ -86,7 +100,7 @@ class GlassDoorBase(BaseScraper):
             raise ValueError(f'No html method {method} exists')
 
 
-    def quantize_radius(self, radius):
+    def quantize_radius(self, radius: int) -> int:
         """function that quantizes the user input radius to a valid radius
            value: 10, 20, 30, 50, 100, and 200 kilometers
         FIXME: use numpy.digitize instead
