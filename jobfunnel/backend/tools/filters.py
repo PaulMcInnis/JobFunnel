@@ -39,6 +39,8 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                  max_similarity: float = 0.75):
     """ Fit a tfidf vectorizer to a corpus of all listing's text.
 
+        TODO: this should handle better empty inputs
+
         Args:
             cur_dict: today's job scrape dict
             prev_dict: the existing master list job dict
@@ -61,11 +63,19 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     # init list to store duplicate ids
     duplicate_ids = {}
 
-    if prev_dict is None:
-        # get query words and ids as lists
-        query_ids = [job.key_id for job in cur_dict.values()]
-        query_words = [job.description for job in cur_dict.values()]
+    if prev_dict:
+        # checks current scrape for re-posts/duplicates
+        duplicate_ids = tfidf_filter(cur_dict)
 
+    # get query words and ids as lists
+    query_ids, query_words = [], []
+    for job in cur_dict.values():
+        query_ids.append(job.key_id)
+        if len(job.description) > 0:
+            query_words.append(job.description)
+    assert query_words, "No query strings to fit, are your descriptions empty?"
+
+    if prev_dict is None:
         # returns cosine similarity between jobs as square matrix (n,n)
         similarities = cosine_similarity(vectorizer.fit_transform(query_words))
         # fills diagonals with 0, so whole dict does not get popped
@@ -92,15 +102,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         # log something
         logging.info(f'Found and removed {len(duplicate_ids.keys())} '
                      f're-posts/duplicates via TFIDF cosine similarity!')
-
     else:
-        # checks current scrape for re-posts/duplicates
-        duplicate_ids = tfidf_filter(cur_dict)
-
-        # get query words and ids as lists
-        query_ids = [job.key_id for job in cur_dict.values()]
-        query_words = [job.description for job in cur_dict.values()]
-
         # get reference words as list
         reference_words = [job.description for job in prev_dict.values()]
 
@@ -123,7 +125,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         logging.info(
             f'Found {len(cur_dict.keys())} unique listings and '
             f'{len(duplicate_ids.keys())} duplicates '
-            f'via TFIDF cosine similarity'
+            'via TFIDF cosine similarity'
         )
 
     # returns a dictionary of duplicate key_ids

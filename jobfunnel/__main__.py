@@ -17,16 +17,15 @@ from typing import Union
 import logging
 
 from .backend.jobfunnel import JobFunnel
-from .config import parse_config, validate_config, build_funnel_cfg_from_legacy
+from .config import parse_cli, config_builder
 
 
 def main():
     """Parse CLI and call jobfunnel() to manage scrapers and lists
     """
     # Parse CLI into a dict
-    config = parse_config()
-    validate_config(config)
-    funnel_cfg = build_funnel_cfg_from_legacy(config)
+    args = parse_cli()
+    funnel_cfg = config_builder(args)
     job_funnel = JobFunnel(funnel_cfg)
     job_funnel.run()
 

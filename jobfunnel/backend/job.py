@@ -2,36 +2,17 @@
 to csv / etc by Exporter
 """
 from datetime import date, datetime
-from enum import Enum
 import re
 import string
 from typing import Any, Dict, Optional, List
 
-from jobfunnel.backend.localization import Locale
-from jobfunnel.resources.resources import CSV_HEADER
+from jobfunnel.resources import (
+    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS
+)
 
 
-PRINTABLE_STRINGS = set(string.printable)
-
-class JobStatus(Enum):
-    """Job statuses that are built-into jobfunnel
-    NOTE: these are the only valid values for entries in 'status' in our CSV
-    """
-    UNKNOWN = 1
-    NEW = 2
-    ARCHIVE = 3
-    INTERVIEWING = 4
-    INTERVIEWED = 5
-    REJECTED = 6
-    ACCEPTED = 7
-    DELETE = 8
-    INTERESTED = 9
-    APPLIED = 10
-    APPLY = 11
-    OLD = 12
-
-
-REMOVE_STATUSES = [
+# If job.status == one of these we filter it out of results
+JOB_REMOVE_STATUSES = [
     JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED, JobStatus.OLD
 ]
 
@@ -112,7 +93,7 @@ class Job():
     def is_remove_status(self) -> bool:
         """Return True if the job's status is one of our removal statuses.
         """
-        return self.status in REMOVE_STATUSES
+        return self.status in JOB_REMOVE_STATUSES
 
     @property
     def as_row(self) -> Dict[str, str]:

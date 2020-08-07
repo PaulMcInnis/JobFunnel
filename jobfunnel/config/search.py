@@ -1,12 +1,10 @@
 """Object to contain job query metadata
 """
 from typing import List, Optional
-from jobfunnel.backend.localization import Locale
 from jobfunnel.config import BaseConfig
-
-
-DEFAULT_SEARCH_RADIUS_KM = 25
-DEFAULT_MAX_LISTING_DAYS = 60
+from jobfunnel.resources import (
+    Locale, DEFAULT_SEARCH_RADIUS_KM, DEFAULT_MAX_LISTING_DAYS
+)
 
 
 class SearchConfig(BaseConfig):
@@ -19,8 +17,8 @@ class SearchConfig(BaseConfig):
 
     def __init__(self,
                  keywords: List[str],
-                 province: Optional[str] = None,
-                 state: Optional[str] = None,
+                 province_or_state: Optional[str] = None,
+                 # state: Optional[str] = None,  TODO: impl. per-locale ?
                  city: Optional[str] = None,
                  distance_radius_km: Optional[int] = None,
                  return_similar_results: Optional[bool] = False,
@@ -30,8 +28,8 @@ class SearchConfig(BaseConfig):
 
         Args:
             keywords (List[str]): list of search keywords
-            province (Optional[str], optional): province. Defaults to None.
-            state (Optional[str], optional): state. Defaults to None.
+            province_or_state (Optional[str], optional): province or state.
+                Defaults to None.
             city (Optional[str], optional): city. Defaults to None.
             distance_radius_km (Optional[int], optional): km radius. Defaults to
                 DEFAULT_SEARCH_RADIUS_KM.
@@ -42,9 +40,9 @@ class SearchConfig(BaseConfig):
             blocked_company_names (Optional[List[str]]): list of names of
                 companies that we never want to see in our results.
         """
-        self.province = province
-        self.state = state
-        self.city = city
+        self.province = province_or_state
+        self.state = province_or_state
+        self.city = city.lower()
         self.radius = distance_radius_km or DEFAULT_SEARCH_RADIUS_KM
         self.keywords = keywords
         self.return_similar_results = return_similar_results  # indeed thing
