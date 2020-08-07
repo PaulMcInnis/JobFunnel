@@ -20,6 +20,7 @@ requires = [
     'pytest-mock>=3.1.1',
     'selenium>=3.141.0',
     'webdriver-manager>=2.4.0',
+    'Cerberus>=1.3.2',
 ]
 
 with open('readme.md', 'r') as f:

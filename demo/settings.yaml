@@ -12,13 +12,13 @@ locale:
 # Providers from which to search (i.e. glassdoor, monster)
 # NOTE: we will choose domain via locale (i.e. CANADA_ENGLISH --> www.indeed.ca)
 providers:
-  - indeed
+  - INDEED
 # Also available:
-#  - glassdoor
-#  - monster
+#  - GLASSDOOR
+#  - MONSTER
 
 # Job search configuration
-search_terms:
+search:
 
   # This is the region you are searching for jobs in, and the distance in km
   # within which to return jobs.
@@ -40,36 +40,27 @@ company_block_list:
   - "Infox Consulting"
 
 # Logging level options are: critical, error, warning, info, debug, notset
-log_level: info
-
-# Keep similar job postings
-similar: False
-
-# Skip web-scraping and load a previously saved daily scrape pickle
-no_scrape: False
-
-# Recover master-list by accessing all historic scrapes pickles
-recover: False
+log_level: INFO
 
 # Saves duplicates removed by tfidf filter to duplicate_list.csv
 # TODO: document why this should be done.
 save_duplicates: False
 
 # Delaying algorithm configuration
-delay_config:
-    # Functions used for delaying algorithm: 'constant', 'linear', 'sigmoid'
-    function: linear
+delay:
+    # Functions used for delaying algorithm: CONSTANT, LINEAR, SIGMOID
+    algorithm: LINEAR
     # Maximum delay/upper bound for converging random delay
-    delay: 5.0
+    max_duration: 5.0
     # Minimum delay/lower bound for random delay
-    min_delay: 1.0
+    min_duration: 1.0
     # Random delay
-    random: False
+    random_delay: False
     # Converging random delay, only used if 'random' is set to True
-    converge: False
+    converging_random_delay: False
 
 # # Proxy settings
 # proxy:
 #   protocol: https  # NOTE: you can also set to 'http'
-#   ip_address: "1.1.1.1"
+#   ip: "1.1.1.1"
 #   port: '200'
