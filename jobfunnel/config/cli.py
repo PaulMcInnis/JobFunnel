@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 import yaml
 
 from jobfunnel.config import (
-    JobFunnelConfig, DelayConfig, SearchConfig, ProxyConfig)
+    JobFunnelConfig, DelayConfig, SearchConfig, ProxyConfig, SettingsValidator)
 from jobfunnel.backend.tools.tools import split_url
 from jobfunnel.resources import (
     Locale, DelayAlgorithm, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_CACHE_DIRECTORY,
@@ -66,67 +66,67 @@ def parse_cli():
     #     help='Path to a master CSV file containing your search results'
     # )
 
-    # Search terms
-    parser.add_argument(
-        '-k',
-        dest='search_keywords',
-        nargs='+',
-        default=['Python'],
-        help='List of job-search keywords. (i.e. Engineer, AI).'
-    )
+    # # Search terms
+    # parser.add_argument(
+    #     '-k',
+    #     dest='search_keywords',
+    #     nargs='+',
+    #     default=['Python'],
+    #     help='List of job-search keywords. (i.e. Engineer, AI).'
+    # )
 
-    parser.add_argument(
-        '-l',
-        dest='locale',
-        default=Locale.CANADA_ENGLISH,
-        choices=[l.name for l in Locale],
-        help='Global location and language to use to scrape the job provider'
-             ' website. (i.e. CANADA_ENGLISH --> indeed --> indeed.ca)'
-    )
+    # parser.add_argument(
+    #     '-l',
+    #     dest='locale',
+    #     default=Locale.CANADA_ENGLISH,
+    #     choices=[l.name for l in Locale],
+    #     help='Global location and language to use to scrape the job provider'
+    #          ' website. (i.e. CANADA_ENGLISH --> indeed --> indeed.ca)'
+    # )
 
-    parser.add_argument(
-        '-p',
-        dest='province_or_state',
-        default='ON',  # TODO: we should use a Local object of some sort.
-        type=str,
-        help='Province/state value for your job-search region. NOTE: format '
-             'is job-provider-specific.'
-    )
+    # parser.add_argument(
+    #     '-p',
+    #     dest='province_or_state',
+    #     default='ON',  # TODO: we should use a Local object of some sort.
+    #     type=str,
+    #     help='Province/state value for your job-search region. NOTE: format '
+    #          'is job-provider-specific.'
+    # )
 
-    parser.add_argument(
-        '-c',
-        dest='city',
-        default='Waterloo',
-        type=str,
-        help='City/town value for job-search region.'
-    )
+    # parser.add_argument(
+    #     '-c',
+    #     dest='city',
+    #     default='Waterloo',
+    #     type=str,
+    #     help='City/town value for job-search region.'
+    # )
 
-    parser.add_argument(
-        '-max-age',
-        type=int,
-        help='The maximum number of days-old a job can be. (i.e pass 30 to '
-        'filter out jobs older than a month).'
-    )
+    # parser.add_argument(
+    #     '-max-age',
+    #     type=int,
+    #     help='The maximum number of days-old a job can be. (i.e pass 30 to '
+    #     'filter out jobs older than a month).'
+    # )
 
-    # Functionality
-    parser.add_argument(
-        '--log-level',
-        type=str,
-        choices=['critical', 'error', 'warning', 'info', 'debug', 'notset'],
-        help='Type of logging information shown on the terminal.'
-    )
+    # # Functionality
+    # parser.add_argument(
+    #     '--log-level',
+    #     type=str,
+    #     choices=['critical', 'error', 'warning', 'info', 'debug', 'notset'],
+    #     help='Type of logging information shown on the terminal.'
+    # )
 
-    parser.add_argument(
-        '--recover',
-        action='store_true',
-        help='Reconstruct a new master CSV file from all available cache files.'
-    )
+    # parser.add_argument(
+    #     '--recover',
+    #     action='store_true',
+    #     help='Reconstruct a new master CSV file from all available cache files.'
+    # )
 
-    parser.add_argument(
-        '--save-duplicates',
-        action='store_true',
-        help='Save duplicate job key_ids into file.'
-    )
+    # parser.add_argument(
+    #     '--save-duplicates',
+    #     action='store_true',
+    #     help='Save duplicate job key_ids into file.'
+    # )
 
     # # Proxy stuff move to subparser.
     # # FIXME missing stuff here
@@ -175,7 +175,16 @@ def parse_cli():
 def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
     """Parse the JobFunnel configuration settings.
     """
-    #if args.yaml
+    if args.settings_yaml_file:
+        config = yaml.load(
+            open(args.settings_yaml_file, 'r'), Loader=yaml.FullLoader
+        )
+        if not SettingsValidator.validate(config):
+            # TODO: some way to print allowed values in error msg?
+            raise ValueError(
+                f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
+            )
+
     import pdb; pdb.set_trace()
     # # parse the settings file for the line arguments
     # given_yaml = None
@@ -239,45 +248,45 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
 
     # return config
 
-    search_cfg = SearchConfig(
-        keywords=config['search_terms']['keywords'],
-        province_or_state=config['search_terms']['region']['province_or_state'],
-        city=config['search_terms']['region']['city'],
-        distance_radius_km=config['search_terms']['region']['radius'],
-        return_similar_results=False,
-        max_listing_days=config['max_listing_days'],
-        blocked_company_names=config['company_block_list'],
-    )
+    # search_cfg = SearchConfig(
+    #     keywords=config['search_terms']['keywords'],
+    #     province_or_state=config['search_terms']['region']['province_or_state'],
+    #     city=config['search_terms']['region']['city'],
+    #     distance_radius_km=config['search_terms']['region']['radius'],
+    #     return_similar_results=False,
+    #     max_listing_days=config['max_listing_days'],
+    #     blocked_company_names=config['company_block_list'],
+    # )
 
-    delay_cfg = DelayConfig(
-        duration=config['delay_config']['delay'],
-        min_delay=config['delay_config']['min_delay'],
-        function_name=config['delay_config']['function'],
-        random=config['delay_config']['random'],
-        converge=config['delay_config']['converge'],
-    )
+    # delay_cfg = DelayConfig(
+    #     duration=config['delay_config']['delay'],
+    #     min_delay=config['delay_config']['min_delay'],
+    #     function_name=config['delay_config']['function'],
+    #     random=config['delay_config']['random'],
+    #     converge=config['delay_config']['converge'],
+    # )
 
-    if config['proxy']:
-        proxy_cfg = ProxyConfig(
-            protocol=config['proxy']['protocol'],
-            ip_address=config['proxy']['ip_address'],
-            port=config['proxy']['port'],
-        )
-    else:
-        proxy_cfg = None
+    # if config['proxy']:
+    #     proxy_cfg = ProxyConfig(
+    #         protocol=config['proxy']['protocol'],
+    #         ip_address=config['proxy']['ip_address'],
+    #         port=config['proxy']['port'],
+    #     )
+    # else:
+    #     proxy_cfg = None
 
-    funnel_cfg = JobFunnelConfig(
-        master_csv_file=config['master_list_path'],
-        user_block_list_file=config['filter_list_path'],
-        duplicates_list_file=config['duplicate_list_path'],
-        cache_folder=config['data_path'],
-        search_terms=search_cfg,
-        provider_names=config['providers'],
-        locale=config['locale'],
-        log_file=config['log_path'],
-        log_level=config['log_level'],
-        no_scrape=config['no_scrape'],
-        delay_config=delay_cfg,
-        proxy_config=proxy_cfg,
-    )
-    return funnel_cfg
+    # funnel_cfg = JobFunnelConfig(
+    #     master_csv_file=config['master_list_path'],
+    #     user_block_list_file=config['filter_list_path'],
+    #     duplicates_list_file=config['duplicate_list_path'],
+    #     cache_folder=config['data_path'],
+    #     search_terms=search_cfg,
+    #     provider_names=config['providers'],
+    #     locale=config['locale'],
+    #     log_file=config['log_path'],
+    #     log_level=config['log_level'],
+    #     no_scrape=config['no_scrape'],
+    #     delay_config=delay_cfg,
+    #     proxy_config=proxy_cfg,
+    # )
+    # return funnel_cfg

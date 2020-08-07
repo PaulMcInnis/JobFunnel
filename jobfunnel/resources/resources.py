@@ -11,6 +11,10 @@ CSV_HEADER = [
     'id', 'provider', 'query', 'locale'
 ]
 
+LOG_LEVEL_NAMES = [
+    'CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'
+]
+
 # Maximum num threads we use when scraping
 MAX_CPU_WORKERS = 8
 
