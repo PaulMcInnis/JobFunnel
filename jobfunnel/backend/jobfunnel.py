@@ -1,4 +1,4 @@
-"""Paul McInnis 2018
+"""Paul McInnis 2020
 Scrapes jobs, applies search filters and writes pickles to master list
 """
 import csv
@@ -14,12 +14,12 @@ from typing import Dict, List, Union
 from time import time
 
 from jobfunnel.config import JobFunnelConfig
-from jobfunnel.backend import Job, JobStatus, Locale
-from jobfunnel.resources import CSV_HEADER
+from jobfunnel.backend import Job
+from jobfunnel.resources import CSV_HEADER, JobStatus, Locale
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
 
 
-MAX_BLOCK_LIST_DESC_CHARS = 150  # maximum len of description in block_list JSON
+MAX_BLOCK_LIST_DESC_CHARS = 150  # Maximum len of description in block_list JSON
 
 
 class JobFunnel(object):
@@ -83,8 +83,7 @@ class JobFunnel(object):
 
             # Identify duplicate jobs using the existing masterlist
             masterlist = self.read_master_csv()  # type: Dict[str, Job]
-            self.filter(masterlist)  # NOTE: reduces size of masterlist
-            # FIXME: this doesn't handle empty descriptions or masterlist well
+            self.filter(masterlist)  # NOTE: this reduces size of masterlist
             tfidf_filter(jobs_dict, masterlist)
 
             # Expand the masterlist with filteres, non-duplicated jobs & save
@@ -361,20 +360,29 @@ class JobFunnel(object):
         TODO: would be cool if we could run TFIDF in here too
         FIXME: load the global block-list as well
         """
+        # Read the user's block list
+        block_dict = {}  # type: Dict[str, Job]
         if os.path.isfile(self.config.user_block_list_file):
             block_dict = json.load(
                 open(self.config.user_block_list_file, 'r')
             )
-        else:
-            block_dict = {}  # type: Dict[str, Job]
 
+        # Read the user's duplicate jobs list (from TFIDF)
+        duplicates_dict = {}  # type: Dict[str, Job]
+        if os.path.isfile(self.config.duplicate_):
+            duplicates_dict = json.load(
+                open(self.config.user_block_list_file, 'r')
+            )
+
+        # Filter jobs out using all our available filters
+        # NOTE: checks are arranged in order of assumed calculation expense
         filter_jobs_ids = []
         for key_id, job in jobs_dict.items():
-            if (key_id in block_dict
-                or job_is_old(job, self.config.search_terms.max_listing_days)
-                or job.is_remove_status
+            if (job.is_remove_status
                 or job.company in self.config.search_terms.blocked_company_names
-                ):
+                or key_id in block_dict
+                or key_id in duplicates_dict
+                or job_is_old(job, self.config.search_terms.max_listing_days)):
                 filter_jobs_ids.append(key_id)
 
         for key_id in filter_jobs_ids:

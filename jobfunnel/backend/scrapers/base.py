@@ -11,14 +11,19 @@ from typing import Dict, List, Tuple
 import random
 from requests import Session
 
-from jobfunnel.resources import USER_AGENT_LIST
+from jobfunnel.resources import USER_AGENT_LIST, Locale, MAX_CPU_WORKERS
 from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
 from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.localization import Locale, get_domain_from_locale
 #from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
 
-MAX_CPU_WORKERS = 8
+# Defaults we use from localization, the scraper can always override it.
+DOMAIN_FROM_LOCALE = {
+    Locale.CANADA_ENGLISH: 'ca',
+    Locale.CANADA_FRENCH: 'ca',
+    Locale.USA_ENGLISH: 'com',
+}
+
 
 class BaseScraper(ABC):
     """Base scraper object, for generating List[Job] from a specific job source
@@ -39,7 +44,9 @@ class BaseScraper(ABC):
         NOTE: if you have a special case for your locale (i.e. canadian .com)
         inherit from BaseScraper and set this and locale in your Scraper class
         """
-        return get_domain_from_locale(self.locale)
+        if not self.locale in DOMAIN_FROM_LOCALE:
+            raise ValueError(f"Unknown domain for locale: {self.locale}")
+        return DOMAIN_FROM_LOCALE[self.locale]
 
     @property
     def bs4_parser(self) -> str:
@@ -134,14 +141,6 @@ class BaseScraper(ABC):
         Returns:
             Job: job object constructed from the soup and localization of class
         """
-
-        # Init default values
-        status = JobStatus.NEW
-        post_date = datetime.datetime.now()
-        tags = []  # type: List[str]
-        title, company, location = None, None, None
-        key_id, url, short_description = None, None, None
-
         # Scrape the data for the post, requiring a minimum of info...
         try:
             # Jobs should at minimum have a title, company and location
@@ -156,14 +155,17 @@ class BaseScraper(ABC):
                 "Unable to scrape minimum-required job info!\nerror:" + str(err)
             )
 
+        # Scrape the optional stuff
         try:
             tags = self.get_job_tags(job_soup)
         except AttributeError:
+            tags = []  # type: List[str]
             self.logger.warning(f"Unable to scrape tags for job {key_id}")
 
         try:
             post_date = self.get_job_date(job_soup)
         except (AttributeError, ValueError):
+            post_date = datetime.datetime.now()
             self.logger.warning(
                 f"Unknown date for job {key_id}, setting to datetime.now()."
             )
@@ -178,7 +180,7 @@ class BaseScraper(ABC):
             url=url,
             locale=self.locale,
             query='', #self.query_string, FIXME
-            status=status,
+            status=JobStatus.NEW,
             provider='', #self.__class___.__name__, FIXME
             short_description='', # We will populate this later per-job-page
             post_date=post_date,

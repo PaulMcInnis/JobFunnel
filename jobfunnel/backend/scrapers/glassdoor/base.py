@@ -5,7 +5,6 @@ from requests import Session
 from typing import Dict, List, Tuple, Optional, Union
 
 from jobfunnel.backend.scrapers import BaseScraper
-from jobfunnel.backend.localization import Locale, get_domain_from_locale
 
 
 MAX_LOCATIONS_TO_RETURN = 10
@@ -67,7 +66,7 @@ class GlassDoorBase(BaseScraper):
             search = (
                 'https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn'
                 '&sc.keyword={}&locT=C&locId={}&jobType=&radius={}'.format(
-                    get_domain_from_locale(self.locale),
+                    self.domain,
                     self.query_string,
                     location_response[0]['locationId'],
                     self.quantize_radius(self.config.search_terms.radius),
@@ -79,7 +78,7 @@ class GlassDoorBase(BaseScraper):
 
             # Form the job search url
             search = "https://www.glassdoor.{}/Job/jobs.htm".format(
-                get_domain_from_locale(self.locale)
+                self.domain
             )
 
             # Form the job search data

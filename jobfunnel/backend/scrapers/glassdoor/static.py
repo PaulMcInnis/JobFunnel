@@ -11,9 +11,9 @@ from typing import Dict, List, Tuple, Optional
 import time
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.localization import Locale
 from jobfunnel.backend.scrapers import BaseCANEngScraper, BaseUSAEngScraper
 from jobfunnel.backend.scrapers.glassdoor.base import GlassDoorBase
+from jobfunnel.resources import Locale
 
 
 class GlassDoorStatic(GlassDoorBase):

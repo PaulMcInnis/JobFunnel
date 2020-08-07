@@ -25,5 +25,5 @@ class ProxyConfig(BaseConfig):
         return url_str  # FIXME: this could be done in one line
 
     def validate(self) -> None:
-        """TODO: validate ip addr is valid format etc"""
+        """FIXME: impl. validate ip addr is valid format etc"""
         pass

@@ -8,10 +8,11 @@ from typing import Dict, List, Tuple, Optional
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools import get_webdriver
-from jobfunnel.backend.localization import Locale
 from jobfunnel.backend.scrapers.glassdoor.base import GlassDoorBase
+from jobfunnel.resources import Locale
 
 
+# FIXME: maybe we can just move this to a dev branch?
 class GlassDoorDynamic(GlassDoorBase):
     """The Dynamic Version of the GlassDoor scraper, that uses selenium to scrape job postings.
     """

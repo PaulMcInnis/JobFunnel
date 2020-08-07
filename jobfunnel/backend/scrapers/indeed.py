@@ -13,8 +13,8 @@ from requests import Session
 
 from bs4 import BeautifulSoup
 
+from jobfunnel.resources import Locale
 from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.localization import Locale
 from jobfunnel.backend.scrapers import BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
 from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
 #from jobfunnel.config import JobFunnelConfig  # causes a circular import
