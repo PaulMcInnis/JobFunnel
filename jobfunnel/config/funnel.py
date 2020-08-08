@@ -18,9 +18,7 @@ class JobFunnelConfig(BaseConfig):
                  user_block_list_file: str,
                  duplicates_list_file: str,
                  cache_folder: str,
-                 search_terms: SearchConfig,
-                 locale: Locale,
-                 providers: List[Provider],
+                 search_config: SearchConfig,
                  log_file: str,
                  log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
@@ -36,11 +34,8 @@ class JobFunnelConfig(BaseConfig):
             duplicates_list_file (str): path to a JSON that contains jobs
                 which TFIDF has identified to be duplicates of an existing job
             cache_folder (str): folder where all scrape data will be stored
-            search_terms (SearchTerms): SearchTerms config which contains the
+            search_config (SearchConfig): SearchTerms config which contains the
                 desired job search information (i.e. keywords)
-            providers (List[str]): names of job providers / websites that
-                we want to scrape from using the specified locale & searchterms.
-            locale (Locale): the locale we will use for the desired scrapers
             log_file (str): file to log all logger calls to
             log_level (int): level to log at, use 10 logging.DEBUG for more data
             no_scrape (Optional[bool], optional): If True, will not scrape data
@@ -55,15 +50,13 @@ class JobFunnelConfig(BaseConfig):
         self.user_block_list_file = user_block_list_file
         self.duplicates_list_file = duplicates_list_file
         self.cache_folder = cache_folder
-        self.search_terms = search_terms
-        self.providers = providers
+        self.search_config = search_config
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
-        self.locale = locale
         if not delay_config:
             # We will always use a delay config to be respectful
-            self.delay_config = DelayConfig(5.0, 1.0, 'linear')
+            self.delay_config = DelayConfig()
         else:
             self.delay_config = delay_config
         self.proxy_config = proxy_config
@@ -83,8 +76,8 @@ class JobFunnelConfig(BaseConfig):
         """All the compatible scrapers for the provider_name
         """
         return [
-            s for s in SCRAPER_FROM_LOCALE[pn[self.locale]]
-             for pn in self.provider_names
+            SCRAPER_FROM_LOCALE[p][self.search_config.locale]
+            for p in self.search_config.providers
         ]
 
     @property
@@ -105,7 +98,7 @@ class JobFunnelConfig(BaseConfig):
         FIXME: impl. more validation here
         """
         assert os.path.exists(self.cache_folder)
-        self.search_terms.validate()
+        self.search_config.validate()
         if self.proxy_config:
             self.proxy_config.validate()
         self.delay_config.validate()

@@ -2,7 +2,6 @@
 """
 import os
 import string
-from pathlib import Path
 
 # CSV header for output CSV. do not remove anything or you'll break usr's CSV's
 # TODO: need to add short and long descriptions (breaking change)
@@ -17,17 +16,6 @@ LOG_LEVEL_NAMES = [
 
 # Maximum num threads we use when scraping
 MAX_CPU_WORKERS = 8
-
-# Default args
-DEFAULT_SEARCH_RADIUS_KM = 25
-DEFAULT_MAX_LISTING_DAYS = 60
-
-# Other definitions
-USER_HOME_DIRECTORY = os.path.abspath(str(Path.home()))
-DEFAULT_OUTPUT_DIRECTORY = os.path.join(
-    USER_HOME_DIRECTORY, 'job_search_results'
-)
-DEFAULT_CACHE_DIRECTORY = os.path.join(DEFAULT_OUTPUT_DIRECTORY, '.cache')
 
 PRINTABLE_STRINGS = set(string.printable)
 

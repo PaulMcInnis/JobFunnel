@@ -10,8 +10,11 @@ from jobfunnel.config import (
     JobFunnelConfig, DelayConfig, SearchConfig, ProxyConfig, SettingsValidator)
 from jobfunnel.backend.tools.tools import split_url
 from jobfunnel.resources import (
-    Locale, DelayAlgorithm, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_CACHE_DIRECTORY,
-)
+    Locale, DelayAlgorithm, LOG_LEVEL_NAMES, Provider)
+from jobfunnel.resources.defaults import *
+
+
+PROVIDER_NAMES = [p.name for p in DEFAULT_PROVIDERS]
 
 
 def parse_cli():
@@ -26,267 +29,340 @@ def parse_cli():
         type=str,
         help='Path to a settings YAML file containing your job search info. '
              'Pass an existing YAML file path to continue a search '
-             'by scraping new jobs and updating the CSV file. '
+             'by scraping new jobs and updating the CSV file. CLI args will '
+             'overwrite any settings in YAML.'
     )
 
-    # FIXME: make it mutually exclusive to pass -o or -mscv/-bl/-cache
+    # This arg is problematic because you can't pass it and the
+    # paths to the files directly.
     parser.add_argument(
         '-o',
-        dest='job_search_results_folder',
+        dest='output_folder',
         default=DEFAULT_OUTPUT_DIRECTORY,
         help='Directory where the job search results will be stored. '
              'Pass an existing search results folder to continue a search '
              'by scraping new jobs and updating the CSV file. '
              'Note that you should use seperate folders per-job-search! '
              'Folder contents: <folder>/data/.cache/, <folder>/master_list.csv.'
-             ' These folders and associated files will be created if not found.'
+             ' These folders and associated files will be created if not found,'
+             ' or if -cache, -blf -dl, and -csv paths are not passed as args.'
              f' Defaults to: {DEFAULT_OUTPUT_DIRECTORY}'
     )
 
-    # parser.add_argument(
-    #     '-cache',
-    #     dest='cache_folder',
-    #     default=DEFAULT_CACHE_DIRECTORY,
-    #     help='Directory where cached scrape data will be stored. defaults to '
-    #          + DEFAULT_CACHE_DIRECTORY
-    # )
+    parser.add_argument(
+        '-csv',
+        dest='master_csv_file',
+        default=DEFAULT_MASTER_CSV_FILE,
+        nargs='*',
+        help='Path to a master CSV file containing your search results. '
+             f'Defaults to {DEFAULT_MASTER_CSV_FILE}'
+    )
 
-    # parser.add_argument(
-    #     '-bl',
-    #     dest='block-list-file',
-    #     nargs='*',
-    #     help='JSON file of jobs you want to omit from your job search '
-    #          '(usually this is in the output of previous jobfunnel results).'
-    # )
+    parser.add_argument(
+        '-cache',
+        dest='cache_folder',
+        default=DEFAULT_CACHE_DIRECTORY,
+        help='Directory where cached scrape data will be stored. '
+             f'Defaults to {DEFAULT_CACHE_DIRECTORY}'
+    )
 
-    # parser.add_argument(
-    #     '-mcsv',
-    #     dest='master_csv_file',
-    #     nargs='*',
-    #     help='Path to a master CSV file containing your search results'
-    # )
+    parser.add_argument(
+        '-blf',
+        dest='block_list_file',
+        nargs='*',
+        default=DEFAULT_BLOCK_LIST_FILE,
+        help='JSON file of jobs you want to omit from your job search '
+             '(usually this is in the output of previous jobfunnel results). '
+             f'Defaults to: {DEFAULT_BLOCK_LIST_FILE}'
+    )
 
-    # # Search terms
-    # parser.add_argument(
-    #     '-k',
-    #     dest='search_keywords',
-    #     nargs='+',
-    #     default=['Python'],
-    #     help='List of job-search keywords. (i.e. Engineer, AI).'
-    # )
+    parser.add_argument(
+        '-lf',
+        dest='log_file',
+        type=str,
+        default=DEFAULT_LOG_FILE,
+        help='path to logging file.'
+    )
 
-    # parser.add_argument(
-    #     '-l',
-    #     dest='locale',
-    #     default=Locale.CANADA_ENGLISH,
-    #     choices=[l.name for l in Locale],
-    #     help='Global location and language to use to scrape the job provider'
-    #          ' website. (i.e. CANADA_ENGLISH --> indeed --> indeed.ca)'
-    # )
+    parser.add_argument(
+        '-dl',
+        dest='duplicates_list_file',
+        nargs='*',
+        default=DEFAULT_DUPLICATES_FILE,
+        help='JSON file of jobs which have been detected to be duplicates of '
+             'existing jobs (usually this is in the output of previous '
+             f'jobfunnel results). Defaults to: {DEFAULT_DUPLICATES_FILE}'
+    )
 
-    # parser.add_argument(
-    #     '-p',
-    #     dest='province_or_state',
-    #     default='ON',  # TODO: we should use a Local object of some sort.
-    #     type=str,
-    #     help='Province/state value for your job-search region. NOTE: format '
-    #          'is job-provider-specific.'
-    # )
+    parser.add_argument(
+        '-cbl',
+        dest='search_company_block_list',
+        nargs='+',
+        default=DEFAULT_COMPANY_BLOCK_LIST,
+        help='List of company names to omit from all search results.'
+    )
 
-    # parser.add_argument(
-    #     '-c',
-    #     dest='city',
-    #     default='Waterloo',
-    #     type=str,
-    #     help='City/town value for job-search region.'
-    # )
+    # Search terms
+    parser.add_argument(
+        '-p',
+        dest='search_providers',
+        choices=PROVIDER_NAMES,
+        default=PROVIDER_NAMES,
+        help='List of job-search providers. (i.e. indeed, monster, glassdoor).'
+    )
 
-    # parser.add_argument(
-    #     '-max-age',
-    #     type=int,
-    #     help='The maximum number of days-old a job can be. (i.e pass 30 to '
-    #     'filter out jobs older than a month).'
-    # )
+    parser.add_argument(
+        '-k',
+        dest='search_keywords',
+        nargs='+',
+        default=DEFAULT_SEARCH_KEYWORDS,
+        help='List of job-search keywords. (i.e. Engineer, AI).'
+    )
 
-    # # Functionality
-    # parser.add_argument(
-    #     '--log-level',
-    #     type=str,
-    #     choices=['critical', 'error', 'warning', 'info', 'debug', 'notset'],
-    #     help='Type of logging information shown on the terminal.'
-    # )
+    parser.add_argument(
+        '-l',
+        dest='search_locale',
+        default=DEFAULT_LOCALE.name,
+        choices=[l.name for l in Locale],
+        help='Global location and language to use to scrape the job provider'
+             ' website. (i.e. CANADA_ENGLISH --> indeed --> indeed.ca)'
+    )
 
-    # parser.add_argument(
-    #     '--recover',
-    #     action='store_true',
-    #     help='Reconstruct a new master CSV file from all available cache files.'
-    # )
+    parser.add_argument(
+        '-ps',
+        dest='search_region_province_or_state',
+        default=DEFAULT_PROVINCE,
+        type=str,
+        help='Province/state value for your job-search region. NOTE: format '
+             'is job-provider-specific.'
+    )
 
-    # parser.add_argument(
-    #     '--save-duplicates',
-    #     action='store_true',
-    #     help='Save duplicate job key_ids into file.'
-    # )
+    parser.add_argument(
+        '-c',
+        dest='search_region_city',
+        default=DEFAULT_CITY,
+        type=str,
+        help='City/town value for job-search region.'
+    )
 
-    # # Proxy stuff move to subparser.
-    # # FIXME missing stuff here
-    # parser.add_argument(
-    #     '--proxy',
-    #     type=str,
-    #     help='Proxy address (URL).'
-    # )
+    parser.add_argument(
+        '-r',
+        dest='search_region_radius',
+        type=int,
+        default=DEFAULT_SEARCH_RADIUS_KM,
+        help='The maximum distance a job should be from the specified city.'
+    )
 
-    # # Delay stuff
-    # # TODO: move delay args into a subparser for improved -h clarity
-    # parser.add_argument(
-    #     '--random-delay',
-    #     action='store_true',
-    #     help='Turn on random delaying for certain get requests.'
-    # )
+    parser.add_argument(
+        '-max-listing-age',
+        dest='search_max_listing_days',
+        type=int,
+        default=DEFAULT_MAX_LISTING_DAYS,
+        help='The maximum number of days-old a job can be. (i.e pass 30 to '
+        'filter out jobs older than a month).'
+    )
 
-    # parser.add_argument(
-    #     '--converging-delay',
-    #     action='store_true',
-    #     help='Use converging random delay for certain get requests.'
-    # )
+    parser.add_argument(
+        '--similar-results',
+        action='store_true',
+        help='Return \'similar\' results from search query (only for Indeed).'
+    )
 
-    # parser.add_argument(
-    #     '-delay-duration',
-    #     type=float,
-    #     help='Set delay seconds for certain get requests.'
-    # )
+    # Functionality
+    parser.add_argument(
+        '--log-level',
+        type=str,
+        default=DEFAULT_LOG_LEVEL_NAME,
+        choices=LOG_LEVEL_NAMES,
+        help='Type of logging information shown on the terminal.'
+    )
 
-    # parser.add_argument(
-    #     '-delay-min',
-    #     type=float,
-    #     help='Set lower bound value for delay for certain get requests.'
-    # )
+    parser.add_argument(
+        '--recover',
+        action='store_true',
+        help='Reconstruct a new master CSV file from all available cache files.'
+    )
 
-    # parser.add_argument(
-    #     '-delay-algorithm',
-    #     choices=[a.name for a in DelayAlgorithm],
-    #     help='Select a function to calculate delay times with.'
-    # )
+    parser.add_argument(
+        '--save-duplicates',
+        action='store_true',
+        help='Save duplicate job key_ids into file.'
+    )
 
+    parser.add_argument(
+        '--no-scrape',
+        action='store_true',
+        help='Do not make any get requests, and attempt to load from cache.'
+    )
+
+    # Proxy stuff
+    # TODO: subparser.
+    parser.add_argument(
+        '-protocol',
+        dest='proxy_protocol',
+        type=str,
+        help='Proxy protocol.'
+    )
+    parser.add_argument(
+        '-ip',
+        dest='proxy_ip',
+        type=str,
+        help='Proxy IP (V4) address.'
+    )
+    parser.add_argument(
+        '-port',
+        dest='proxy_port',
+        type=str,
+        help='Proxy port address.'
+    )
+
+    # Delay stuff
+    # TODO: move delay args into a subparser for improved -h clarity
+    parser.add_argument(
+        '--delay-random',
+        dest='delay_random',
+        action='store_true',
+        help='Turn on random delaying for certain get requests.'
+    )
+
+    parser.add_argument(
+        '--delay-converging',
+        dest='delay_converging',
+        action='store_true',
+        help='Use converging random delay for certain get requests.'
+    )
+
+    parser.add_argument(
+        '-delay-max',
+        dest='delay_max_duration',
+        default=DEFAULT_DELAY_MAX_DURATION,
+        type=float,
+        help='Set delay seconds for certain get requests.'
+    )
+
+    parser.add_argument(
+        '-delay-min',
+        dest='delay_min_duration',
+        default=DEFAULT_DELAY_MIN_DURATION,
+        type=float,
+        help='Set lower bound value for delay for certain get requests.'
+    )
+
+    parser.add_argument(
+        '-delay-algorithm',
+        default=DEFAULT_DELAY_ALGORITHM.name,
+        choices=[a.name for a in DelayAlgorithm],
+        help='Select a function to calculate delay times with.'
+    )
 
     return parser.parse_args()
 
 
 def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
-    """Parse the JobFunnel configuration settings.
+    """Parse the JobFunnel configuration settings into a JobFunnelConfig.
+
+        args [argparse.Namespace]: cli arguments from argparser
     """
-    if args.settings_yaml_file:
+    # Load config dict from the YAML (may be default)
+    args_dict = vars(args)
+    if args_dict.pop('settings_yaml_file'):
         config = yaml.load(
             open(args.settings_yaml_file, 'r'), Loader=yaml.FullLoader
         )
-        if not SettingsValidator.validate(config):
-            # TODO: some way to print allowed values in error msg?
+    else:
+        config = DEFAULT_CONFIG
+
+    # Ensure that if user provided output folder that the other paths aren't
+    if (args_dict['output_folder'] != DEFAULT_OUTPUT_DIRECTORY and (
+            args_dict['master_csv_file'] != DEFAULT_MASTER_CSV_FILE
+            or args_dict['block_list_file'] != DEFAULT_BLOCK_LIST_FILE
+            or args_dict['duplicates_list_file'] != DEFAULT_DUPLICATES_FILE
+            or args_dict['cache_folder'] != DEFAULT_CACHE_DIRECTORY)):
+
             raise ValueError(
-                f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
+                "When providing output_folder, do not also provide -csv, -blf"
+                ", -dlf, or -cache, as these are defined by the output folder."
+                " If specifying file paths you must pass all the arguments and"
+                " not pass -o."
             )
 
-    import pdb; pdb.set_trace()
-    # # parse the settings file for the line arguments
-    # given_yaml = None
-    # given_yaml_path = None
-    # if cli.settings is not None:
-    #     given_yaml_path = os.path.dirname(cli.settings)
-    #     given_yaml = yaml.safe_load(open(cli.settings, 'r'))
+    # Inject any modified attributs only if they override our config/defaults
+    # TODO less messy way to do this?
+    output_folder = args_dict.pop('output_folder')
+    for key, value in args_dict.items():
+        if key in config and config[key] != value:
+            config[key] = value
+            continue
+        if 'search_region' in key:
+            sub_sub_cfg_key = key.split('search_region_')[1]
+            if config['search']['region'][sub_sub_cfg_key] != value:
+                config['search']['region'][sub_sub_cfg_key] = value
+            continue
+        for sub_cfg_name in ['search', 'delay', 'proxy']:
+            if sub_cfg_name in key:
+                sub_cfg_key = key.split(f'{sub_cfg_name}_')[1]
+                if config[sub_cfg_name][sub_cfg_key] != value:
+                    config[sub_cfg_name][sub_cfg_key] = value
+                continue
 
-    # # combine default, given and argument yamls into one. Note that we update
-    # # the values of the default_yaml, so we use this for the rest of the file.
-    # # We could make a deep copy if necessary.
-    # config = default_yaml
-    # if given_yaml is not None:
-    #     update_yaml(config, given_yaml)
-    # update_yaml(config, cli_yaml)
-    # # check if the config has valid attribute types
-    # check_config_types(config)
+    # Create any folders that we need
+    if output_folder:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        if not os.path.exists(args_dict['cache_folder']):
+            os.makedirs(args_dict['cache_folder'])
 
-    # # create output path and corresponding (children) data paths
-    # # I feel like this is not in line with the rest of the file's philosophy
-    # if cli.output_path is not None:
-    #     output_path = cli.output_path
-    # elif given_yaml_path is not None:
-    #     output_path = os.path.join(given_yaml_path, given_yaml['output_path'])
-    # else:
-    #     output_path = default_yaml['output_path']
+    # Validate the config we have built
+    if not SettingsValidator.validate(config):
+        # TODO: some way to print allowed values in error msg?
+        raise ValueError(
+            f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
+        )
 
-    # # define paths and normalise
-    # config['data_path'] = os.path.join(output_path, 'data')
-    # config['master_list_path'] = os.path.join(output_path, 'master_list.csv')
-    # config['duplicate_list_path'] = os.path.join(
-    #     output_path, 'duplicate_list.csv')
-    # config['filter_list_path'] = os.path.join(
-    #     config['data_path'], 'filter_list.json')
-    # config['log_path'] = os.path.join(config['data_path'], 'jobfunnel.log')
+    # Build JobFunnelConfig
+    search_cfg = SearchConfig(
+        keywords=config['search']['keywords'],
+        province_or_state=config['search']['region']['province_or_state'],
+        city=config['search']['region']['city'],
+        distance_radius_km=config['search']['region']['radius'],
+        return_similar_results=config['search']['similar_results'],
+        max_listing_days=config['search']['max_listing_days'],
+        blocked_company_names=config['search']['company_block_list'],
+        locale=Locale[config['search']['locale']],
+        providers=[Provider[p] for p in config['search']['providers']],
+    )
 
-    # # normalize paths
-    # for p in ['data_path', 'master_list_path', 'duplicate_list_path',
-    #           'log_path', 'filter_list_path']:
-    #     config[p] = os.path.normpath(config[p])
+    delay_cfg = DelayConfig(
+        max_duration=config['delay']['max_duration'],
+        min_duration=config['delay']['min_duration'],
+        algorithm=DelayAlgorithm[config['delay']['algorithm']],
+        random=config['delay']['random'],
+        converge=config['delay']['converging'],
+    )
 
-    # # lower provider and delay function
-    # for i, p in enumerate(config['providers']):
-    #     config['providers'][i] = p.lower()
-    # config['delay_config']['function'] = \
-    #     config['delay_config']['function'].lower()
+    if config['proxy']['ip']:
+        proxy_cfg = ProxyConfig(
+            protocol=config['proxy']['protocol'],
+            ip_address=config['proxy']['ip'],
+            port=config['proxy']['port'],
+        )
+    else:
+        proxy_cfg = None
 
-    # # parse the log level
-    # config['log_level'] = LOG_LEVELS_MAP[config['log_level']]
+    funnel_cfg = JobFunnelConfig(
+        master_csv_file=config['master_csv_file'],
+        user_block_list_file=config['block_list_file'],
+        duplicates_list_file=config['duplicates_list_file'],
+        cache_folder=config['cache_folder'],
+        log_file=config['log_file'],
+        log_level=config['log_level'],
+        no_scrape=config['no_scrape'],
+        search_config=search_cfg,
+        delay_config=delay_cfg,
+        proxy_config=proxy_cfg,
+    )
 
-    # # parse the locale into Locale (must be upper case and match enum def name)
-    # for locale in Locale:
-    #     if locale.name == config['locale']:
-    #         config['locale'] = locale
+    # Validate funnel config as well (checks some stuff Cerberus doesn't rn)
+    funnel_cfg.validate()
 
-    # # check if proxy and max_listing_days have not been set yet (optional)
-    # if 'proxy' not in config:
-    #     config['proxy'] = None
-    # if 'max_listing_days' not in config:
-    #     config['max_listing_days'] = None
-
-    # return config
-
-    # search_cfg = SearchConfig(
-    #     keywords=config['search_terms']['keywords'],
-    #     province_or_state=config['search_terms']['region']['province_or_state'],
-    #     city=config['search_terms']['region']['city'],
-    #     distance_radius_km=config['search_terms']['region']['radius'],
-    #     return_similar_results=False,
-    #     max_listing_days=config['max_listing_days'],
-    #     blocked_company_names=config['company_block_list'],
-    # )
-
-    # delay_cfg = DelayConfig(
-    #     duration=config['delay_config']['delay'],
-    #     min_delay=config['delay_config']['min_delay'],
-    #     function_name=config['delay_config']['function'],
-    #     random=config['delay_config']['random'],
-    #     converge=config['delay_config']['converge'],
-    # )
-
-    # if config['proxy']:
-    #     proxy_cfg = ProxyConfig(
-    #         protocol=config['proxy']['protocol'],
-    #         ip_address=config['proxy']['ip_address'],
-    #         port=config['proxy']['port'],
-    #     )
-    # else:
-    #     proxy_cfg = None
-
-    # funnel_cfg = JobFunnelConfig(
-    #     master_csv_file=config['master_list_path'],
-    #     user_block_list_file=config['filter_list_path'],
-    #     duplicates_list_file=config['duplicate_list_path'],
-    #     cache_folder=config['data_path'],
-    #     search_terms=search_cfg,
-    #     provider_names=config['providers'],
-    #     locale=config['locale'],
-    #     log_file=config['log_path'],
-    #     log_level=config['log_level'],
-    #     no_scrape=config['no_scrape'],
-    #     delay_config=delay_cfg,
-    #     proxy_config=proxy_cfg,
-    # )
-    # return funnel_cfg
+    return funnel_cfg
