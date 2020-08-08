@@ -10,15 +10,21 @@ from jobfunnel.resources import (
 
 
 SETTINGS_YAML_SCHEMA = {
-    'output_path': {'required': True, 'type': 'string'},
-    'locale' : {'required': True, 'allowed': [l.name for l in Locale]},
-    'providers': {'required': True, 'allowed': [p.name for p in Provider]},
-    # 'no_scrape': {'required': False, 'type': 'boolean'},  # NOTE:  CLI only.
-    # 'recover': {'required': False, 'type': 'boolean'},  # NOTE: CLI only.
+    'master_csv_file': {'required': True, 'type': 'string'},
+    'block_list_file': {'required': True, 'type': 'string'},
+    'cache_folder': {'required': True, 'type': 'string'},
+    'duplicates_list_file': {'required': False, 'type': 'string'},
+    'no_scrape': {'required': False, 'type': 'boolean'},
+    'recover': {'required': False, 'type': 'boolean'},
+    'log_level': {'required': False, 'allowed': LOG_LEVEL_NAMES},
+    'log_file': {'required': False, 'type': 'string'},
+    'save_duplicates': {'required': False, 'type': 'boolean'},
     'search': {
         'type': 'dict',
         'required': True,
         'schema': {
+            'providers': {'required': True, 'allowed': [p.name for p in Provider]},
+            'locale' : {'required': True, 'allowed': [l.name for l in Locale]},
             'region': {
                 'type': 'dict',
                 'required': True,
@@ -28,62 +34,78 @@ SETTINGS_YAML_SCHEMA = {
                     'radius': {'required': False, 'type': 'integer', 'min': 0},
                 },
             },
+            'similar_results': {'required': False, 'type': 'boolean'},
             'keywords': {
                 'required': True,
+                'type': 'list',
+                'schema': {'type': 'string'},
+            },
+            'max_listing_days': {
+                'required': False, 'type': 'integer', 'min': 0
+            },
+            'company_block_list': {
+                'required': False,
                 'type': 'list', 'schema': {'type': 'string'},
             },
-            'similar': {'required': False, 'type': 'boolean'},
         },
     },
-    'company_block_list': {
-        'required': False,
-        'type': 'list', 'schema': {'type': 'string'},
-    },
-    'log_level': {'required': False, 'allowed': LOG_LEVEL_NAMES},
-    'save_duplicates': {'required': False, 'type': 'boolean'},
     'delay': {
         'type': 'dict',
         'required': False,
+        'nullable': True,
         'schema' : {
             'algorithm': {
                 'required': False,
                 'allowed': [d.name for d in DelayAlgorithm],
+                'nullable': True,
              },
             # TODO: implement custom rule max > min
             'max_duration': {
                 'required': False,
                 'type': 'float',
                 'min': 0,
+                'nullable': True,
              },
             'min_duration': {
                 'required': False,
                 'type': 'float',
                 'min': 0,
+                'nullable': True,
              },
-             'random_delay': {'required': False, 'type': 'boolean'},
-             'converging_random_delay': {'required': False, 'type': 'boolean'},
+             'random': {
+                'required': False,
+                'type': 'boolean',
+                'nullable': True,
+                },
+             'converging': {
+                'required': False,
+                'type': 'boolean',
+                'nullable': True,
+            },
         },
     },
 
     'proxy': {
         'type': 'dict',
         'required': False,
+        'nullable': True,
         'schema' : {
             'protocol': {
                 'required': False,
                 'allowed': ['http', 'https'],
+                'nullable': True,
              },
             'ip': {
                 'required': False,
                 'type': 'ipv4address',
+                'nullable': True,
              },
             'port': {
                 'required': False,
                 'type': 'integer',
                 'min': 0,
+                'nullable': True,
              },
-             'random_delay': {'required': False, 'type': 'boolean'},
-             'converging_random_delay': {'required': False, 'type': 'boolean'},
         },
     },
 }
@@ -100,7 +122,6 @@ class JobFunnelSettingsValidator(Validator):
         try:
             # try to create an IPv4 address object using the python3 ipaddress module
             ipaddress.IPv4Address(value)
-
         except:
             self._error(field, "Not a valid IPv4 address")
 

@@ -2,8 +2,9 @@
 """
 from typing import List, Optional
 from jobfunnel.config import BaseConfig
-from jobfunnel.resources import (
-    Locale, DEFAULT_SEARCH_RADIUS_KM, DEFAULT_MAX_LISTING_DAYS
+from jobfunnel.resources import Locale, Provider
+from jobfunnel.resources.defaults import (
+    DEFAULT_SEARCH_RADIUS_KM, DEFAULT_MAX_LISTING_DAYS
 )
 
 
@@ -17,8 +18,9 @@ class SearchConfig(BaseConfig):
 
     def __init__(self,
                  keywords: List[str],
-                 province_or_state: Optional[str] = None,
-                 # state: Optional[str] = None,  TODO: impl. per-locale ?
+                 province_or_state: Optional[str],
+                 locale: Locale,
+                 providers: List[Provider],
                  city: Optional[str] = None,
                  distance_radius_km: Optional[int] = None,
                  return_similar_results: Optional[bool] = False,
@@ -28,8 +30,7 @@ class SearchConfig(BaseConfig):
 
         Args:
             keywords (List[str]): list of search keywords
-            province_or_state (Optional[str], optional): province or state.
-                Defaults to None.
+            province_or_state (str): province or state.
             city (Optional[str], optional): city. Defaults to None.
             distance_radius_km (Optional[int], optional): km radius. Defaults to
                 DEFAULT_SEARCH_RADIUS_KM.
@@ -44,6 +45,8 @@ class SearchConfig(BaseConfig):
         self.state = province_or_state
         self.city = city.lower()
         self.radius = distance_radius_km or DEFAULT_SEARCH_RADIUS_KM
+        self.locale = locale
+        self.providers = providers
         self.keywords = keywords
         self.return_similar_results = return_similar_results  # indeed thing
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
