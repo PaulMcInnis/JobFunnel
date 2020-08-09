@@ -104,10 +104,6 @@ class JobFunnel(object):
             # FIXME: we should still remove duplicates (TFIDF) within jobs_dict
             # Dump the results into the data folder as the masterlist
             self.write_master_csv(jobs_dict)
-            self.logger.info(
-                f'No masterlist detected, added {len(jobs_dict.keys())}'
-                f' jobs to {self.config.master_csv_file}'
-            )
 
         self.logger.info(
             f"Done. View your current jobs in {self.config.master_csv_file}"
@@ -145,10 +141,10 @@ class JobFunnel(object):
             end = time()
             self.logger.info(
                 f"Scraped {len(jobs.items())} jobs from {scraper_cls.__name__},"
-                f" took {(end - start):.3f}s'"
+                f" took {(end - start):.3f}s"
             )
 
-        self.logger.info(f"Completed Scraping, got {len(jobs)} jobs.")
+        self.logger.info(f"Completed all scraping, found {len(jobs)} new jobs.")
         return jobs
 
     def recover(self):
@@ -299,7 +295,7 @@ class JobFunnel(object):
                 writer.writerow(job.as_row)
         n_jobs = len(jobs)
         self.logger.info(
-            f"Wrote out {n_jobs} jobs to {self.config.master_csv_file}"
+            f"Wrote {n_jobs} jobs to {self.config.master_csv_file}"
         )
 
     def update_block_list(self):
@@ -402,6 +398,7 @@ class JobFunnel(object):
         if n_filtered > 0:
             self.logger.info(f'Filtered-out {n_filtered} jobs from results.')
         else:
+            # TODO: print a % of jobs that are new /etc here.
             self.logger.info(f'No jobs were filtered from results.')
 
         return n_filtered

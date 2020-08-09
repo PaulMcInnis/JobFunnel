@@ -15,8 +15,6 @@ class Locale(Enum):
     CANADA_FRENCH = 2
     USA_ENGLISH = 3
 
-
-# Some enums
 class JobStatus(Enum):
     """Job statuses that are built-into jobfunnel
     NOTE: these are the only valid values for entries in 'status' in our CSV
@@ -33,6 +31,26 @@ class JobStatus(Enum):
     APPLIED = 10
     APPLY = 11
     OLD = 12
+
+
+class JobField(Enum):
+    """Fields of job that we need setters for, passed to Scraper.get(field=...)
+    """
+    TITLE = 0
+    COMPANY = 1
+    LOCATION = 2
+    DESCRIPTION = 3
+    KEY_ID = 4
+    URL = 5
+    LOCALE = 6
+    QUERY = 7
+    PROVIDER = 8
+    STATUS = 9
+    SCRAPE_DATE = 10
+    SHORT_DESCRIPTION = 11
+    POST_DATE = 12
+    RAW = 13
+    TAGS = 14
 
 
 class Provider(Enum):

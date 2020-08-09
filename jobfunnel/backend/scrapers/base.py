@@ -7,11 +7,13 @@ import datetime
 import logging
 import os
 from time import sleep, time
-from typing import Dict, List, Tuple
+from tqdm import tqdm
+from typing import Dict, List, Tuple, Union, Any
 import random
 from requests import Session
 
-from jobfunnel.resources import USER_AGENT_LIST, Locale, MAX_CPU_WORKERS
+from jobfunnel.resources import (
+    Locale, JobField, USER_AGENT_LIST, MAX_CPU_WORKERS)
 from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
 from jobfunnel.backend import Job, JobStatus
 # from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
@@ -35,6 +37,18 @@ class BaseScraper(ABC):
         if self.headers:
             self.session.headers.update(self.headers)
 
+        # Ensure that the locale we want to use matches the locale that the
+        # scraper was written to scrape in:
+        if self.config.search_config.locale != self.locale:
+            raise ValueError(
+                f"Attempting to use scraper designed for {self.locale.name} "
+                "when config indicates user is searching with "
+                f"{self.config.search_config.locale.name}"
+            )
+
+        # Ensure our properties satisfy constraints
+        self._validate_get_set()
+
     @property
     def user_agent(self) -> str:
         """Get a user agent for this scraper
@@ -42,12 +56,42 @@ class BaseScraper(ABC):
         return random.choice(USER_AGENT_LIST)
 
     @property
+    def min_required_job_fields(self) -> str:
+        """If we dont get() or set() any of these fields, we will raise an
+        exception instead of continuing without that information.
+        """
+        return [
+            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
+            JobField.KEY_ID, JobField.URL
+        ]
+
+    @property
+    def job_get_fields(self) -> str:
+        """Call self.get(...) for the JobFields in this list when scraping a Job
+
+        Override this as needed.
+        """
+        return [
+            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
+            JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
+        ]
+
+    @property
+    def job_set_fields(self) -> str:
+        """Call self.set(...) for the JobFields in this list when scraping a Job
+        NOTE: Since this passes the Job we are updating, the order of this list
+        matters if set fields rely on each-other.
+
+        Override this as needed.
+        """
+        return [JobField.URL, JobField.DESCRIPTION]
+
+    @property
     @abstractmethod
     def locale(self) -> Locale:
         """Get the localizations that this scraper was built for
         We will use this to put the right filters & scrapers together
         NOTE: it is best to inherit this from Base<Locale>Class
-        NOTE: self.config.search.locale == self.locale should be true
         """
         pass
 
@@ -66,12 +110,13 @@ class BaseScraper(ABC):
         maybe we can just use a queue and calc delays on-the-fly in scrape_job
         for all session.get requests?
         """
+
         # Get a list of job soups from the initial search results page
         try:
             job_soups = self.get_job_listings_from_search_results()
         except Exception as err:
             raise ValueError(
-                "Unable to extract jobs from initial search result page:\n"
+                "Unable to extract jobs from initial search result page:\n\t"
                 f"{str(err)}"
             )
         self.logger.info(
@@ -80,7 +125,7 @@ class BaseScraper(ABC):
 
         # For each job-soup object, scrape the soup into a Job  (w/o desc.)
         jobs_dict = {}  # type: Dict[str, Job]
-        for job_soup in job_soups:
+        for job_soup in tqdm(job_soups):
             job = self.scrape_job(job_soup)
             if job.key_id in jobs_dict:
                 self.logger.error(
@@ -89,212 +134,133 @@ class BaseScraper(ABC):
                 )
             jobs_dict[job.key_id] = job
 
-        # FIXME: get rid of these two _methods and replace with more flexible
-        # delaying implementation.
-        def _get_with_delay(job: Job, delay: float) -> Tuple[Job, str]:
-            """Get a job's page by the job url with a delay beforehand
-            """
-            sleep(delay)
-            self.logger.info(
-                f'Delay of {delay:.1f}s, getting search results for: {job.url}'
-            )
-            job_page_soup = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
-            )
-            return job, job_page_soup
-
-        def _parse(job: Job, job_page_soup: BeautifulSoup) -> None:
-            """Set job.description with the job's own page.
-            TODO: move this into our delay callback
-            """
-            try:
-                job.description = self.get_job_description(job, job_page_soup)
-            except AttributeError:
-                self.logger.warning(
-                    f"Unable to scrape short description for job {job.key_id}."
-                )
-            job.clean_strings()
-
-        # Scrape stuff that we are delaying for
-        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
-        jobs_list = list(jobs_dict.values())
-        delays = calculate_delays(len(jobs_list), self.config.delay_config)
-        delay_threader(
-            jobs_list, _get_with_delay, _parse, threads, self.logger, delays
-        )
         return jobs_dict
 
     def scrape_job(self, job_soup: BeautifulSoup) -> Job:
         """Scrapes a search page and get a list of soups that will yield jobs
+        Arguments:
+            job_soup [BeautifulSoup]: This is a soup object that your get/set
+                will use to perform the get/set action. It should be specific
+                to this job and not contain other job information.
 
-        NOTE: does not currently scrape anything that
+        FIXME: need to have get and set trap to delay calc with a queue()
 
         Returns:
             Job: job object constructed from the soup and localization of class
         """
+        # Init kwargs
+        job_init_kwargs = {
+            JobField.STATUS: JobStatus.NEW,
+            JobField.LOCALE: self.locale,
+            JobField.QUERY: self.config.search_config.query_string,
+            JobField.DESCRIPTION: '',
+            JobField.URL: '',
+            JobField.SHORT_DESCRIPTION: '',  # TODO: impl.
+            JobField.RAW: '',  # TODO: impl.
+            JobField.PROVIDER: self.__class__.__name__,
+        }  # type: Dict[JobField, Any]
+
+        # Formulate the get/set actions
+        actions_list = [(True, f) for f in self.job_get_fields]
+        actions_list += [(False, f) for f in self.job_set_fields]
+
         # Scrape the data for the post, requiring a minimum of info...
-        try:
-            # Jobs should at minimum have a title, company and location
-            title = self.get_job_title(job_soup)
-            company = self.get_job_company(job_soup)
-            location = self.get_job_location(job_soup)
-            key_id = self.get_job_key_id(job_soup)
-            url = self.get_job_url(key_id)
-        except Exception as err:
-            # TODO: decide how we should handle these, proceed or exit?
-            raise ValueError(
-                "Unable to scrape minimum-required job info!\nerror:" + str(err)
-            )
+        job = None  # type: Union[None, Job]
+        for is_get, field in actions_list:
+            kwarg_name = field.name.lower()
+            try:
+                if is_get:
+                    job_init_kwargs[field] = self.get(field, job_soup)
+                else:
+                    if not job:
+                        job = Job(**{
+                            k.name.lower(): v for k, v
+                            in job_init_kwargs.items()
+                        })
+                    self.set(field, job, job_soup)
+            except Exception as err:
+                if field in self.min_required_job_fields:
+                    raise ValueError(
+                        "Unable to scrape minimum-required job field: "
+                        f"{field.name} Got error:{str(err)}"
+                    )
+                else:
+                    self.logger.warning(
+                        "Unable to scrape {} for job{}:\n\t{}".format(
+                            kwarg_name, ' ' + job.url if job else '', str(err)
+                        )
+                    )
 
-        # Scrape the optional stuff
-        try:
-            tags = self.get_job_tags(job_soup)
-        except AttributeError as err:
-            tags = []  # type: List[str]
-            self.logger.warning(
-                f"Unable to scrape tags for job {key_id}:\n{str(err)}"
-            )
-
-        try:
-            post_date = self.get_job_post_date(job_soup)
-        except (AttributeError, ValueError):
-            post_date = datetime.datetime.now()
-            self.logger.warning(
-                f"Unknown date for job {key_id}, setting to datetime.now()."
-            )
-
-        # Init a new job from scraped data
-        job = Job(
-            title=title,
-            company=company,
-            location=location,
-            description='',  # We will populate this later per-job-page
-            key_id=key_id,
-            url=url,
-            locale=self.locale,
-            query='', #self.query_string, FIXME
-            status=JobStatus.NEW,
-            provider='', #self.__class___.__name__, FIXME
-            short_description='', # TODO: impl.
-            post_date=post_date,
-            raw='',  # FIXME: we cannot pickle the soup object (job_soup)
-            tags=tags,
-        )
+        assert job, "Failed to initialize job"  # NOTE: should never see this
+        job.validate()
 
         return job
-
-    # FIXME: review below types and complete docstrings
-
-    # TODO: implement getters like this so we can make the entire thing more
-    # flexible.
-    # @abstractmethod
-    # def get(self, parameter: str,
-    #         soup: BeautifulSoup) -> Union[str, List[str], date]:
-    #     """Get a single job attribute from a soup object
-    #     i.e. get 'description' --> str
-    #     """
 
     @abstractmethod
     def get_job_listings_from_search_results(self) -> List[BeautifulSoup]:
         """Generate a list of soups for each job object from the response to our
         job search query.
-
         NOTE: This should be in a format where there are many jobs shown to the
         user to click-into in a single view.
-
         Returns a list of soup objects which correspond to each job shown on the
         results page.
         """
         pass
 
     @abstractmethod
-    def get_job_url(self, job_soup: BeautifulSoup) -> str:
-        """Get job url from a job soup
-        Args:
-			job_soup: BeautifulSoup base to scrape the title from.
-        Returns:
-            Title of the job (i.e. 'Secret Shopper')
+    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+        """Get a single job attribute from a soup object by JobField
+
+        i.e. if param is JobField.COMPANY --> scrape from soup --> return str
+        TODO: better way to handle ret type than a massive Union?
         """
         pass
 
     @abstractmethod
-    def get_job_title(self, job_soup: BeautifulSoup) -> str:
-        """Get job title from soup
-        Args:
-			job_soup: BeautifulSoup base to scrape the title from.
-        Returns:
-            Title of the job (i.e. 'Secret Shopper')
-        """
-        pass
-
-    @abstractmethod
-    def get_job_company(self, job_soup: BeautifulSoup) -> str:
-        """Get job company name from soup
-        Args:
-			job_soup: BeautifulSoup base to scrape the company from.
-        Returns:
-            Company name (i.e. 'Aperture Science')
-        """
-        pass
-
-    @abstractmethod
-    def get_job_location(self, job_soup: BeautifulSoup) -> str:
-        """Get job location string
-        TODO: we should have a better format than str for this.
-        """
-        pass
-
-    @abstractmethod
-    def get_job_tags(self, job_soup: BeautifulSoup) -> List[str]:
-        """Fetches the job tags / keywords from a BeautifulSoup base.
-        """
-        pass
-
-    @abstractmethod
-    def get_job_post_date(self, job_soup: BeautifulSoup) -> datetime.date:
-        """Fetches the job date from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the date from.
-        Returns:
-            date of the job's posting
-        """
-        pass
-
-    @abstractmethod
-    def get_job_key_id(self, job_soup: BeautifulSoup) -> str:
-        """Fetches the job id from a BeautifulSoup base.
-        NOTE: this should be unique, but we should probably use our own SHA
-        Args:
-			soup: BeautifulSoup base to scrape the id from.
-        Returns:
-            The job id scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the id. The caller is expected to handle this exception.
-        """
-        pass
-
-    # FIXME: do we want all of these to take in a Job object? might be useful?
-    # ... the first in the chain would have job = None for its call though...
-    @abstractmethod
-    def get_job_description(self, job: Job,
-                            job_soup: BeautifulSoup = None) -> str:
-        """Parses and stores job description html and sets Job.description
-        NOTE: this accepts Job because it allows using other job attributes
-        to make new session.get() for job-specific information.
-        """
-        pass
-
-    @abstractmethod
-    def get_short_job_description(self, job: Job,
-                                  job_soup: BeautifulSoup = None) -> str:
-        """Parses and stores job description from a job's page HTML
-        NOTE: this accepts Hob because it allows using other job attributes
-        to make new session.get() for job-specific information.
+    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
+        """Set a single job attribute from a soup object by JobField
+        NOTE: use this to set Job attribs that rely on Job existing already
+        with the required minimum fields (i.e. you can set description by
+        getting the job's detail page with job.url)
         """
         pass
 
 
-# Just some basic localized scrapers, can inherit these to set locale as well.
+    def _validate_get_set(self) -> None:
+        """Ensure the get/set actions cover all need attribs and dont intersect
+        """
+        set_job_get_fields = set(self.job_get_fields)
+        set_job_set_fields = set(self.job_set_fields)
+        all_set_get_fields = set(self.job_get_fields + self.job_set_fields)
+        set_min_fields = set(self.min_required_job_fields)
+
+        set_missing_req_fields = set_min_fields - all_set_get_fields
+        if set_missing_req_fields:
+            raise ValueError(
+                f"Job attributes: {set_missing_req_fields} are required and not"
+                f" implemented by {self.__class__.__name__}"
+            )
+
+        field_intersection = set_job_get_fields.intersection(set_job_set_fields)
+        if field_intersection:
+            raise ValueError(
+                f"Job attributes: {field_intersection} are implemented by both"
+                f"get() and set() methods of {self.__class__.__name__}"
+            )
+        for field in JobField:
+            # NOTE: we exclude status, locale, query, provider and scrape date
+            # because these are set without needing any scrape data.
+            # TODO: SHORT and RAW are not impl. rn. remove this check when impl.
+            if (field not in [JobField.STATUS, JobField.LOCALE, JobField.QUERY,
+                              JobField.SCRAPE_DATE, JobField.PROVIDER,
+                              JobField.SHORT_DESCRIPTION, JobField.RAW]
+                    and field not in self.job_get_fields
+                    and field not in self.job_set_fields):
+                self.logger.warning(
+                    f"No get() or set() will be done for Job attr: {field.name}"
+                )
+
+# Just some basic localized scrapers, you can inherit these to set the locale.
 
 class BaseUSAEngScraper(BaseScraper):
     """Localized scraper for USA English
@@ -309,5 +275,4 @@ class BaseCANEngScraper(BaseScraper):
     """
     @property
     def locale(self) -> Locale:
-        return Locale.USA_ENGLISH
-
+        return Locale.CANADA_ENGLISH

@@ -21,6 +21,7 @@ requires = [
     'selenium>=3.141.0',
     'webdriver-manager>=2.4.0',
     'Cerberus>=1.3.2',
+    'tqdm>=4.47.0',
 ]
 
 with open('readme.md', 'r') as f:
