@@ -20,14 +20,7 @@ from jobfunnel.backend import Job, JobStatus
 
 
 class BaseScraper(ABC):
-    """Base scraper object, for generating List[Job] from a specific job source
-
-    TODO: accept filters: List[Filter] here if we have Filter(ABC)
-    NOTE: we want to use filtering here because scraping blurbs can be slow.
-    NOTE: we don't have domain as an attrib because multiple domains can belong
-    to multiple locales. The Locale is intended to define the format of the
-    website, the scraping logic needed and the language used - as such,
-    SearchConfig is what defines the domain (it is being requested).
+    """Base scraper object, for scraping and filtering Jobs from a provider
     """
     def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
@@ -59,6 +52,10 @@ class BaseScraper(ABC):
     def min_required_job_fields(self) -> str:
         """If we dont get() or set() any of these fields, we will raise an
         exception instead of continuing without that information.
+
+        NOTE: pointless to check for locale / provider / other defaults
+
+        Override this as needed.
         """
         return [
             JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
@@ -79,6 +76,7 @@ class BaseScraper(ABC):
     @property
     def job_set_fields(self) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job
+
         NOTE: Since this passes the Job we are updating, the order of this list
         matters if set fields rely on each-other.
 
@@ -89,16 +87,18 @@ class BaseScraper(ABC):
     @property
     @abstractmethod
     def locale(self) -> Locale:
-        """Get the localizations that this scraper was built for
+        """The localization that this scraper was built for.
+
         We will use this to put the right filters & scrapers together
-        NOTE: it is best to inherit this from Base<Locale>Class
+
+        NOTE: it is best to inherit this from Base<Locale>Class (btm. of file)
         """
         pass
 
     @property
     @abstractmethod
     def headers(self) -> Dict[str, str]:
-        """Get the Session headers for this scraper to be used with
+        """The Session headers for this scraper to be used with
         requests.Session.headers.update()
         """
         pass
@@ -113,7 +113,7 @@ class BaseScraper(ABC):
 
         # Get a list of job soups from the initial search results page
         try:
-            job_soups = self.get_job_listings_from_search_results()
+            job_soups = self.get_job_soups_from_search_result_listings()
         except Exception as err:
             raise ValueError(
                 "Unable to extract jobs from initial search result page:\n\t"
@@ -197,13 +197,19 @@ class BaseScraper(ABC):
         return job
 
     @abstractmethod
-    def get_job_listings_from_search_results(self) -> List[BeautifulSoup]:
-        """Generate a list of soups for each job object from the response to our
-        job search query.
-        NOTE: This should be in a format where there are many jobs shown to the
-        user to click-into in a single view.
-        Returns a list of soup objects which correspond to each job shown on the
-        results page.
+    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+        """Scrapes a job provider's response to a search query where we are
+        shown many job listings at once.
+
+        NOTE: the soups list returned by this method should contain enough
+        information to set your self.min_required_job_fields with get/set.
+
+        NOTE: for situations where the data you want is in the job's own page
+        and we need to make another get request, handle those in set()
+        and make a request using job.url (it will be respectfully delayed)
+
+        Returns:
+            List[BeautifulSoup]: list of jobs soups we can use to make a Job
         """
         pass
 
