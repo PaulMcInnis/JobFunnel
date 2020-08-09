@@ -6,7 +6,7 @@ import os
 
 from jobfunnel.backend.scrapers import BaseScraper, SCRAPER_FROM_LOCALE
 from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
-from jobfunnel.resources import Locale, Provider
+from jobfunnel.resources import Locale, Provider, BS4_PARSER
 
 
 class JobFunnelConfig(BaseConfig):
@@ -22,6 +22,7 @@ class JobFunnelConfig(BaseConfig):
                  log_file: str,
                  log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
+                 bs4_parser: Optional[str] = BS4_PARSER,
                  return_similar_results: Optional[bool] = False,
                  delay_config: Optional[DelayConfig] = None,
                  proxy_config: Optional[ProxyConfig] = None) -> None:
@@ -42,6 +43,7 @@ class JobFunnelConfig(BaseConfig):
             no_scrape (Optional[bool], optional): If True, will not scrape data
                 at all, instead will only update filters and CSV. Defaults to
                 False.
+            bs4_parser (Optional[str], optional): the parser to use for BS4.
             return_similar_resuts (Optional[bool], optional): If True, we will
                 ask the job provider to provide more loosely-similar results for
                 our search queries. NOTE: only a thing for indeed rn.
@@ -58,6 +60,7 @@ class JobFunnelConfig(BaseConfig):
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
+        self.bs4_parser = bs4_parser  # TODO: add to config
         self.return_similar_results = return_similar_results
         if not delay_config:
             # We will always use a delay config to be respectful

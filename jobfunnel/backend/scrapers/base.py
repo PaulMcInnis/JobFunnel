@@ -14,7 +14,7 @@ from requests import Session
 from jobfunnel.resources import USER_AGENT_LIST, Locale, MAX_CPU_WORKERS
 from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
 from jobfunnel.backend import Job, JobStatus
-#from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
+# from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
 
 class BaseScraper(ABC):
@@ -32,14 +32,8 @@ class BaseScraper(ABC):
         self.session = session
         self.config = config
         self.logger = logger
-        self.session.headers.update(self.headers)
-
-    @property
-    def bs4_parser(self) -> str:
-        """Beautiful soup 4's parser setting
-        NOTE: it's the same for all scrapers rn so it's not abstract
-        """
-        return 'lxml'
+        if self.headers:
+            self.session.headers.update(self.headers)
 
     @property
     def user_agent(self) -> str:
@@ -53,6 +47,7 @@ class BaseScraper(ABC):
         """Get the localizations that this scraper was built for
         We will use this to put the right filters & scrapers together
         NOTE: it is best to inherit this from Base<Locale>Class
+        NOTE: self.config.search.locale == self.locale should be true
         """
         pass
 
@@ -104,7 +99,7 @@ class BaseScraper(ABC):
                 f'Delay of {delay:.1f}s, getting search results for: {job.url}'
             )
             job_page_soup = BeautifulSoup(
-                self.session.get(job.url).text, self.bs4_parser
+                self.session.get(job.url).text, self.config.bs4_parser
             )
             return job, job_page_soup
 
@@ -190,6 +185,15 @@ class BaseScraper(ABC):
 
     # FIXME: review below types and complete docstrings
 
+    # TODO: implement getters like this so we can make the entire thing more
+    # flexible.
+    # @abstractmethod
+    # def get(self, parameter: str,
+    #         soup: BeautifulSoup) -> Union[str, List[str], date]:
+    #     """Get a single job attribute from a soup object
+    #     i.e. get 'description' --> str
+    #     """
+
     @abstractmethod
     def get_job_listings_from_search_results(self) -> List[BeautifulSoup]:
         """Generate a list of soups for each job object from the response to our
@@ -202,15 +206,6 @@ class BaseScraper(ABC):
         results page.
         """
         pass
-
-    # TODO: implement getters like this so we can make the entire thing more
-    # flexible.
-    # @abstractmethod
-    # def get(self, parameter: str,
-    #         soup: BeautifulSoup) -> Union[str, List[str], date]:
-    #     """Get a single job attribute from a soup object
-    #     i.e. get 'description' --> str
-    #     """
 
     @abstractmethod
     def get_job_url(self, job_soup: BeautifulSoup) -> str:
