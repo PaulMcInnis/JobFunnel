@@ -11,13 +11,13 @@ from logging import warning, Logger
 
 from scipy.special import expit
 
+from jobfunnel.resources import DelayAlgorithm
 from jobfunnel.config import DelayConfig
 from jobfunnel.backend import Job
 
 
 def _c_delay(list_len: int, delay: Union[int, float]):
-    """ Sets single delay value to whole list.
-
+    """Sets single delay value to whole list.
     """
     delays = [delay] * list_len
     # sets incrementing offsets to the first 8 elements
@@ -34,8 +34,7 @@ def _c_delay(list_len: int, delay: Union[int, float]):
 
 
 def _lin_delay(list_len: int, delay: Union[int, float]):
-    """ Calculates y=.2*x and sets y=delay at intersection of x between lines.
-
+    """Calculates y=.2*x and sets y=delay at intersection of x between lines.
     """
     # calculates x value where lines intersect
     its = 5 * delay  # its = intersection
@@ -55,8 +54,7 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
 
 # https://en.wikipedia.org/wiki/Generalised_logistic_function
 def _sig_delay(list_len: int, delay: Union[int, float]):
-    """ Calculates Richards/Sigmoid curve for delay.
-
+    """Calculates Richards/Sigmoid curve for delay.
     """
     gr = sqrt(delay) * 4  # growth rate
     y_0 = log(4 * delay)  # Y(0)
@@ -66,9 +64,11 @@ def _sig_delay(list_len: int, delay: Union[int, float]):
 
 
 def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
-    """ Checks delay config and returns calculated delay list.
+    """Checks delay config and returns calculated delay list.
 
     NOTE: we do this to be respectful to online job sources
+    TODO: make this return a delay value based on list_len so we can use this
+    on-demand with the thread executor's GET queue.
 
     Args:
         list_len: length of scrape job list
@@ -80,20 +80,22 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
     delay_config.validate()
 
     # Delay calculations using specified equations
-    if delay_config.function_name == 'constant':
-        delay_vals = _c_delay(list_len, delay_config.duration)
-    elif delay_config.function_name == 'linear':
-        delay_vals = _lin_delay(list_len, delay_config.duration)
-    elif delay_config.function_name == 'sigmoid':
-        delay_vals = _sig_delay(list_len, delay_config.duration)
+    if delay_config.algorithm == DelayAlgorithm.CONSTANT:
+        delay_vals = _c_delay(list_len, delay_config.max_duration)
+    elif delay_config.algorithm == DelayAlgorithm.LINEAR:
+        delay_vals = _lin_delay(list_len, delay_config.max_duration)
+    elif delay_config.algorithm == DelayAlgorithm.SIGMOID:
+        delay_vals = _sig_delay(list_len, delay_config.max_duration)
+    else:
+        raise ValueError(f"Cannot calculate delay for {delay_config.algorithm}")
 
     # Check if minimum delay is above 0 and less than last element
-    if 0 < delay_config.min_delay:
-        # sets min_delay to values greater than itself in delay_vals
+    if 0 < delay_config.min_duration:
+        # sets min_duration to values greater than itself in delay_vals
         for i, n in enumerate(delay_vals):
-            if n > delay_config.min_delay:
+            if n > delay_config.min_duration:
                 break
-            delay_vals[i] = delay_config.min_delay
+            delay_vals[i] = delay_config.min_duration
 
     # Outputs final list of delays rounded up to 3 decimal places
     if delay_config.random:  # check if random delay was specified
@@ -101,7 +103,8 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         if delay_config.converge:  # checks if converging delay is True
             # delay_vals = lower bound, delay = upper bound
             durations = [
-                round(uniform(x, delay_config.duration), 3) for x in delay_vals
+                round(uniform(x, delay_config.max_duration), 3)
+                for x in delay_vals
             ]
         else:
             # lb = lower bounds, delay_vals = upper bound
@@ -120,18 +123,16 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
 
 def delay_threader(jobs_list: List[Job], scrape_fn: object,
                    parse_fn: object, threads: ThreadPoolExecutor,
-                   logger: Logger, delays: List[float]) -> None:
+                   logger: Logger, delays: List[float] = None) -> None:
     """Method to scrape descriptions from individual indeed postings.
     with respectful-delaying
     """
-    scrape_jobs = zip(jobs_list, delays)
 
     # Submits jobs and stores futures in dict
     start = time()
-    results = {
-        threads.submit(scrape_fn, job, delays): job.key_id
-        for job, delays in scrape_jobs
-    }
+    results = {}
+    for job, delay in zip(jobs_list, delays):
+        results[threads.submit(scrape_fn, job=job, delay=delay)] = job.key_id
 
     # Loops through futures as completed and removes each if successfully parsed
     while results:

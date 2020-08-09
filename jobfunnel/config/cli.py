@@ -324,7 +324,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         keywords=config['search']['keywords'],
         province_or_state=config['search']['region']['province_or_state'],
         city=config['search']['region']['city'],
-        distance_radius_km=config['search']['region']['radius'],
+        distance_radius=config['search']['region']['radius'],
         return_similar_results=config['search']['similar_results'],
         max_listing_days=config['search']['max_listing_days'],
         blocked_company_names=config['search']['company_block_list'],

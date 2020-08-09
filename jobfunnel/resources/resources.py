@@ -1,4 +1,4 @@
-"""Constant definitions or files we need to load once can go here
+"""String-like resouces and other constants are initialized here.
 """
 import os
 import string
@@ -16,6 +16,7 @@ LOG_LEVEL_NAMES = [
 
 # Maximum num threads we use when scraping
 MAX_CPU_WORKERS = 8
+MAX_BLOCK_LIST_DESC_CHARS = 150  # Maximum len of description in block_list JSON
 
 PRINTABLE_STRINGS = set(string.printable)
 

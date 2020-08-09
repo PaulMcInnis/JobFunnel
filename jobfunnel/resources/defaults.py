@@ -40,7 +40,8 @@ DEFAULT_COMPANY_BLOCK_LIST = []
 DEFAULT_OUTPUT_DIRECTORY = os.path.join(
     USER_HOME_DIRECTORY, 'job_search_results'
 )
-DEFAULT_CACHE_DIRECTORY = os.path.join(DEFAULT_OUTPUT_DIRECTORY, '.jobfcache')
+# FIXME: move to home when we have per-search caching
+DEFAULT_CACHE_DIRECTORY = os.path.join(DEFAULT_OUTPUT_DIRECTORY, '.cache')
 DEFAULT_BLOCK_LIST_FILE = os.path.join(DEFAULT_CACHE_DIRECTORY, 'block.json')
 DEFAULT_DUPLICATES_FILE = os.path.join(
     DEFAULT_CACHE_DIRECTORY, 'duplicates.json'
@@ -62,6 +63,13 @@ DEFAULT_RANDOM_CONVERGING_DELAY = False
 DEFAULT_PROTOCOL = None
 DEFAULT_IP = None
 DEFAULT_PORT = None
+
+# Defaults we use from localization, the scraper can always override it.
+DEFAULT_DOMAIN_FROM_LOCALE = {
+    Locale.CANADA_ENGLISH: 'ca',
+    Locale.CANADA_FRENCH: 'ca',
+    Locale.USA_ENGLISH: 'com',
+}
 
 DEFAULT_CONFIG = {
         'master_csv_file': DEFAULT_MASTER_CSV_FILE,
