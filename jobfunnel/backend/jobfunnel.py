@@ -15,11 +15,9 @@ from time import time
 
 from jobfunnel.config import JobFunnelConfig
 from jobfunnel.backend import Job
-from jobfunnel.resources import CSV_HEADER, JobStatus, Locale
+from jobfunnel.resources import (
+    CSV_HEADER, JobStatus, Locale, MAX_BLOCK_LIST_DESC_CHARS)
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
-
-
-MAX_BLOCK_LIST_DESC_CHARS = 150  # Maximum len of description in block_list JSON
 
 
 class JobFunnel(object):
@@ -48,7 +46,9 @@ class JobFunnel(object):
 
     @property
     def daily_cache_file(self) -> str:
-        """The name for for pickle file containing the scraped data ran today
+        """The name for for pickle file containing the scraped data ran today'
+        TODO: instead of using a 'daily' cache file, we should be tying this
+        into the search that was made to prevent cross-caching results.
         """
         return os.path.join(
             self.config.cache_folder, f"jobs_{self.__date_string}.pkl",
@@ -65,14 +65,19 @@ class JobFunnel(object):
         self.update_block_list()
 
         # Get jobs keyed by their unique ID, use cache if we scraped today
-        if self.config.no_scrape:
+        jobs_dict = {}  # type: Dict[str, Job]
+        if os.path.exists(self.daily_cache_file):
             jobs_dict = self.load_cache(self.daily_cache_file)
+        elif self.config.no_scrape:
+            self.logger.warning(
+                f"No jobs cached, missing: {self.daily_cache_file}"
+            )
+
+        if self.config.no_scrape:
+            self.logger.info("Skipping scraping, running with --no-scrape.")
         else:
-            if os.path.exists(self.daily_cache_file):
-                jobs_dict = self.load_cache(self.daily_cache_file)
-            else:
-                jobs_dict = self.scrape()  # type: Dict[str, Job]
-                self.write_cache(jobs_dict)
+            jobs_dict = self.scrape()  # type: Dict[str, Job]
+            self.write_cache(jobs_dict)
 
         # Filter out scraped jobs we have rejected, archived or block-listed
         # (before we add them to the CSV)
@@ -84,7 +89,12 @@ class JobFunnel(object):
             # Identify duplicate jobs using the existing masterlist
             masterlist = self.read_master_csv()  # type: Dict[str, Job]
             self.filter(masterlist)  # NOTE: this reduces size of masterlist
-            tfidf_filter(jobs_dict, masterlist)
+            try:
+                tfidf_filter(jobs_dict, masterlist)
+            except ValueError as err:
+                self.logger.error(
+                    f"Skipping similarity filter due to: {str(err)}"
+                )
 
             # Expand the masterlist with filteres, non-duplicated jobs & save
             masterlist.update(jobs_dict)
@@ -122,9 +132,6 @@ class JobFunnel(object):
     def scrape(self) ->Dict[str, Job]:
         """Run each of the desired Scraper.scrape() with threading and delaying
         """
-        if self.config.no_scrape:
-            self.logger.info("Bypassing scraping (--no-scrape).")
-            return
         self.logger.info(f"Starting scraping for: {self.config.scraper_names}")
 
         # Iterate thru scrapers and run their scrape.
@@ -164,6 +171,8 @@ class JobFunnel(object):
 
     def load_cache(self, cache_file: str) -> Dict[str, Job]:
         """Load today's scrape data from pickle via date string
+        TODO: search the cache for pickles that match search config.
+        (we may need a registry for the pickles and seach terms used)
         """
         try:
             jobs_dict = pickle.load(open(cache_file, 'rb'))
@@ -173,13 +182,14 @@ class JobFunnel(object):
             )
             raise e
         self.logger.info(
-            f"Read {len(jobs_dict.keys())} jobs from {cache_file}"
+            f"Read {len(jobs_dict.keys())} cached jobs from: {cache_file}"
         )
         return jobs_dict
 
     def write_cache(self, jobs_dict: Dict[str, Job],
                     cache_file: str = None) -> None:
         """Dump a jobs_dict into a pickle
+        TODO: write search_config into the cache file and jobfunnel version
         """
         cache_file = cache_file if cache_file else self.daily_cache_file
         pickle.dump(jobs_dict, open(cache_file, 'wb'))
@@ -369,7 +379,7 @@ class JobFunnel(object):
 
         # Read the user's duplicate jobs list (from TFIDF)
         duplicates_dict = {}  # type: Dict[str, Job]
-        if os.path.isfile(self.config.duplicate_):
+        if os.path.isfile(self.config.duplicates_list_file):
             duplicates_dict = json.load(
                 open(self.config.user_block_list_file, 'r')
             )
@@ -379,10 +389,10 @@ class JobFunnel(object):
         filter_jobs_ids = []
         for key_id, job in jobs_dict.items():
             if (job.is_remove_status
-                or job.company in self.config.search_terms.blocked_company_names
+                or job.company in self.config.search_config.blocked_company_names
                 or key_id in block_dict
                 or key_id in duplicates_dict
-                or job_is_old(job, self.config.search_terms.max_listing_days)):
+                or job_is_old(job, self.config.search_config.max_listing_days)):
                 filter_jobs_ids.append(key_id)
 
         for key_id in filter_jobs_ids:
@@ -392,6 +402,6 @@ class JobFunnel(object):
         if n_filtered > 0:
             self.logger.info(f'Filtered-out {n_filtered} jobs from results.')
         else:
-            self.logger.info(f'No jobs filtered.')
+            self.logger.info(f'No jobs were filtered from results.')
 
         return n_filtered

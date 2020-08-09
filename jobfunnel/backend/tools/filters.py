@@ -73,7 +73,10 @@ def tfidf_filter(cur_dict: Dict[str, dict],
         query_ids.append(job.key_id)
         if len(job.description) > 0:
             query_words.append(job.description)
-    assert query_words, "No query strings to fit, are your descriptions empty?"
+    if not query_words:
+        raise ValueError(
+            "No query strings to fit, are all of your job descriptions empty?"
+        )
 
     if prev_dict is None:
         # returns cosine similarity between jobs as square matrix (n,n)
@@ -101,7 +104,7 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 index += 1
         # log something
         logging.info(f'Found and removed {len(duplicate_ids.keys())} '
-                     f're-posts/duplicates via TFIDF cosine similarity!')
+                     f're-posts/duplicates via TFIDF cosine similarity.')
     else:
         # get reference words as list
         reference_words = [job.description for job in prev_dict.values()]
@@ -121,12 +124,13 @@ def tfidf_filter(cur_dict: Dict[str, dict],
             if np_max(sim) >= max_similarity:
                 duplicate_ids.update({query_id: cur_dict.pop(query_id)})
 
-        # log something
-        logging.info(
-            f'Found {len(cur_dict.keys())} unique listings and '
-            f'{len(duplicate_ids.keys())} duplicates '
-            'via TFIDF cosine similarity'
-        )
+        # FIXME: this message is wrong and we see it after above message.
+        # # log something
+        # logging.info(
+        #     f'Found {len(cur_dict.keys())} unique listings and '
+        #     f'{len(duplicate_ids.keys())} duplicates '
+        #     'via TFIDF cosine similarity'
+        # )
 
     # returns a dictionary of duplicate key_ids
     return duplicate_ids

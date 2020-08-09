@@ -17,19 +17,15 @@ from jobfunnel.backend import Job, JobStatus
 #from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
 
-# Defaults we use from localization, the scraper can always override it.
-DOMAIN_FROM_LOCALE = {
-    Locale.CANADA_ENGLISH: 'ca',
-    Locale.CANADA_FRENCH: 'ca',
-    Locale.USA_ENGLISH: 'com',
-}
-
-
 class BaseScraper(ABC):
     """Base scraper object, for generating List[Job] from a specific job source
 
     TODO: accept filters: List[Filter] here if we have Filter(ABC)
     NOTE: we want to use filtering here because scraping blurbs can be slow.
+    NOTE: we don't have domain as an attrib because multiple domains can belong
+    to multiple locales. The Locale is intended to define the format of the
+    website, the scraping logic needed and the language used - as such,
+    SearchConfig is what defines the domain (it is being requested).
     """
     def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
@@ -37,16 +33,6 @@ class BaseScraper(ABC):
         self.config = config
         self.logger = logger
         self.session.headers.update(self.headers)
-
-    @property
-    def domain(self) -> str:
-        """Get the domain string from the locale i.e. 'ca'
-        NOTE: if you have a special case for your locale (i.e. canadian .com)
-        inherit from BaseScraper and set this and locale in your Scraper class
-        """
-        if not self.locale in DOMAIN_FROM_LOCALE:
-            raise ValueError(f"Unknown domain for locale: {self.locale}")
-        return DOMAIN_FROM_LOCALE[self.locale]
 
     @property
     def bs4_parser(self) -> str:
@@ -66,6 +52,7 @@ class BaseScraper(ABC):
     def locale(self) -> Locale:
         """Get the localizations that this scraper was built for
         We will use this to put the right filters & scrapers together
+        NOTE: it is best to inherit this from Base<Locale>Class
         """
         pass
 
@@ -79,33 +66,54 @@ class BaseScraper(ABC):
 
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
-        """
-        # Make a dict of job postings from the listing briefs
-        jobs_dict = {}  # type: Dict[str, Job]
-        for job_soup in self.scrape_job_soups():
 
-            # Key by id to prevent duplicate key_ids FIXME: add a key-warning
+        FIXME: this is hard-coded to delay scraping of descriptions only rn
+        maybe we can just use a queue and calc delays on-the-fly in scrape_job
+        for all session.get requests?
+        """
+        # Get a list of job soups from the initial search results page
+        try:
+            job_soups = self.get_job_listings_from_search_results()
+        except Exception as err:
+            raise ValueError(
+                "Unable to extract jobs from initial search result page:\n"
+                f"{str(err)}"
+            )
+        self.logger.info(
+            f"Scraped {len(job_soups)} job listings from search results pages"
+        )
+
+        # For each job-soup object, scrape the soup into a Job  (w/o desc.)
+        jobs_dict = {}  # type: Dict[str, Job]
+        for job_soup in job_soups:
             job = self.scrape_job(job_soup)
+            if job.key_id in jobs_dict:
+                self.logger.error(
+                    f"Job {job.title} and {jobs_dict[job.key_id].title} share "
+                    f"duplicate key_id: {job.key_id}"
+                )
             jobs_dict[job.key_id] = job
 
-        def _get_with_delay(self, job: Job, delay: float) -> Tuple[Job, str]:
+        # FIXME: get rid of these two _methods and replace with more flexible
+        # delaying implementation.
+        def _get_with_delay(job: Job, delay: float) -> Tuple[Job, str]:
             """Get a job's page by the job url with a delay beforehand
             """
             sleep(delay)
             self.logger.info(
-                f'Delay of {delay:.2f}s, getting search results for: {job.url}'
+                f'Delay of {delay:.1f}s, getting search results for: {job.url}'
             )
             job_page_soup = BeautifulSoup(
                 self.session.get(job.url).text, self.bs4_parser
             )
             return job, job_page_soup
 
-        def _parse(self, job: Job, job_page_soup: BeautifulSoup) -> None:
-            """Set job.description
-            TODO: roll into our delay callback
+        def _parse(job: Job, job_page_soup: BeautifulSoup) -> None:
+            """Set job.description with the job's own page.
+            TODO: move this into our delay callback
             """
             try:
-                self.get_short_job_description(job_page_soup)
+                job.description = self.get_job_description(job, job_page_soup)
             except AttributeError:
                 self.logger.warning(
                     f"Unable to scrape short description for job {job.key_id}."
@@ -113,24 +121,12 @@ class BaseScraper(ABC):
             job.clean_strings()
 
         # Scrape stuff that we are delaying for
-        # FIXME: this is hard-coded to delay scraping of descriptions only rn
-        # maybe we can just use a queue and calc delays on-the-fly in scrape_job
         threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
         jobs_list = list(jobs_dict.values())
         delays = calculate_delays(len(jobs_list), self.config.delay_config)
         delay_threader(
             jobs_list, _get_with_delay, _parse, threads, self.logger, delays
         )
-
-        # FIXME: impl. once CSV supports it, indeed supports it and we make
-        # delaying more flexible (i.e. queue)
-        # try:
-        #     self.get_short_job_description(job_soup)
-        # except AttributeError:
-        #     self.logger.warning(
-        #         f"Unable to scrape short description for job {key_id}."
-        #     )
-
         return jobs_dict
 
     def scrape_job(self, job_soup: BeautifulSoup) -> Job:
@@ -158,12 +154,14 @@ class BaseScraper(ABC):
         # Scrape the optional stuff
         try:
             tags = self.get_job_tags(job_soup)
-        except AttributeError:
+        except AttributeError as err:
             tags = []  # type: List[str]
-            self.logger.warning(f"Unable to scrape tags for job {key_id}")
+            self.logger.warning(
+                f"Unable to scrape tags for job {key_id}:\n{str(err)}"
+            )
 
         try:
-            post_date = self.get_job_date(job_soup)
+            post_date = self.get_job_post_date(job_soup)
         except (AttributeError, ValueError):
             post_date = datetime.datetime.now()
             self.logger.warning(
@@ -182,42 +180,31 @@ class BaseScraper(ABC):
             query='', #self.query_string, FIXME
             status=JobStatus.NEW,
             provider='', #self.__class___.__name__, FIXME
-            short_description='', # We will populate this later per-job-page
+            short_description='', # TODO: impl.
             post_date=post_date,
             raw='',  # FIXME: we cannot pickle the soup object (job_soup)
             tags=tags,
         )
-
-        # TODO: make these calls work here, maybe use a queue with delaying?
-        # These calls require additional get using job.url
-        # try:
-        #     self.get_job_description(job, job_soup)
-        # except AttributeError:
-        #     self.logger.warning(
-        #         f"Unable to scrape description for job {key_id}."
-        #     )
-
-        # try:
-        #     self.get_short_job_description(job_soup)
-        # except AttributeError:
-        #     self.logger.warning(
-        #         f"Unable to scrape short description for job {key_id}."
-        #     )
 
         return job
 
     # FIXME: review below types and complete docstrings
 
     @abstractmethod
-    def scrape_job_soups(self) -> List[BeautifulSoup]:
-        """Generate a list of soups for each job object.
-        i.e. the job listing on a search results page.
-        NOTE: you can use job soups to get more detailed listings later
-        i.e self.get('details_from_job_page') ->  make get request to load desc.
+    def get_job_listings_from_search_results(self) -> List[BeautifulSoup]:
+        """Generate a list of soups for each job object from the response to our
+        job search query.
+
+        NOTE: This should be in a format where there are many jobs shown to the
+        user to click-into in a single view.
+
+        Returns a list of soup objects which correspond to each job shown on the
+        results page.
         """
         pass
 
-    # TODO: this might be more elegant:
+    # TODO: implement getters like this so we can make the entire thing more
+    # flexible.
     # @abstractmethod
     # def get(self, parameter: str,
     #         soup: BeautifulSoup) -> Union[str, List[str], date]:
@@ -295,7 +282,7 @@ class BaseScraper(ABC):
     # ... the first in the chain would have job = None for its call though...
     @abstractmethod
     def get_job_description(self, job: Job,
-                            job_soup: BeautifulSoup = None) -> None:
+                            job_soup: BeautifulSoup = None) -> str:
         """Parses and stores job description html and sets Job.description
         NOTE: this accepts Job because it allows using other job attributes
         to make new session.get() for job-specific information.
@@ -304,7 +291,7 @@ class BaseScraper(ABC):
 
     @abstractmethod
     def get_short_job_description(self, job: Job,
-                                  job_soup: BeautifulSoup = None) -> None:
+                                  job_soup: BeautifulSoup = None) -> str:
         """Parses and stores job description from a job's page HTML
         NOTE: this accepts Hob because it allows using other job attributes
         to make new session.get() for job-specific information.
