@@ -52,11 +52,11 @@ class BaseIndeedScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def get_job_listings_from_search_results(self) -> List[BeautifulSoup]:
+    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
         Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job
+            List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
         # Get the search url
         search_url = self._get_search_url()
