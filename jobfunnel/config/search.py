@@ -55,6 +55,8 @@ class SearchConfig(BaseConfig):
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
 
+        self.__query_string = '' # type: str
+
         # Try to infer the domain string based on the locale.
         if not domain:
             if not self.locale in DEFAULT_DOMAIN_FROM_LOCALE:
@@ -62,6 +64,14 @@ class SearchConfig(BaseConfig):
             self.domain = DEFAULT_DOMAIN_FROM_LOCALE[self.locale]
         else:
             self.domain = domain
+
+    @property
+    def query_string(self) -> str:
+        """User-readable version of the keywords we are searching with
+        """
+        if not self.__query_string:
+            self.__query_string = ' '.join(self.keywords)
+        return self.__query_string
 
     def validate(self):
         """We need to have the right information set, not mixing stuff

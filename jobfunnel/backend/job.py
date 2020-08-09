@@ -36,8 +36,9 @@ class Job():
                  post_date: Optional[date] = None,
                  raw: Optional[Any] = None,
                  tags: Optional[List[str]] = None) -> None:
-        """[summary]
+        """Object to represent a single job that we have scraped
 
+        NOTE: self.attrs must be reflected in JobField so we can auto-get/set
         TODO: would be nice to use something standardized for location
         TODO: perhaps we can do 'remote' for location w/ Enum for those jobs?
 
@@ -50,7 +51,8 @@ class Job():
             key_id (str): unique identifier for the job TODO: make more robust?
             url (str): link to the page where the job exists
             locale (Locale): identifier to help us with internationalization,
-                tells us what language and host-locale/domain a source is in.
+                tells us what the locale of the scraper was that scraped this
+                job.
             query (str): the search string that this job was found with
             provider (str): name of the job source
             status (JobStatus): the status of the job (i.e. new)

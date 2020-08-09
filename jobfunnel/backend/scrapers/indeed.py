@@ -3,32 +3,24 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import logging
 from math import ceil
 from time import sleep, time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 import re
 from requests import Session
 
 from bs4 import BeautifulSoup
 
-from jobfunnel.resources import Locale, MAX_CPU_WORKERS
+from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.backend.scrapers import (
     BaseScraper, BaseCANEngScraper, BaseUSAEngScraper)
 #from jobfunnel.config import JobFunnelConfig  # causes a circular import
 
 
-# Initialize list and store regex objects of date quantifiers
-HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)')
-DAY_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d)')
-MONTH_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?month')
-YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year')
-RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
-RECENT_REGEX_B = re.compile(r'[yY]esterday')
 ID_REGEX = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
-
 MAX_RESULTS_PER_INDEED_PAGE = 50
 
 
@@ -71,7 +63,9 @@ class BaseIndeedScraper(BaseScraper):
 
         # Parse total results, and calculate the # of pages needed
         pages = self._get_num_search_result_pages(search_url)
-        self.logger.info(f"Found {pages} indeed results for query={self.query}")
+        self.logger.info(
+            f"Found {pages} pages of search results for query={self.query}"
+        )
 
         # Init list of job soups
         job_soup_list = []  # type: List[Any]
@@ -93,6 +87,61 @@ class BaseIndeedScraper(BaseScraper):
         wait(futures_list)
 
         return job_soup_list
+
+    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+        """Get a single job attribute from a soup object by JobField
+        """
+        if parameter == JobField.TITLE:
+            return soup.find(
+                'a', attrs={'data-tn-element': 'jobTitle'}
+            ).text.strip()
+        elif parameter == JobField.COMPANY:
+            return soup.find('span', attrs={'class': 'company'}).text.strip()
+        elif parameter == JobField.LOCATION:
+            return soup.find('span', attrs={'class': 'location'}).text.strip()
+        elif parameter == JobField.TAGS:
+            # tags may not be on page and that's ok.
+            table_soup = soup.find(
+                'table', attrs={'class': 'jobCardShelfContainer'}
+            )
+            if table_soup:
+                return [
+                    td.text.strip() for td in table_soup.find_all(
+                        'td', attrs={'class': 'jobCardShelfItem'}
+                    )
+                ]
+        elif parameter == JobField.POST_DATE:
+            return calc_post_date_from_relative_str(
+                soup.find('span', attrs={'class': 'date'}).text.strip()
+            )
+        elif parameter == JobField.KEY_ID:
+            return ID_REGEX.findall(
+                str(
+                    soup.find(
+                        'a', attrs={'class': 'sl resultLink save-job-link'}
+                    )
+                )
+            )[0]
+        else:
+            raise NotImplementedError(f"Cannot get {parameter.name}")
+
+    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
+        """Set a single job attribute from a soup object by JobField
+        """
+        if parameter == JobField.DESCRIPTION:
+            job_link_soup = BeautifulSoup(
+                self.session.get(job.url).text, self.config.bs4_parser
+            )
+            job.description = job_link_soup.find(
+                id='jobDescriptionText'
+            ).text.strip()
+        elif parameter == JobField.URL:
+            job.url = (
+                f"http://www.indeed.{self.config.search_config.domain}/"
+                f"viewjob?jk={job.key_id}"
+            )
+        else:
+            raise NotImplementedError(f"Cannot set {parameter.name}")
 
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
@@ -146,7 +195,6 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: modifies the job_soup_list in-place
         """
         url = f'{search}&start={int(page * self.max_results_per_page)}'
-        self.logger.info(f'Getting indeed page {page} : {url}')
         job_soup_list.extend(
             BeautifulSoup(
                 self.session.get(url).text, self.config.bs4_parser
@@ -175,148 +223,6 @@ class BaseIndeedScraper(BaseScraper):
             return number_of_pages
         else:
             return max_pages
-
-    def get_job_url(self, job_id: str) -> str:
-        """Constructs the link with the given job_id.
-        Args:
-			job_id: The id to be used to construct the link for this job.
-        Returns:
-                The constructed job link.
-        """
-        return (
-            f"http://www.indeed.{self.config.search_config.domain}/"
-            f"viewjob?jk={job_id}"
-        )
-
-    def get_job_title(self, soup: BeautifulSoup) -> str:
-        """Fetches the title from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the title from.
-        Returns:
-            The job title scraped from soup.
-            NOTE: that this function may throw an AttributeError if it cannot
-            find the title. The caller is expected to handle this exception.
-        """
-        return soup.find(
-            'a', attrs={'data-tn-element': 'jobTitle'}
-        ).text.strip()
-
-    def get_job_company(self, soup: BeautifulSoup) -> str:
-        """Fetches the company from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the company from.
-        Returns:
-            The company scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the company. The caller is expected to handle this exception.
-        """
-        return soup.find('span', attrs={'class': 'company'}).text.strip()
-
-    def get_job_location(self, soup: BeautifulSoup) -> str:
-        """Fetches the job location from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the location from.
-        Returns:
-            The job location scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the location. The caller is expected to handle this exception.
-        """
-        return soup.find('span', attrs={'class': 'location'}).text.strip()
-
-    def get_job_tags(self, soup: BeautifulSoup) -> List[str]:
-        """Fetches the job tags / keywords from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the location from.
-        Returns:
-            The job location scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the location. The caller is expected to handle this exception.
-        """
-        return [td.text.strip() for td in soup.find(
-            'table', attrs={'class': 'jobCardShelfContainer'}
-        ).find_all('td', attrs={'class': 'jobCardShelfItem'})]
-
-    def get_job_post_date(self, soup: BeautifulSoup) -> date:
-        """Fetches the job date from a BeautifulSoup base.
-        Args:
-			soup: BeautifulSoup base to scrape the date from.
-        Returns:
-            The job date scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the date. The caller is expected to handle this exception.
-        """
-        date_string = soup.find('span', attrs={'class': 'date'}).text.strip()
-        return self._calc_post_date_from_relative_str(date_string)
-
-    def _calc_post_date_from_relative_str(self, date_str: str) -> date:
-        """Identifies a job's post date via post age, updates in-place
-        """
-        post_date = datetime.now()  # type: date
-        # Supports almost all formats like 7 hours|days and 7 hr|d|+d
-        try:
-            # Hours old
-            hours_ago = HOUR_REGEX.findall(date_str)[0]
-            post_date -= timedelta(hours=int(hours_ago))
-        except IndexError:
-            # Days old
-            try:
-                days_ago = DAY_REGEX.findall(date_str)[0]
-                post_date -= timedelta(days=int(days_ago))
-            except IndexError:
-                # Months old
-                try:
-                    months_ago = MONTH_REGEX.findall(date_str)[0]
-                    post_date -= relativedelta(
-                        months=int(months_ago))
-                except IndexError:
-                    # Years old
-                    try:
-                        years_ago = YEAR_REGEX.findall(date_str)[0]
-                        post_date -= relativedelta(
-                            years=int(years_ago))
-                    except IndexError:
-                        # Try phrases like 'today'/'just posted'/'yesterday'
-                        if (RECENT_REGEX_A.findall(date_str) and
-                                not post_date):
-                            # Today
-                            post_date = datetime.now()
-                        elif RECENT_REGEX_B.findall(date_str):
-                            # Yesterday
-                            post_date -= timedelta(days=int(1))
-                        elif not post_date:
-                            # We have failed to correctly evaluate date.
-                            raise ValueError(
-                                f"Unable to calculate date from:\n{date_str}"
-                            )
-        return post_date
-
-    def get_job_key_id(self, soup: BeautifulSoup) -> str:
-        """Fetches the job id from a BeautifulSoup base.
-        NOTE: this should be unique, but we should probably use our own SHA
-        Args:
-			soup: BeautifulSoup base to scrape the id from.
-        Returns:
-            The job id scraped from soup.
-            Note that this function may throw an AttributeError if it cannot
-            find the id. The caller is expected to handle this exception.
-        """
-        return ID_REGEX.findall(
-            str(soup.find('a', attrs={'class': 'sl resultLink save-job-link'}))
-        )[0]
-
-    def get_job_description(self, job: Job, soup: BeautifulSoup) -> str:
-        """Parses and stores job description html and sets Job.description
-        """
-        job_link_soup = BeautifulSoup(
-            self.session.get(job.url).text, self.config.bs4_parser
-        )
-        return job_link_soup.find(id='jobDescriptionText').text.strip()
-
-    def get_short_job_description(self, job: Job, soup: str) -> None:
-        """Parses and stores job description from a job's page HTML
-        # FIXME: impl.
-        """
-        pass
 
 
 class IndeedScraperCAEng(BaseIndeedScraper, BaseCANEngScraper):
