@@ -357,6 +357,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         log_file=config['log_file'],
         log_level=config['log_level'],
         no_scrape=config['no_scrape'],
+        # bs4_parser=config['bs4_parser'], # TODO: impl. cli/cfg when needed.
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,

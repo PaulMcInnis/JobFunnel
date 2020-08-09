@@ -18,6 +18,8 @@ LOG_LEVEL_NAMES = [
 MAX_CPU_WORKERS = 8
 MAX_BLOCK_LIST_DESC_CHARS = 150  # Maximum len of description in block_list JSON
 
+BS4_PARSER = 'lxml'
+
 PRINTABLE_STRINGS = set(string.printable)
 
 # Load the user agent list once only.

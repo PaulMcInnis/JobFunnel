@@ -149,7 +149,7 @@ class BaseIndeedScraper(BaseScraper):
         self.logger.info(f'Getting indeed page {page} : {url}')
         job_soup_list.extend(
             BeautifulSoup(
-                self.session.get(url).text, self.bs4_parser
+                self.session.get(url).text, self.config.bs4_parser
             ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         )
 
@@ -165,7 +165,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
-        query_resp = BeautifulSoup(request_html.text, self.bs4_parser)
+        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
         num_res = query_resp.find(id='searchCountPages').contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
         number_of_pages = int(ceil(num_res / self.max_results_per_page))
@@ -308,7 +308,7 @@ class BaseIndeedScraper(BaseScraper):
         """Parses and stores job description html and sets Job.description
         """
         job_link_soup = BeautifulSoup(
-            self.session.get(job.url).text, self.bs4_parser
+            self.session.get(job.url).text, self.config.bs4_parser
         )
         return job_link_soup.find(id='jobDescriptionText').text.strip()
 
