@@ -2,7 +2,7 @@
 """
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import datetime
 import logging
 import os
@@ -41,6 +41,9 @@ class BaseScraper(ABC):
 
         # Ensure our properties satisfy constraints
         self._validate_get_set()
+
+        # Init a thread executor (multi-worker) TODO: can't reuse after shutdown
+        self.executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
 
     @property
     def user_agent(self) -> str:
@@ -85,6 +88,15 @@ class BaseScraper(ABC):
         return [JobField.URL, JobField.DESCRIPTION]
 
     @property
+    def delayed_get_set_fields(self) -> str:
+        """Delay execution when getting /setting any of these attributes of a
+        job.
+
+        Override this as needed.
+        """
+        return [JobField.DESCRIPTION]
+
+    @property
     @abstractmethod
     def locale(self) -> Locale:
         """The localization that this scraper was built for.
@@ -119,14 +131,28 @@ class BaseScraper(ABC):
                 "Unable to extract jobs from initial search result page:\n\t"
                 f"{str(err)}"
             )
+        n_soups = len(job_soups)
         self.logger.info(
-            f"Scraped {len(job_soups)} job listings from search results pages"
+            f"Scraped {n_soups} job listings from search results pages"
         )
 
+        # Calculate delays for all job get/set calls NOTE: only get/set
+        # calls which require delaying (in self.delayed_get_set_fields
+        # will be delayed.
+        delays = calculate_delays(n_soups, self.config.delay_config)
+        results = []
+        for job_soup, delay in zip(job_soups, delays):
+            results.append(
+                self.executor.submit(
+                    self.scrape_job, job_soup=job_soup, delay=delay
+                )
+            )
+
+        # Loops through futures as completed and removes each if successfully parsed
         # For each job-soup object, scrape the soup into a Job  (w/o desc.)
         jobs_dict = {}  # type: Dict[str, Job]
-        for job_soup in tqdm(job_soups):
-            job = self.scrape_job(job_soup)
+        for future in tqdm(as_completed(results), total=n_soups):
+            job = future.result()
             if job.key_id in jobs_dict:
                 self.logger.error(
                     f"Job {job.title} and {jobs_dict[job.key_id].title} share "
@@ -134,16 +160,19 @@ class BaseScraper(ABC):
                 )
             jobs_dict[job.key_id] = job
 
+        # Cleanup + log
+        self.executor.shutdown()
+
         return jobs_dict
 
-    def scrape_job(self, job_soup: BeautifulSoup) -> Job:
+    def scrape_job(self, job_soup: BeautifulSoup, delay: float) -> Job:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
             job_soup [BeautifulSoup]: This is a soup object that your get/set
                 will use to perform the get/set action. It should be specific
                 to this job and not contain other job information.
-
-        FIXME: need to have get and set trap to delay calc with a queue()
+            delay [float]: how long to delay getting/setting for certain
+                get/set calls.
 
         Returns:
             Job: job object constructed from the soup and localization of class
@@ -167,6 +196,11 @@ class BaseScraper(ABC):
         # Scrape the data for the post, requiring a minimum of info...
         job = None  # type: Union[None, Job]
         for is_get, field in actions_list:
+
+            # Respectfully delay if it's configured to do so.
+            if field in self.delayed_get_set_fields:
+                sleep(delay)
+
             kwarg_name = field.name.lower()
             try:
                 if is_get:

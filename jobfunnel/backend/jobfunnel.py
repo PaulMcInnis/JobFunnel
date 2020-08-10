@@ -3,6 +3,7 @@ Scrapes jobs, applies search filters and writes pickles to master list
 """
 import csv
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime
 import json
 import logging
@@ -16,7 +17,7 @@ from time import time
 from jobfunnel.config import JobFunnelConfig
 from jobfunnel.backend import Job
 from jobfunnel.resources import (
-    CSV_HEADER, JobStatus, Locale, MAX_BLOCK_LIST_DESC_CHARS)
+    JobStatus, Locale, CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS, MAX_CPU_WORKERS)
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
 
 
@@ -35,6 +36,7 @@ class JobFunnel(object):
         self.config.validate()
         self.logger = None
         self.__date_string = date.today().strftime("%Y-%m-%d")
+        self.__threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
         self.init_logging()
 
         # Open a session with/out a proxy configured

@@ -67,8 +67,6 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
     """Checks delay config and returns calculated delay list.
 
     NOTE: we do this to be respectful to online job sources
-    TODO: make this return a delay value based on list_len so we can use this
-    on-demand with the thread executor's GET queue.
 
     Args:
         list_len: length of scrape job list
@@ -119,30 +117,3 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
     durations[0] = 0
 
     return durations
-
-
-def delay_threader(jobs_list: List[Job], scrape_fn: object,
-                   parse_fn: object, threads: ThreadPoolExecutor,
-                   logger: Logger, delays: List[float] = None) -> None:
-    """Method to scrape descriptions from individual indeed postings.
-    with respectful-delaying
-    """
-
-    # Submits jobs and stores futures in dict
-    start = time()
-    results = {}
-    for job, delay in zip(jobs_list, delays):
-        results[threads.submit(scrape_fn, job=job, delay=delay)] = job.key_id
-
-    # Loops through futures as completed and removes each if successfully parsed
-    while results:
-        for future in as_completed(results):
-            job, html = future.result()
-            parse_fn(job, html)
-            del results[future]
-            del html
-
-    # Cleanup + log
-    threads.shutdown()
-    end = time()
-    logger.info(f'Scrape delay took {(end - start):.3f}s')
