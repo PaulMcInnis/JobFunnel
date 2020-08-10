@@ -66,46 +66,53 @@ class JobFunnel(object):
         # we are getting detailed job information (per-job)
         self.update_block_list()
 
-        # Get jobs keyed by their unique ID, use cache if we scraped today
-        jobs_dict = {}  # type: Dict[str, Job]
-        if os.path.exists(self.daily_cache_file):
-            jobs_dict = self.load_cache(self.daily_cache_file)
-        elif self.config.no_scrape:
-            self.logger.warning(
-                f"No jobs cached, missing: {self.daily_cache_file}"
-            )
+        if self.config.recover_from_cache:
 
-        if self.config.no_scrape:
-            self.logger.info("Skipping scraping, running with --no-scrape.")
+            # Perform recovery from cache if --recover passed
+            self.recover()
+
         else:
-            jobs_dict = self.scrape()  # type: Dict[str, Job]
-            self.write_cache(jobs_dict)
 
-        # Filter out scraped jobs we have rejected, archived or block-listed
-        # (before we add them to the CSV)
-        self.filter(jobs_dict)
-
-        # Load and update existing masterlist
-        if os.path.exists(self.config.master_csv_file):
-
-            # Identify duplicate jobs using the existing masterlist
-            masterlist = self.read_master_csv()  # type: Dict[str, Job]
-            self.filter(masterlist)  # NOTE: this reduces size of masterlist
-            try:
-                tfidf_filter(jobs_dict, masterlist)
-            except ValueError as err:
-                self.logger.error(
-                    f"Skipping similarity filter due to: {str(err)}"
+            # Get jobs keyed by their unique ID, use cache if we scraped today
+            jobs_dict = {}  # type: Dict[str, Job]
+            if os.path.exists(self.daily_cache_file):
+                jobs_dict = self.load_cache(self.daily_cache_file)
+            elif self.config.no_scrape:
+                self.logger.warning(
+                    f"No jobs cached, missing: {self.daily_cache_file}"
                 )
 
-            # Expand the masterlist with filteres, non-duplicated jobs & save
-            masterlist.update(jobs_dict)
-            self.write_master_csv(masterlist)
+            if self.config.no_scrape:
+                self.logger.info("Skipping scraping, running with --no-scrape.")
+            else:
+                jobs_dict = self.scrape()  # type: Dict[str, Job]
+                self.write_cache(jobs_dict)
 
-        else:
-            # FIXME: we should still remove duplicates (TFIDF) within jobs_dict
-            # Dump the results into the data folder as the masterlist
-            self.write_master_csv(jobs_dict)
+            # Filter out scraped jobs we have rejected, archived or block-listed
+            # (before we add them to the CSV)
+            self.filter(jobs_dict)
+
+            # Load and update existing masterlist
+            if os.path.exists(self.config.master_csv_file):
+
+                # Identify duplicate jobs using the existing masterlist
+                masterlist = self.read_master_csv()  # type: Dict[str, Job]
+                self.filter(masterlist)  # NOTE: this reduces size of masterlist
+                try:
+                    tfidf_filter(jobs_dict, masterlist)
+                except ValueError as err:
+                    self.logger.error(
+                        f"Skipping similarity filter due to: {str(err)}"
+                    )
+
+                # Expand the masterlist with filters, non-duplicated jobs & save
+                masterlist.update(jobs_dict)
+                self.write_master_csv(masterlist)
+
+            else:
+                # FIXME: we should still remove duplicates within jobs_dict?
+                # Dump the results into the data folder as the masterlist
+                self.write_master_csv(jobs_dict)
 
         self.logger.info(
             f"Done. View your current jobs in {self.config.master_csv_file}"
@@ -113,7 +120,7 @@ class JobFunnel(object):
 
     def init_logging(self) -> None:
         """Initialize a logger
-        TODO: we are mixing logging calls with self.logger here, is that OK?
+        NOTE: make stdout format more configurable?
         """
         self.logger = logging.getLogger()
         self.logger.setLevel(self.config.log_level)
@@ -121,10 +128,10 @@ class JobFunnel(object):
             filename=self.config.log_file,
             level=self.config.log_level,
         )
-        if self.config.log_level == 20:
-            logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-        else:
-            logging.getLogger().addHandler(logging.StreamHandler())
+        formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(formatter)
+        self.logger.addHandler(stdout_handler)
         self.logger.info(f"JobFunnel initialized at {self.__date_string}")
 
     def scrape(self) ->Dict[str, Job]:
@@ -151,8 +158,6 @@ class JobFunnel(object):
 
     def recover(self):
         """Build a new master CSV from all the available pickles in our cache
-        NOTE: maybe we can warn user that this will throw away their current
-        masterlist, since we are assuming it's corrupted somehow
         """
         self.logger.info("Recovering jobs from all cache files in cache folder")
         if os.path.exists(self.config.user_block_list_file):
@@ -164,7 +169,12 @@ class JobFunnel(object):
         all_jobs_dict = {}
         for file in os.listdir(self.config.cache_folder):
             if '.pkl' in file:
-                all_jobs_dict.update(self.load_cache(file))
+                all_jobs_dict.update(
+                    self.load_cache(
+                        os.path.join(self.config.cache_folder, file)
+                    )
+                )
+        self.filter(all_jobs_dict)
         self.write_master_csv(all_jobs_dict)
 
     def load_cache(self, cache_file: str) -> Dict[str, Job]:
@@ -306,6 +316,8 @@ class JobFunnel(object):
 
         NOTE: adding jobs to block list will result in filter() removing them
         from all scraped & cached jobs in the future.
+
+        NOTE: we truncate descriptions in the block list
         """
         if os.path.isfile(self.config.master_csv_file):
 
@@ -329,8 +341,12 @@ class JobFunnel(object):
                     blocked_jobs_dict[job.key_id] = {
                         'title': job.title,
                         'post_date': job.post_date.strftime('%Y-%m-%d'),
-                        'description': '{0:<MAX_BLOCK_LIST_DESC_CHARS}'.format(
-                            job.description),
+                        'description': (
+                                job.description[:MAX_BLOCK_LIST_DESC_CHARS]
+                                + '..'
+                            )
+                            if len(job.description) > MAX_BLOCK_LIST_DESC_CHARS
+                            else job.description,
                         'status': job.status.name,
                     }
 

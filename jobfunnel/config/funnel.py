@@ -22,12 +22,15 @@ class JobFunnelConfig(BaseConfig):
                  log_file: str,
                  log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
+                 recover_from_cache: Optional[bool] = False,
                  bs4_parser: Optional[str] = BS4_PARSER,
                  return_similar_results: Optional[bool] = False,
                  delay_config: Optional[DelayConfig] = None,
                  proxy_config: Optional[ProxyConfig] = None) -> None:
         """Init a config that determines how we will scrape jobs from Scrapers
         and how we will update CSV and filtering lists
+
+        TODO: we might want to make a RunTimeConfig with the flags etc.
 
         Args:
             master_csv_file (str): path to the .csv file that user interacts w/
@@ -43,6 +46,9 @@ class JobFunnelConfig(BaseConfig):
             no_scrape (Optional[bool], optional): If True, will not scrape data
                 at all, instead will only update filters and CSV. Defaults to
                 False.
+            recover_from_cache (Optional[bool], optional): if True, build the
+                master CSV file from the contents of all the cache files inside
+                self.cache_folder. NOTE: respects the block list. not in YAML.
             bs4_parser (Optional[str], optional): the parser to use for BS4.
             return_similar_resuts (Optional[bool], optional): If True, we will
                 ask the job provider to provide more loosely-similar results for
@@ -61,6 +67,7 @@ class JobFunnelConfig(BaseConfig):
         self.log_level = log_level
         self.no_scrape = no_scrape
         self.bs4_parser = bs4_parser  # TODO: add to config
+        self.recover_from_cache = recover_from_cache
         self.return_similar_results = return_similar_results
         if not delay_config:
             # We will always use a delay config to be respectful

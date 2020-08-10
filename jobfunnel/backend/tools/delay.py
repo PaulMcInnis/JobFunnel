@@ -1,13 +1,10 @@
 """Module for calculating random or non-random delay
 """
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from math import ceil, log, sqrt
 from numpy import arange
 from random import uniform
-import sys
 from typing import Dict, Union, List
 from time import time
-from logging import warning, Logger
 
 from scipy.special import expit
 
@@ -68,6 +65,8 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
 
     NOTE: we do this to be respectful to online job sources
 
+    TODO: we should calculate delays on-demand.
+
     Args:
         list_len: length of scrape job list
         delay_config: Delay configuration dictionary
@@ -114,6 +113,6 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         durations = [round(i, 3) for i in delay_vals]
 
     # Always set first element to 0 so scrape starts right away
-    durations[0] = 0
+    durations[0] = 0.0
 
     return durations
