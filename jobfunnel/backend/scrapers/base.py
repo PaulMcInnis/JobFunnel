@@ -14,7 +14,7 @@ from requests import Session
 
 from jobfunnel.resources import (
     Locale, JobField, USER_AGENT_LIST, MAX_CPU_WORKERS)
-from jobfunnel.backend.tools.delay import calculate_delays, delay_threader
+from jobfunnel.backend.tools.delay import calculate_delays
 from jobfunnel.backend import Job, JobStatus
 # from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
@@ -118,9 +118,11 @@ class BaseScraper(ABC):
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
-        FIXME: this is hard-coded to delay scraping of descriptions only rn
-        maybe we can just use a queue and calc delays on-the-fly in scrape_job
-        for all session.get requests?
+        NOTE: respectfully delays for scraping of configured job attributes in
+        self.
+
+        Returns:
+            jobs (Dict[str, Job]): list of Jobs in a Dict keyed by job.key_id
         """
 
         # Get a list of job soups from the initial search results page
@@ -136,9 +138,8 @@ class BaseScraper(ABC):
             f"Scraped {n_soups} job listings from search results pages"
         )
 
-        # Calculate delays for all job get/set calls NOTE: only get/set
-        # calls which require delaying (in self.delayed_get_set_fields
-        # will be delayed.
+        # Calculate delays for get/set calls per-job NOTE: only get/set
+        # calls in self.delayed_get_set_fields will be delayed.
         delays = calculate_delays(n_soups, self.config.delay_config)
         results = []
         for job_soup, delay in zip(job_soups, delays):
@@ -172,7 +173,7 @@ class BaseScraper(ABC):
                 will use to perform the get/set action. It should be specific
                 to this job and not contain other job information.
             delay [float]: how long to delay getting/setting for certain
-                get/set calls.
+                get/set calls while scraping data for this job.
 
         Returns:
             Job: job object constructed from the soup and localization of class

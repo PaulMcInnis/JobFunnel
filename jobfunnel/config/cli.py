@@ -179,8 +179,12 @@ def parse_cli():
 
     parser.add_argument(
         '--recover',
+        dest='recover_from_cache',
         action='store_true',
         help='Reconstruct a new master CSV file from all available cache files.'
+             'WARNING: this will replace all the statuses/etc in your master '
+             'CSV, it is intended for starting fresh / recovering from a bad '
+             'state.'
     )
 
     parser.add_argument(
@@ -272,6 +276,9 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
     else:
         config = DEFAULT_CONFIG
 
+    # Are we recovering? NOTE: this arg is not part of yaml like settings path
+    recover_from_cache = args_dict.pop('recover_from_cache')
+
     # Ensure that if user provided output folder that the other paths aren't
     if (args_dict['output_folder'] != DEFAULT_OUTPUT_DIRECTORY and (
             args_dict['master_csv_file'] != DEFAULT_MASTER_CSV_FILE
@@ -358,6 +365,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         log_level=config['log_level'],
         no_scrape=config['no_scrape'],
         # bs4_parser=config['bs4_parser'], # TODO: impl. cli/cfg when needed.
+        recover_from_cache=recover_from_cache,  # NOTE: this isn't in YAML
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,
