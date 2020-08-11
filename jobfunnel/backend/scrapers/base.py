@@ -1,21 +1,22 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
 """
-from abc import ABC, abstractmethod
-from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import datetime
 import logging
 import os
-from time import sleep, time
-from tqdm import tqdm
-from typing import Dict, List, Tuple, Union, Any
 import random
-from requests import Session
+from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from time import sleep, time
+from typing import Any, Dict, List, Tuple, Union
 
-from jobfunnel.resources import (
-    Locale, JobField, USER_AGENT_LIST, MAX_CPU_WORKERS)
-from jobfunnel.backend.tools.delay import calculate_delays
+from bs4 import BeautifulSoup
+from requests import Session
+from tqdm import tqdm
+
 from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend.tools.delay import calculate_delays
+from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
+                                 Locale)
 # from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
 
 
@@ -208,6 +209,7 @@ class BaseScraper(ABC):
                     job_init_kwargs[field] = self.get(field, job_soup)
                 else:
                     if not job:
+                        # Build initial job object + populate all the job
                         job = Job(**{
                             k.name.lower(): v for k, v
                             in job_init_kwargs.items()
@@ -260,7 +262,10 @@ class BaseScraper(ABC):
     @abstractmethod
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
-        NOTE: use this to set Job attribs that rely on Job existing already
+
+        NOTE: (remember) do not return anything in here! it sets job attribs
+
+        Use this to set Job attribs that rely on Job existing already
         with the required minimum fields (i.e. you can set description by
         getting the job's detail page with job.url)
         """

@@ -2,23 +2,23 @@
 Scrapes jobs, applies search filters and writes pickles to master list
 """
 import csv
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import date, datetime
 import json
 import logging
 import os
 import pickle
-from requests import Session
 import sys
-from typing import Dict, List, Union
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime
 from time import time
+from typing import Dict, List
 
-from jobfunnel.config import JobFunnelConfig
+from requests import Session
+
 from jobfunnel.backend import Job
-from jobfunnel.resources import (
-    JobStatus, Locale, CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS, MAX_CPU_WORKERS)
 from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
+from jobfunnel.config import JobFunnelConfig
+from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
+                                 MAX_CPU_WORKERS, JobStatus, Locale)
 
 
 class JobFunnel(object):

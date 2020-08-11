@@ -7,4 +7,7 @@ from jobfunnel.backend.scrapers.indeed import (
 from jobfunnel.backend.scrapers.glassdoor.static import (
     GlassDoorStaticCAEng, GlassDoorStaticUSAEng,
 )
+from jobfunnel.backend.scrapers.monster import (
+    MonsterScraperCAEng, MonsterScraperUSAEng,
+)
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
