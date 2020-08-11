@@ -25,12 +25,12 @@ class Job():
                  company: str,
                  location: str,
                  description: str,
-                 key_id: str,
                  url: str,
                  locale: Locale,
                  query: str,
                  provider: str,
                  status: JobStatus,
+                 key_id: Optional[str] = '',
                  scrape_date: Optional[date] = None,
                  short_description: Optional[str] = None,
                  post_date: Optional[date] = None,
@@ -38,9 +38,11 @@ class Job():
                  tags: Optional[List[str]] = None) -> None:
         """Object to represent a single job that we have scraped
 
-        NOTE: self.attrs must be reflected in JobField so we can auto-get/set
-        TODO: would be nice to use something standardized for location
+        TODO integrate init with JobField somehow, ideally with validation.
+        TODO: would be nice to use something standardized for location str
         TODO: perhaps we can do 'remote' for location w/ Enum for those jobs?
+        NOTE: ideally key_id is provided, but Monster sets() it, so it now
+            has a default = None and is checked for in validate()
 
         Args:
             title (str): title of the job (should be somewhat short)
@@ -136,4 +138,4 @@ class Job():
 
     def validate(self) -> None:
         """TODO: implement this just to ensure that the metadata is good"""
-        pass
+        assert self.key_id, "Key_ID is unset!"

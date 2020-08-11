@@ -27,6 +27,7 @@ MAX_RESULTS_PER_INDEED_PAGE = 50
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
     """
+
     def __init__(self, session: Session, config: 'JobFunnelConfig',
                  logger: logging.Logger) -> None:
         """Init that contains indeed specific stuff
@@ -70,7 +71,7 @@ class BaseIndeedScraper(BaseScraper):
         # Init list of job soups
         job_soup_list = []  # type: List[Any]
 
-        # Init threads & futures list
+        # Init threads & futures list FIXME: use existing ThreadPoolExecutor
         threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
         futures_list = []  # FIXME: type?
 
@@ -129,10 +130,10 @@ class BaseIndeedScraper(BaseScraper):
         """Set a single job attribute from a soup object by JobField
         """
         if parameter == JobField.DESCRIPTION:
-            job_link_soup = BeautifulSoup(
+            detailed_job_soup = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
-            job.description = job_link_soup.find(
+            job.description = detailed_job_soup.find(
                 id='jobDescriptionText'
             ).text.strip()
         elif parameter == JobField.URL:
@@ -145,22 +146,21 @@ class BaseIndeedScraper(BaseScraper):
 
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
+        TODO: use Enum for method instead of str.
         """
         if method == 'get':
-            # form job search url
-            search = (
+            return (
                 "https://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}&"
                 "limit={5}&filter={6}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+'),
-                    self.config.search_config.state,
+                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.province_or_state,
                     self._convert_radius(self.config.search_config.radius),
                     self.max_results_per_page,
                     int(self.config.search_config.return_similar_results)
                 )
             )
-            return search
         elif method == 'post':
             # TODO: implement post style for indeed.X
             raise NotImplementedError()
@@ -202,14 +202,14 @@ class BaseIndeedScraper(BaseScraper):
         )
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
-        """Calculates the number of pages to be scraped.
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
         Args:
-			soup_base: search URL for the job search we are making
 			max_pages: the maximum number of pages to be scraped.
         Returns:
             The number of pages to be scraped.
-            If the number of pages that soup_base yields is higher than max,
-            then max is returned.
         """
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)

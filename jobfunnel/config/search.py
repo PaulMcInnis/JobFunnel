@@ -44,8 +44,7 @@ class SearchConfig(BaseConfig):
             domain (Optional[str], optional): domain string to use for search
                 querying. If not passed, will set based on locale. (i.e. 'ca')
         """
-        self.province = province_or_state
-        self.state = province_or_state
+        self.province_or_state = province_or_state
         self.city = city.lower()
         self.radius = distance_radius or DEFAULT_SEARCH_RADIUS_KM
         self.locale = locale

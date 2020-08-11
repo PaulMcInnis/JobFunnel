@@ -1,8 +1,12 @@
 """Lookup tables where we can map scrapers to locales, etc
+
+NOTE: if you implement a scraper you must add it here or JobFunnel cannot
+find it.
+TODO: way to make this unnecessary? maybe import & map based on name?
 """
 from jobfunnel.backend.scrapers import (
     BaseScraper, IndeedScraperCAEng, IndeedScraperUSAEng, GlassDoorStaticCAEng,
-    GlassDoorStaticUSAEng,
+    GlassDoorStaticUSAEng, MonsterScraperCAEng, MonsterScraperUSAEng,
 )
 from jobfunnel.resources import Locale, Provider
 
@@ -15,12 +19,12 @@ SCRAPER_FROM_LOCALE = {
         Locale.CANADA_ENGLISH: IndeedScraperCAEng,
         Locale.USA_ENGLISH: IndeedScraperUSAEng,
     },
-    Provider.GLASSDOOR: {
-        Locale.CANADA_ENGLISH: GlassDoorStaticCAEng,
-        Locale.CANADA_ENGLISH: GlassDoorStaticUSAEng,
+    # Provider.GLASSDOOR: {  # FIXME
+    #     Locale.CANADA_ENGLISH: GlassDoorStaticCAEng,
+    #     Locale.CANADA_ENGLISH: GlassDoorStaticUSAEng,
+    # },
+    Provider.MONSTER: {
+        Locale.CANADA_ENGLISH: MonsterScraperCAEng,
+        Locale.USA_ENGLISH: MonsterScraperUSAEng,
     },
-    # 'monster': MonsterScraperCAEng,  FIXME
-    #'MONSTER_CANADA_ENG': MonsterScraperCAEng,
-}  # type:
-
-
+}
