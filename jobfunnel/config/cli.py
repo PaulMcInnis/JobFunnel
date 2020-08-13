@@ -106,6 +106,7 @@ def parse_cli():
     parser.add_argument(
         '-p',
         dest='search_providers',
+        nargs='+',
         choices=PROVIDER_NAMES,
         default=PROVIDER_NAMES,
         help='List of job-search providers. (i.e. indeed, monster, glassdoor).'
@@ -164,6 +165,7 @@ def parse_cli():
 
     parser.add_argument(
         '--similar-results',
+        dest='search_similar_results',
         action='store_true',
         help='Return \'similar\' results from search query (only for Indeed).'
     )
@@ -197,6 +199,14 @@ def parse_cli():
         '--no-scrape',
         action='store_true',
         help='Do not make any get requests, and attempt to load from cache.'
+    )
+
+    parser.add_argument(
+        '--web-driver',
+        dest='use_web_driver',
+        action='store_true',
+        help='Use web-driven scraping if available. Currently only available '
+             'for GlassDoor scrapers. WARNING: this is in beta.'
     )
 
     # Proxy stuff
@@ -369,6 +379,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,
+        web_driven_scraping=config['use_web_driver'],
     )
 
     # Validate funnel config as well (checks some stuff Cerberus doesn't rn)

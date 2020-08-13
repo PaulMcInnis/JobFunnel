@@ -1,6 +1,6 @@
 """Scraper designed to get jobs from www.indeed.com / www.indeed.ca
 """
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
 import logging
@@ -15,8 +15,9 @@ from bs4 import BeautifulSoup
 from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.backend.scrapers import (
-    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper)
+from jobfunnel.backend.scrapers.base import (
+    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
+)
 #from jobfunnel.config import JobFunnelConfig  # causes a circular import
 
 
@@ -225,7 +226,7 @@ class BaseIndeedScraper(BaseScraper):
             return max_pages
 
 
-class IndeedScraperCAEng(BaseIndeedScraper, BaseCANEngScraper):
+class IndeedScraperCANEng(BaseIndeedScraper, BaseCANEngScraper):
     """Scrapes jobs from www.indeed.ca
     """
     pass

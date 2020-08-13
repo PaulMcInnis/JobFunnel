@@ -19,11 +19,14 @@ SETTINGS_YAML_SCHEMA = {
     'log_level': {'required': False, 'allowed': LOG_LEVEL_NAMES},
     'log_file': {'required': False, 'type': 'string'},
     'save_duplicates': {'required': False, 'type': 'boolean'},
+    'use_web_driver': {'required': False, 'type': 'boolean'},
     'search': {
         'type': 'dict',
         'required': True,
         'schema': {
-            'providers': {'required': True, 'allowed': [p.name for p in Provider]},
+            'providers': {
+                'required': True, 'allowed': [p.name for p in Provider]
+            },
             'locale' : {'required': True, 'allowed': [l.name for l in Locale]},
             'region': {
                 'type': 'dict',
