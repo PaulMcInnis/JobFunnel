@@ -15,11 +15,11 @@ from bs4 import BeautifulSoup
 from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.backend.scrapers import (
-    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper)
+from jobfunnel.backend.scrapers.base import (
+    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
+)
 
-
-MAGIC_GLASSDOOR_SEARCH_STRING = 'skr_navigation_nhpso_searchMain'
+MAGIC_MONSTER_SEARCH_STRING = 'skr_navigation_nhpso_searchMain'
 MAX_RESULTS_PER_MONSTER_PAGE = 25
 ID_REGEX = re.compile(
     r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]'
@@ -176,7 +176,7 @@ class BaseMonsterScraper(BaseScraper):
                     self.query,
                     self.config.search_config.city.replace(' ', '-'),
                     self.config.search_config.province_or_state,
-                    MAGIC_GLASSDOOR_SEARCH_STRING,
+                    MAGIC_MONSTER_SEARCH_STRING,
                     self._convert_radius(self.config.search_config.radius)
                 )
             )
@@ -191,7 +191,7 @@ class BaseMonsterScraper(BaseScraper):
         """
         pass
 
-class MonsterScraperCAEng(BaseMonsterScraper, BaseCANEngScraper):
+class MonsterScraperCANEng(BaseMonsterScraper, BaseCANEngScraper):
     """Scrapes jobs from www.monster.ca
     """
     def _convert_radius(self, radius: int) -> int:

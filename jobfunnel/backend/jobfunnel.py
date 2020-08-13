@@ -21,7 +21,7 @@ from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
                                  MAX_CPU_WORKERS, JobStatus, Locale)
 
 
-class JobFunnel(object):
+class JobFunnel:
     """Class that initializes a Scraper and scrapes a website to get jobs
     """
 

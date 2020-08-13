@@ -264,6 +264,7 @@ class BaseScraper(ABC):
         """Set a single job attribute from a soup object by JobField
 
         NOTE: (remember) do not return anything in here! it sets job attribs
+        FIXME: have this automatically set the attribute by JobField.
 
         Use this to set Job attribs that rely on Job existing already
         with the required minimum fields (i.e. you can set description by

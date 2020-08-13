@@ -54,8 +54,9 @@ DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
 # NOTE: we do indeed first b/c it has most information, monster is missing keys
-DEFAULT_PROVIDERS = [Provider.INDEED, Provider.MONSTER, ] #, Provider.GLASSDOOR] FIXME
+DEFAULT_PROVIDERS = [Provider.GLASSDOOR, Provider.INDEED, Provider.MONSTER] #, ] FIXME
 DEFAULT_NO_SCRAPE = False
+DEFAULT_USE_WEB_DRIVER = False
 DEFAULT_RECOVER = False
 DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_SAVE_DUPLICATES = False
@@ -82,6 +83,7 @@ DEFAULT_CONFIG = {
         'save_duplicates': DEFAULT_SAVE_DUPLICATES,
         'log_level': DEFAULT_LOG_LEVEL_NAME,
         'log_file': DEFAULT_LOG_FILE,
+        'use_web_driver': DEFAULT_USE_WEB_DRIVER,
         'search': {
             'locale' : DEFAULT_LOCALE.name,
             'providers': [p.name for p in DEFAULT_PROVIDERS],
