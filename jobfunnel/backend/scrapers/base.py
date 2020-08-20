@@ -179,7 +179,7 @@ class BaseScraper(ABC):
         Returns:
             Job: job object constructed from the soup and localization of class
         """
-        # Init kwargs
+        # Init kwargs which allow for defaults + known information
         job_init_kwargs = {
             JobField.STATUS: JobStatus.NEW,
             JobField.LOCALE: self.locale,
@@ -187,8 +187,10 @@ class BaseScraper(ABC):
             JobField.DESCRIPTION: '',
             JobField.URL: '',
             JobField.SHORT_DESCRIPTION: '',  # TODO: impl.
-            JobField.RAW: '',  # TODO: impl.
+            JobField.RAW: None,
             JobField.PROVIDER: self.__class__.__name__,
+            JobField.REMOTE: '',
+            JobField.WAGE: '',
         }  # type: Dict[JobField, Any]
 
         # Formulate the get/set actions
@@ -230,6 +232,10 @@ class BaseScraper(ABC):
 
         assert job, "Failed to initialize job"  # NOTE: should never see this
         job.validate()
+
+        # FIXME: this is to prevent issues with JSON and raw data recur limit
+        # We could handle this when scraping but this will also save memory.
+        job._raw_scrape_data = None
 
         return job
 

@@ -1,6 +1,7 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
+from bs4 import BeautifulSoup
 from datetime import date, datetime
 import re
 import string
@@ -34,13 +35,16 @@ class Job():
                  scrape_date: Optional[date] = None,
                  short_description: Optional[str] = None,
                  post_date: Optional[date] = None,
-                 raw: Optional[Any] = None,
-                 tags: Optional[List[str]] = None) -> None:
+                 raw: Optional[BeautifulSoup] = None,
+                 wage: Optional[str] = None,
+                 tags: Optional[List[str]] = None,
+                 remote: Optional[str] = None) -> None:
         """Object to represent a single job that we have scraped
 
         TODO integrate init with JobField somehow, ideally with validation.
         TODO: would be nice to use something standardized for location str
         TODO: perhaps we can do 'remote' for location w/ Enum for those jobs?
+        TODO: wage ought to be a number or an object, but is str for flexibility
         NOTE: ideally key_id is provided, but Monster sets() it, so it now
             has a default = None and is checked for in validate()
 
@@ -64,10 +68,13 @@ class Job():
                 (one-liner)
             post_date (Optional[date]): the date the job became available on the
                 job source. Defaults to None.
-            raw (Optional[Any]): raw scrape data that we can use for
+            raw (Optional[BeautifulSoup]): raw scrape data that we can use for
                 debugging/pickling, defualts to None.
+            wage (Optional[str], optional): string describing wage (may be est)
             tags (Optional[List[str]], optional): additional key-words that are
                 in the job posting that identify the job. Defaults to [].
+            remote (Optional[str], optional): string describing remote work
+                allowance/status i.e. ('temporarily remote', 'fully remote' etc)
         """
         # These must be populated by a Scraper
         self.title = title
@@ -80,6 +87,8 @@ class Job():
         self.query = query
         self.provider = provider
         self.status = status
+        self.wage = wage
+        self.remote = remote
 
         # These may not always be populated in our job source
         self.post_date = post_date
@@ -121,6 +130,8 @@ class Job():
                     self.provider,
                     self.query,
                     self.locale.name,
+                    self.wage,
+                    self.remote,
                 ]
             )
         ])
@@ -131,7 +142,8 @@ class Job():
         ...This way of doing it is janky and might not work right...
         """
         for attr in [self.title, self.company, self.description, self.tags,
-                     self.url, self.key_id, self.provider, self.query]:
+                     self.url, self.key_id, self.provider, self.query,
+                     self.wage]:
             attr = ''.join(
                 filter(lambda x: x in PRINTABLE_STRINGS, self.title)
             )
