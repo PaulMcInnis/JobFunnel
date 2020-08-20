@@ -54,7 +54,7 @@ DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
 # NOTE: we do indeed first b/c it has most information, monster is missing keys
-DEFAULT_PROVIDERS = [Provider.GLASSDOOR, Provider.INDEED, Provider.MONSTER] #, ] FIXME
+DEFAULT_PROVIDERS = [Provider.GLASSDOOR] #, Provider.INDEED, Provider.MONSTER] #, ] FIXME
 DEFAULT_NO_SCRAPE = False
 DEFAULT_USE_WEB_DRIVER = False
 DEFAULT_RECOVER = False

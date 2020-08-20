@@ -51,6 +51,8 @@ class JobField(Enum):
     POST_DATE = 12
     RAW = 13
     TAGS = 14
+    WAGE = 15
+    REMOTE = 16
 
 
 class Provider(Enum):

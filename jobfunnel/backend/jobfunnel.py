@@ -36,7 +36,6 @@ class JobFunnel:
         self.config.validate()
         self.logger = None
         self.__date_string = date.today().strftime("%Y-%m-%d")
-        self.__threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
         self.init_logging()
 
         # Open a session with/out a proxy configured
@@ -198,6 +197,7 @@ class JobFunnel:
                     cache_file: str = None) -> None:
         """Dump a jobs_dict into a pickle
         TODO: write search_config into the cache file and jobfunnel version
+        FIXME: some way to cache raw data without recur-limit
         """
         cache_file = cache_file if cache_file else self.daily_cache_file
         pickle.dump(jobs_dict, open(cache_file, 'wb'))

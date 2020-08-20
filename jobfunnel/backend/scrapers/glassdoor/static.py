@@ -39,7 +39,7 @@ class StaticGlassDoorScraper(BaseGlassDoorScraper):
         """
         return [
             JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.POST_DATE, JobField.URL, JobField.KEY_ID,
+            JobField.POST_DATE, JobField.URL, JobField.KEY_ID, JobField.WAGE,
         ]
 
     @property
@@ -67,53 +67,33 @@ class StaticGlassDoorScraper(BaseGlassDoorScraper):
             f"Found {n_pages} pages of search results for query={self.query}"
         )
 
-        # Init list of job soups
-        job_soup_list = []  # type: List[BeautifulSoup]
+        # Get the first page of job soups from the search results listings
+        job_soup_list = self._parse_job_listings_to_bs4(soup_base)
 
         # Init threads & futures list FIXME: use existing ThreadPoolExecutor?
         threads = ThreadPoolExecutor(MAX_CPU_WORKERS)
         futures_list = []  # FIXME: type?
 
-        # search the pages to extract the list of job soups
-        # FIXME: something goes wrong here and we end up with a 4x duplicated job soups??
-        for page in range(1, n_pages + 1):
-            if page == 1:
+        #Search the remaining pages to extract the list of job soups
+        if n_pages > 1:
+            for page in range(2, n_pages + 1):
                 futures_list.append(
                     threads.submit(
                         self._search_page_for_job_soups,
-                        request_html.url,
+                        self._get_next_page_url(soup_base, page),
                         job_soup_list,
                     )
                 )
-            else:
-                # gets partial url for next page
-                part_url = soup_base.find(
-                    'li', attrs={'class', 'next'}
-                ).find('a').get('href')
 
-                # uses partial url to construct next page url
-                page_url = re.sub(
-                    r'_IP\d+\.',
-                    f'_IP{page}.',
-                    f'https://www.glassdoor.{self.config.search_config.domain}'
-                    f'{part_url}',
-                )
-
-                futures_list.append(
-                    threads.submit(
-                        self._search_page_for_job_soups,
-                        page_url,
-                        job_soup_list,
-                    )
-                )
         wait(futures_list)  # wait for all scrape jobs to finish
-        return job_soup_list
+        return job_soup_list[25:30]
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
         TODO: impl div class=compactStars value somewhere.
         """
         if parameter == JobField.TITLE:
+            # TODO: we should instead get what user sees in the <span>
             return soup.get('data-normalize-job-title')
         elif parameter == JobField.COMPANY:
             return soup.find(
@@ -138,6 +118,12 @@ class StaticGlassDoorScraper(BaseGlassDoorScraper):
                     }
                 ).text.strip()
             )
+        elif parameter == JobField.WAGE:
+            # NOTE: most jobs don't have this so we wont raise a warning here
+            # and will fail silently instead
+            wage = soup.find('span', attrs={'class': 'gray salary'})
+            if wage is not None:
+                return wage.text.strip()
         elif parameter == JobField.KEY_ID:
             return soup.get('data-id')
         elif parameter == JobField.URL:
@@ -153,6 +139,7 @@ class StaticGlassDoorScraper(BaseGlassDoorScraper):
 
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
+        NOTE: Description has to get and should be respectfully delayed
         """
         if parameter == JobField.DESCRIPTION:
             job_link_soup = BeautifulSoup(
@@ -161,23 +148,54 @@ class StaticGlassDoorScraper(BaseGlassDoorScraper):
             job.description = job_link_soup.find(
                 id='JobDescriptionContainer'
             ).text.strip()
+            job._raw_scrape_data = job_link_soup  # This is so we can set wage
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def _search_page_for_job_soups(self, url: str,
-                                   job_soup_list: List[BeautifulSoup]):
-        """Get a list of job soups from a glassdoor page
+    def _search_page_for_job_soups(self, listings_page_url: str,
+                                   job_soup_list: List[BeautifulSoup]) -> None:
+        """Get a list of job soups from a glassdoor page, by loading the page.
+        NOTE: this makes GET requests and should be respectfully delayed.
         """
-        job = BeautifulSoup(
-            self.session.get(url).text, self.config.bs4_parser
-        ).find_all('li', attrs={'class', 'jl'})
-        job_soup_list.extend(job)
+        job_soup_list.extend(
+            self._parse_job_listings_to_bs4(
+                BeautifulSoup(
+                    self.session.get(listings_page_url).text,
+                    self.config.bs4_parser,
+                )
+            )
+        )
+
+    def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
+                                   ) -> List[BeautifulSoup]:
+        """Parse a page of job listings HTML text into job soups
+        """
+        return page_soup.find_all('li', attrs={'class', 'jl'})
 
     def _get_num_search_result_pages(self, soup_base: BeautifulSoup) -> int:
         # scrape total number of results, and calculate the # pages needed
         num_res = soup_base.find('p', attrs={'class', 'jobsCount'}).text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
         return int(ceil(num_res / self.max_results_per_page))
+
+    def _get_next_page_url(self, soup_base: BeautifulSoup,
+                           results_page_number: int) -> str:
+        """Construct the next page of search results from the initial search
+        results page BeautifulSoup.
+        """
+        part_url = soup_base.find(
+            'li', attrs={'class', 'next'}
+        ).find('a').get('href')
+
+        assert part_url is not None, "Unable to find next page in listing soup!"
+
+        # Uses partial url to construct next page url
+        return re.sub(
+            r'_IP\d+\.',
+            f'_IP{results_page_number}.',
+            f'https://www.glassdoor.{self.config.search_config.domain}'
+            f'{part_url}',
+        )
 
 
 # These are the same exact logic, same website beyond the domain.
