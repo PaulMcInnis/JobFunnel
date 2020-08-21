@@ -114,13 +114,13 @@ class JobFunnel:
         """Initialize a logger
         NOTE: make stdout format more configurable?
         """
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger('jobfunnel')
         self.logger.setLevel(self.config.log_level)
         logging.basicConfig(
             filename=self.config.log_file,
             level=self.config.log_level,
         )
-        formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        formatter = logging.Formatter('[%(levelname)s] jobfunnel: %(message)s')
         stdout_handler = logging.StreamHandler(sys.stdout)
         stdout_handler.setFormatter(formatter)
         self.logger.addHandler(stdout_handler)
@@ -136,7 +136,7 @@ class JobFunnel:
         for scraper_cls in self.config.scrapers:
             # FIXME: need to add the threader and delaying here
             start = time()
-            scraper = scraper_cls(self.session, self.config, self.logger)
+            scraper = scraper_cls(self.session, self.config)
             # TODO: add a warning for overwriting different jobs with same key
             jobs.update(scraper.scrape())
             end = time()

@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import random
+import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep, time
@@ -23,13 +24,15 @@ from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
 class BaseScraper(ABC):
     """Base scraper object, for scraping and filtering Jobs from a provider
     """
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
-                 logger: logging.Logger) -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
         self.session = session
         self.config = config
-        self.logger = logger
+        self.logger = None
         if self.headers:
             self.session.headers.update(self.headers)
+
+        # Init logging
+        self.init_logging()
 
         # Ensure that the locale we want to use matches the locale that the
         # scraper was written to scrape in:
@@ -107,6 +110,23 @@ class BaseScraper(ABC):
         requests.Session.headers.update()
         """
         pass
+
+    def init_logging(self) -> None:
+        """Initialize a logger which displays clearly the name of the scraper
+        TODO: make this less of a duplication of JobFunnel.init_logging()
+        """
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(self.config.log_level)
+        logging.basicConfig(
+            filename=self.config.log_file,
+            level=self.config.log_level,
+        )
+        formatter = logging.Formatter(
+            f'[%(levelname)s] {self.__class__.__name__}: %(message)s'
+        )
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(formatter)
+        self.logger.addHandler(stdout_handler)
 
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
@@ -278,6 +298,7 @@ class BaseScraper(ABC):
 
     def _validate_get_set(self) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect
+        TODO: we should link a helpful article on how to implement get/set mthds
         """
         set_job_get_fields = set(self.job_get_fields)
         set_job_set_fields = set(self.job_set_fields)
@@ -287,15 +308,15 @@ class BaseScraper(ABC):
         set_missing_req_fields = set_min_fields - all_set_get_fields
         if set_missing_req_fields:
             raise ValueError(
-                f"Job attributes: {set_missing_req_fields} are required and not"
-                f" implemented by {self.__class__.__name__}"
+                f"Scraper: {self.__class__.__name__} Job attributes: "
+                f"{set_missing_req_fields} are required and not implemented."
             )
 
         field_intersection = set_job_get_fields.intersection(set_job_set_fields)
         if field_intersection:
             raise ValueError(
-                f"Job attributes: {field_intersection} are implemented by both"
-                f"get() and set() methods of {self.__class__.__name__}"
+                f"Scraper: {self.__class__.__name__} Job attributes: "
+                f"{field_intersection} are implemented by both get() and set()!"
             )
         for field in JobField:
             # NOTE: we exclude status, locale, query, provider and scrape date
@@ -308,7 +329,7 @@ class BaseScraper(ABC):
                     and field not in self.job_set_fields):
                 self.logger.warning(
                     f"No get() or set() will be done for Job attr: {field.name}"
-                )
+                )  # NOTE: we have the class name in the logger format
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
 

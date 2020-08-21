@@ -31,11 +31,10 @@ class BaseMonsterScraper(BaseScraper):
     """Scraper for www.monster.X
     """
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
-                 logger: logging.Logger) -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
         """Init that contains monster specific stuff
         """
-        super().__init__(session, config, logger)
+        super().__init__(session, config)
         self.query = '-'.join(
             self.config.search_config.keywords
         ).replace(' ', '-')
