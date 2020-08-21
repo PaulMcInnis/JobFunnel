@@ -65,53 +65,46 @@ class JobFunnel:
         # we are getting detailed job information (per-job)
         self.update_block_list()
 
-        if self.config.recover_from_cache:
+        # Get jobs keyed by their unique ID, use cache if we scraped today
+        jobs_dict = {}  # type: Dict[str, Job]
+        if os.path.exists(self.daily_cache_file):
+            jobs_dict = self.load_cache(self.daily_cache_file)
+        elif self.config.no_scrape:
+            self.logger.warning(
+                f"No jobs cached, missing: {self.daily_cache_file}"
+            )
 
-            # Perform recovery from cache if --recover passed
-            self.recover()
-
+        if self.config.no_scrape:
+            self.logger.info("Skipping scraping, running with --no-scrape.")
         else:
+            jobs_dict = self.scrape()  # type: Dict[str, Job]
+            self.write_cache(jobs_dict)
 
-            # Get jobs keyed by their unique ID, use cache if we scraped today
-            jobs_dict = {}  # type: Dict[str, Job]
-            if os.path.exists(self.daily_cache_file):
-                jobs_dict = self.load_cache(self.daily_cache_file)
-            elif self.config.no_scrape:
-                self.logger.warning(
-                    f"No jobs cached, missing: {self.daily_cache_file}"
+        # Filter out scraped jobs we have rejected, archived or block-listed
+        # (before we add them to the CSV)
+        self.filter(jobs_dict)
+
+        # Load and update existing masterlist
+        if os.path.exists(self.config.master_csv_file):
+
+            # Identify duplicate jobs using the existing masterlist
+            masterlist = self.read_master_csv()  # type: Dict[str, Job]
+            self.filter(masterlist)  # NOTE: this reduces size of masterlist
+            try:
+                tfidf_filter(jobs_dict, masterlist)
+            except ValueError as err:
+                self.logger.error(
+                    f"Skipping similarity filter due to: {str(err)}"
                 )
 
-            if self.config.no_scrape:
-                self.logger.info("Skipping scraping, running with --no-scrape.")
-            else:
-                jobs_dict = self.scrape()  # type: Dict[str, Job]
-                self.write_cache(jobs_dict)
+            # Expand the masterlist with filters, non-duplicated jobs & save
+            masterlist.update(jobs_dict)
+            self.write_master_csv(masterlist)
 
-            # Filter out scraped jobs we have rejected, archived or block-listed
-            # (before we add them to the CSV)
-            self.filter(jobs_dict)
-
-            # Load and update existing masterlist
-            if os.path.exists(self.config.master_csv_file):
-
-                # Identify duplicate jobs using the existing masterlist
-                masterlist = self.read_master_csv()  # type: Dict[str, Job]
-                self.filter(masterlist)  # NOTE: this reduces size of masterlist
-                try:
-                    tfidf_filter(jobs_dict, masterlist)
-                except ValueError as err:
-                    self.logger.error(
-                        f"Skipping similarity filter due to: {str(err)}"
-                    )
-
-                # Expand the masterlist with filters, non-duplicated jobs & save
-                masterlist.update(jobs_dict)
-                self.write_master_csv(masterlist)
-
-            else:
-                # FIXME: we should still remove duplicates within jobs_dict?
-                # Dump the results into the data folder as the masterlist
-                self.write_master_csv(jobs_dict)
+        else:
+            # FIXME: we should still remove duplicates within jobs_dict?
+            # Dump the results into the data folder as the masterlist
+            self.write_master_csv(jobs_dict)
 
         self.logger.info(
             f"Done. View your current jobs in {self.config.master_csv_file}"
@@ -305,9 +298,8 @@ class JobFunnel:
             for job in jobs.values():
                 job.validate()
                 writer.writerow(job.as_row)
-        n_jobs = len(jobs)
         self.logger.info(
-            f"Wrote {n_jobs} jobs to {self.config.master_csv_file}"
+            f"Wrote {len(jobs)} jobs to {self.config.master_csv_file}"
         )
 
     def update_block_list(self):

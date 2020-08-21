@@ -25,9 +25,13 @@ def main():
     """
     # Parse CLI into a dict
     args = parse_cli()
+    do_recovery_mode = args.do_recovery_mode  # NOTE: we modify args for config
     funnel_cfg = config_builder(args)
     job_funnel = JobFunnel(funnel_cfg)
-    job_funnel.run()
+    if do_recovery_mode:
+        job_funnel.recover()
+    else:
+        job_funnel.run()
 
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ class BaseScraper(ABC):
         self._validate_get_set()
 
         # Init a thread executor (multi-worker) TODO: can't reuse after shutdown
-        self.executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+        self.executor = ThreadPoolExecutor(max_workers=1) #MAX_CPU_WORKERS)
 
     @property
     def user_agent(self) -> str:
@@ -53,49 +53,41 @@ class BaseScraper(ABC):
         return random.choice(USER_AGENT_LIST)
 
     @property
-    def min_required_job_fields(self) -> str:
+    @abstractmethod
+    def min_required_job_fields(self) -> List[JobField]:
         """If we dont get() or set() any of these fields, we will raise an
         exception instead of continuing without that information.
 
         NOTE: pointless to check for locale / provider / other defaults
-
-        Override this as needed.
         """
-        return [
-            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.KEY_ID, JobField.URL
-        ]
+        pass
 
     @property
-    def job_get_fields(self) -> str:
-        """Call self.get(...) for the JobFields in this list when scraping a Job
-
-        Override this as needed.
+    @abstractmethod
+    def job_get_fields(self) -> List[JobField]:
+        """Call self.get(...) for the JobFields in this list when scraping a Job.
         """
-        return [
-            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
-        ]
+        pass
 
     @property
-    def job_set_fields(self) -> str:
+    @abstractmethod
+    def job_set_fields(self) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job
 
         NOTE: Since this passes the Job we are updating, the order of this list
-        matters if set fields rely on each-other.
-
-        Override this as needed.
+        matters if set fields rely on each-other.ed.
         """
-        return [JobField.URL, JobField.DESCRIPTION]
+        pass
 
     @property
-    def delayed_get_set_fields(self) -> str:
+    @abstractmethod
+    def delayed_get_set_fields(self) -> List[JobField]:
         """Delay execution when getting /setting any of these attributes of a
         job.
 
         Override this as needed.
         """
-        return [JobField.DESCRIPTION]
+        pass
 
     @property
     @abstractmethod
@@ -217,6 +209,11 @@ class BaseScraper(ABC):
                             in job_init_kwargs.items()
                         })
                     self.set(field, job, job_soup)
+
+                # FIXME: Abort scraping immediately if we have a duplicate ?
+                # This will prevent getting un-needed descriptions (delayed)
+                # if field == JobField.KEY_ID and job.key_id in ....
+
             except Exception as err:
                 if field in self.min_required_job_fields:
                     raise ValueError(

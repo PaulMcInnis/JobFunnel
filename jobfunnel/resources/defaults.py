@@ -54,7 +54,8 @@ DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
 # NOTE: we do indeed first b/c it has most information, monster is missing keys
-DEFAULT_PROVIDERS = [Provider.GLASSDOOR] #, Provider.INDEED, Provider.MONSTER] #, ] FIXME
+# FIXME: re-enable glassdoor once we fix issue with it.
+DEFAULT_PROVIDERS = [Provider.MONSTER, Provider.INDEED] #, Provider.GLASSDOOR]
 DEFAULT_NO_SCRAPE = False
 DEFAULT_USE_WEB_DRIVER = False
 DEFAULT_RECOVER = False
@@ -62,9 +63,6 @@ DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_SAVE_DUPLICATES = False
 DEFAULT_RANDOM_DELAY= False
 DEFAULT_RANDOM_CONVERGING_DELAY = False
-DEFAULT_PROTOCOL = None
-DEFAULT_IP = None
-DEFAULT_PORT = None
 
 # Defaults we use from localization, the scraper can always override it.
 DEFAULT_DOMAIN_FROM_LOCALE = {
@@ -72,42 +70,3 @@ DEFAULT_DOMAIN_FROM_LOCALE = {
     Locale.CANADA_FRENCH: 'ca',
     Locale.USA_ENGLISH: 'com',
 }
-
-DEFAULT_CONFIG = {
-        'master_csv_file': DEFAULT_MASTER_CSV_FILE,
-        'block_list_file': DEFAULT_BLOCK_LIST_FILE,
-        'duplicates_list_file': DEFAULT_DUPLICATES_FILE,
-        'cache_folder': DEFAULT_CACHE_DIRECTORY,
-        'no_scrape': DEFAULT_NO_SCRAPE,
-        'recover': DEFAULT_RECOVER,
-        'save_duplicates': DEFAULT_SAVE_DUPLICATES,
-        'log_level': DEFAULT_LOG_LEVEL_NAME,
-        'log_file': DEFAULT_LOG_FILE,
-        'use_web_driver': DEFAULT_USE_WEB_DRIVER,
-        'search': {
-            'locale' : DEFAULT_LOCALE.name,
-            'providers': [p.name for p in DEFAULT_PROVIDERS],
-            'region': {
-                'province_or_state': DEFAULT_PROVINCE,
-                'city': DEFAULT_CITY,
-                'radius': DEFAULT_SEARCH_RADIUS_KM,
-            },
-            'keywords': DEFAULT_SEARCH_KEYWORDS,
-            'similar_results': DEFAULT_RETURN_SIMILAR_RESULTS,
-            'max_listing_days': DEFAULT_MAX_LISTING_DAYS,
-            'company_block_list': DEFAULT_COMPANY_BLOCK_LIST,
-        },
-        'delay': {
-            'algorithm': DEFAULT_DELAY_ALGORITHM.name,
-            'max_duration': DEFAULT_DELAY_MAX_DURATION,
-            'min_duration': DEFAULT_DELAY_MIN_DURATION,
-            'random': DEFAULT_RANDOM_DELAY,
-            'converging': DEFAULT_RANDOM_CONVERGING_DELAY,
-        },
-
-        'proxy': {
-            'protocol': DEFAULT_PROTOCOL,
-            'ip': DEFAULT_IP,
-            'port': DEFAULT_PORT,
-        },
-    }
