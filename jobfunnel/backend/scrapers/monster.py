@@ -68,6 +68,15 @@ class BaseMonsterScraper(BaseScraper):
         return [JobField.KEY_ID, JobField.DESCRIPTION]
 
     @property
+    def delayed_get_set_fields(self) -> str:
+        """Delay execution when getting /setting any of these attributes of a
+        job.
+
+        Override this as needed.
+        """
+        return [JobField.DESCRIPTION]
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Session header for monster.X
         """
@@ -122,45 +131,71 @@ class BaseMonsterScraper(BaseScraper):
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
+        TODO: use threading here too
+
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
         # Get the search url
         search_url = self._get_search_url()
 
-        # Parse total results, and calculate the # of pages needed
-        pages = self._get_num_search_result_pages(search_url)
-        self.logger.info(
-            f"Found {pages} pages of search results for query={self.query}"
+        # Load our initial search results listings page
+        initial_seach_results_html = self.session.get(search_url)
+        initial_search_results_soup = BeautifulSoup(
+            initial_seach_results_html.text, self.config.bs4_parser
         )
 
-        # Return list of soups from the listings (short)
-        return self._get_job_soups_from_search_page(search_url, pages)
+        # Parse total results, and calculate the # of pages needed
+        n_pages = self._get_num_search_result_pages(initial_search_results_soup)
+        self.logger.info(
+            f"Found {n_pages} pages of search results for query={self.query}"
+        )
 
-    def _get_job_soups_from_search_page(self, search_url: str,
-                                        pages: int) -> List[BeautifulSoup]:
-        """Scrapes the monster page for a list of job soups
+        # Get first page of listing soups from our search results listings page
+        job_soups_list = self._get_job_soups_from_search_page(
+            initial_search_results_soup
+        )
+
+        # Get all the other pages
+        for page in range(1, n_pages):
+            next_listings_page_soup = BeautifulSoup(
+                self.session.get(self._get_results_page_url(page, search_url)),
+                self.config.bs4_parser,
+            )
+            job_soups_list.extend(
+                self._get_job_soups_from_search_page(next_listings_page_soup)
+            )
+
+        return job_soups_list
+
+    def _get_results_page_url(self, cur_page: int, search_url: str) -> str:
+        """Get the next page of search listings
         """
-        page_url = f'{search_url}&start={pages}'
-        return BeautifulSoup(
-            self.session.get(page_url).text, self.config.bs4_parser
-        ). find_all('div', attrs={'class': 'flex-row'})
+        return f'{search_url}&start={cur_page}'
 
-    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
+    def _get_job_soups_from_search_page(self,
+                                        initial_results_soup: BeautifulSoup,
+                                        ) -> List[BeautifulSoup]:
+        """Get individual job listing soups from a results page of many jobs
+        """
+        return initial_results_soup.find_all('div', attrs={'class': 'flex-row'})
+
+    def _get_num_search_result_pages(self, initial_results_soup: BeautifulSoup,
+                                     max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
         i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
 
         Args:
+            initial_results_soup: the soup for the first search results page
 			max_pages: the maximum number of pages to be scraped.
         Returns:
             The number of pages of job listings to be scraped.
         """
         # scrape total number of results, and calculate the # pages needed
-        request_html = self.session.get(search_url)
-        soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = soup_base.find('h2', 'figure').text.strip()
-        num_res = int(re.findall(r'(\d+)', num_res)[0])
+        partial = initial_results_soup.find('h2', 'figure').text.strip()
+        assert partial, "Unable to identify number of search results"
+        num_res = int(re.findall(r'(\d+)', partial)[0])
         return int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
 
     def _get_search_url(self, method: Optional[str] = 'get') -> str:

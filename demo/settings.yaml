@@ -1,43 +1,40 @@
-# This is an example settings YAML
+# This is an example settings YAML, it closely mirrors our default search
 
 # Path where your master CSV, block-lists, and cache data will be stored
-output_path: search
-
-# Locale settings (i.e. USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH)
-# These are used to define the reference to what code implementation we should
-# use for the scraper and the provider
-locale:
-  CANADA_ENGLISH
-
-# Providers from which to search (i.e. glassdoor, monster)
-# NOTE: we will choose domain via locale (i.e. CANADA_ENGLISH --> www.indeed.ca)
-providers:
-  - INDEED
-# Also available:
-#  - GLASSDOOR
-#  - MONSTER
+output_path: demo_search
 
 # Job search configuration
 search:
 
-  # This is the region you are searching for jobs in, and the distance in km
-  # within which to return jobs.
-  region:
-    province_or_state: "ON"
-    city: "waterloo"
-    radius: 25  # This is in kilometers (km)
+  # Providers from which to search
+  # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
+  providers:
+    - INDEED
+    - MONSTER
+
+  # Locale settings (i.e. USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH)
+  # These are used to define the reference to what code implementation we should
+  # use for the scraper and the provider
+  locale: CANADA_ENGLISH
+
+  # Region that we are searching for jobs within
+  province_or_state: "ON"
+  city: "waterloo"
+  radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field
   # NOTE: we will search with all the provided keywords and format according
   # to the input format of job provider (i.e. the GET URLs).
   keywords:
     - Python
-    - Scientist
 
-# Blocked company names
-# TODO: refactor --> block_list
-company_block_list:
-  - "Infox Consulting"
+  # Don't return any listings older than this
+  max_listing_days: 35
+
+  # Blocked company names that will never appear in any results
+  # TODO: refactor --> block_list
+  company_block_list:
+    - "Infox Consulting"
 
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: INFO

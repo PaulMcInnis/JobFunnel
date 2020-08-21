@@ -23,10 +23,11 @@ class SearchConfig(BaseConfig):
                  providers: List[Provider],
                  city: Optional[str] = None,
                  distance_radius: Optional[int] = None,
-                 return_similar_results: Optional[bool] = False,
+                 return_similar_results: bool = False,
                  max_listing_days: Optional[int] = None,
                  blocked_company_names: Optional[List[str]] = None,
-                 domain: Optional[str] = None):
+                 domain: Optional[str] = None,
+                 remote: bool = False,):
         """Search config for all job sources
 
         Args:
@@ -43,6 +44,7 @@ class SearchConfig(BaseConfig):
                 companies that we never want to see in our results.
             domain (Optional[str], optional): domain string to use for search
                 querying. If not passed, will set based on locale. (i.e. 'ca')
+            remote: True if searching for remote jobs only TODO: impl. for scr.
         """
         self.province_or_state = province_or_state
         self.city = city.lower()
@@ -53,7 +55,7 @@ class SearchConfig(BaseConfig):
         self.return_similar_results = return_similar_results  # indeed thing
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
-
+        self.remote = remote
         self.__query_string = '' # type: str
 
         # Try to infer the domain string based on the locale.

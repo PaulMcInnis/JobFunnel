@@ -38,6 +38,49 @@ class BaseIndeedScraper(BaseScraper):
         self.query = '+'.join(self.config.search_config.keywords)
 
     @property
+    def min_required_job_fields(self) -> str:
+        """If we dont get() or set() any of these fields, we will raise an
+        exception instead of continuing without that information.
+        """
+        return [
+            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
+            JobField.KEY_ID, JobField.URL
+        ]
+
+    @property
+    def job_get_fields(self) -> str:
+        """Call self.get(...) for the JobFields in this list when scraping a Job
+
+        Override this as needed.
+        """
+        return [
+            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
+            JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
+            # JobField.WAGE, JobField.REMOTE
+            # FIXME: wage and remote are available in listings
+        ]
+
+    @property
+    def job_set_fields(self) -> str:
+        """Call self.set(...) for the JobFields in this list when scraping a Job
+
+        NOTE: Since this passes the Job we are updating, the order of this list
+        matters if set fields rely on each-other.
+
+        Override this as needed.
+        """
+        return [JobField.URL, JobField.DESCRIPTION]
+
+    @property
+    def delayed_get_set_fields(self) -> str:
+        """Delay execution when getting /setting any of these attributes of a
+        job.
+
+        Override this as needed.
+        """
+        return [JobField.DESCRIPTION]
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Session header for indeed.X
         """
@@ -112,6 +155,10 @@ class BaseIndeedScraper(BaseScraper):
                         'td', attrs={'class': 'jobCardShelfItem'}
                     )
                 ]
+        # elif parameter == JobField.REMOTE:
+        # TODO: Impl, this is available in listings as: <span class="remote">...
+        # elif parameter == JobField.WAGE:
+        # TODO: Impl, this is available as: <span class="salaryText">...
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(
                 soup.find('span', attrs={'class': 'date'}).text.strip()
@@ -150,6 +197,8 @@ class BaseIndeedScraper(BaseScraper):
         TODO: use Enum for method instead of str.
         """
         if method == 'get':
+            # TODO: impl. &remotejob=.... string which allows for remote search
+            # i.e &remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11
             return (
                 "https://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}&"
                 "limit={5}&filter={6}".format(

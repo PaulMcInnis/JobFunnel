@@ -7,10 +7,8 @@ import os
 # from jobfunnel.backend.scrapers.base import BaseScraper CYCLICAL!
 from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
 from jobfunnel.resources import Locale, Provider, BS4_PARSER
+from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
 
-from jobfunnel.backend.scrapers.registry import (
-    SCRAPER_FROM_LOCALE, DRIVEN_SCRAPER_FROM_LOCALE
-)
 
 class JobFunnelConfig(BaseConfig):
     """Master config containing all the information we need to run jobfunnel
@@ -25,7 +23,6 @@ class JobFunnelConfig(BaseConfig):
                  log_file: str,
                  log_level: Optional[int] = logging.INFO,
                  no_scrape: Optional[bool] = False,
-                 recover_from_cache: Optional[bool] = False,
                  bs4_parser: Optional[str] = BS4_PARSER,
                  return_similar_results: Optional[bool] = False,
                  delay_config: Optional[DelayConfig] = None,
@@ -50,9 +47,6 @@ class JobFunnelConfig(BaseConfig):
             no_scrape (Optional[bool], optional): If True, will not scrape data
                 at all, instead will only update filters and CSV. Defaults to
                 False.
-            recover_from_cache (Optional[bool], optional): if True, build the
-                master CSV file from the contents of all the cache files inside
-                self.cache_folder. NOTE: respects the block list. not in YAML.
             bs4_parser (Optional[str], optional): the parser to use for BS4.
             return_similar_resuts (Optional[bool], optional): If True, we will
                 ask the job provider to provide more loosely-similar results for
@@ -73,7 +67,6 @@ class JobFunnelConfig(BaseConfig):
         self.log_level = log_level
         self.no_scrape = no_scrape
         self.bs4_parser = bs4_parser  # TODO: add to config
-        self.recover_from_cache = recover_from_cache
         self.return_similar_results = return_similar_results
         self.web_driven_scraping = web_driven_scraping
         if not delay_config:
@@ -99,11 +92,7 @@ class JobFunnelConfig(BaseConfig):
         """
         scrapers = []  # type: List[BaseScraper]
         for pr in self.search_config.providers:
-            if self.web_driven_scraping and pr in DRIVEN_SCRAPER_FROM_LOCALE:
-                scrapers.append(
-                    DRIVEN_SCRAPER_FROM_LOCALE[pr][self.search_config.locale]
-                )
-            elif pr in SCRAPER_FROM_LOCALE:
+            if pr in SCRAPER_FROM_LOCALE:
                 scrapers.append(
                     SCRAPER_FROM_LOCALE[pr][self.search_config.locale]
                 )
