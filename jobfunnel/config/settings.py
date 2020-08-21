@@ -24,9 +24,8 @@ SETTINGS_YAML_SCHEMA = {
         'type': 'string',
         },
     'duplicates_list_file': {
-        'required': False,
+        'required': True,
         'type': 'string',
-        'default': DEFAULT_DUPLICATES_FILE,
     },
     'no_scrape': {
         'required': False,

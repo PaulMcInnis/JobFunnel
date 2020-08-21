@@ -1,7 +1,12 @@
 # This is an example settings YAML, it closely mirrors our default search
 
 # Path where your master CSV, block-lists, and cache data will be stored
-output_path: demo_search
+# NOTE: when you are using CLI, you can just specify output_folder and we
+# will calculate these paths for you.
+master_csv_file: demo_search.csv
+cache_folder: .demo_cache  # NOTE: this will be created if it doesn't exist
+block_list_file: .demo_cache/demo_block_list.json
+duplicates_list_file: .demo_cache/demo_bduplicates_list.json
 
 # Job search configuration
 search:
@@ -52,9 +57,9 @@ delay:
     # Minimum delay/lower bound for random delay
     min_duration: 1.0
     # Random delay
-    random_delay: False
+    random: False
     # Converging random delay, only used if 'random' is set to True
-    converging_random_delay: False
+    converging: False
 
 # # Proxy settings
 # proxy:

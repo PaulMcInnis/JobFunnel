@@ -29,11 +29,10 @@ class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
     """
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
-                 logger: logging.Logger) -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
         """Init that contains indeed specific stuff
         """
-        super().__init__(session, config, logger)
+        super().__init__(session, config)
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
         self.query = '+'.join(self.config.search_config.keywords)
 

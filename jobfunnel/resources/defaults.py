@@ -1,34 +1,11 @@
-"""Default settings YAML used for every search without cli args
+"""Default arguments for both JobFunnelConfig and CLI arguments.
+NOTE: we include defaults for all arguments so that JobFunnel is plug-n-play
 """
 import os
 import logging
 from pathlib import Path
 from jobfunnel.resources.enums import Locale, DelayAlgorithm, Provider
 
-# Below defs constructs:
-# output_path: search
-# log_level: INFO
-
-# locale:
-#   CANADA_ENGLISH
-
-# providers:
-#   - INDEED
-# #  - GLASSDOOR
-# #  - MONSTER
-
-# search:
-#   region:
-#     province_or_state: "ON"
-#     city: "Waterloo"
-#     radius: 25
-#   keywords:
-#     - Python
-
-# delay:
-#     algorithm: LINEAR
-#     max_duration: 5.0
-#     min_duration: 1.0
 USER_HOME_DIRECTORY = os.path.abspath(str(Path.home()))
 
 DEFAULT_LOG_LEVEL_NAME = 'INFO'
