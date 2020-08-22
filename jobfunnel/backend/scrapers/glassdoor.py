@@ -12,6 +12,7 @@ from jobfunnel.backend.scrapers.base import (
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 
 from abc import abstractmethod
@@ -40,10 +41,11 @@ GLASSDOOR_RADIUS_MAP = {
 
 class BaseGlassDoorScraper(BaseScraper):
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
+                 job_filter: JobFilter) -> None:
         """Init that contains glassdoor specific stuff
         """
-        super().__init__(session, config)
+        super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
         self.query = '-'.join(self.config.search_config.keywords)
         # self.driver = get_webdriver() TODO: we can use this if-needed

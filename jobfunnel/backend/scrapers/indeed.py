@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.scrapers.base import (
     BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
 )
@@ -29,10 +30,11 @@ class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
     """
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
+                 job_filter: JobFilter) -> None:
         """Init that contains indeed specific stuff
         """
-        super().__init__(session, config)
+        super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
         self.query = '+'.join(self.config.search_config.keywords)
 

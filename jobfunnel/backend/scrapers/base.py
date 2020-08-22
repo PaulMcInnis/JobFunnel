@@ -8,7 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep, time
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -17,6 +17,7 @@ from tqdm import tqdm
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools.delay import calculate_delays
 from jobfunnel.backend.tools import get_logger
+from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
                                  Locale)
 # from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
@@ -25,7 +26,22 @@ from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
 class BaseScraper(ABC):
     """Base scraper object, for scraping and filtering Jobs from a provider
     """
-    def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
+    def __init__(self, session: Session, config: 'JobFunnelConfig',
+                 job_filter: JobFilter) -> None:
+        """Init
+
+        Args:
+            session (Session): session object used to make post and get requests
+            config (JobFunnelConfig): config containing all needed paths, search
+                proxy, delaying and other metadata.
+            job_filter (JobFilter): filtering class used to perform on-the-fly
+                filtering of jobs to reduce the number of delayed get or set
+                (i.e. operations that make requests).
+
+        Raises:
+            ValueError: if no Locale is configured in the JobFunnelConfig
+        """
+        self.job_filter = job_filter  # We will use this for live-filtering
         self.session = session
         self.config = config
         self.logger = get_logger(
@@ -181,19 +197,23 @@ class BaseScraper(ABC):
         jobs_dict = {}  # type: Dict[str, Job]
         for future in tqdm(as_completed(results), total=n_soups):
             job = future.result()
-            if job.key_id in jobs_dict:
-                self.logger.error(
-                    f"Job {job.title} and {jobs_dict[job.key_id].title} share "
-                    f"duplicate key_id: {job.key_id}"
-                )
-            jobs_dict[job.key_id] = job
+            if job:
+                # Handle duplicates that exist within the scraped set.
+                # NOTE: if you see alot of these our scrape for key_id is bad
+                if job.key_id in jobs_dict:
+                    self.logger.error(
+                        f"Job {job.title} and {jobs_dict[job.key_id].title} "
+                        f"share duplicate key_id: {job.key_id}"
+                    )
+                jobs_dict[job.key_id] = job
 
         # Cleanup + log
         self.executor.shutdown()
 
         return jobs_dict
 
-    def scrape_job(self, job_soup: BeautifulSoup, delay: float) -> Job:
+    def scrape_job(self, job_soup: BeautifulSoup, delay: float
+                   ) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
             job_soup [BeautifulSoup]: This is a soup object that your get/set
@@ -202,10 +222,11 @@ class BaseScraper(ABC):
             delay [float]: how long to delay getting/setting for certain
                 get/set calls while scraping data for this job.
 
-        FIXME: abort on get(key_id) when that key_id matches an existing job
+        NOTE: this will never raise an exception to prevent killing workers.
 
         Returns:
-            Job: job object constructed from the soup and localization of class
+            Optional[Job]: job object constructed from the soup and localization
+                of class, returns None if scrape failed.
         """
         # Formulate the get/set actions
         actions_list = [(True, f) for f in self.job_get_fields]
@@ -215,6 +236,14 @@ class BaseScraper(ABC):
         job = None  # type: Union[None, Job]
         job_init_kwargs = self.job_init_kwargs  # NOTE: best to construct once
         for is_get, field in actions_list:
+
+            # Break out immediately because we have failed a filterable
+            # condition with something we initialized while scraping.
+            if job and self.job_filter(job):
+                self.logger.debug(
+                    f"Skipping scraping job {job.key_id}, failed JobFilter"
+                )
+                break
 
             # Respectfully delay if it's configured to do so.
             if field in self.delayed_get_set_fields:
@@ -250,12 +279,13 @@ class BaseScraper(ABC):
                         )
                     )
 
-        assert job, "Failed to initialize job"  # NOTE: should never see this
-        job.validate()
+        # Validate job fields if we got something
+        if job:
+            job.validate()
 
-        # FIXME: this is to prevent issues with JSON and raw data recur limit
-        # We could handle this when scraping but this will also save memory.
-        job._raw_scrape_data = None
+            # FIXME: this is to prevent issues with JSON and raw data recur lim.
+            # We could handle this when scraping but this will also save memory.
+            job._raw_scrape_data = None
 
         return job
 

@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 from requests import Session
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools.filters import tfidf_filter
+from jobfunnel.backend.tools.filters import tfidf_filter, JobFilter
 from jobfunnel.backend.tools import update_job_if_newer, get_logger
 from jobfunnel.config import JobFunnelConfig
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
@@ -44,9 +44,6 @@ class JobFunnel:
             "%(message)s"
         )
         self.__date_string = date.today().strftime("%Y-%m-%d")
-        self.max_job_date = T_NOW - timedelta(
-            days=self.config.search_config.max_listing_days
-        )
 
         # NOTE: we have these as attrs so they are read minimally.
         self.user_block_jobs_dict = {}  # type: Dict[str, str]
@@ -75,6 +72,14 @@ class JobFunnel:
         # Read the master CSV file
         if os.path.isfile(self.config.master_csv_file):
             self.master_jobs_dict = self.read_master_csv()
+
+        # NOTE: we will set this after updating everything
+        self.job_filter = JobFilter(
+            self.user_block_jobs_dict,
+            self.duplicate_jobs_dict,
+            self.config.search_config.blocked_company_names,
+            T_NOW - timedelta(days=self.config.search_config.max_listing_days)
+        )
 
     @property
     def daily_cache_file(self) -> str:
@@ -125,7 +130,7 @@ class JobFunnel:
         # Pre-filter by removing jobs with duplicate IDs from scraped_jobs_dict
         if scraped_jobs_dict:
             if self.master_jobs_dict:
-                self.filter_duplicates(
+                self.filter_new_duplicates(
                     scraped_jobs_dict, self.master_jobs_dict,
                     by_key_id_only=True,
                 )
@@ -145,7 +150,7 @@ class JobFunnel:
                 # Filter out duplicates and update duplicates list file
                 # NOTE: this will match duplicates by job description contents
                 if scraped_jobs_dict:
-                    self.filter_duplicates(
+                    self.filter_new_duplicates(
                         scraped_jobs_dict, self.master_jobs_dict
                     )
 
@@ -181,12 +186,15 @@ class JobFunnel:
             f"Scraping local providers with: {self.config.scraper_names}"
         )
 
+        # Ensure filters are up-to-date for per-job filtering as we scrape
+        self._update_job_filter()
+
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
         for scraper_cls in self.config.scrapers:
             # FIXME: need to add the threader and delaying here
             start = time()
-            scraper = scraper_cls(self.session, self.config)
+            scraper = scraper_cls(self.session, self.config, self.job_filter)
             # TODO: add a warning for overwriting different jobs with same key
             jobs.update(scraper.scrape())
             end = time()
@@ -434,23 +442,12 @@ class JobFunnel:
                 f"statuses: {self.config.user_block_list_file}"
             )
 
-    def filter_job(self, job: Job,
-                   user_block_jobs_dict: Optional[Dict[str, str]] = None,
-                   duplicate_jobs_dict: Optional[Dict[str, str]] = None
-                   ) -> bool:
-        """Filter jobs out using all our available filters except TFIDF
-        FIXME: how can we update_if_newer if we are prempting the scrape?
-        TODO: arrange checks by how long they take to run
+    def _update_job_filter(self) -> None:
+        """Ensure that the filtering attribs are up-to-date TODO: better way?
         """
-        return (
-            job.is_remove_status
-            or (job.company in self.config.search_config.blocked_company_names)
-            or job.is_old(self.max_job_date)
-            or (self.user_block_jobs_dict
-                and job.key_id in self.user_block_jobs_dict)
-            or (self.duplicate_jobs_dict
-                and job.key_id in self.duplicate_jobs_dict)
-        )
+        self.job_filter.user_block_jobs_dict = self.user_block_jobs_dict
+        self.job_filter.master_jobs_dict = self.master_jobs_dict
+        self.job_filter.duplicate_jobs_dict = self.duplicate_jobs_dict
 
     def filter_jobs(self, jobs_dict: Dict[str, Job]) -> int:
         """Remove jobs from jobs_dict if they are:
@@ -465,12 +462,12 @@ class JobFunnel:
 
         TODO: make the filters used configurable, i.e. list of FilterType
         """
+        self._update_job_filter()
 
         # Filter jobs with all filters except TFIDF, then remove filtered jobs
         filter_jobs_ids = []
         for key_id, job in jobs_dict.items():
-            if self.filter_job(job, self.user_block_jobs_dict,
-                               self.duplicate_jobs_dict):
+            if self.job_filter.filter(job):
                 filter_jobs_ids.append(key_id)
 
         for key_id in filter_jobs_ids:
@@ -487,11 +484,13 @@ class JobFunnel:
         return n_filtered
 
 
-    def filter_duplicates(self, scraped_jobs_dict: Dict[str, Job],
-                          existing_jobs_dict: Dict[str, Job],
-                          by_key_id_only: bool = False) -> None:
+    def filter_new_duplicates(self, scraped_jobs_dict: Dict[str, Job],
+                              existing_jobs_dict: Dict[str, Job],
+                              by_key_id_only: bool = False) -> None:
         """Identify duplicate jobs between scrape data and existing_jobs_dict
         and update the duplicates block list if any are found by contents.
+
+        NOTE: this is intended for identifying new duplicates
 
         TODO: move this into self.filter_jobs() - it should be more configurable
         TODO: make max_similarity configurable i.e. self.config.filter...
@@ -512,6 +511,7 @@ class JobFunnel:
                 duplicates as well (NOTE: currently only TFIDF filter for desc).
         """
         # First we need to remove any duplicates by id directly
+        # FIXME: this should go into BaseScraper get set
         for key_id in existing_jobs_dict:
             if key_id in scraped_jobs_dict:
                 duplicate_job = scraped_jobs_dict.pop(key_id)
@@ -522,10 +522,12 @@ class JobFunnel:
                     )
 
         # If we have any jobs left, filter these using their contents.
-        new_duplicate_jobs_list = []  # type: List[Job]
-        if scraped_jobs_dict:
+        if by_key_id_only and scraped_jobs_dict:
             if (len(scraped_jobs_dict.keys()) + len(existing_jobs_dict.keys())
                     >= MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH):
+
+                # Run the TFIDF content matching filter and get new duplicates
+                new_duplicate_jobs_list = []  # type: List[Job]
                 try:
                     new_duplicate_jobs_list = tfidf_filter(
                         cur_dict=scraped_jobs_dict,
@@ -540,6 +542,7 @@ class JobFunnel:
                         f"Skipping similarity filter due to error: {str(err)}"
                     )
 
+                # Save any new duplicates
                 if new_duplicate_jobs_list:
 
                     if self.config.duplicates_list_file:
@@ -556,7 +559,7 @@ class JobFunnel:
                             # NOTE: we use indent=4 for human-readability
                             outfile.write(
                                 json.dumps(
-                                    self.config.duplicates_list_file,
+                                    self.duplicate_jobs_dict,
                                     indent=4,
                                     sort_keys=True,
                                     separators=(',', ': '),
