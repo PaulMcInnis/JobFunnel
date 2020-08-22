@@ -7,6 +7,8 @@ import re
 import string
 from typing import Any, Dict, Optional, List
 
+from datetime import date, datetime, timedelta
+
 from jobfunnel.resources import (
     Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS, MAX_BLOCK_LIST_DESC_CHARS
 )
@@ -108,6 +110,18 @@ class Job():
         """
         return self.status in JOB_REMOVE_STATUSES
 
+    def is_old(self, max_age: datetime) -> bool:
+        """Identify if a job is older than a certain max_age
+
+        Args:
+            max_age_days: maximum allowable age for a job
+
+        Returns:
+            True if it's older than number of days
+            False if it's fresh enough to keep
+        """
+        return self.post_date < max_age
+
     @property
     def as_row(self) -> Dict[str, str]:
         """Builds a CSV row dict for this job entry
@@ -158,7 +172,7 @@ class Job():
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
         FIXME: do this automatically upon assignment (override assignment)
-        ...This way of doing it is janky and might not work right...
+        FIXME: maybe we can use stopwords?
         """
         for attr in [self.title, self.company, self.description, self.tags,
                      self.url, self.key_id, self.provider, self.query,
