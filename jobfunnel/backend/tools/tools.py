@@ -1,16 +1,19 @@
 """Assorted tools for all aspects of funnelin' that don't fit elsewhere
 """
+import logging
 import re
+import sys
 from datetime import date, datetime, timedelta
+
 from dateutil.relativedelta import relativedelta
-
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.microsoft import IEDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from webdriver_manager.opera import OperaDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import (EdgeChromiumDriverManager,
+                                         IEDriverManager)
+from webdriver_manager.opera import OperaDriverManager
 
+from jobfunnel.backend import Job
 
 # Initialize list and store regex objects of date quantifiers
 HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr)')
@@ -20,6 +23,33 @@ YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year')
 RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
 RECENT_REGEX_B = re.compile(r'[yY]esterday')
 
+
+def get_logger(logger_name: str, log_level: int, filename: str,
+               message_format: str) -> logging.Logger:
+    """Initialize and return a logger
+    TODO: make this a class so we can inherit it into any class
+    TODO: make more easily configurable w/ defaults
+    TODO: streamline
+    """
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(log_level)
+    logging.basicConfig(filename=filename, level=log_level)
+    formatter = logging.Formatter(message_format)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    logger.addHandler(stdout_handler)
+    return logger
+
+
+def update_job_if_newer(existing_job: Job, new_job: Job) -> None:
+    """Update an existing job with new metadata but keep user's status,
+    but only if the new_job.post_date > existing_job.post_date!
+
+    Returns: True if existing job was updated
+    """
+    if (new_job.post_date > existing_job.post_date):
+        new_job.status = existing_job.status
+        existing_job = new_job
 
 def calc_post_date_from_relative_str(date_str: str) -> date:
     """Identifies a job's post date via post age, updates in-place

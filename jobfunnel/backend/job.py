@@ -8,7 +8,7 @@ import string
 from typing import Any, Dict, Optional, List
 
 from jobfunnel.resources import (
-    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS
+    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS, MAX_BLOCK_LIST_DESC_CHARS
 )
 
 
@@ -135,6 +135,25 @@ class Job():
                 ]
             )
         ])
+
+    @property
+    def as_json_entry(self) -> Dict[str, str]:
+        """This formats a job for the purpose of saving it to a block JSON
+        i.e. duplicates list file or user's block list file
+        NOTE: we truncate descriptions in block lists, TODO: use 'short' desc
+        """
+        return {
+            'title': self.title,
+            'company': self.company,
+            'post_date': self.post_date.strftime('%Y-%m-%d'),
+            'description': (
+                    self.description[:MAX_BLOCK_LIST_DESC_CHARS]
+                    + '..'
+                )
+                if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS
+                else self.description,
+            'status': self.status.name,
+        }
 
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
