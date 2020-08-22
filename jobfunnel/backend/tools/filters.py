@@ -5,6 +5,7 @@ and generic log messages.
 """
 import logging
 from typing import Dict, List, Optional, Tuple
+from datetime import datetime
 import json
 import os
 
@@ -18,6 +19,50 @@ from jobfunnel.backend.tools import update_job_if_newer, get_logger
 from jobfunnel.resources import (
     DEFAULT_MAX_TFIDF_SIMILARITY, MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH
 )
+
+
+class JobFilter:
+    """Class Used by JobFunnel and BaseScraper to filter collections of jobs
+    """
+    def __init__(self, user_block_jobs_dict: Optional[Dict[str, str]] = None,
+                 duplicate_jobs_dict: Optional[Dict[str, str]] = None,
+                 blocked_company_names_list: Optional[List[str]] = None,
+                 max_job_date: Optional[datetime] = None) -> None:
+        """Init
+
+        NOTE: remember to update attributes as needed.
+
+        Args:
+            user_block_jobs_dict (Optional[Dict[str, str]], optional): dict
+                containing user's blocked jobs. Defaults to None.
+            duplicate_jobs_dict (Optional[Dict[str, str]], optional): dict
+                containing duplicate jobs, detected by content. Defaults to None
+            blocked_company_names_list (Optional[List[str]], optional): list of
+                company names disallowed from results. Defaults to None.
+            max_job_date (Optional[datetime], optional): maximium date that a
+                job can be scraped. Defaults to None.
+        """
+        self.user_block_jobs_dict = user_block_jobs_dict or {}
+        self.duplicate_jobs_dict = duplicate_jobs_dict or {}
+        self.blocked_company_names_list = blocked_company_names_list or []
+        self.max_job_date = max_job_date
+        # TODO: add tfidf to this class for per-job scraping
+
+    def filter(self, job: Job) -> bool:
+        """Filter jobs out using all our available filters
+        TODO: arrange checks by how long they take to run
+        NOTE: this does a lot of checks because job may be partially initialized
+        """
+        return (
+            job.status and job.is_remove_status
+            or (job.company in self.blocked_company_names_list)
+            or (job.post_date and self.max_job_date
+                and job.is_old(self.max_job_date))
+            or (job.key_id and self.user_block_jobs_dict
+                and job.key_id in self.user_block_jobs_dict)
+            or (job.key_id and self.duplicate_jobs_dict
+                and job.key_id in self.duplicate_jobs_dict)
+        )
 
 
 def tfidf_filter(cur_dict: Dict[str, dict],
@@ -35,10 +80,9 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     NOTE/WARNING: if you are running this method, you should have already
         removed any duplicates by key_id
     FIXME: we should make max_similarity configurable in SearchConfig
-    FIXME: this should be integrated into jobfunnel.filter with other filters
-    FIXME: fix logger arg-passing once we get this in some kind of class
+    FIXME: this should be integrated into JobFilter (on the fly content match)
     NOTE: this only uses job descriptions to do the content matching.
-    NOTE: it is recommended that you have at least around 25 Jobs.
+    NOTE: it is recommended that you have at least around 25 ish Jobs.
     TODO: have this raise an exception if there are too few words?
     FIXME: make this a class so we can call it many times on single queries.
 
@@ -88,7 +132,10 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     # NOTE: this allows us to do smaller TFIDF comparisons because we ensure
     # that we are skipping previously-detected job duplicates (by id)
     duplicate_jobs_dict = duplicate_jobs_dict or {}  # type: Dict[str, str]
-    existing_duplicate_keys = duplicate_jobs_dict.keys()
+    if duplicate_jobs_dict:
+        existing_duplicate_keys = duplicate_jobs_dict.keys()
+    else:
+        existing_duplicate_keys = {}  # type: Dict[str, str]
 
     def __dict_to_ids_and_words(jobs_dict: Dict[str, Job]
                                 ) -> Tuple[List[str], List[str]]:
@@ -160,15 +207,18 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 filt_cur_dict[query_id],
             )
             new_duplicate_jobs_list.append(filt_cur_dict[query_id])
-            logger.debug(
-                f"Removed {job.key_id} from scraped data, TFIDF content match."
-            )
+
+    # Make sure the duplicate jobs list contains only unique entries
+    new_duplicate_jobs_list = list(set(new_duplicate_jobs_list))
 
     # Pop duplicates from cur_dict and return them
     # NOTE: we cannot change cur_dict in above loop, or no updates possible.
     if new_duplicate_jobs_list:
         for job in new_duplicate_jobs_list:
             cur_dict.pop(job.key_id)
+            logger.debug(
+                f"Removed {job.key_id} from scraped data, TFIDF content match."
+            )
 
         logger.info(
             f'Found and removed {len(new_duplicate_jobs_list)} '
