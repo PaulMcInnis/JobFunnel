@@ -98,38 +98,53 @@ class JobFunnel:
             self.write_cache(scraped_jobs_dict)
 
         # Pre-filter by removing jobs with duplicate IDs from scraped_jobs_dict
-        if master_jobs_dict:
-            self.filter_duplicates(
-                scraped_jobs_dict, master_jobs_dict, by_key_id_only=True,
-            )
+        if scraped_jobs_dict:
+            if master_jobs_dict:
+                self.filter_duplicates(
+                    scraped_jobs_dict, master_jobs_dict, by_key_id_only=True,
+                )
 
-        # Filter out scraped jobs we have rejected, archived or block-listed
-        # or which we previously detected to be duplicates before updating CSV.
-        self.filter(scraped_jobs_dict)
+            # Filter out scraped jobs we have rejected, archived or block-listed
+            # or which we previously detected as duplicates before updating CSV.
+            self.filter(scraped_jobs_dict)
 
-        # Update master CSV iif we have one
-        if master_jobs_dict:
+        # Update master CSV if we have one with scrape data (if we have it)
+        if scraped_jobs_dict:
 
-            # Mabye reduce the size of master_jobs (may have blocked new jobs)
-            self.filter(master_jobs_dict)
+            if master_jobs_dict:
 
-            # Filter out duplicates and update duplicates list file
-            # NOTE: this will match duplicates by job description contents
-            self.filter_duplicates(scraped_jobs_dict, master_jobs_dict)
+                # Mabye reduce the size of master_jobs (user-blocked new jobs)
+                self.filter(master_jobs_dict)
 
-            # Expand master_jobs_dict with filtered, non-duplicated jobs & save
-            # NOTE: this may be an empty update.. TODO: save the write call?
-            master_jobs_dict.update(scraped_jobs_dict)
-            self.write_master_csv(master_jobs_dict)
+                # Filter out duplicates and update duplicates list file
+                # NOTE: this will match duplicates by job description contents
+                if scraped_jobs_dict:
+                    self.filter_duplicates(scraped_jobs_dict, master_jobs_dict)
+
+                    # Expand master_jobs_dict with scraped & filtered jobs
+                    master_jobs_dict.update(scraped_jobs_dict)
+
+                # Update the existing master jobs dict (i.e. remove status-jobs)
+                self.write_master_csv(master_jobs_dict)
+
+            else:
+                # Dump the results into the data folder as the masterlist
+                # FIXME: we could still detect duplicates within the CSV itself?
+                self.write_master_csv(scraped_jobs_dict)
 
         else:
-            # Dump the results into the data folder as the masterlist
-            # FIXME: we could still detect duplicates within the CSV itself?
-            self.write_master_csv(scraped_jobs_dict)
+            # User is running --no-scrape and hasn't got a master CSV
+            self.logger.error(
+                "Running --no-scrape without any cached file or CSV, nothing "
+                "was done!"
+            )
 
-        self.logger.info(
-            f"Done. View your current jobs in {self.config.master_csv_file}"
-        )
+        # Tell user we updated CSV and/or scraped successfully.
+        # TODO: chuck a stat or two in here?
+        if scraped_jobs_dict or master_jobs_dict:
+            self.logger.info(
+                f"Done. View your current jobs in {self.config.master_csv_file}"
+            )
 
     def scrape(self) ->Dict[str, Job]:
         """Run each of the desired Scraper.scrape() with threading and delaying
