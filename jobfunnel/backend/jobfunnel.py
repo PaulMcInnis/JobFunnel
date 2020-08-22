@@ -8,18 +8,18 @@ import os
 import pickle
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from time import time
 from typing import Dict, List, Optional
 
 from requests import Session
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools.filters import job_is_old, tfidf_filter
+from jobfunnel.backend.tools.filters import tfidf_filter
 from jobfunnel.backend.tools import update_job_if_newer, get_logger
 from jobfunnel.config import JobFunnelConfig
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
-                                 MAX_CPU_WORKERS, JobStatus, Locale,
+                                 MAX_CPU_WORKERS, JobStatus, Locale, T_NOW,
                                  MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH)
 
 
@@ -44,6 +44,14 @@ class JobFunnel:
             "%(message)s"
         )
         self.__date_string = date.today().strftime("%Y-%m-%d")
+        self.max_job_date = T_NOW - timedelta(
+            days=self.config.search_config.max_listing_days
+        )
+
+        # NOTE: we have these as attrs so they are read minimally.
+        self.user_block_jobs_dict = {}  # type: Dict[str, str]
+        self.duplicate_jobs_dict = {}  # type: Dict[str, str]
+        self.master_jobs_dict = {}  # type: Dict[str, Job]
 
         # Open a session with/out a proxy configured
         self.session = Session()
@@ -51,6 +59,22 @@ class JobFunnel:
             self.session.proxies = {
                 self.config.proxy_config.protocol: self.config.proxy_config.url
             }
+
+        # Read the user's block list
+        if os.path.isfile(self.config.user_block_list_file):
+            self.user_block_jobs_dict = json.load(
+                open(self.config.user_block_list_file, 'r')
+            )
+
+        # Read the user's duplicate jobs list (from TFIDF)
+        if os.path.isfile(self.config.duplicates_list_file):
+            self.duplicate_jobs_dict = json.load(
+                open(self.config.duplicates_list_file, 'r')
+            )
+
+        # Read the master CSV file
+        if os.path.isfile(self.config.master_csv_file):
+            self.master_jobs_dict = self.read_master_csv()
 
     @property
     def daily_cache_file(self) -> str:
@@ -67,65 +91,69 @@ class JobFunnel:
         NOTE: we are assuming the user has distinct cache folder per-search,
         otherwise we will load the cache for today, for a different search!
         """
+
         # Load master csv jobs if they exist and update our block list with
         # any jobs the user has set the status to == a remove status
         # NOTE: we want to do this first to ensure scraping is efficient when
         # we are getting detailed job information (per-job)
-        master_jobs_dict = {}  # type: Dict[str, Job[
-        if os.path.isfile(self.config.master_csv_file):
-            master_jobs_dict = self.read_master_csv()
-            self.update_user_block_list(master_jobs_dict)
+        if self.master_jobs_dict:
+            self.update_user_block_list(self.master_jobs_dict)
         else:
             logging.debug(
                 "No master-CSV present, did not update block-list: "
                 f"{self.config.user_block_list_file}"
             )
 
-        # Get jobs keyed by their unique ID, use cache if --no-scrape is set
+        # Get jobs keyed by their unique ID
         scraped_jobs_dict = {}  # type: Dict[str, Job]
-        if os.path.exists(self.daily_cache_file):
-            scraped_jobs_dict = self.load_cache(self.daily_cache_file)
-        elif self.config.no_scrape:
-            self.logger.warning(
-                f"No jobs cached, missing: {self.daily_cache_file}"
-            )
-
-        # Scrape and writeout the cache
         if self.config.no_scrape:
+
+            # Load cache since --no-scrape is set
             self.logger.info("Skipping scraping, running with --no-scrape.")
+            if os.path.exists(self.daily_cache_file):
+                scraped_jobs_dict = self.load_cache(self.daily_cache_file)
+            else:
+                self.logger.warning(
+                    f"No jobs cached, missing: {self.daily_cache_file}"
+                )
         else:
-            scraped_jobs_dict = self.scrape()  # type: Dict[str, Job]
+
+            # Scrape new jobs and cache them
+            scraped_jobs_dict = self.scrape()
             self.write_cache(scraped_jobs_dict)
 
         # Pre-filter by removing jobs with duplicate IDs from scraped_jobs_dict
         if scraped_jobs_dict:
-            if master_jobs_dict:
+            if self.master_jobs_dict:
                 self.filter_duplicates(
-                    scraped_jobs_dict, master_jobs_dict, by_key_id_only=True,
+                    scraped_jobs_dict, self.master_jobs_dict,
+                    by_key_id_only=True,
                 )
 
             # Filter out scraped jobs we have rejected, archived or block-listed
             # or which we previously detected as duplicates before updating CSV.
-            self.filter(scraped_jobs_dict)
+            self.filter_jobs(scraped_jobs_dict)
 
         # Update master CSV if we have one with scrape data (if we have it)
         if scraped_jobs_dict:
 
-            if master_jobs_dict:
+            if self.master_jobs_dict:
 
                 # Mabye reduce the size of master_jobs (user-blocked new jobs)
-                self.filter(master_jobs_dict)
+                self.filter_jobs(self.master_jobs_dict)
 
                 # Filter out duplicates and update duplicates list file
                 # NOTE: this will match duplicates by job description contents
                 if scraped_jobs_dict:
-                    self.filter_duplicates(scraped_jobs_dict, master_jobs_dict)
+                    self.filter_duplicates(
+                        scraped_jobs_dict, self.master_jobs_dict
+                    )
 
-                    # Expand master_jobs_dict with scraped & filtered jobs
-                    master_jobs_dict.update(scraped_jobs_dict)
+                    # Expand self.master_jobs_dict with scraped & filtered jobs
+                    self.master_jobs_dict.update(scraped_jobs_dict)
 
                 # Update the existing master jobs dict (i.e. remove status-jobs)
-                self.write_master_csv(master_jobs_dict)
+                self.write_master_csv(self.master_jobs_dict)
 
             else:
                 # Dump the results into the data folder as the masterlist
@@ -141,7 +169,7 @@ class JobFunnel:
 
         # Tell user we updated CSV and/or scraped successfully.
         # TODO: chuck a stat or two in here?
-        if scraped_jobs_dict or master_jobs_dict:
+        if scraped_jobs_dict or self.master_jobs_dict:
             self.logger.info(
                 f"Done. View your current jobs in {self.config.master_csv_file}"
             )
@@ -188,7 +216,7 @@ class JobFunnel:
                         os.path.join(self.config.cache_folder, file)
                     )
                 )
-        self.filter(all_jobs_dict)
+        self.filter_jobs(all_jobs_dict)  # NOTE: we warn user about this above
         self.write_master_csv(all_jobs_dict)
 
     def load_cache(self, cache_file: str) -> Dict[str, Job]:
@@ -365,30 +393,23 @@ class JobFunnel:
                                file does not exist.
         """
 
-        # Load from CSV if not passed by argument
-        if not master_jobs_dict:
+        # Try to load from CSV if master_jobs_dict is un-set
+        if not self.master_jobs_dict:
             if os.path.isfile(self.config.master_csv_file):
-                master_jobs_dict or self.read_master_csv()
+                self.master_jobs_dict or self.read_master_csv()
             else:
                 raise FileNotFoundError(
                     f"Cannot update {self.config.user_block_list_file} without "
                     f"{self.config.master_csv_file}"
                 )
 
-        # Load existing filtered jobs, if any
-        if os.path.isfile(self.config.user_block_list_file):
-            blocked_jobs_dict = json.load(
-                open(self.config.user_block_list_file, 'r')
-            )
-        else:
-            blocked_jobs_dict = {}
-
-        # Add jobs from csv that need to be filtered away, if any
+        # Add jobs from csv that need to be filtered away, if any + update self
         n_jobs_added = 0
-        for job in master_jobs_dict.values():
-            if job.is_remove_status and job.key_id not in blocked_jobs_dict:
+        for job in self.master_jobs_dict.values():
+            if (job.is_remove_status and job.key_id
+                    not in self.user_block_jobs_dict):
                 n_jobs_added += 1
-                blocked_jobs_dict[job.key_id] = job.as_json_entry
+                self.user_block_jobs_dict[job.key_id] = job.as_json_entry
                 logging.info(
                     f'Added {job.key_id} to '
                     f'{self.config.user_block_list_file}'
@@ -401,7 +422,7 @@ class JobFunnel:
                       encoding='utf8') as outfile:
                 outfile.write(
                     json.dumps(
-                        blocked_jobs_dict,
+                        self.user_block_jobs_dict,
                         indent=4,
                         sort_keys=True,
                         separators=(',', ': '),
@@ -413,7 +434,25 @@ class JobFunnel:
                 f"statuses: {self.config.user_block_list_file}"
             )
 
-    def filter(self, jobs_dict: Dict[str, Job]) -> int:
+    def filter_job(self, job: Job,
+                   user_block_jobs_dict: Optional[Dict[str, str]] = None,
+                   duplicate_jobs_dict: Optional[Dict[str, str]] = None
+                   ) -> bool:
+        """Filter jobs out using all our available filters except TFIDF
+        FIXME: how can we update_if_newer if we are prempting the scrape?
+        TODO: arrange checks by how long they take to run
+        """
+        return (
+            job.is_remove_status
+            or (job.company in self.config.search_config.blocked_company_names)
+            or job.is_old(self.max_job_date)
+            or (self.user_block_jobs_dict
+                and job.key_id in self.user_block_jobs_dict)
+            or (self.duplicate_jobs_dict
+                and job.key_id in self.duplicate_jobs_dict)
+        )
+
+    def filter_jobs(self, jobs_dict: Dict[str, Job]) -> int:
         """Remove jobs from jobs_dict if they are:
             1. in our block-list
             2. status == a removal status string (i.e. DELETE)
@@ -426,30 +465,12 @@ class JobFunnel:
 
         TODO: make the filters used configurable, i.e. list of FilterType
         """
-        # Read the user's block list
-        block_dict = {}  # type: Dict[str, Job]
-        if os.path.isfile(self.config.user_block_list_file):
-            block_dict = json.load(
-                open(self.config.user_block_list_file, 'r')
-            )
 
-        # Read the user's duplicate jobs list (from TFIDF)
-        duplicates_dict = {}  # type: Dict[str, Job]
-        if os.path.isfile(self.config.duplicates_list_file):
-            duplicates_dict = json.load(
-                open(self.config.duplicates_list_file, 'r')
-            )
-
-        # Filter jobs out using all our available filters
-        # NOTE: checks are arranged in order of assumed calculation expense
+        # Filter jobs with all filters except TFIDF, then remove filtered jobs
         filter_jobs_ids = []
         for key_id, job in jobs_dict.items():
-            if (job.is_remove_status
-                or job.company in
-                self.config.search_config.blocked_company_names
-                or key_id in block_dict
-                or key_id in duplicates_dict
-                or job_is_old(job, self.config.search_config.max_listing_days)):
+            if self.filter_job(job, self.user_block_jobs_dict,
+                               self.duplicate_jobs_dict):
                 filter_jobs_ids.append(key_id)
 
         for key_id in filter_jobs_ids:
@@ -472,7 +493,7 @@ class JobFunnel:
         """Identify duplicate jobs between scrape data and existing_jobs_dict
         and update the duplicates block list if any are found by contents.
 
-        TODO: move this into self.filter() which should be more configurable
+        TODO: move this into self.filter_jobs() - it should be more configurable
         TODO: make max_similarity configurable i.e. self.config.filter...
         TODO: we are wrapping in a try/catch because TFIDF filter is missing
               some error handling. Remove once it is safer to use w.out crashing
@@ -501,21 +522,54 @@ class JobFunnel:
                     )
 
         # If we have any jobs left, filter these using their contents.
+        new_duplicate_jobs_list = []  # type: List[Job]
         if scraped_jobs_dict:
             if (len(scraped_jobs_dict.keys()) + len(existing_jobs_dict.keys())
                     >= MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH):
                 try:
-                    tfidf_filter(
+                    new_duplicate_jobs_list = tfidf_filter(
                         cur_dict=scraped_jobs_dict,
                         prev_dict=existing_jobs_dict,
                         log_level=self.config.log_level,
                         log_file=self.config.log_file,
-                        duplicate_jobs_file=self.config.duplicates_list_file,
+                        duplicate_jobs_dict=self.duplicate_jobs_dict,
                     )
+
                 except ValueError as err:
                     self.logger.error(
                         f"Skipping similarity filter due to error: {str(err)}"
                     )
+
+                if new_duplicate_jobs_list:
+
+                    if self.config.duplicates_list_file:
+
+                        # Write out a list of duplicates so that detections
+                        # persist under changing input data / scrape data.
+                        self.duplicate_jobs_dict = {
+                            dj.key_id: dj.as_json_entry
+                            for dj in new_duplicate_jobs_list
+                        }  # type: Dict[str, str]
+
+                        with open(self.config.duplicates_list_file, 'w',
+                                  encoding='utf8') as outfile:
+                            # NOTE: we use indent=4 for human-readability
+                            outfile.write(
+                                json.dumps(
+                                    self.config.duplicates_list_file,
+                                    indent=4,
+                                    sort_keys=True,
+                                    separators=(',', ': '),
+                                    ensure_ascii=False,
+                                )
+                            )
+                    else:
+                        self.logger.warning(
+                            "Duplicates will not be saved, no duplicates list "
+                            "file set. Saving to a duplicates file will ensure "
+                            "that these persist."
+                        )
+
             else:
                 self.logger.warning(
                     "Skipping similarity filter because there are fewer than "

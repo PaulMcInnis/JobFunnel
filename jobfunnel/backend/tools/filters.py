@@ -4,7 +4,6 @@ FIXME: we should have a Enum(Filter) for all job filters to allow configuration
 and generic log messages.
 """
 import logging
-from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import json
 import os
@@ -21,32 +20,10 @@ from jobfunnel.resources import (
 )
 
 
-T_NOW = datetime.now()
-
-
-def job_is_old(job: Job, number_of_days: int) -> bool:
-    """Identify if a job is older than number_of_days from today
-    TODO: move this into Job.job_is_old()
-    NOTE: modifies job_dict in-place
-
-        Args:
-            job_dict: today's job scrape dict
-            number_of_days: how many days old a job can be
-
-        Returns:
-            True if it's older than number of days
-            False if it's fresh enough to keep
-    """
-    assert number_of_days > 0
-    # Calculate the oldest date a job can be
-    # NOTE: we may want to just set job.status = JobStatus.OLD
-    return job.post_date < (T_NOW - timedelta(days=number_of_days))
-
-
 def tfidf_filter(cur_dict: Dict[str, dict],
                  prev_dict: Optional[Dict[str, dict]] = None,
                  max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
-                 duplicate_jobs_file: Optional[str] = None,
+                 duplicate_jobs_dict: Optional[Dict[str, str]] = None,
                  log_level: int = logging.INFO,
                  log_file: str = None,
                  ) -> List[Job]:
@@ -73,15 +50,15 @@ def tfidf_filter(cur_dict: Dict[str, dict],
             from within the cur_dict only. Defaults to None.
         max_similarity (float, optional): threshold above which blurb similarity
             is considered a duplicate. Defaults to DEFAULT_MAX_TFIDF_SIMILARITY.
-        duplicate_jobs_file (str, optional): location to save duplicates that
-            we identify via content matching. Defaults to None.
+        duplicate_jobs_dict (str, optional): cntents of user's duplicate job
+            detection JSON so we can make content matching persist better.
         ...
 
     Raises:
         ValueError: cur_dict contains no job descriptions
 
     Returns:
-        List[Job]: list of duplicate Jobs which were removed from cur_dict
+        List[Job]: list of new duplicate Jobs which were removed from cur_dict
     """
     logger = get_logger(
         tfidf_filter.__name__,
@@ -110,13 +87,8 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     # Load known duplicate keys from JSON if we have it
     # NOTE: this allows us to do smaller TFIDF comparisons because we ensure
     # that we are skipping previously-detected job duplicates (by id)
-    existing_duplicate_keys = {}  # type: Set[str]
-    existing_duplicate_jobs_dict = {}  # type: Dict[str, str]
-    if duplicate_jobs_file and os.path.isfile(duplicate_jobs_file):
-        existing_duplicate_jobs_dict = json.load(
-            open(duplicate_jobs_file, 'r')
-        )
-        existing_duplicate_keys = existing_duplicate_jobs_dict.keys()
+    duplicate_jobs_dict = duplicate_jobs_dict or {}  # type: Dict[str, str]
+    existing_duplicate_keys = duplicate_jobs_dict.keys()
 
     def __dict_to_ids_and_words(jobs_dict: Dict[str, Job]
                                 ) -> Tuple[List[str], List[str]]:
@@ -176,7 +148,8 @@ def tfidf_filter(cur_dict: Dict[str, dict],
     )
 
     # Get duplicate job ids and pop them, updating cur_dict if they are newer
-    duplicate_jobs_list = []  # type: List[Job]
+    # NOTE: multiple jobs can be determined to be a duplicate of the same job!
+    new_duplicate_jobs_list = []  # type: List[Job]
     for query_similarities, query_id in zip(similarities_per_query, query_ids):
 
         # Identify the jobs in prev_dict that our query is a duplicate of
@@ -186,47 +159,21 @@ def tfidf_filter(cur_dict: Dict[str, dict],
                 filt_prev_dict[reference_ids[similar_index]],
                 filt_cur_dict[query_id],
             )
-            duplicate_jobs_list.append(filt_cur_dict[query_id])
-
-    if duplicate_jobs_list:
-
-        # NOTE: multiple jobs can be a duplicate of the same job.
-        duplicate_ids = {job.key_id for job in duplicate_jobs_list}
-
-        # Remove duplicates from cur_dict + save to our duplicates file
-        for key_id in duplicate_ids:
-            cur_dict.pop(key_id)
+            new_duplicate_jobs_list.append(filt_cur_dict[query_id])
             logger.debug(
-                f"Removed {key_id} from scraped data, TFIDF content match."
+                f"Removed {job.key_id} from scraped data, TFIDF content match."
             )
 
+    # Pop duplicates from cur_dict and return them
+    # NOTE: we cannot change cur_dict in above loop, or no updates possible.
+    if new_duplicate_jobs_list:
+        for job in new_duplicate_jobs_list:
+            cur_dict.pop(job.key_id)
+
         logger.info(
-            f'Found and removed {len(duplicate_jobs_list)} '
+            f'Found and removed {len(new_duplicate_jobs_list)} '
             f're-posts/duplicate postings via TFIDF cosine similarity.'
         )
 
-        if duplicate_jobs_file:
-            # Write out a list of duplicates so that detections persist under
-            # changing input data.
-            existing_duplicate_jobs_dict.update(
-                {dj.key_id: dj.as_json_entry for dj in duplicate_jobs_list}
-            )
-            with open(duplicate_jobs_file, 'w', encoding='utf8') as outfile:
-                # NOTE: we use indent=4 so that it stays human-readable.
-                outfile.write(
-                    json.dumps(
-                        existing_duplicate_jobs_dict,
-                        indent=4,
-                        sort_keys=True,
-                        separators=(',', ': '),
-                        ensure_ascii=False,
-                    )
-                )
-        else:
-            logger.warning(
-                "Duplicates will not be saved, no duplicates list file set. "
-                "Saving to a duplicates file will ensure that these persist."
-            )
-
-    # returns a list of duplicate Jobs
-    return duplicate_jobs_list
+    # returns a list of newly-detected duplicate Jobs
+    return new_duplicate_jobs_list

@@ -1,5 +1,6 @@
 """String-like resouces and other constants are initialized here.
 """
+import datetime
 import os
 import string
 
@@ -20,6 +21,7 @@ MAX_BLOCK_LIST_DESC_CHARS = 150  # Maximum len of description in block_list JSON
 DEFAULT_MAX_TFIDF_SIMILARITY = 0.75  # Maximum similarity between job text TFIDF
 
 BS4_PARSER = 'lxml'
+T_NOW = datetime.datetime.now()
 
 PRINTABLE_STRINGS = set(string.printable)
 
