@@ -19,7 +19,6 @@ from jobfunnel.backend.scrapers.base import (
     BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
 )
 
-MAGIC_MONSTER_SEARCH_STRING = 'skr_navigation_nhpso_searchMain'
 MAX_RESULTS_PER_MONSTER_PAGE = 25
 ID_REGEX = re.compile(
     r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]'
@@ -56,15 +55,15 @@ class BaseMonsterScraper(BaseScraper):
         """Call self.get(...) for the JobFields in this list when scraping a Job
         """
         return [
-            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.POST_DATE, JobField.URL,
+            JobField.KEY_ID, JobField.TITLE, JobField.COMPANY,
+            JobField.LOCATION, JobField.POST_DATE, JobField.URL,
         ]
 
     @property
     def job_set_fields(self) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job
         """
-        return [JobField.KEY_ID, JobField.DESCRIPTION]
+        return [JobField.DESCRIPTION]
 
     @property
     def delayed_get_set_fields(self) -> str:
@@ -95,7 +94,13 @@ class BaseMonsterScraper(BaseScraper):
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
         """
-        if parameter == JobField.TITLE:
+        if parameter == JobField.KEY_ID:
+            # TODO: is there a way to combine these calls?
+            # NOTE: do not use 'data-m_impr_j_jobid' as this is duplicated
+            return soup.find('h2', attrs={'class': 'title'}).find('a').get(
+                'data-m_impr_j_postingid'
+            )
+        elif parameter == JobField.TITLE:
             return soup.find('h2', attrs={'class': 'title'}).text.strip()
         elif parameter == JobField.COMPANY:
             return soup.find('div', attrs={'class': 'company'}).text.strip()
@@ -115,9 +120,7 @@ class BaseMonsterScraper(BaseScraper):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
         """
-        if parameter == JobField.KEY_ID:
-            job.key_id = ID_REGEX.findall(job.url)[0]
-        elif parameter == JobField.DESCRIPTION:
+        if parameter == JobField.DESCRIPTION:
             detailed_job_soup = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
@@ -130,7 +133,7 @@ class BaseMonsterScraper(BaseScraper):
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
-        TODO: use threading here too
+        TODO: use threading here too?
 
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
@@ -139,9 +142,9 @@ class BaseMonsterScraper(BaseScraper):
         search_url = self._get_search_url()
 
         # Load our initial search results listings page
-        initial_seach_results_html = self.session.get(search_url)
+        initial_search_results_html = self.session.get(search_url)
         initial_search_results_soup = BeautifulSoup(
-            initial_seach_results_html.text, self.config.bs4_parser
+            initial_search_results_html.text, self.config.bs4_parser
         )
 
         # Parse total results, and calculate the # of pages needed
@@ -151,26 +154,35 @@ class BaseMonsterScraper(BaseScraper):
         )
 
         # Get first page of listing soups from our search results listings page
-        job_soups_list = self._get_job_soups_from_search_page(
-            initial_search_results_soup
-        )
+        # NOTE: Monster is an endless-scroll style of job site so we have to
+        # Remove previous pages as we go.
+        # TODO: better error handling here?
+        # TODO: maybe we can move this into get set / BaseScraper somehow?
+        def __get_job_soups_by_key_id(result_listings: BeautifulSoup
+                                      ) -> Dict[str, BeautifulSoup]:
+            return {
+                self.get(JobField.KEY_ID, job_soup): job_soup
+                for job_soup in self._get_job_soups_from_search_page(
+                    result_listings
+                )
+            }
+
+        job_soups_dict = __get_job_soups_by_key_id(initial_search_results_soup)
 
         # Get all the other pages
-        for page in range(1, n_pages):
-            next_listings_page_soup = BeautifulSoup(
-                self.session.get(self._get_results_page_url(page, search_url)),
-                self.config.bs4_parser,
-            )
-            job_soups_list.extend(
-                self._get_job_soups_from_search_page(next_listings_page_soup)
-            )
+        if n_pages > 1:
+            for page in range(2, n_pages):
+                next_listings_page_soup = BeautifulSoup(
+                    self.session.get(self._get_search_url(page=page)).text,
+                    self.config.bs4_parser,
+                )
+                # Add only the jobs that we didn't 'scroll' past already
+                job_soups_dict.update(
+                    __get_job_soups_by_key_id(next_listings_page_soup)
+                )
 
-        return job_soups_list
-
-    def _get_results_page_url(self, cur_page: int, search_url: str) -> str:
-        """Get the next page of search listings
-        """
-        return f'{search_url}&start={cur_page}'
+        # TODO: would be cool if we could avoid key_id scrape duplication in get
+        return list(job_soups_dict.values())
 
     def _get_job_soups_from_search_page(self,
                                         initial_results_soup: BeautifulSoup,
@@ -180,14 +192,13 @@ class BaseMonsterScraper(BaseScraper):
         return initial_results_soup.find_all('div', attrs={'class': 'flex-row'})
 
     def _get_num_search_result_pages(self, initial_results_soup: BeautifulSoup,
-                                     max_pages=0) -> int:
+                                     ) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
         i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
 
         Args:
             initial_results_soup: the soup for the first search results page
-			max_pages: the maximum number of pages to be scraped.
         Returns:
             The number of pages of job listings to be scraped.
         """
@@ -197,21 +208,25 @@ class BaseMonsterScraper(BaseScraper):
         num_res = int(re.findall(r'(\d+)', partial)[0])
         return int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
 
-    def _get_search_url(self, method: Optional[str] = 'get') -> str:
+    def _get_search_url(self, method: Optional[str] = 'get',
+                        page: int = 1) -> str:
         """Get the monster search url from SearchTerms
-        TODO: use Enum for method instead of str.
+        TODO: implement fulltime/parttime portion + company search?
         TODO: implement POST
+        NOTE: unfortunately we cannot start on any page other than 1,
+              so the jobs displayed just scrolls forever and we will see
+              all previous jobs as we go.
         """
         if method == 'get':
             return (
-                'https://www.monster.{0}/jobs/search/?q={1}&where={2}__2C-{3}'
-                    '&intcid={4}&rad={5}&where={2}__2c-{3}'.format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(' ', '-'),
-                    self.config.search_config.province_or_state,
-                    MAGIC_MONSTER_SEARCH_STRING,
-                    self._convert_radius(self.config.search_config.radius)
+                'https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}'
+                    '&rad={}'.format(
+                        self.config.search_config.domain,
+                        f'page={page}&' if page > 1 else '',
+                        self.query,
+                        self.config.search_config.city.replace(' ', '-'),
+                        self.config.search_config.province_or_state,
+                        self._convert_radius(self.config.search_config.radius)
                 )
             )
         elif method == 'post':

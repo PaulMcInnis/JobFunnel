@@ -140,6 +140,10 @@ class BaseScraper(ABC):
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
+        FIXME: we need to accept some kind of filter bank argument
+            here so we can abort scraping that isn't promising with a minimal
+            number of delayed get/sets
+
         NOTE: respectfully delays for scraping of configured job attributes in
         self.
 
@@ -172,7 +176,7 @@ class BaseScraper(ABC):
                 )
             )
 
-        # Loops through futures as completed and removes each if successfully parsed
+        # Loops through futures as completed and removes if successfully parsed
         # For each job-soup object, scrape the soup into a Job  (w/o desc.)
         jobs_dict = {}  # type: Dict[str, Job]
         for future in tqdm(as_completed(results), total=n_soups):
@@ -197,6 +201,8 @@ class BaseScraper(ABC):
                 to this job and not contain other job information.
             delay [float]: how long to delay getting/setting for certain
                 get/set calls while scraping data for this job.
+
+        FIXME: abort on get(key_id) when that key_id matches an existing job
 
         Returns:
             Job: job object constructed from the soup and localization of class

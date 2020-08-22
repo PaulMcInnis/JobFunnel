@@ -437,7 +437,7 @@ class JobFunnel:
         duplicates_dict = {}  # type: Dict[str, Job]
         if os.path.isfile(self.config.duplicates_list_file):
             duplicates_dict = json.load(
-                open(self.config.user_block_list_file, 'r')
+                open(self.config.duplicates_list_file, 'r')
             )
 
         # Filter jobs out using all our available filters
