@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools.delay import calculate_delays
+from jobfunnel.backend.tools import get_logger
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
                                  Locale)
 # from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
@@ -27,12 +28,15 @@ class BaseScraper(ABC):
     def __init__(self, session: Session, config: 'JobFunnelConfig') -> None:
         self.session = session
         self.config = config
-        self.logger = None
+        self.logger = get_logger(
+            self.__class__.__name__,
+            self.config.log_level,
+            self.config.log_file,
+            f"[%(asctime)s] [%(levelname)s] {self.__class__.__name__}: "
+            "%(message)s"
+        )
         if self.headers:
             self.session.headers.update(self.headers)
-
-        # Init logging
-        self.init_logging()
 
         # Ensure that the locale we want to use matches the locale that the
         # scraper was written to scrape in:
@@ -54,6 +58,28 @@ class BaseScraper(ABC):
         """Get a user agent for this scraper
         """
         return random.choice(USER_AGENT_LIST)
+
+    @property
+    def job_init_kwargs(self) -> Dict[JobField, Any]:
+        """This is a helper property that stores a Dict of JobField : value that
+        we set defaults for when scraping. If the scraper fails to get/set these
+        we can fail back to the empty value from here.
+
+        i.e. JobField.POST_DATE defaults to today.
+        TODO: formalize the defaults for JobFields via Job.__init__(Jobfields...
+        """
+        return {
+            JobField.STATUS: JobStatus.NEW,
+            JobField.LOCALE: self.locale,
+            JobField.QUERY: self.config.search_config.query_string,
+            JobField.DESCRIPTION: '',
+            JobField.URL: '',
+            JobField.SHORT_DESCRIPTION: '',
+            JobField.RAW: None,
+            JobField.PROVIDER: self.__class__.__name__,
+            JobField.REMOTE: '',
+            JobField.WAGE: '',
+        }
 
     @property
     @abstractmethod
@@ -111,23 +137,6 @@ class BaseScraper(ABC):
         """
         pass
 
-    def init_logging(self) -> None:
-        """Initialize a logger which displays clearly the name of the scraper
-        TODO: make this less of a duplication of JobFunnel.init_logging()
-        """
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(self.config.log_level)
-        logging.basicConfig(
-            filename=self.config.log_file,
-            level=self.config.log_level,
-        )
-        formatter = logging.Formatter(
-            f'[%(levelname)s] {self.__class__.__name__}: %(message)s'
-        )
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(formatter)
-        self.logger.addHandler(stdout_handler)
-
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
@@ -152,8 +161,9 @@ class BaseScraper(ABC):
         )
 
         # Calculate delays for get/set calls per-job NOTE: only get/set
-        # calls in self.delayed_get_set_fields will be delayed.
-        delays = calculate_delays(n_soups, self.config.delay_config)
+        # calls in self.delayed_get_set_fields will be delayed. FIXME: remove bypass!
+        import numpy as np
+        delays = np.ones(n_soups) * 0.1 #calculate_delays(n_soups, self.config.delay_config)
         results = []
         for job_soup, delay in zip(job_soups, delays):
             results.append(
@@ -191,26 +201,13 @@ class BaseScraper(ABC):
         Returns:
             Job: job object constructed from the soup and localization of class
         """
-        # Init kwargs which allow for defaults + known information
-        job_init_kwargs = {
-            JobField.STATUS: JobStatus.NEW,
-            JobField.LOCALE: self.locale,
-            JobField.QUERY: self.config.search_config.query_string,
-            JobField.DESCRIPTION: '',
-            JobField.URL: '',
-            JobField.SHORT_DESCRIPTION: '',  # TODO: impl.
-            JobField.RAW: None,
-            JobField.PROVIDER: self.__class__.__name__,
-            JobField.REMOTE: '',
-            JobField.WAGE: '',
-        }  # type: Dict[JobField, Any]
-
         # Formulate the get/set actions
         actions_list = [(True, f) for f in self.job_get_fields]
         actions_list += [(False, f) for f in self.job_set_fields]
 
         # Scrape the data for the post, requiring a minimum of info...
         job = None  # type: Union[None, Job]
+        job_init_kwargs = self.job_init_kwargs  # NOTE: best to construct once
         for is_get, field in actions_list:
 
             # Respectfully delay if it's configured to do so.
@@ -329,10 +326,11 @@ class BaseScraper(ABC):
                     and field not in self.job_set_fields):
                 self.logger.warning(
                     f"No get() or set() will be done for Job attr: {field.name}"
-                )  # NOTE: we have the class name in the logger format
+                )
+
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
-
+# TODO: move into own file once we get enough of em...
 class BaseUSAEngScraper(BaseScraper):
     """Localized scraper for USA English
     """
