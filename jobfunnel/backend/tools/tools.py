@@ -41,18 +41,9 @@ def get_logger(logger_name: str, log_level: int, filename: str,
     return logger
 
 
-def update_job_if_newer(existing_job: Job, new_job: Job) -> None:
-    """Update an existing job with new metadata but keep user's status,
-    but only if the new_job.post_date > existing_job.post_date!
-
-    Returns: True if existing job was updated
-    """
-    if (new_job.post_date > existing_job.post_date):
-        new_job.status = existing_job.status
-        existing_job = new_job
-
 def calc_post_date_from_relative_str(date_str: str) -> date:
     """Identifies a job's post date via post age, updates in-place
+    NOTE: we round to nearest day only.
     """
     post_date = datetime.now()  # type: date
     # Supports almost all formats like 7 hours|days and 7 hr|d|+d
@@ -88,7 +79,9 @@ def calc_post_date_from_relative_str(date_str: str) -> date:
                         raise ValueError(
                             f"Unable to calculate date from:\n{date_str}"
                         )
-    return post_date
+
+    return post_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
 
 def get_webdriver():
     """Get whatever webdriver is availiable in the system.

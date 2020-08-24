@@ -1,4 +1,5 @@
 """Scraper for www.glassdoor.X
+FIXME: this is currently unable to get past page 1 of job results.
 """
 from abc import abstractmethod
 from bs4 import BeautifulSoup
@@ -79,7 +80,7 @@ class BaseGlassDoorScraper(BaseScraper):
     def job_set_fields(self) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job
         """
-        return [JobField.DESCRIPTION]
+        return [JobField.RAW, JobField.DESCRIPTION]
 
     @property
     def delayed_get_set_fields(self) -> str:
@@ -88,7 +89,7 @@ class BaseGlassDoorScraper(BaseScraper):
 
         Override this as needed.
         """
-        return [JobField.DESCRIPTION]
+        return [JobField.RAW]
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -256,14 +257,15 @@ class BaseGlassDoorScraper(BaseScraper):
         """Set a single job attribute from a soup object by JobField
         NOTE: Description has to get and should be respectfully delayed
         """
-        if parameter == JobField.DESCRIPTION:
-            job_link_soup = BeautifulSoup(
+        if parameter == JobField.RAW:
+            job._raw_scrape_data = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
-            job.description = job_link_soup.find(
+        elif parameter == JobField.DESCRIPTION:
+            assert job._raw_scrape_data
+            job.description = job._raw_scrape_data.find(
                 id='JobDescriptionContainer'
             ).text.strip()
-            job._raw_scrape_data = job_link_soup  # This is so we can set wage
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 

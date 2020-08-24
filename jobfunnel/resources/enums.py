@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Locale(Enum):
     """This will allow Scrapers / Filters / Main to identify the support they
     have for different domains of different websites
@@ -14,6 +15,7 @@ class Locale(Enum):
     CANADA_ENGLISH = 1
     CANADA_FRENCH = 2
     USA_ENGLISH = 3
+
 
 class JobStatus(Enum):
     """Job statuses that are built-into jobfunnel
@@ -53,6 +55,15 @@ class JobField(Enum):
     TAGS = 14
     WAGE = 15
     REMOTE = 16
+
+
+class DuplicateType(Enum):
+    """Ways in which a job can be a duplicate
+    NOTE: we use these to determine what action(s) to take
+    """
+    KEY_ID = 0
+    EXISTING_TFIDF = 1
+    NEW_TFIDF = 2
 
 
 class Provider(Enum):

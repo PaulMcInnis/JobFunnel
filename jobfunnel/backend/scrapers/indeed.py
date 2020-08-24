@@ -70,7 +70,7 @@ class BaseIndeedScraper(BaseScraper):
 
         Override this as needed.
         """
-        return [JobField.URL, JobField.DESCRIPTION]
+        return [JobField.RAW, JobField.URL, JobField.DESCRIPTION]
 
     @property
     def delayed_get_set_fields(self) -> str:
@@ -79,7 +79,7 @@ class BaseIndeedScraper(BaseScraper):
 
         Override this as needed.
         """
-        return [JobField.DESCRIPTION]
+        return [JobField.RAW]
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -178,14 +178,17 @@ class BaseIndeedScraper(BaseScraper):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
         """
-        if parameter == JobField.DESCRIPTION:
-            detailed_job_soup = BeautifulSoup(
+        if parameter == JobField.RAW:
+            job._raw_scrape_data = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
-            job.description = detailed_job_soup.find(
+        elif parameter == JobField.DESCRIPTION:
+            assert job._raw_scrape_data
+            job.description = job._raw_scrape_data.find(
                 id='jobDescriptionText'
             ).text.strip()
         elif parameter == JobField.URL:
+            assert job.key_id
             job.url = (
                 f"http://www.indeed.{self.config.search_config.domain}/"
                 f"viewjob?jk={job.key_id}"
