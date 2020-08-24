@@ -21,6 +21,7 @@ from jobfunnel.backend.scrapers.base import (
 )
 
 MAX_RESULTS_PER_MONSTER_PAGE = 25
+MONSTER_SIDEPANEL_TAG_ENTRIES = ['industries', 'job type']  # these --> Job.tags
 ID_REGEX = re.compile(
     r'/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]'
     r'{12})|\d+)'
@@ -29,6 +30,9 @@ ID_REGEX = re.compile(
 
 class BaseMonsterScraper(BaseScraper):
     """Scraper for www.monster.X
+
+    NOTE: I dont think it's possible to scrape REMOTE other than from desc.
+        as of aug 2020. -pm
     """
 
     def __init__(self, session: Session, config: 'JobFunnelConfig',
@@ -65,7 +69,7 @@ class BaseMonsterScraper(BaseScraper):
     def job_set_fields(self) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job
         """
-        return [JobField.DESCRIPTION]
+        return [JobField.RAW, JobField.DESCRIPTION, JobField.TAGS]
 
     @property
     def delayed_get_set_fields(self) -> str:
@@ -74,7 +78,7 @@ class BaseMonsterScraper(BaseScraper):
 
         Override this as needed.
         """
-        return [JobField.DESCRIPTION]
+        return [JobField.RAW]
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -113,6 +117,7 @@ class BaseMonsterScraper(BaseScraper):
                 soup.find('time').text.strip()
             )
         elif parameter == JobField.URL:
+            # NOTE: seems that it is a bit hard to view these links? getting 503
             return str(
                 soup.find('a', attrs={'data-bypass': 'true'}).get('href')
             )
@@ -122,13 +127,27 @@ class BaseMonsterScraper(BaseScraper):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
         """
-        if parameter == JobField.DESCRIPTION:
-            detailed_job_soup = BeautifulSoup(
+        if parameter == JobField.RAW:
+            job._raw_scrape_data = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
-            job.description = detailed_job_soup.find(
+        elif parameter == JobField.DESCRIPTION:
+            assert job._raw_scrape_data
+            job.description = job._raw_scrape_data.find(
                 id='JobDescription'
             ).text.strip()
+        elif parameter == JobField.TAGS:
+            # NOTE: this seems a bit flimsy, monster allows a lot of flex. here
+            assert job._raw_scrape_data
+            tags = []  # type: List[str]
+            for li in job._raw_scrape_data.find_all(
+                    'section', attrs={'class': 'summary-section'}):
+                table_key = li.find('dt')
+                if (table_key and table_key.text.strip().lower()
+                        in MONSTER_SIDEPANEL_TAG_ENTRIES):
+                    table_value = li.find('dd')
+                    if table_value:
+                        tags.append(table_value.text.strip())
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 

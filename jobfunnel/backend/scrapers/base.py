@@ -1,6 +1,5 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
 """
-import datetime
 import logging
 import os
 import random
@@ -29,6 +28,8 @@ class BaseScraper(ABC):
     def __init__(self, session: Session, config: 'JobFunnelConfig',
                  job_filter: JobFilter) -> None:
         """Init
+
+        TODO: we should have a way of establishing pre-requsites for set()
 
         Args:
             session (Session): session object used to make post and get requests
@@ -67,7 +68,7 @@ class BaseScraper(ABC):
         self._validate_get_set()
 
         # Init a thread executor (multi-worker) TODO: can't reuse after shutdown
-        self.executor = ThreadPoolExecutor(max_workers=1) #MAX_CPU_WORKERS)
+        self.executor = ThreadPoolExecutor(max_workers=1) #MAX_CPU_WORKERS) FIXME
 
     @property
     def user_agent(self) -> str:
@@ -198,7 +199,7 @@ class BaseScraper(ABC):
         for future in tqdm(as_completed(results), total=n_soups):
             job = future.result()
             if job:
-                # Handle duplicates that exist within the scraped set.
+                # Handle duplicates that exist within the scraped data itself.
                 # NOTE: if you see alot of these our scrape for key_id is bad
                 if job.key_id in jobs_dict:
                     self.logger.error(
@@ -239,9 +240,19 @@ class BaseScraper(ABC):
 
             # Break out immediately because we have failed a filterable
             # condition with something we initialized while scraping.
-            if job and self.job_filter(job):
+            # NOTE: if we pre-empt scraping duplicates we cannot update
+            # the existing job listing with the new information!
+            # TODO: make this configurable?
+            if job and self.job_filter.filterable(job):
+                # if self.job_filter.is_duplicate(job):
+                #     self.logger.debug(  # FIXME: do we want this message?
+                #         f"Scraped job {job.key_id} has key_id "
+                #         "in known duplicates list. Continuing scrape of job "
+                #         "to update existing job attributes."
+                #     )
+                # else:
                 self.logger.debug(
-                    f"Skipping scraping job {job.key_id}, failed JobFilter"
+                    f"Cancelled scraping of {job.key_id}, failed JobFilter"
                 )
                 break
 
@@ -262,11 +273,10 @@ class BaseScraper(ABC):
                         })
                     self.set(field, job, job_soup)
 
-                # FIXME: Abort scraping immediately if we have a duplicate ?
-                # This will prevent getting un-needed descriptions (delayed)
-                # if field == JobField.KEY_ID and job.key_id in ....
-
             except Exception as err:
+
+                # Crash out gracefully so we can continue scraping.
+                # (hopefully it's a one-off)
                 if field in self.min_required_job_fields:
                     raise ValueError(
                         "Unable to scrape minimum-required job field: "
@@ -282,10 +292,6 @@ class BaseScraper(ABC):
         # Validate job fields if we got something
         if job:
             job.validate()
-
-            # FIXME: this is to prevent issues with JSON and raw data recur lim.
-            # We could handle this when scraping but this will also save memory.
-            job._raw_scrape_data = None
 
         return job
 
@@ -351,6 +357,7 @@ class BaseScraper(ABC):
                 f"Scraper: {self.__class__.__name__} Job attributes: "
                 f"{field_intersection} are implemented by both get() and set()!"
             )
+        excluded_fields = []  # type: List[JobField]
         for field in JobField:
             # NOTE: we exclude status, locale, query, provider and scrape date
             # because these are set without needing any scrape data.
@@ -360,9 +367,15 @@ class BaseScraper(ABC):
                               JobField.SHORT_DESCRIPTION, JobField.RAW]
                     and field not in self.job_get_fields
                     and field not in self.job_set_fields):
-                self.logger.warning(
-                    f"No get() or set() will be done for Job attr: {field.name}"
-                )
+                        excluded_fields.append(field)
+        if excluded_fields:
+            # NOTE: INFO level because this is OK, but ideally ppl see this
+            # so they are motivated to help and understand why stuff might
+            # be missing in the CSV
+            self.logger.info(
+                "No get() or set() will be done for Job attrs: "
+                f"{[field.name for field in excluded_fields]}"
+            )
 
 
 # Just some basic localized scrapers, you can inherit these to set the locale.

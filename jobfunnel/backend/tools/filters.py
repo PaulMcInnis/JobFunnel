@@ -3,6 +3,8 @@ filters to reduce un-necessesary scraping.
 FIXME: we should have a Enum(Filter) for all job filters to allow configuration
 and generic log messages.
 """
+from collections import namedtuple
+from copy import deepcopy
 import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
@@ -15,22 +17,35 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools import update_job_if_newer, get_logger
+from jobfunnel.backend.tools import get_logger
 from jobfunnel.resources import (
-    DEFAULT_MAX_TFIDF_SIMILARITY, MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH
+    DEFAULT_MAX_TFIDF_SIMILARITY, MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
+    DuplicateType
+)
+
+DuplicatedJob = namedtuple(
+    'DuplicatedJob', ['original', 'duplicate', 'type'],
 )
 
 
 class JobFilter:
     """Class Used by JobFunnel and BaseScraper to filter collections of jobs
+
+    TODO: make more configurable, maybe with a Filter class and a FilterBank.
     """
+
     def __init__(self, user_block_jobs_dict: Optional[Dict[str, str]] = None,
                  duplicate_jobs_dict: Optional[Dict[str, str]] = None,
                  blocked_company_names_list: Optional[List[str]] = None,
-                 max_job_date: Optional[datetime] = None) -> None:
+                 max_job_date: Optional[datetime] = None,
+                 max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
+                 min_tfidf_corpus_size:
+                    int = MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
+                 log_level: int = logging.INFO,
+                 log_file: str = None) -> None:
         """Init
 
-        NOTE: remember to update attributes as needed.
+        TODO: need a config for this
 
         Args:
             user_block_jobs_dict (Optional[Dict[str, str]], optional): dict
@@ -46,184 +61,309 @@ class JobFilter:
         self.duplicate_jobs_dict = duplicate_jobs_dict or {}
         self.blocked_company_names_list = blocked_company_names_list or []
         self.max_job_date = max_job_date
-        # TODO: add tfidf to this class for per-job scraping
+        self.max_similarity = max_similarity
+        self.min_tfidf_corpus_size = min_tfidf_corpus_size
+        self.logger = get_logger(
+            self.__class__.__name__,
+            log_level,
+            log_file,
+            f"[%(asctime)s] [%(levelname)s] {self.__class__.__name__}: "
+            "%(message)s"
+        )
+        # Retrieve stopwords if not already downloaded
+        try:
+            stopwords = nltk.corpus.stopwords.words('english')
+        except LookupError:
+            nltk.download('stopwords', quiet=True)
+            stopwords = nltk.corpus.stopwords.words('english')
 
-    def filter(self, job: Job) -> bool:
+        # Init vectorizer e!
+        self.vectorizer = TfidfVectorizer(
+            strip_accents='unicode',
+            lowercase=True,
+            analyzer='word',
+            stop_words=stopwords,
+        )
+
+    def filter(self, jobs_dict: Dict[str, Job],
+               remove_existing_duplicate_keys: bool = True) -> Dict[str, Job]:
+        """Filter jobs that fail numerous tests, possibly including duplication
+
+        Arguments:
+            remove_existing_duplicate_keys: pass True to remove jobs if their
+                ID was previously detected to be a duplicate via TFIDF cosine
+                similarity
+
+        NOTE: if you remove duplicates before processesing them into updates
+              you will retain potentially stale job information.
+
+        FIXME: it would make sense if we could integrate filter_duplicates
+            into this as well.
+
+        Returns:
+            jobs_dict with all filtered items removed.
+        """
+        return {
+            key_id: job for key_id, job in jobs_dict.items()
+            if not self.filterable(
+                job, check_existing_duplicates=remove_existing_duplicate_keys
+            )
+        }
+
+    def filterable(self, job: Job,
+                   check_existing_duplicates: bool = True) -> bool:
         """Filter jobs out using all our available filters
+
+        Arguments:
+            check_existing_duplicates: pass True to check if ID was previously
+                detected to be a duplicate via TFIDF cosine similarity
+
+        Returns:
+            True if the job should be removed from incoming data, else False
+
         TODO: arrange checks by how long they take to run
         NOTE: this does a lot of checks because job may be partially initialized
         """
-        return (
+        return bool(
             job.status and job.is_remove_status
             or (job.company in self.blocked_company_names_list)
             or (job.post_date and self.max_job_date
                 and job.is_old(self.max_job_date))
             or (job.key_id and self.user_block_jobs_dict
                 and job.key_id in self.user_block_jobs_dict)
-            or (job.key_id and self.duplicate_jobs_dict
-                and job.key_id in self.duplicate_jobs_dict)
+            or (check_existing_duplicates and self.is_duplicate(job))
         )
 
-
-def tfidf_filter(cur_dict: Dict[str, dict],
-                 prev_dict: Optional[Dict[str, dict]] = None,
-                 max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
-                 duplicate_jobs_dict: Optional[Dict[str, str]] = None,
-                 log_level: int = logging.INFO,
-                 log_file: str = None,
-                 ) -> List[Job]:
-    """Fit a tfidf vectorizer to a corpus of Job.DESCRIPTIONs and identify
-    duplicate jobs by cosine-similarity.
-
-    NOTE: This will update jobs in cur_dict if the content match has a newer
-        post_date.
-    NOTE/WARNING: if you are running this method, you should have already
-        removed any duplicates by key_id
-    FIXME: we should make max_similarity configurable in SearchConfig
-    FIXME: this should be integrated into JobFilter (on the fly content match)
-    NOTE: this only uses job descriptions to do the content matching.
-    NOTE: it is recommended that you have at least around 25 ish Jobs.
-    TODO: have this raise an exception if there are too few words?
-    FIXME: make this a class so we can call it many times on single queries.
-
-    Args:
-        cur_dict (Dict[str, dict]): dict of jobs containing potential duplicates
-             (i.e jobs we just scraped)
-        prev_dict (Optional[Dict[str, dict]], optional): the existing jobs dict
-            (i.e. master CSV contents). If None, we will remove duplicates
-            from within the cur_dict only. Defaults to None.
-        max_similarity (float, optional): threshold above which blurb similarity
-            is considered a duplicate. Defaults to DEFAULT_MAX_TFIDF_SIMILARITY.
-        duplicate_jobs_dict (str, optional): cntents of user's duplicate job
-            detection JSON so we can make content matching persist better.
-        ...
-
-    Raises:
-        ValueError: cur_dict contains no job descriptions
-
-    Returns:
-        List[Job]: list of new duplicate Jobs which were removed from cur_dict
-    """
-    logger = get_logger(
-        tfidf_filter.__name__,
-        log_level,
-        log_file,
-        f"[%(asctime)s] [%(levelname)s] {tfidf_filter.__name__}: %(message)s"
-    )
-
-    # Retrieve stopwords if not already downloaded
-    # TODO: we should use this to make jobs attrs tokenizable as a property.
-    # TODO: make the vectorizer persistant.
-    try:
-        stopwords = nltk.corpus.stopwords.words('english')
-    except LookupError:
-        nltk.download('stopwords', quiet=True)
-        stopwords = nltk.corpus.stopwords.words('english')
-
-    # init vectorizer NOTE: pretty fast call but we should do this once!
-    vectorizer = TfidfVectorizer(
-        strip_accents='unicode',
-        lowercase=True,
-        analyzer='word',
-        stop_words=stopwords,
-    )
-
-    # Load known duplicate keys from JSON if we have it
-    # NOTE: this allows us to do smaller TFIDF comparisons because we ensure
-    # that we are skipping previously-detected job duplicates (by id)
-    duplicate_jobs_dict = duplicate_jobs_dict or {}  # type: Dict[str, str]
-    if duplicate_jobs_dict:
-        existing_duplicate_keys = duplicate_jobs_dict.keys()
-    else:
-        existing_duplicate_keys = {}  # type: Dict[str, str]
-
-    def __dict_to_ids_and_words(jobs_dict: Dict[str, Job]
-                                ) -> Tuple[List[str], List[str]]:
-        """Get query words and ids as lists + prefilter
-        NOTE: this is just a convenience method since we do this 2x
+    def is_duplicate(self, job: Job) -> bool:
+        """Return true if passed Job has key_id and it is in our duplicates list
         """
-        ids = []  # type: List[str]
-        words = []  # type: List[str]
-        filt_job_dict = {}  # type: Dict[str, Job]
-        for job in cur_dict.values():
-            if job.key_id in existing_duplicate_keys:
-                logger.debug(
-                    f"Removing {job.key_id} from scrape result, existing "
-                    "duplicate."
+        return bool(job.key_id and self.duplicate_jobs_dict
+                    and job.key_id in self.duplicate_jobs_dict)
+
+    def find_duplicates(self, existing_jobs_dict: Dict[str, Job],
+                        incoming_jobs_dict: Dict[str, Job],
+                        ) -> List[DuplicatedJob]:
+        """Remove all known duplicates from jobs_dict and update original data
+
+        Args:
+            existing_jobs_dict (Dict[str, Job]): dict of jobs keyed by key_id.
+            incoming_jobs_dict (Dict[str, Job]): dict of new jobs by key_id.
+
+        Returns:
+            Dict[str, Job]: jobs dict with all jobs keyed by known-duplicate
+                key_ids removed, and their originals updated.
+        """
+        duplicate_jobs_list = []  # type: List[DuplicateJob]
+        filt_existing_jobs_dict = deepcopy(existing_jobs_dict)
+        # FIXME: we assume there are no duplicates by content in existing jobs
+        # And this is a bad assumption... need to fix this.
+        filt_incoming_jobs_dict = {}  # type: Dict[str, Job]
+
+        # Look for matches by key id only
+        for key_id, incoming_job in incoming_jobs_dict.items():
+
+            # The key-ids are a direct match between existing and new
+            if key_id in existing_jobs_dict:
+                self.logger.debug(
+                    f"Identified duplicate {key_id} between incoming data "
+                    "and existing data."
                 )
-            elif not len(job.description):
-                logger.debug(
-                    f"Removing {job.key_id} from scrape result, empty "
-                    "description."
+                duplicate_jobs_list.append(
+                    DuplicatedJob(
+                        original=existing_jobs_dict[key_id],
+                        duplicate=incoming_job,
+                        type=DuplicateType.KEY_ID,
+                    )
+                )
+
+            # The key id is a known-duplicate we detected via content match
+            # NOTE: original and duplicate have the same key id.
+            elif key_id in self.duplicate_jobs_dict:
+                self.logger.debug(
+                    f"Identified existing content-matched duplicate {key_id} "
+                    "in incoming data."
+                )
+                duplicate_jobs_list.append(
+                    DuplicatedJob(
+                        original=None, # FIXME: we should keep original ref.
+                        duplicate=incoming_job,
+                        type=DuplicateType.EXISTING_TFIDF,
+                    )
                 )
             else:
-                ids.append(job.key_id)
-                words.append(job.description)
-                # NOTE: We want to leave changing cur_dict in place till the end
-                # or we will break usage of update_job_if_newer()
-                filt_job_dict[job.key_id] = job
+                # This key_id is not duplicate, we can use it for TFIDF
+                filt_incoming_jobs_dict[key_id] = deepcopy(incoming_job)
 
-        # TODO: assert on length of contents of the lists as well
-        if not words:
-            raise ValueError(
-                "No data to fit, are your job descriptions all empty?"
+        # Run the tfidf vectorizer if we have enough jobs left after removing
+        # key duplicates
+        if (len(filt_incoming_jobs_dict.keys()) + len(filt_existing_jobs_dict.keys())
+                < self.min_tfidf_corpus_size):
+            self.logger.warning(
+                "Skipping similarity filter because there are fewer than "
+                f"{self.min_tfidf_corpus_size} jobs."
             )
-        return ids, words, filt_job_dict
+        elif filt_incoming_jobs_dict:
+            duplicate_jobs_list.extend(
+                self.tfidf_filter(
+                    incoming_jobs_dict=filt_incoming_jobs_dict,
+                    existing_jobs_dict=filt_existing_jobs_dict,
+                )
+            )
+        else:
+            self.logger.warning(
+                "Skipping similarity filter because there are no incoming jobs"
+            )
 
-    query_ids, query_words, filt_cur_dict = __dict_to_ids_and_words(cur_dict)
-    reference_ids, reference_words, filt_prev_dict = __dict_to_ids_and_words(
-        prev_dict
-    )
+        # Update duplicates list with more JSON-friendly entries
+        # FIXME: we should retain a reference to the original job
+        self.duplicate_jobs_dict.update({
+            j.duplicate.key_id: j.duplicate.as_json_entry
+            for j in duplicate_jobs_list
+        })
 
-    # Provide a warning if we have few words.
-    corpus = query_words + reference_words
-    if len(corpus) < MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH:
-        logger.warning(
-            "It is not recommended to use this filter with less than "
-            f"{MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH} words"
+        return duplicate_jobs_list
+
+    def tfidf_filter(self, incoming_jobs_dict: Dict[str, dict],
+                     existing_jobs_dict: Dict[str, dict],
+                     ) -> List[DuplicatedJob]:
+        """Fit a tfidf vectorizer to a corpus of Job.DESCRIPTIONs and identify
+        duplicate jobs by cosine-similarity.
+
+        FIXME: need to handle existing_jobs_dict = None!
+
+        NOTE/WARNING: if you are running this method, you should have already
+            removed any duplicates by key_id
+        NOTE: this only uses job descriptions to do the content matching.
+        NOTE: it is recommended that you have at least around 25 ish Jobs.
+        TODO: have this raise an exception if there are too few words.
+        TODO: we should consider caching the transformed corups.
+
+        Args:
+            incoming_jobs_dict (Dict[str, dict]): dict of jobs containing
+                potential duplicates (i.e jobs we just scraped)
+            existing_jobs_dict (Dict[str, dict]): the existing jobs dict
+                (i.e. Master CSV)
+            max_similarity (float, optional): threshold above which desc
+                similarity is considered a duplicate. Defaults to
+                DEFAULT_MAX_TFIDF_SIMILARITY.
+            duplicate_jobs_dict (str, optional): contents of user's duplicate
+                job detection JSON so we can persist previous detections during
+                this run
+
+        Raises:
+            ValueError: incoming_jobs_dict contains no job descriptions
+
+        Returns:
+            List[DuplicatedJob]: list of new duplicate Jobs and their existing Jobs
+                found via content matching (for use in JobFunnel).
+        """
+        def __dict_to_ids_and_words(jobs_dict: Dict[str, Job]
+                                    ) -> Tuple[List[str], List[str]]:
+            """Get query words and ids as lists + prefilter
+            NOTE: this is just a convenience method since we do this 2x
+            TODO: consider moving this once/if we change iteration
+            """
+            ids = []  # type: List[str]
+            words = []  # type: List[str]
+            filt_job_dict = {}  # type: Dict[str, Job]
+            for job in jobs_dict.values():
+                if job.key_id in self.duplicate_jobs_dict:
+                    # NOTE: we should never see this. might want to raise Error
+                    raise ValueError(
+                        "Attempting to run TFIDF with existing duplicate "
+                        f"{job.key_id}"
+                    )
+                elif not len(job.description):
+                    self.logger.debug(
+                        f"Removing {job.key_id} from scrape result, empty "
+                        "description."
+                    )
+                else:
+                    ids.append(job.key_id)
+                    words.append(job.description)
+                    # NOTE: We want to leave changing incoming_jobs_dict in
+                    # place till the end or we will break usage of
+                    # Job.update_if_newer()
+                    filt_job_dict[job.key_id] = job
+
+            # TODO: assert on length of contents of the lists as well
+            if not words:
+                raise ValueError(
+                    "No data to fit, are your job descriptions all empty?"
+                )
+            return ids, words, filt_job_dict
+
+        query_ids, query_words, filt_incoming_jobs_dict = \
+            __dict_to_ids_and_words(incoming_jobs_dict)
+
+        # Calculate corpus and format query data for TFIDF calculation
+        corpus = []  # type: List[str]
+        if existing_jobs_dict:
+            self.logger.debug("Running TFIDF on incoming vs existing data.")
+            reference_ids, reference_words, filt_existing_jobs_dict = \
+                __dict_to_ids_and_words(existing_jobs_dict)
+            corpus = query_words + reference_words
+        else:
+            self.logger.debug("Running TFIDF on incoming data only.")
+            reference_ids = query_ids,
+            reference_words = query_words
+            filt_existing_jobs_dict = filt_incoming_jobs_dict
+            corpus = query_words
+
+        # Provide a warning if we have few words.
+        # FIXME: warning should reflect actual corpus size
+        if len(corpus) < self.min_tfidf_corpus_size:
+            self.logger.warning(
+                "It is not recommended to use this filter with less than "
+                f"{self.min_tfidf_corpus_size} jobs"
+            )
+
+        # Fit vectorizer to entire corpus
+        self.vectorizer.fit(corpus)
+
+        # Calculate cosine similarity between reference and current blurbs
+        # This is a list of the similarity between that query job and all the
+        # TODO: impl. in a more efficient way since fit() does the transform too
+        similarities_per_query = cosine_similarity(
+            self.vectorizer.transform(query_words),
+            self.vectorizer.transform(reference_words)
+                if existing_jobs_dict else None,
         )
 
-    # Fit vectorizer to entire corpus
-    vectorizer.fit(corpus)
+        # Find Duplicate jobs by similarity score
+        # NOTE: multiple jobs can be determined to be a duplicate of same job!
+        # TODO: traverse this so we look at max similarity for original vs query
+        # currently it's the other way around so we can look at multi-matching
+        # original jobs but not multiple matching queries for our original job.
+        new_duplicate_jobs_list = []  # type: List[DuplicatedJob]
+        for query_similarities, query_id in zip(similarities_per_query,
+                                                query_ids):
 
-    # Calculate cosine similarity between reference and current blurbs
-    # This is a list of the similarity between that query job and all the
-    # TODO: impl. in a more efficient way since fit() does the transform already
-    similarities_per_query = cosine_similarity(
-        vectorizer.transform(query_words),
-        vectorizer.transform(reference_words),
-    )
+            # Identify the jobs in existing_jobs_dict that our query is a
+            # duplicate of
+            # FIXME: handle if everything is highly similar!
+            similar_indeces = np.where(
+                query_similarities >= self.max_similarity
+            )[0]
+            if similar_indeces.size > 0:
+                # TODO: capture if more jobs are similar by content match
+                top_similar_job = np.argmax(query_similarities[similar_indeces])
+                self.logger.debug(
+                    f"Identified incoming job {query_id} as new duplicate by "
+                    "contents of existing job "
+                    f"{reference_ids[top_similar_job]}"
+                )
+                new_duplicate_jobs_list.append(
+                    DuplicatedJob(
+                        original=filt_existing_jobs_dict[
+                            reference_ids[top_similar_job]],
+                        duplicate=filt_incoming_jobs_dict[query_id],
+                        type=DuplicateType.NEW_TFIDF,
+                    )
+                )
 
-    # Get duplicate job ids and pop them, updating cur_dict if they are newer
-    # NOTE: multiple jobs can be determined to be a duplicate of the same job!
-    new_duplicate_jobs_list = []  # type: List[Job]
-    for query_similarities, query_id in zip(similarities_per_query, query_ids):
+        if not new_duplicate_jobs_list:
+            self.logger.debug("Found no duplicates by content-matching.")
 
-        # Identify the jobs in prev_dict that our query is a duplicate of
-        # FIXME: handle if everything is highly similar!
-        for similar_index in np.where(query_similarities >= max_similarity)[0]:
-            update_job_if_newer(
-                filt_prev_dict[reference_ids[similar_index]],
-                filt_cur_dict[query_id],
-            )
-            new_duplicate_jobs_list.append(filt_cur_dict[query_id])
-
-    # Make sure the duplicate jobs list contains only unique entries
-    new_duplicate_jobs_list = list(set(new_duplicate_jobs_list))
-
-    # Pop duplicates from cur_dict and return them
-    # NOTE: we cannot change cur_dict in above loop, or no updates possible.
-    if new_duplicate_jobs_list:
-        for job in new_duplicate_jobs_list:
-            cur_dict.pop(job.key_id)
-            logger.debug(
-                f"Removed {job.key_id} from scraped data, TFIDF content match."
-            )
-
-        logger.info(
-            f'Found and removed {len(new_duplicate_jobs_list)} '
-            f're-posts/duplicate postings via TFIDF cosine similarity.'
-        )
-
-    # returns a list of newly-detected duplicate Jobs
-    return new_duplicate_jobs_list
+        # returns a list of newly-detected duplicate Jobs
+        return new_duplicate_jobs_list

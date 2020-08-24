@@ -1,6 +1,7 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
+from copy import deepcopy
 from bs4 import BeautifulSoup
 from datetime import date, datetime
 import re
@@ -10,7 +11,8 @@ from typing import Any, Dict, Optional, List
 from datetime import date, datetime, timedelta
 
 from jobfunnel.resources import (
-    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS, MAX_BLOCK_LIST_DESC_CHARS
+    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS, MAX_BLOCK_LIST_DESC_CHARS,
+    MIN_DESCRIPTION_CHARS,
 )
 
 
@@ -94,12 +96,12 @@ class Job():
 
         # These may not always be populated in our job source
         self.post_date = post_date
-        self.scrape_date = scrape_date if scrape_date else datetime.now()
+        self.scrape_date = scrape_date if scrape_date else datetime.today()
         self.tags = tags if tags else []
         if short_description:
             self.short_description = short_description
         else:
-            self.short_description = description  # TODO: copy it?
+            self.short_description = ''
 
         # Semi-private attrib for debugging
         self._raw_scrape_data = raw
@@ -109,6 +111,45 @@ class Job():
         """Return True if the job's status is one of our removal statuses.
         """
         return self.status in JOB_REMOVE_STATUSES
+
+    def update_if_newer(self, job: 'Job') -> bool:
+        """Update an existing job with new metadata but keep user's status,
+        but only if the job.post_date > existing_job.post_date!
+
+        TODO: we should do more checks to ensure we are not seeing a totally
+        different job by accident (since this check is usually done by key_id)
+        TODO: more elegant way? maybe we can deepcopy self?
+        Returns: True if we updated
+        NOTE: if you have hours or minutes or seconds set, the comparison will
+        favour the extra information as being newer!
+        TODO: Currently we do day precision but if we wanted to update because
+        something is newer by hours we will need to revisit this limitation and
+        store scrape hour in the CSV as well.
+
+        Returns:
+            True if we updated self with job, False if we didn't
+        """
+        if (job.post_date > self.post_date):
+            # Update all attrs other than status (which user can set).
+            self.company = deepcopy(job.company)
+            self.location = deepcopy(job.location)
+            self.description = deepcopy(job.description)
+            self.key_id = deepcopy(job.key_id) # NOTE: be careful doing this!
+            self.url = deepcopy(job.url)
+            self.locale = deepcopy(job.locale)
+            self.query = deepcopy(job.query)
+            self.provider = deepcopy(job.provider)
+            self.status = deepcopy(job.status)
+            self.wage = deepcopy(job.wage)
+            self.remote = deepcopy(job.remote)
+            self.post_date = deepcopy(job.post_date)
+            self.scrape_date = deepcopy(job.scrape_date)
+            self.tags = deepcopy(job.tags)
+            self.short_description = deepcopy(job.short_description)
+            self._raw_scrape_data = deepcopy(job._raw_scrape_data)
+            return True
+        else:
+            return False
 
     def is_old(self, max_age: datetime) -> bool:
         """Identify if a job is older than a certain max_age
@@ -182,5 +223,10 @@ class Job():
             )
 
     def validate(self) -> None:
-        """TODO: implement this just to ensure that the metadata is good"""
+        """FIXME: implement this just to ensure that the metadata is good
+        """
         assert self.key_id, "Key_ID is unset!"
+        assert self.title, "Title is unset!"
+        assert self.company, "Company is unset!"
+        assert self.url, "URL is unset!"
+        assert len(self.description) > MIN_DESCRIPTION_CHARS, "Description too short!"
