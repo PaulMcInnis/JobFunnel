@@ -244,17 +244,18 @@ class BaseScraper(ABC):
             # the existing job listing with the new information!
             # TODO: make this configurable?
             if job and self.job_filter.filterable(job):
-                # if self.job_filter.is_duplicate(job):
-                #     self.logger.debug(  # FIXME: do we want this message?
-                #         f"Scraped job {job.key_id} has key_id "
-                #         "in known duplicates list. Continuing scrape of job "
-                #         "to update existing job attributes."
-                #     )
-                # else:
-                self.logger.debug(
-                    f"Cancelled scraping of {job.key_id}, failed JobFilter"
-                )
-                break
+                if self.job_filter.is_duplicate(job):
+                    # FIXME: make this configurable
+                    self.logger.debug(
+                        f"Scraped job {job.key_id} has key_id "
+                        "in known duplicates list. Continuing scrape of job "
+                        "to update existing job attributes."
+                    )
+                else:
+                    self.logger.debug(
+                        f"Cancelled scraping of {job.key_id}, failed JobFilter"
+                    )
+                    break
 
             # Respectfully delay if it's configured to do so.
             if field in self.delayed_get_set_fields:
