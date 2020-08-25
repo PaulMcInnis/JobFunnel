@@ -44,7 +44,7 @@ If you want to develop JobFunnel, you may want to install it in-place:
 
 ```
 git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnel
-pip install -e ./jobfunnel
+pip install -e ./JobFunnel
 funnel --help
 ```
 
