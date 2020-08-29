@@ -1,6 +1,7 @@
 data/
 *.csv
 demo/data/
+demo_cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
