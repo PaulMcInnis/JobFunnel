@@ -198,7 +198,7 @@ class JobFilter(Logger):
         if (len(filt_incoming_jobs_dict.keys())
             + len(filt_existing_jobs_dict.keys()) < self.min_tfidf_corpus_size):
             self.logger.warning(
-                "Skipping similarity filter because there are fewer than "
+                "Skipping content-similarity filter because there are fewer than "
                 f"{self.min_tfidf_corpus_size} jobs."
             )
         elif filt_incoming_jobs_dict:
@@ -210,7 +210,8 @@ class JobFilter(Logger):
             )
         else:
             self.logger.warning(
-                "Skipping similarity filter because there are no incoming jobs"
+                "Skipping content-similarity filter because there are no "
+                "incoming jobs"
             )
 
         # Update duplicates list with more JSON-friendly entries
