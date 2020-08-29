@@ -1,14 +1,13 @@
 """Settings YAML Schema w/ validator
 """
-from cerberus import Validator
 import ipaddress
 import logging
 
-from jobfunnel.resources import (
-    Locale, Provider, DelayAlgorithm, LOG_LEVEL_NAMES
-)
-from jobfunnel.resources.defaults import *
+from cerberus import Validator
 
+from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
+                                 Provider)
+from jobfunnel.resources.defaults import *
 
 SETTINGS_YAML_SCHEMA = {
     'master_csv_file': {
@@ -157,7 +156,8 @@ class JobFunnelSettingsValidator(Validator):
         checks that the given value is a valid IPv4 address
         """
         try:
-            # try to create an IPv4 address object using the python3 ipaddress module
+            # try to create an IPv4 address object using the python3 ipaddress
+            # module
             ipaddress.IPv4Address(value)
         except:
             self._error(field, "Not a valid IPv4 address")

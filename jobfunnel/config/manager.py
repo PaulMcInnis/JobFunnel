@@ -1,13 +1,12 @@
 """Config object to run JobFunnel
 """
 import logging
-from typing import Optional, List, Dict, Any
 import os
+from typing import Any, Dict, List, Optional
 
-from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
-from jobfunnel.resources import Locale, Provider, BS4_PARSER
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
-
+from jobfunnel.config import BaseConfig, DelayConfig, ProxyConfig, SearchConfig
+from jobfunnel.resources import BS4_PARSER, Locale, Provider
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.backend.scrapers.base import BaseScraper
@@ -29,8 +28,7 @@ class JobFunnelConfigManager(BaseConfig):
                  bs4_parser: Optional[str] = BS4_PARSER,
                  return_similar_results: Optional[bool] = False,
                  delay_config: Optional[DelayConfig] = None,
-                 proxy_config: Optional[ProxyConfig] = None,
-                 web_driven_scraping: Optional[bool] = False) -> None:
+                 proxy_config: Optional[ProxyConfig] = None) -> None:
         """Init a config that determines how we will scrape jobs from Scrapers
         and how we will update CSV and filtering lists
 
@@ -58,8 +56,6 @@ class JobFunnelConfigManager(BaseConfig):
                 Defaults to a default delay config object.
             proxy_config (Optional[ProxyConfig], optional): proxy config object.
                  Defaults to None, which will result in no proxy being used
-            web_driven_scraping (Optional[bool], optional): use web-driven
-                scraper implementation if available. NOTE: beta feature!
         """
         self.master_csv_file = master_csv_file
         self.user_block_list_file = user_block_list_file
@@ -69,9 +65,8 @@ class JobFunnelConfigManager(BaseConfig):
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
-        self.bs4_parser = bs4_parser  # TODO: add to config
+        self.bs4_parser = bs4_parser  # TODO: add to config YAML?
         self.return_similar_results = return_similar_results
-        self.web_driven_scraping = web_driven_scraping
         if not delay_config:
             # We will always use a delay config to be respectful
             self.delay_config = DelayConfig()
@@ -106,7 +101,7 @@ class JobFunnelConfigManager(BaseConfig):
         return scrapers
 
     @property
-    def scraper_names(self) -> str:
+    def scraper_names(self) -> List[str]:
         """User-readable names of the scrapers we will be running
         """
         return [s.__name__ for s in self.scrapers]
@@ -120,7 +115,7 @@ class JobFunnelConfigManager(BaseConfig):
     def validate(self) -> None:
         """Validate the config object i.e. paths exit
         NOTE: will raise exceptions if issues are encountered.
-        FIXME: impl. more validation here
+        TODO: impl. more validation here
         """
         assert os.path.exists(self.cache_folder)
         self.search_config.validate()

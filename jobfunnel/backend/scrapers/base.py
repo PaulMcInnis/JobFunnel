@@ -6,15 +6,15 @@ import random
 import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from multiprocessing import Manager, Lock
-from time import time, sleep
+from multiprocessing import Lock, Manager
+from time import sleep, time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup
 from requests import Session
 from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 from tqdm import tqdm
+from urllib3.util import Retry
 
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools import Logger
@@ -77,9 +77,16 @@ class BaseScraper(ABC, Logger):
         self._validate_get_set()
         self.thread_manager = Manager()
 
+        # Construct actions list which respects priority for scraping Jobs
+        self._actions_list = [(True, f) for f in self.job_get_fields]
+        self._actions_list += [(False, f) for f in self.job_set_fields if f
+                               in self.high_priority_get_set_fields]
+        self._actions_list += [(False, f) for f in self.job_set_fields if f not
+                               in self.high_priority_get_set_fields]
+
     @property
     def user_agent(self) -> str:
-        """Get a user agent for this scraper
+        """Get a randomized user agent for this scraper
         """
         return random.choice(USER_AGENT_LIST)
 
@@ -146,6 +153,8 @@ class BaseScraper(ABC, Logger):
     def delayed_get_set_fields(self) -> List[JobField]:
         """Delay execution when getting /setting any of these attributes of a
         job.
+
+        TODO: handle this within an overridden self.session.get()
         """
         pass
 
@@ -165,6 +174,9 @@ class BaseScraper(ABC, Logger):
     def locale(self) -> Locale:
         """The localization that this scraper was built for.
 
+        i.e. I am looking for jobs on the Canadian version of Indeed, and I
+        speak english, so I will have this return Locale.CANADA_ENGLISH
+
         We will use this to put the right filters & scrapers together
 
         NOTE: it is best to inherit this from Base<Locale>Class (btm. of file)
@@ -182,18 +194,12 @@ class BaseScraper(ABC, Logger):
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
-        FIXME: we need to accept some kind of filter bank argument
-            here so we can abort scraping that isn't promising with a minimal
-            number of delayed get/sets
-
-        NOTE: respectfully delays for scraping of configured job attributes in
-        self.
-
         Returns:
             jobs (Dict[str, Job]): list of Jobs in a Dict keyed by job.key_id
         """
 
         # Get a list of job soups from the initial search results page
+        # These wont contain enough information to do more than initialize Job
         try:
             job_soups = self.get_job_soups_from_search_result_listings()
         except Exception as err:
@@ -206,17 +212,17 @@ class BaseScraper(ABC, Logger):
             f"Scraped {n_soups} job listings from search results pages"
         )
 
+        # Init a Manager so we can control delaying
+        # TODO: make session use async io to coordinate on-the-fly delaying.
+        # this is assuming every job will incur one delayed session.get()
+        # NOTE pylint issue: https://github.com/PyCQA/pylint/issues/3313
+        delay_lock = self.thread_manager.Lock()  # pylint: disable=no-member
+        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+
+        # Distribute work to N workers such that each worker is building one
+        # Job at a time, getting and setting all required attributes
         jobs_dict = {}  # type: Dict[str, Job]
-
         try:
-            # Init a Manager so we can control delaying
-            # TODO: make session use async io to coordinate on-the-fly delaying.
-            # this is assuming every job will incur one delayed session.get()
-            # NOTE pylint issue: https://github.com/PyCQA/pylint/issues/3313
-            delay_lock = self.thread_manager.Lock()  # pylint: disable=no-member
-            # Init a process executor (multi-worker)
-            executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
-
             # Calculate delays for get/set calls per-job NOTE: only get/set
             # calls in self.delayed_get_set_fields will be delayed.
             # and it busy-waits.
@@ -224,7 +230,7 @@ class BaseScraper(ABC, Logger):
             futures = []
             for job_soup, delay in zip(job_soups, delays):
                 futures.append(
-                    executor.submit(
+                    threads.submit(
                         self.scrape_job,
                         job_soup=job_soup,
                         delay=delay,
@@ -248,7 +254,7 @@ class BaseScraper(ABC, Logger):
 
         finally:
             # Cleanup
-            executor.shutdown()
+            threads.shutdown()
 
         return jobs_dict
 
@@ -265,29 +271,18 @@ class BaseScraper(ABC, Logger):
             delay_lock (Optional[Manager.Lock], optional): semaphore for
                 synchronizing respectful delaying across workers
 
-        NOTE: we should scrape all-priority get fields first, then do high
-            set priorities, and finally low priority set fields.
         NOTE: this will never raise an exception to prevent killing workers,
             who are building jobs sequentially.
-        FIXME: we need to make this use an event loop so that delays are correct
-            and we can perform a synchronized wait.
 
         Returns:
             Optional[Job]: job object constructed from the soup and localization
                 of class, returns None if scrape failed.
         """
-        # Formulate the get/set actions, we will do these in-sequence
-        actions_list = [(True, f) for f in self.job_get_fields]
-        actions_list += [(False, f) for f in self.job_set_fields if f in
-                         self.high_priority_get_set_fields]
-        actions_list += [(False, f) for f in self.job_set_fields if f not in
-                         self.high_priority_get_set_fields]
-
         # Scrape the data for the post, requiring a minimum of info...
         # NOTE: if we perform a self.session.get we may get respectfully delayed
-        job = None  # type: Union[None, Job]
-        job_init_kwargs = self.job_init_kwargs  # NOTE: best to construct once
-        for is_get, field in actions_list:
+        job = None  # type: Optional[Job]
+        job_init_kwargs = self.job_init_kwargs  # NOTE: faster?
+        for is_get, field in self._actions_list:
 
             # Break out immediately because we have failed a filterable
             # condition with something we initialized while scraping.
@@ -363,11 +358,7 @@ class BaseScraper(ABC, Logger):
         shown many job listings at once.
 
         NOTE: the soups list returned by this method should contain enough
-        information to set your self.min_required_job_fields with get/set.
-
-        NOTE: for situations where the data you want is in the job's own page
-        and we need to make another get request, handle those in set()
-        and make a request using job.url (it will be respectfully delayed)
+        information to set your self.min_required_job_fields with get()
 
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make a Job
@@ -387,20 +378,19 @@ class BaseScraper(ABC, Logger):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
 
+        Use this to set Job attribs that rely on Job existing already
+        with the required minimum fields.
+
+        i.e. I can set() the Job.RAW to be the soup of it's own dedicated web
+        page (Job.URL), then I can set() my Job.DESCRIPTION from the Job.RAW
+
         NOTE: (remember) do not return anything in here! it sets job attribs
         FIXME: have this automatically set the attribute by JobField.
-
-        Use this to set Job attribs that rely on Job existing already
-        with the required minimum fields (i.e. you can set description by
-        getting the job's detail page with job.url)
         """
         pass
 
-
     def _validate_get_set(self) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect
-        TODO: we should link a helpful article on how to implement get/set mthds
-        TODO: we should try to identify if any get/set fields have circ. dep.
         """
         set_job_get_fields = set(self.job_get_fields)
         set_job_set_fields = set(self.job_set_fields)

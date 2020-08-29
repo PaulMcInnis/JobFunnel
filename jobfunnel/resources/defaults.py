@@ -29,7 +29,7 @@ DEFAULT_MAX_LISTING_DAYS = 60
 DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
-# FIXME: re-enable glassdoor once we fix issue with it.
+# FIXME: re-enable glassdoor once we fix issue with it. (#87)
 DEFAULT_PROVIDERS = [Provider.MONSTER, Provider.INDEED] #, Provider.GLASSDOOR]
 DEFAULT_NO_SCRAPE = False
 DEFAULT_USE_WEB_DRIVER = False

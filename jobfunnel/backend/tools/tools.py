@@ -3,8 +3,8 @@
 import logging
 import re
 import sys
-from typing import Optional
 from datetime import date, datetime, timedelta
+from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from selenium import webdriver
@@ -74,7 +74,8 @@ class Logger:
 
 def calc_post_date_from_relative_str(date_str: str) -> date:
     """Identifies a job's post date via post age, updates in-place
-    NOTE: we round to nearest day only.
+    NOTE: we round to nearest day only so that comparisons dont capture
+        portions of days.
     """
     post_date = datetime.now()  # type: date
     # Supports almost all formats like 7 hours|days and 7 hr|d|+d
@@ -149,18 +150,3 @@ def get_webdriver():
                             "Chrome, Opera, Microsoft Edge, Internet Explorer]"
                         )
     return driver
-
-
-def split_url(url):
-    # capture protocol, ip address and port from given url
-    match = re.match(r'^(http[s]?):\/\/([A-Za-z0-9.]+):([0-9]+)?(.*)$', url)
-
-    # if not all groups have a match, match will be None
-    if match is not None:
-        return {
-            'protocol': match.group(1),
-            'ip_address': match.group(2),
-            'port': match.group(3),
-        }
-    else:
-        return None
