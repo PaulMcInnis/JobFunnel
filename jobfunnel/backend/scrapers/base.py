@@ -24,14 +24,14 @@ from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
 
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfig
+    from jobfunnel.config import JobFunnelConfigManager
 
 
 
 class BaseScraper(ABC):
     """Base scraper object, for scraping and filtering Jobs from a provider
     """
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
+    def __init__(self, session: Session, config: 'JobFunnelConfigManager',
                  job_filter: JobFilter) -> None:
         """Init
 
@@ -39,14 +39,14 @@ class BaseScraper(ABC):
 
         Args:
             session (Session): session object used to make post and get requests
-            config (JobFunnelConfig): config containing all needed paths, search
-                proxy, delaying and other metadata.
+            config (JobFunnelConfigManager): config containing all needed paths,
+                search proxy, delaying and other metadata.
             job_filter (JobFilter): filtering class used to perform on-the-fly
                 filtering of jobs to reduce the number of delayed get or set
                 (i.e. operations that make requests).
 
         Raises:
-            ValueError: if no Locale is configured in the JobFunnelConfig
+            ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
         self.job_filter = job_filter  # We will use this for live-filtering
         self.session = session

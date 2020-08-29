@@ -17,7 +17,7 @@ from requests import Session
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools.filters import JobFilter, DuplicatedJob
 from jobfunnel.backend.tools import get_logger
-from jobfunnel.config import JobFunnelConfig
+from jobfunnel.config import JobFunnelConfigManager
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
                                  MAX_CPU_WORKERS, JobStatus, Locale, T_NOW,
                                  MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
@@ -32,11 +32,11 @@ class JobFunnel:
     FIXME: instead of Dic[str, Job] we should be using JobsDict
     """
 
-    def __init__(self, config: JobFunnelConfig) -> None:
+    def __init__(self, config: JobFunnelConfigManager) -> None:
         """Initialize a JobFunnel object, with a JobFunnel Config
 
         Args:
-            config (JobFunnelConfig): config object containing paths etc.
+            config (JobFunnelConfigManager): config object containing paths etc.
         """
         self.config = config
         self.config.create_dirs()

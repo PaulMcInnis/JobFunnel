@@ -28,7 +28,7 @@ from requests import Session
 
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfig
+    from jobfunnel.config import JobFunnelConfigManager
 
 
 MAX_GLASSDOOR_LOCATIONS_TO_RETURN = 10
@@ -47,7 +47,7 @@ GLASSDOOR_RADIUS_MAP = {
 
 class BaseGlassDoorScraper(BaseScraper):
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
+    def __init__(self, session: Session, config: 'JobFunnelConfigManager',
                  job_filter: JobFilter) -> None:
         """Init that contains glassdoor specific stuff
         """

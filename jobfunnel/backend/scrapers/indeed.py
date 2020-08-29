@@ -22,7 +22,7 @@ from jobfunnel.backend.scrapers.base import (
 
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfig
+    from jobfunnel.config import JobFunnelConfigManager
 
 
 ID_REGEX = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
@@ -33,7 +33,7 @@ class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
     """
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
+    def __init__(self, session: Session, config: 'JobFunnelConfigManager',
                  job_filter: JobFilter) -> None:
         """Init that contains indeed specific stuff
         """
