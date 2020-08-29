@@ -72,6 +72,12 @@ class BaseIndeedScraper(BaseScraper):
         return [JobField.RAW]
 
     @property
+    def high_priority_get_set_fields(self) -> List[JobField]:
+        """These get() and/or set() fields will be populated first.
+        """
+        return [JobField.URL]
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Session header for indeed.X
         """
@@ -167,6 +173,7 @@ class BaseIndeedScraper(BaseScraper):
 
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
+        NOTE: URL is high-priority, since we need it to get RAW.
         """
         if parameter == JobField.RAW:
             job._raw_scrape_data = BeautifulSoup(
