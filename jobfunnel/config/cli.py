@@ -295,8 +295,8 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
             args_dict['master_csv_file'] and args_dict['block_list_file'] and
             args_dict['duplicates_list_file'] and args_dict['cache_folder']
         ) or (
-            config['master_csv_file'] and config['block_list_file'] and
-            config['duplicates_list_file'] and config['cache_folder']
+            config.get('master_csv_file') and config.get('block_list_file') and
+            config.get('duplicates_list_file') and config.get('cache_folder')
         )
     )
     if output_folder == DEFAULT_OUTPUT_DIRECTORY and not user_passed_paths:
