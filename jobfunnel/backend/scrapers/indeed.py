@@ -39,16 +39,6 @@ class BaseIndeedScraper(BaseScraper):
         self.query = '+'.join(self.config.search_config.keywords)
 
     @property
-    def min_required_job_fields(self) -> str:
-        """If we dont get() or set() any of these fields, we will raise an
-        exception instead of continuing without that information.
-        """
-        return [
-            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.KEY_ID, JobField.URL
-        ]
-
-    @property
     def job_get_fields(self) -> str:
         """Call self.get(...) for the JobFields in this list when scraping a Job
 

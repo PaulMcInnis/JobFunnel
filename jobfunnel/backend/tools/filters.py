@@ -196,8 +196,8 @@ class JobFilter:
 
         # Run the tfidf vectorizer if we have enough jobs left after removing
         # key duplicates
-        if (len(filt_incoming_jobs_dict.keys()) + len(filt_existing_jobs_dict.keys())
-                < self.min_tfidf_corpus_size):
+        if (len(filt_incoming_jobs_dict.keys())
+            + len(filt_existing_jobs_dict.keys()) < self.min_tfidf_corpus_size):
             self.logger.warning(
                 "Skipping similarity filter because there are fewer than "
                 f"{self.min_tfidf_corpus_size} jobs."
@@ -257,7 +257,8 @@ class JobFilter:
             List[DuplicatedJob]: list of new duplicate Jobs and their existing Jobs
                 found via content matching (for use in JobFunnel).
         """
-        def __dict_to_ids_and_words(jobs_dict: Dict[str, Job]
+        def __dict_to_ids_and_words(jobs_dict: Dict[str, Job],
+                                    is_incoming: bool = False,
                                     ) -> Tuple[List[str], List[str]]:
             """Get query words and ids as lists + prefilter
             NOTE: this is just a convenience method since we do this 2x
@@ -267,8 +268,10 @@ class JobFilter:
             words = []  # type: List[str]
             filt_job_dict = {}  # type: Dict[str, Job]
             for job in jobs_dict.values():
-                if job.key_id in self.duplicate_jobs_dict:
-                    # NOTE: we should never see this. might want to raise Error
+                if is_incoming and job.key_id in self.duplicate_jobs_dict:
+                    # NOTE: we should never see this for incoming jobs.
+                    # we will see it for existing jobs since duplicates can
+                    # share a key_id. FIXME: need to look closer into this.
                     raise ValueError(
                         "Attempting to run TFIDF with existing duplicate "
                         f"{job.key_id}"
@@ -294,14 +297,14 @@ class JobFilter:
             return ids, words, filt_job_dict
 
         query_ids, query_words, filt_incoming_jobs_dict = \
-            __dict_to_ids_and_words(incoming_jobs_dict)
+            __dict_to_ids_and_words(incoming_jobs_dict, is_incoming=True)
 
         # Calculate corpus and format query data for TFIDF calculation
         corpus = []  # type: List[str]
         if existing_jobs_dict:
             self.logger.debug("Running TFIDF on incoming vs existing data.")
             reference_ids, reference_words, filt_existing_jobs_dict = \
-                __dict_to_ids_and_words(existing_jobs_dict)
+                __dict_to_ids_and_words(existing_jobs_dict, is_incoming=False)
             corpus = query_words + reference_words
         else:
             self.logger.debug("Running TFIDF on incoming data only.")
