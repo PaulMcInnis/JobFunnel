@@ -60,6 +60,12 @@ class BaseMonsterScraper(BaseScraper):
         return [JobField.RAW, JobField.DESCRIPTION, JobField.TAGS]
 
     @property
+    def high_priority_get_set_fields(self) -> List[JobField]:
+        """We need to populate these fields first
+        """
+        return [JobField.RAW, JobField.KEY_ID]
+
+    @property
     def delayed_get_set_fields(self) -> str:
         """Delay execution when getting /setting any of these attributes of a
         job.
@@ -87,6 +93,7 @@ class BaseMonsterScraper(BaseScraper):
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
+        NOTE: priority is all the same.
         """
         if parameter == JobField.KEY_ID:
             # TODO: is there a way to combine these calls?
@@ -114,6 +121,7 @@ class BaseMonsterScraper(BaseScraper):
 
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
+        NOTE: priority is: HIGH: RAW, LOW: DESCRIPTION / TAGS
         """
         if parameter == JobField.RAW:
             job._raw_scrape_data = BeautifulSoup(

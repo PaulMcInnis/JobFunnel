@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Tuple, Union, Optional
 
 from bs4 import BeautifulSoup
 from requests import Session
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from tqdm import tqdm
 
 from jobfunnel.backend import Job, JobStatus
@@ -54,6 +56,12 @@ class BaseScraper(ABC):
         )
         if self.headers:
             self.session.headers.update(self.headers)
+
+        # Elongate the retries TODO: make configurable
+        retry = Retry(connect=3, backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
         # Ensure that the locale we want to use matches the locale that the
         # scraper was written to scrape in:
@@ -117,6 +125,10 @@ class BaseScraper(ABC):
     @abstractmethod
     def job_get_fields(self) -> List[JobField]:
         """Call self.get(...) for the JobFields in this list when scraping a Job.
+
+        NOTE: these will be passed job listing soups, if you have data you need
+        to populate that exists in the Job.RAW (the soup from the listing's own
+        page), you should use job_set_fields.
         """
         pass
 
@@ -125,9 +137,8 @@ class BaseScraper(ABC):
     def job_set_fields(self) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job
 
-        NOTE: Since this passes the Job we are updating, the order of this list
-        matters if set fields rely on each-other. (i.e if desc relies on raw:
-        then you would want to do [raw, description])
+        NOTE: You should generally set the job's own page as soup to RAW first
+        and then populate other fields from this soup, or from each-other here.
         """
         pass
 
@@ -138,6 +149,17 @@ class BaseScraper(ABC):
         job.
         """
         pass
+
+    @property
+    def high_priority_get_set_fields(self) -> List[JobField]:
+        """These get() and/or set() fields will be populated first.
+
+        i.e we need the RAW populated before DESCRIPTION, so RAW should be high.
+        i.e. we need to get key_id before we set job.url, so key_id is high.
+
+        NOTE: override as needed.
+        """
+        return []
 
     @property
     @abstractmethod
@@ -227,15 +249,21 @@ class BaseScraper(ABC):
             delay [float]: how long to delay getting/setting for certain
                 get/set calls while scraping data for this job.
 
-        NOTE: this will never raise an exception to prevent killing workers.
+        NOTE: we should scrape all-priority get fields first, then do high
+            set priorities, and finally low priority set fields.
+        NOTE: this will never raise an exception to prevent killing workers,
+            who are building jobs sequentially.
 
         Returns:
             Optional[Job]: job object constructed from the soup and localization
                 of class, returns None if scrape failed.
         """
-        # Formulate the get/set actions
+        # Formulate the get/set actions, we will do these in-sequence
         actions_list = [(True, f) for f in self.job_get_fields]
-        actions_list += [(False, f) for f in self.job_set_fields]
+        actions_list += [(False, f) for f in self.job_set_fields if f in
+                         self.high_priority_get_set_fields]
+        actions_list += [(False, f) for f in self.job_set_fields if f not in
+                         self.high_priority_get_set_fields]
 
         # Scrape the data for the post, requiring a minimum of info...
         job = None  # type: Union[None, Job]
