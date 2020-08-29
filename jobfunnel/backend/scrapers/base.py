@@ -76,7 +76,7 @@ class BaseScraper(ABC):
         self._validate_get_set()
 
         # Init a thread executor (multi-worker) TODO: can't reuse after shutdown
-        self.executor = ThreadPoolExecutor(max_workers=1) #MAX_CPU_WORKERS) FIXME
+        self.executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
 
     @property
     def user_agent(self) -> str:
@@ -208,9 +208,8 @@ class BaseScraper(ABC):
         )
 
         # Calculate delays for get/set calls per-job NOTE: only get/set
-        # calls in self.delayed_get_set_fields will be delayed. FIXME: remove bypass!
-        import numpy as np
-        delays = np.ones(n_soups) * 0.1 #calculate_delays(n_soups, self.config.delay_config)
+        # calls in self.delayed_get_set_fields will be delayed.
+        delays = calculate_delays(n_soups, self.config.delay_config)
         results = []
         for job_soup, delay in zip(job_soups, delays):
             results.append(
