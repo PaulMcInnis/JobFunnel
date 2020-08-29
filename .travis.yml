@@ -7,7 +7,7 @@ install:
   - 'python -m nltk.downloader stopwords'
 before_script: 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
 script:
-  - 'python -m jobfunnel -s demo/settings.yaml -o demo/'
+  - 'python -m jobfunnel -s demo/settings.yaml'
   - 'pytest --cov=jobfunnel --cov-report=xml'
 after_success:
   - 'bash <(curl -s https://codecov.io/bash)'

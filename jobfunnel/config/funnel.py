@@ -4,10 +4,13 @@ import logging
 from typing import Optional, List, Dict, Any
 import os
 
-# from jobfunnel.backend.scrapers.base import BaseScraper CYCLICAL!
 from jobfunnel.config import BaseConfig, ProxyConfig, SearchConfig, DelayConfig
 from jobfunnel.resources import Locale, Provider, BS4_PARSER
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
+
+
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.backend.scrapers.base import BaseScraper
 
 
 class JobFunnelConfig(BaseConfig):

@@ -19,7 +19,10 @@ from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.scrapers.base import (
     BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
 )
-#from jobfunnel.config import JobFunnelConfig  # causes a circular import
+
+
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.config import JobFunnelConfig
 
 
 ID_REGEX = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
