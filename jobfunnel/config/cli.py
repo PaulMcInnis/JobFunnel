@@ -119,7 +119,7 @@ def parse_cli():
     )
 
     parser.add_argument(
-        '-k',
+        '-kw',
         dest='search_keywords',
         nargs='+',
         default=DEFAULT_SEARCH_KEYWORDS,
@@ -160,7 +160,7 @@ def parse_cli():
     )
 
     parser.add_argument(
-        '-max-listing-age',
+        '-max-listing-days',
         dest='search_max_listing_days',
         type=int,
         help='The maximum number of days-old a job can be. (i.e pass 30 to '
