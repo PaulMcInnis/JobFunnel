@@ -274,21 +274,19 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         config.update(
             yaml.load(open(settings_yaml_file, 'r'), Loader=yaml.FullLoader)
         )
+
         # TODO: need a way to handle injecting defaults with YAML but also
         # without an incomplete set of arguments here. Cerberus should do this
         # if we further break down config into sub-configs.
-        missing_or_invalid_attrs = []  # type: List[str]
+        missing_attrs = []  # type: List[str]
         for attr in ['master_csv_file', 'block_list_file', 'cache_folder',
                      'duplicates_list_file']:
-            if attr in config:
-                if os.path.exists(config[attr]):
-                    missing_or_invalid_attrs.append(attr)
-            else:
-                missing_or_invalid_attrs.append(attr)
-        if missing_or_invalid_attrs:
+            if attr not in config:
+                missing_attrs.append(attr)
+        if missing_attrs:
             raise ValueError(
                 f"Passed YAML {settings_yaml_file} fields are missing or "
-                f"invalid: {missing_or_invalid_attrs}"
+                f"invalid: {missing_attrs}"
             )
 
     # Handle output_folder argument which is a shortcut to specifying all paths

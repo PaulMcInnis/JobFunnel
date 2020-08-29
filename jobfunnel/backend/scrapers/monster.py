@@ -20,6 +20,11 @@ from jobfunnel.backend.scrapers.base import (
     BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
 )
 
+
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.config import JobFunnelConfig
+
+
 MAX_RESULTS_PER_MONSTER_PAGE = 25
 MONSTER_SIDEPANEL_TAG_ENTRIES = ['industries', 'job type']  # these --> Job.tags
 ID_REGEX = re.compile(

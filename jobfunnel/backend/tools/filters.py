@@ -153,7 +153,7 @@ class JobFilter:
             Dict[str, Job]: jobs dict with all jobs keyed by known-duplicate
                 key_ids removed, and their originals updated.
         """
-        duplicate_jobs_list = []  # type: List[DuplicateJob]
+        duplicate_jobs_list = []  # type: List[DuplicatedJob]
         filt_existing_jobs_dict = deepcopy(existing_jobs_dict)
         # FIXME: we assume there are no duplicates by content in existing jobs
         # And this is a bad assumption... need to fix this.

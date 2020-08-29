@@ -27,6 +27,10 @@ import re
 from requests import Session
 
 
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.config import JobFunnelConfig
+
+
 MAX_GLASSDOOR_LOCATIONS_TO_RETURN = 10
 LOCATION_BASE_URL = 'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
 MAX_RESULTS_PER_GLASSDOOR_PAGE = 30
@@ -39,6 +43,7 @@ GLASSDOOR_RADIUS_MAP = {
     100: 62,
     200: 124,
 }
+
 
 class BaseGlassDoorScraper(BaseScraper):
 

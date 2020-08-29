@@ -21,7 +21,11 @@ from jobfunnel.backend.tools import get_logger
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
                                  Locale)
-# from jobfunnel.config import JobFunnelConfig  FIXME: circular imports issue
+
+
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.config import JobFunnelConfig
+
 
 
 class BaseScraper(ABC):

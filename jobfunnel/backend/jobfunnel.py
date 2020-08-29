@@ -141,7 +141,7 @@ class JobFunnel:
 
         # Parse duplicate jobs into updates for master jobs dict
         # FIXME: we need to search for duplicates without master jobs too!
-        duplicate_jobs = []  # type: List[DuplicateJob]
+        duplicate_jobs = []  # type: List[DuplicatedJob]
         if self.master_jobs_dict and scraped_jobs_dict:
 
             # Remove jobs with duplicated key_ids from scrape + update master
@@ -482,7 +482,7 @@ class JobFunnel:
 
     def update_duplicates_file(self) -> None:
         """Update duplicates filter file if we have a path and contents
-        FIXME: this should be writing out DuplicateJob objects and a version
+        FIXME: this should be writing out DuplicatedJob objects and a version
         """
         if self.config.duplicates_list_file:
             if self.job_filter.duplicate_jobs_dict:
