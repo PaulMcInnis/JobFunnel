@@ -99,14 +99,19 @@ class BaseScraper(ABC):
         }
 
     @property
-    @abstractmethod
     def min_required_job_fields(self) -> List[JobField]:
         """If we dont get() or set() any of these fields, we will raise an
         exception instead of continuing without that information.
 
         NOTE: pointless to check for locale / provider / other defaults
+
+        Override if needed, but be aware that key_id should always be populated
+        along with URL or the user can do nothing with the result.
         """
-        pass
+        return [
+            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
+            JobField.KEY_ID, JobField.URL
+        ]
 
     @property
     @abstractmethod
@@ -121,7 +126,8 @@ class BaseScraper(ABC):
         """Call self.set(...) for the JobFields in this list when scraping a Job
 
         NOTE: Since this passes the Job we are updating, the order of this list
-        matters if set fields rely on each-other.ed.
+        matters if set fields rely on each-other. (i.e if desc relies on raw:
+        then you would want to do [raw, description])
         """
         pass
 
@@ -130,8 +136,6 @@ class BaseScraper(ABC):
     def delayed_get_set_fields(self) -> List[JobField]:
         """Delay execution when getting /setting any of these attributes of a
         job.
-
-        Override this as needed.
         """
         pass
 
@@ -254,14 +258,13 @@ class BaseScraper(ABC):
                 else:
                     self.logger.debug(
                         f"Cancelled scraping of {job.key_id}, failed JobFilter"
-                    )
+                    )  # TODO a reason would be nice maybe JobFilterFailure ?
                     break
 
             # Respectfully delay if it's configured to do so.
             if field in self.delayed_get_set_fields:
                 sleep(delay)
 
-            kwarg_name = field.name.lower()
             try:
                 if is_get:
                     job_init_kwargs[field] = self.get(field, job_soup)
@@ -276,19 +279,23 @@ class BaseScraper(ABC):
 
             except Exception as err:
 
-                # Crash out gracefully so we can continue scraping.
-                # (hopefully it's a one-off)
                 if field in self.min_required_job_fields:
                     raise ValueError(
                         "Unable to scrape minimum-required job field: "
                         f"{field.name} Got error:{str(err)}"
                     )
                 else:
+                    # Crash out gracefully so we can continue scraping.
                     self.logger.warning(
-                        "Unable to scrape {} for job{}:\n\t{}".format(
-                            kwarg_name, ' ' + job.url if job else '', str(err)
-                        )
+                        f"Unable to scrape {field.name.lower()} for job:"
+                        f"\n\t{str(err)}"
                     )
+                # Log the job url if we have it.
+                # TODO: we should really dump the soup object to an XML file
+                # so that users encountering bugs can submit it and we can
+                # quickly fix any failing scraping.
+                if job.url:
+                    self.logger.debug(f"Job URL was {job.url}")
 
         # Validate job fields if we got something
         if job:
@@ -318,7 +325,7 @@ class BaseScraper(ABC):
         """Get a single job attribute from a soup object by JobField
 
         i.e. if param is JobField.COMPANY --> scrape from soup --> return str
-        TODO: better way to handle ret type than a massive Union?
+        TODO: better way to handle ret type?
         """
         pass
 
@@ -339,6 +346,7 @@ class BaseScraper(ABC):
     def _validate_get_set(self) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect
         TODO: we should link a helpful article on how to implement get/set mthds
+        TODO: we should try to identify if any get/set fields have circ. dep.
         """
         set_job_get_fields = set(self.job_get_fields)
         set_job_set_fields = set(self.job_set_fields)

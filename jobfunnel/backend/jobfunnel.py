@@ -328,19 +328,22 @@ class JobFunnel:
         with open(self.config.master_csv_file, 'r', encoding='utf8',
                   errors='ignore') as csvfile:
             for row in csv.DictReader(csvfile):
+
                 # NOTE: we are doing legacy support here with 'blurb' etc.
-                # In the future we should have an actual condensed descript.
+                # In the future we should have an actual short description
                 if 'short_description' in row:
                     short_description = row['short_description']
                 else:
                     short_description = ''
                 post_date = datetime.strptime(row['date'], '%Y-%m-%d')
+
                 if 'scrape_date' in row:
                     scrape_date = datetime.strptime(
                         row['scrape_date'], '%Y-%m-%d'
                     )
                 else:
                     scrape_date = post_date
+
                 if 'raw' in row:
                     # NOTE: we should never see this because raw cant be in CSV
                     raw = row['raw']
@@ -348,7 +351,6 @@ class JobFunnel:
                     raw = None
 
                 # We need to convert from user statuses
-                # TODO: put this in Job?
                 status = None
                 if 'status' in row:
                     status_str = row['status'].strip()
