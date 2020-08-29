@@ -3,6 +3,9 @@ data/
 demo/data/
 demo_cache
 
+# GraphViz
+*.dot
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

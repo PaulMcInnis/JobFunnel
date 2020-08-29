@@ -60,8 +60,8 @@ class JobFilter(Logger):
             log_file (Optional[str], optional): log file, Defaults to None.
         """
         super().__init__(
-            level=config.log_level,
-            file_path=config.log_file,
+            level=log_level,
+            file_path=log_file,
         )
         self.user_block_jobs_dict = user_block_jobs_dict or {}
         self.duplicate_jobs_dict = duplicate_jobs_dict or {}
