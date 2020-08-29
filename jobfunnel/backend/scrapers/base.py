@@ -6,7 +6,8 @@ import random
 import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from time import sleep, time
+from multiprocessing import Manager, Lock
+from time import time, sleep
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup
@@ -74,9 +75,7 @@ class BaseScraper(ABC, Logger):
 
         # Ensure our properties satisfy constraints
         self._validate_get_set()
-
-        # Init a thread executor (multi-worker) TODO: can't reuse after shutdown
-        self.executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+        self.thread_manager = Manager()
 
     @property
     def user_agent(self) -> str:
@@ -207,51 +206,71 @@ class BaseScraper(ABC, Logger):
             f"Scraped {n_soups} job listings from search results pages"
         )
 
-        # Calculate delays for get/set calls per-job NOTE: only get/set
-        # calls in self.delayed_get_set_fields will be delayed.
-        delays = calculate_delays(n_soups, self.config.delay_config)
-        results = []
-        for job_soup, delay in zip(job_soups, delays):
-            results.append(
-                self.executor.submit(
-                    self.scrape_job, job_soup=job_soup, delay=delay
-                )
-            )
-
-        # Loops through futures as completed and removes if successfully parsed
-        # For each job-soup object, scrape the soup into a Job  (w/o desc.)
         jobs_dict = {}  # type: Dict[str, Job]
-        for future in tqdm(as_completed(results), total=n_soups):
-            job = future.result()
-            if job:
-                # Handle duplicates that exist within the scraped data itself.
-                # NOTE: if you see alot of these our scrape for key_id is bad
-                if job.key_id in jobs_dict:
-                    self.logger.error(
-                        f"Job {job.title} and {jobs_dict[job.key_id].title} "
-                        f"share duplicate key_id: {job.key_id}"
-                    )
-                jobs_dict[job.key_id] = job
 
-        # Cleanup + log
-        self.executor.shutdown()
+        try:
+            # Init a Manager so we can control delaying
+            # TODO: make session use async io to coordinate on-the-fly delaying.
+            # this is assuming every job will incur one delayed session.get()
+            # NOTE pylint issue: https://github.com/PyCQA/pylint/issues/3313
+            delay_lock = self.thread_manager.Lock()  # pylint: disable=no-member
+            # Init a process executor (multi-worker)
+            executor = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+
+            # Calculate delays for get/set calls per-job NOTE: only get/set
+            # calls in self.delayed_get_set_fields will be delayed.
+            # and it busy-waits.
+            delays = calculate_delays(n_soups, self.config.delay_config)
+            futures = []
+            for job_soup, delay in zip(job_soups, delays):
+                futures.append(
+                    executor.submit(
+                        self.scrape_job,
+                        job_soup=job_soup,
+                        delay=delay,
+                        delay_lock=delay_lock,
+                    )
+                )
+
+            # Loops through futures as completed and removes if successfully parsed
+            # For each job-soup object, scrape the soup into a Job  (w/o desc.)
+            for future in tqdm(as_completed(futures), total=n_soups):
+                job = future.result()
+                if job:
+                    # Handle duplicates that exist within the scraped data itself.
+                    # NOTE: if you see alot of these our scrape for key_id is bad
+                    if job.key_id in jobs_dict:
+                        self.logger.error(
+                            f"Job {job.title} and {jobs_dict[job.key_id].title} "
+                            f"share duplicate key_id: {job.key_id}"
+                        )
+                    jobs_dict[job.key_id] = job
+
+        finally:
+            # Cleanup
+            executor.shutdown()
 
         return jobs_dict
 
-    def scrape_job(self, job_soup: BeautifulSoup, delay: float
-                   ) -> Optional[Job]:
+    # pylint: disable=no-member
+    def scrape_job(self, job_soup: BeautifulSoup, delay: float,
+                   delay_lock: Optional[Lock] = None) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
-            job_soup [BeautifulSoup]: This is a soup object that your get/set
+            job_soup (BeautifulSoup): This is a soup object that your get/set
                 will use to perform the get/set action. It should be specific
                 to this job and not contain other job information.
-            delay [float]: how long to delay getting/setting for certain
+            delay (float): how long to delay getting/setting for certain
                 get/set calls while scraping data for this job.
+            delay_lock (Optional[Manager.Lock], optional): semaphore for
+                synchronizing respectful delaying across workers
 
         NOTE: we should scrape all-priority get fields first, then do high
             set priorities, and finally low priority set fields.
         NOTE: this will never raise an exception to prevent killing workers,
             who are building jobs sequentially.
+        FIXME: we need to make this use an event loop so that delays are correct
+            and we can perform a synchronized wait.
 
         Returns:
             Optional[Job]: job object constructed from the soup and localization
@@ -265,6 +284,7 @@ class BaseScraper(ABC, Logger):
                          self.high_priority_get_set_fields]
 
         # Scrape the data for the post, requiring a minimum of info...
+        # NOTE: if we perform a self.session.get we may get respectfully delayed
         job = None  # type: Union[None, Job]
         job_init_kwargs = self.job_init_kwargs  # NOTE: best to construct once
         for is_get, field in actions_list:
@@ -289,8 +309,14 @@ class BaseScraper(ABC, Logger):
                     break
 
             # Respectfully delay if it's configured to do so.
+            # TODO: move into overriden session and manage this access there.
             if field in self.delayed_get_set_fields:
-                sleep(delay)
+                if delay_lock:
+                    self.logger.debug(f"Delaying for {delay}")
+                    with delay_lock:
+                        sleep(delay)
+                else:
+                    sleep(delay)
 
             try:
                 if is_get:
@@ -329,6 +355,7 @@ class BaseScraper(ABC, Logger):
             job.validate()
 
         return job
+    # pylint: enable=no-member
 
     @abstractmethod
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
