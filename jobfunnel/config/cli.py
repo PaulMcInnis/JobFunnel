@@ -3,16 +3,15 @@
 import argparse
 import logging
 import os
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 import yaml
 
-from jobfunnel.config import (
-    JobFunnelConfigManager, DelayConfig, SearchConfig, ProxyConfig,
-    SettingsValidator, SETTINGS_YAML_SCHEMA
-)
-from jobfunnel.backend.tools.tools import split_url
-from jobfunnel.resources import (
-    Locale, DelayAlgorithm, LOG_LEVEL_NAMES, Provider)
+from jobfunnel.config import (SETTINGS_YAML_SCHEMA, DelayConfig,
+                              JobFunnelConfigManager, ProxyConfig,
+                              SearchConfig, SettingsValidator)
+from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
+                                 Provider)
 from jobfunnel.resources.defaults import *
 
 

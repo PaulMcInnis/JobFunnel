@@ -1,31 +1,25 @@
 """Scraper for www.glassdoor.X
 FIXME: this is currently unable to get past page 1 of job results.
 """
-from abc import abstractmethod
-from bs4 import BeautifulSoup
 import logging
-from requests import Session
-from typing import Dict, List, Tuple, Optional, Union
-
-from jobfunnel.backend.scrapers.base import (
-    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
-)
-from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.tools import get_webdriver
-from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.backend.tools.filters import JobFilter
-from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
-
+import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
-import logging
 from math import ceil
 from time import sleep, time
-from typing import Dict, List, Tuple, Optional, Any
-import re
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from bs4 import BeautifulSoup
 from requests import Session
 
+from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
+                                             BaseUSAEngScraper)
+from jobfunnel.backend.tools import get_webdriver
+from jobfunnel.backend.tools.filters import JobFilter
+from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Locale
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
@@ -177,25 +171,28 @@ class BaseGlassDoorScraper(BaseScraper):
         # Get the first page of job soups from the search results listings
         job_soup_list = self._parse_job_listings_to_bs4(soup_base)
 
-        # Init threads & futures list FIXME: use existing ThreadPoolExecutor?
+        # Init threads & futures list FIXME: we should probably delay here too
         threads = ThreadPoolExecutor(MAX_CPU_WORKERS)
-        futures_list = []  # FIXME: type?
-
-        # Search the remaining pages to extract the list of job soups
-        # FIXME: we can't load page 2, it redirects to page 1.
-        # There is toast that shows to get email notifs that shows up if
-        # I click it myself, must be an event listener?
-        if n_pages > 1:
-            for page in range(2, n_pages + 1):
-                futures_list.append(
-                    threads.submit(
-                        self._search_page_for_job_soups,
-                        self._get_next_page_url(soup_base, page),
-                        job_soup_list,
+        try:
+            # Search the remaining pages to extract the list of job soups
+            # FIXME: we can't load page 2, it redirects to page 1.
+            # There is toast that shows to get email notifs that shows up if
+            # I click it myself, must be an event listener?
+            futures = []
+            if n_pages > 1:
+                for page in range(2, n_pages + 1):
+                    futures.append(
+                        threads.submit(
+                            self._search_page_for_job_soups,
+                            self._get_next_page_url(soup_base, page),
+                            job_soup_list,
+                        )
                     )
-                )
 
-        wait(futures_list)  # wait for all scrape jobs to finish
+            wait(futures)  # wait for all scrape jobs to finish
+        finally:
+            threads.shutdown()
+
         return job_soup_list
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:

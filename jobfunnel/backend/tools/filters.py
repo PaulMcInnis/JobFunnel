@@ -1,15 +1,13 @@
 """Filters that are used in jobfunnel's filter() method or as intermediate
-filters to reduce un-necessesary scraping.
-FIXME: we should have a Enum(Filter) for all job filters to allow configuration
-and generic log messages.
+filters to reduce un-necessesary scraping
 """
+import json
+import logging
+import os
 from collections import namedtuple
 from copy import deepcopy
-import logging
-from typing import Dict, List, Optional, Tuple
 from datetime import datetime
-import json
-import os
+from typing import Dict, List, Optional, Tuple
 
 import nltk
 import numpy as np
@@ -18,10 +16,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools import Logger
-from jobfunnel.resources import (
-    DEFAULT_MAX_TFIDF_SIMILARITY, MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
-    DuplicateType
-)
+from jobfunnel.resources import (DEFAULT_MAX_TFIDF_SIMILARITY,
+                                 MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
+                                 DuplicateType)
 
 DuplicatedJob = namedtuple(
     'DuplicatedJob', ['original', 'duplicate', 'type'],
@@ -31,7 +28,7 @@ DuplicatedJob = namedtuple(
 class JobFilter(Logger):
     """Class Used by JobFunnel and BaseScraper to filter collections of jobs
 
-    TODO: make more configurable, maybe with a Filter class and a FilterBank.
+    TODO: make more configurable, maybe with a FilterBank class.
     """
 
     def __init__(self, user_block_jobs_dict: Optional[Dict[str, str]] = None,
@@ -69,6 +66,7 @@ class JobFilter(Logger):
         self.max_job_date = max_job_date
         self.max_similarity = max_similarity
         self.min_tfidf_corpus_size = min_tfidf_corpus_size
+
         # Retrieve stopwords if not already downloaded
         try:
             stopwords = nltk.corpus.stopwords.words('english')
@@ -76,7 +74,7 @@ class JobFilter(Logger):
             nltk.download('stopwords', quiet=True)
             stopwords = nltk.corpus.stopwords.words('english')
 
-        # Init vectorizer e!
+        # Init vectorizer
         self.vectorizer = TfidfVectorizer(
             strip_accents='unicode',
             lowercase=True,
@@ -96,9 +94,6 @@ class JobFilter(Logger):
         NOTE: if you remove duplicates before processesing them into updates
               you will retain potentially stale job information.
 
-        FIXME: it would make sense if we could integrate filter_duplicates
-            into this as well.
-
         Returns:
             jobs_dict with all filtered items removed.
         """
@@ -113,15 +108,14 @@ class JobFilter(Logger):
                    check_existing_duplicates: bool = True) -> bool:
         """Filter jobs out using all our available filters
 
+        NOTE: this allows job to be partially initialized
+
         Arguments:
             check_existing_duplicates: pass True to check if ID was previously
                 detected to be a duplicate via TFIDF cosine similarity
 
         Returns:
             True if the job should be removed from incoming data, else False
-
-        TODO: arrange checks by how long they take to run
-        NOTE: this does a lot of checks because job may be partially initialized
         """
         return bool(
             job.status and job.is_remove_status
@@ -144,6 +138,8 @@ class JobFilter(Logger):
                         ) -> List[DuplicatedJob]:
         """Remove all known duplicates from jobs_dict and update original data
 
+        FIXME: we assume there are no duplicates by content in existing jobs
+
         Args:
             existing_jobs_dict (Dict[str, Job]): dict of jobs keyed by key_id.
             incoming_jobs_dict (Dict[str, Job]): dict of new jobs by key_id.
@@ -154,8 +150,6 @@ class JobFilter(Logger):
         """
         duplicate_jobs_list = []  # type: List[DuplicatedJob]
         filt_existing_jobs_dict = deepcopy(existing_jobs_dict)
-        # FIXME: we assume there are no duplicates by content in existing jobs
-        # And this is a bad assumption... need to fix this.
         filt_incoming_jobs_dict = {}  # type: Dict[str, Job]
 
         # Look for matches by key id only
@@ -215,7 +209,7 @@ class JobFilter(Logger):
             )
 
         # Update duplicates list with more JSON-friendly entries
-        # FIXME: we should retain a reference to the original job
+        # FIXME: we should retain a reference to the original job contents
         self.duplicate_jobs_dict.update({
             j.duplicate.key_id: j.duplicate.as_json_entry
             for j in duplicate_jobs_list
@@ -229,33 +223,26 @@ class JobFilter(Logger):
         """Fit a tfidf vectorizer to a corpus of Job.DESCRIPTIONs and identify
         duplicate jobs by cosine-similarity.
 
-        FIXME: need to handle existing_jobs_dict = None!
-
         NOTE/WARNING: if you are running this method, you should have already
             removed any duplicates by key_id
         NOTE: this only uses job descriptions to do the content matching.
         NOTE: it is recommended that you have at least around 25 ish Jobs.
+        FIXME: need to handle existing_jobs_dict = None
         TODO: have this raise an exception if there are too few words.
-        TODO: we should consider caching the transformed corups.
+        TODO: we should consider caching the transformed corpus.
 
         Args:
             incoming_jobs_dict (Dict[str, dict]): dict of jobs containing
                 potential duplicates (i.e jobs we just scraped)
             existing_jobs_dict (Dict[str, dict]): the existing jobs dict
                 (i.e. Master CSV)
-            max_similarity (float, optional): threshold above which desc
-                similarity is considered a duplicate. Defaults to
-                DEFAULT_MAX_TFIDF_SIMILARITY.
-            duplicate_jobs_dict (str, optional): contents of user's duplicate
-                job detection JSON so we can persist previous detections during
-                this run
 
         Raises:
             ValueError: incoming_jobs_dict contains no job descriptions
 
         Returns:
-            List[DuplicatedJob]: list of new duplicate Jobs and their existing Jobs
-                found via content matching (for use in JobFunnel).
+            List[DuplicatedJob]: list of new duplicate Jobs and their existing
+                Jobs found via content matching (for use in JobFunnel).
         """
         def __dict_to_ids_and_words(jobs_dict: Dict[str, Job],
                                     is_incoming: bool = False,

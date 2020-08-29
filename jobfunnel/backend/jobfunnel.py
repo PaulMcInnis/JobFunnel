@@ -1,5 +1,5 @@
-"""Paul McInnis 2020
-Scrapes jobs, applies search filters and writes pickles to master list
+"""Scrapes jobs, applies search filters and writes pickles to master list
+Paul McInnis 2020
 """
 import csv
 import json
@@ -15,13 +15,13 @@ from typing import Dict, List, Optional, Tuple
 from requests import Session
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools.filters import JobFilter, DuplicatedJob
 from jobfunnel.backend.tools import Logger
+from jobfunnel.backend.tools.filters import DuplicatedJob, JobFilter
 from jobfunnel.config import JobFunnelConfigManager
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
-                                 MAX_CPU_WORKERS, JobStatus, Locale, T_NOW,
-                                 MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
-                                 DuplicateType)
+                                 MAX_CPU_WORKERS,
+                                 MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH, T_NOW,
+                                 DuplicateType, JobStatus, Locale)
 
 
 class JobFunnel(Logger):
@@ -82,7 +82,7 @@ class JobFunnel(Logger):
     @property
     def daily_cache_file(self) -> str:
         """The name for for pickle file containing the scraped data ran today'
-        FIXME: instead of using a 'daily' cache file, we should be tying this
+        TODO: instead of using a 'daily' cache file, we should be tying this
         into the search that was made to prevent cross-caching results.
         """
         return os.path.join(
@@ -225,10 +225,9 @@ class JobFunnel(Logger):
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
         for scraper_cls in self.config.scrapers:
-            # FIXME: need to add the threader and delaying here
             start = time()
             scraper = scraper_cls(self.session, self.config, self.job_filter)
-            # TODO: add a warning for overwriting different jobs with same key
+            # TODO: add a warning for overwriting different jobs with same key!
             jobs.update(scraper.scrape())
             end = time()
             self.logger.debug(
@@ -297,6 +296,7 @@ class JobFunnel(Logger):
         """Dump a jobs_dict into a pickle
 
         TODO: write search_config into the cache file and jobfunnel version
+        TODO: some way to cache Job.RAW without hitting recursion limit
         FIXME: add versioning to this
 
         Args:
@@ -304,7 +304,6 @@ class JobFunnel(Logger):
             cache_file (str, optional): file path to write to. Defaults to None.
         """
         cache_file = cache_file if cache_file else self.daily_cache_file
-        # FIXME: some way to cache raw data without recur-limit
         for job in jobs_dict.values():
             job._raw_scrape_data = None
         pickle.dump(jobs_dict, open(cache_file, 'wb'))
@@ -315,8 +314,7 @@ class JobFunnel(Logger):
     def read_master_csv(self) -> Dict[str, Job]:
         """Read in the master-list CSV to a dict of unique Jobs
 
-        TODO: update from legacy CSV header for short & long description
-        TODO: the header contents should match JobField names
+        TODO: make blurb --> description and add short_description
 
         Returns:
             Dict[str, Job]: unique Job objects in the CSV
@@ -422,7 +420,7 @@ class JobFunnel(Logger):
         our configured user block list file and save (if any)
 
         NOTE: adding jobs to block list will result in filter() removing them
-        from all scraped & cached jobs in the future.
+        from all scraped & cached jobs in the future (persistant).
 
         Raises:
             FileNotFoundError: if no master_jobs_dict is provided and master csv
@@ -479,7 +477,8 @@ class JobFunnel(Logger):
 
     def update_duplicates_file(self) -> None:
         """Update duplicates filter file if we have a path and contents
-        FIXME: this should be writing out DuplicatedJob objects and a version
+        TODO: this should be writing out DuplicatedJob objects and a version
+        so that we retain links to original jobs.
         """
         if self.config.duplicates_list_file:
             if self.job_filter.duplicate_jobs_dict:

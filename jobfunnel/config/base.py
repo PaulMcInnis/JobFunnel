@@ -11,7 +11,7 @@ class BaseConfig(ABC):
 
     def validate(self) -> None:
         """This should raise Exceptions if self.attribs are bad
-        FIXME: move this into cerberus schema validation, or, use the same
-        validators it does here.
+        NOTE: if we use sub-configs we could potentiall use Cerberus for this
+        against any vars(Config)
         """
         pass

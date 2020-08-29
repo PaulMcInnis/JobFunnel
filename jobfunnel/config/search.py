@@ -9,11 +9,9 @@ from jobfunnel.resources.defaults import (
 )
 
 class SearchConfig(BaseConfig):
-    """Config object to contain region of interest for a Locale
-
-    FIXME: ideally we'd have one of these per-locale, per-website, but then
-    the config would be a nightmare, so we'll just put everything in here
-    for now
+    """Config object containing our desired job search information including
+    the Locale of the searcher, the region to search and what job providers to
+    search with.
     """
 
     def __init__(self,
@@ -33,6 +31,8 @@ class SearchConfig(BaseConfig):
         Args:
             keywords (List[str]): list of search keywords
             province_or_state (str): province or state.
+            locale(Locale): the searcher's Locale, defines the job website
+                domain and the scrapers we will use to scrape it.
             city (Optional[str], optional): city. Defaults to None.
             distance_radius (Optional[int], optional): km/m radius. Defaults to
                 DEFAULT_SEARCH_RADIUS_KM.
@@ -76,6 +76,6 @@ class SearchConfig(BaseConfig):
 
     def validate(self):
         """We need to have the right information set, not mixing stuff
-        FIXME: impl.
+        TODO: impl. with _validate_type_ipv4address
         """
         pass

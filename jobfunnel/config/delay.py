@@ -2,12 +2,11 @@
 """
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.resources import DelayAlgorithm
-from jobfunnel.resources.defaults import (
-    DEFAULT_DELAY_ALGORITHM, DEFAULT_DELAY_MAX_DURATION,
-    DEFAULT_DELAY_MIN_DURATION, DEFAULT_DELAY_ALGORITHM,
-    DEFAULT_RANDOM_CONVERGING_DELAY, DEFAULT_RANDOM_DELAY,
-)
-
+from jobfunnel.resources.defaults import (DEFAULT_DELAY_ALGORITHM,
+                                          DEFAULT_DELAY_MAX_DURATION,
+                                          DEFAULT_DELAY_MIN_DURATION,
+                                          DEFAULT_RANDOM_CONVERGING_DELAY,
+                                          DEFAULT_RANDOM_DELAY)
 
 
 class DelayConfig(BaseConfig):

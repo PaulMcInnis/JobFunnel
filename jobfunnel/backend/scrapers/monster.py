@@ -1,25 +1,23 @@
 """Scrapers for www.monster.X
 """
+import logging
+import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
-import logging
 from math import ceil
 from time import sleep, time
-from typing import Dict, List, Tuple, Optional, Any
-import re
-from requests import Session
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
+from requests import Session
 
-from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
+                                             BaseUSAEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
-from jobfunnel.backend.scrapers.base import (
-    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
-)
-
+from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Locale
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
@@ -155,7 +153,7 @@ class BaseMonsterScraper(BaseScraper):
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
-        TODO: use threading here too?
+        TODO: use threading here too
 
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
@@ -233,7 +231,7 @@ class BaseMonsterScraper(BaseScraper):
     def _get_search_url(self, method: Optional[str] = 'get',
                         page: int = 1) -> str:
         """Get the monster search url from SearchTerms
-        TODO: implement fulltime/parttime portion + company search?
+        TODO: implement fulltime/part-time portion + company search?
         TODO: implement POST
         NOTE: unfortunately we cannot start on any page other than 1,
               so the jobs displayed just scrolls forever and we will see

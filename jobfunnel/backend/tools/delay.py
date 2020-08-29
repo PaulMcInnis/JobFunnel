@@ -1,16 +1,16 @@
 """Module for calculating random or non-random delay
 """
 from math import ceil, log, sqrt
-from numpy import arange
 from random import uniform
-from typing import Dict, Union, List
 from time import time
+from typing import Dict, List, Union
 
+from numpy import arange
 from scipy.special import expit
 
-from jobfunnel.resources import DelayAlgorithm
-from jobfunnel.config import DelayConfig
 from jobfunnel.backend import Job
+from jobfunnel.config import DelayConfig
+from jobfunnel.resources import DelayAlgorithm
 
 
 def _c_delay(list_len: int, delay: Union[int, float]):
@@ -49,9 +49,9 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
         return delays
 
 
-# https://en.wikipedia.org/wiki/Generalised_logistic_function
 def _sig_delay(list_len: int, delay: Union[int, float]):
     """Calculates Richards/Sigmoid curve for delay.
+    NOTE: https://en.wikipedia.org/wiki/Generalised_logistic_function
     """
     gr = sqrt(delay) * 4  # growth rate
     y_0 = log(4 * delay)  # Y(0)
@@ -64,8 +64,7 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
     """Checks delay config and returns calculated delay list.
 
     NOTE: we do this to be respectful to online job sources
-
-    TODO: we should calculate delays on-demand.
+    TODO: we should be able to calculate delays on-demand.
 
     Args:
         list_len: length of scrape job list

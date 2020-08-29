@@ -1,25 +1,23 @@
-"""Scraper designed to get jobs from www.indeed.com / www.indeed.ca
+"""Scraper designed to get jobs from www.indeed.X
 """
+import logging
+import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
-import logging
 from math import ceil
 from time import sleep, time
-from typing import Dict, List, Tuple, Optional, Any
-import re
-from requests import Session
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
+from requests import Session
 
-from jobfunnel.resources import Locale, MAX_CPU_WORKERS, JobField
 from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
+                                             BaseUSAEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
-from jobfunnel.backend.scrapers.base import (
-    BaseScraper, BaseCANEngScraper, BaseUSAEngScraper
-)
-
+from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
+from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Locale
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
@@ -51,7 +49,7 @@ class BaseIndeedScraper(BaseScraper):
             JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
             JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
             # JobField.WAGE, JobField.REMOTE
-            # FIXME: wage and remote are available in listings
+            # TODO: wage and remote are available in listings sometimes
         ]
 
     @property
@@ -115,21 +113,24 @@ class BaseIndeedScraper(BaseScraper):
         # Init list of job soups
         job_soup_list = []  # type: List[Any]
 
-        # Init threads & futures list FIXME: use existing ThreadPoolExecutor
+        # Init threads & futures list FIXME: we should probably delay here too
         threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
-        futures_list = []  # FIXME: type?
-
-        # Scrape soups for all the result pages containing lists of jobs found
-        for page in range(0, pages):
-            futures_list.append(
-                threads.submit(
-                    self._get_job_soups_from_search_page, search_url, page,
-                    job_soup_list
+        try:
+            # Scrape soups for all the result pages containing many job listings
+            futures = []
+            for page in range(0, pages):
+                futures.append(
+                    threads.submit(
+                        self._get_job_soups_from_search_page, search_url, page,
+                        job_soup_list
+                    )
                 )
-            )
 
-        # Wait for all scrape jobs to finish
-        wait(futures_list)
+            # Wait for all scrape jobs to finish
+            wait(futures)
+
+        finally:
+            threads.shutdown()
 
         return job_soup_list
 

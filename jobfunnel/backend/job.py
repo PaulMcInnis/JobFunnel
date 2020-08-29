@@ -1,20 +1,17 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
-from copy import deepcopy
-from bs4 import BeautifulSoup
-from datetime import date, datetime
 import re
 import string
-from typing import Any, Dict, Optional, List
-
+from copy import deepcopy
 from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from jobfunnel.resources import (
-    Locale, CSV_HEADER, JobStatus, PRINTABLE_STRINGS, MAX_BLOCK_LIST_DESC_CHARS,
-    MIN_DESCRIPTION_CHARS,
-)
+from bs4 import BeautifulSoup
 
+from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
+                                 MIN_DESCRIPTION_CHARS, PRINTABLE_STRINGS,
+                                 JobStatus, Locale)
 
 # If job.status == one of these we filter it out of results
 JOB_REMOVE_STATUSES = [
@@ -47,7 +44,6 @@ class Job():
 
         TODO integrate init with JobField somehow, ideally with validation.
         TODO: would be nice to use something standardized for location str
-        TODO: perhaps we can do 'remote' for location w/ Enum for those jobs?
         TODO: wage ought to be a number or an object, but is str for flexibility
         NOTE: ideally key_id is provided, but Monster sets() it, so it now
             has a default = None and is checked for in validate()
@@ -116,15 +112,14 @@ class Job():
         """Update an existing job with new metadata but keep user's status,
         but only if the job.post_date > existing_job.post_date!
 
+        NOTE: if you have hours or minutes or seconds set, and jobs were scraped
+        on the same day, the comparison will favour the extra info as newer!
         TODO: we should do more checks to ensure we are not seeing a totally
         different job by accident (since this check is usually done by key_id)
         TODO: more elegant way? maybe we can deepcopy self?
-        Returns: True if we updated
-        NOTE: if you have hours or minutes or seconds set, the comparison will
-        favour the extra information as being newer!
         TODO: Currently we do day precision but if we wanted to update because
         something is newer by hours we will need to revisit this limitation and
-        store scrape hour in the CSV as well.
+        store scrape hour/etc in the CSV as well.
 
         Returns:
             True if we updated self with job, False if we didn't
@@ -167,7 +162,8 @@ class Job():
     def as_row(self) -> Dict[str, str]:
         """Builds a CSV row dict for this job entry
 
-        TODO: this is legacy, no support for short_description/raw yet.
+        TODO: this is legacy, no support for short_description yet.
+        NOTE: RAW cannot be put into CSV.
         """
         return dict([
             (h, v) for h,v in zip(
@@ -212,8 +208,8 @@ class Job():
 
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
-        FIXME: do this automatically upon assignment (override assignment)
-        FIXME: maybe we can use stopwords?
+        TODO: do this automatically upon assignment (override assignment)
+        TODO: maybe we can use stopwords?
         """
         for attr in [self.title, self.company, self.description, self.tags,
                      self.url, self.key_id, self.provider, self.query,
@@ -223,10 +219,12 @@ class Job():
             )
 
     def validate(self) -> None:
-        """FIXME: implement this just to ensure that the metadata is good
+        """Simple checks just to ensure that the metadata is good
+        TODO: consider expanding to cover all attribs.
         """
         assert self.key_id, "Key_ID is unset!"
         assert self.title, "Title is unset!"
         assert self.company, "Company is unset!"
         assert self.url, "URL is unset!"
-        assert len(self.description) > MIN_DESCRIPTION_CHARS, "Description too short!"
+        if len(self.description) < MIN_DESCRIPTION_CHARS:
+            raise ValueError("Description too short!")
