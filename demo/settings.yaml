@@ -4,9 +4,9 @@
 # NOTE: when you are using CLI, you can just specify output_folder and we
 # will calculate these paths for you.
 master_csv_file: demo_search.csv
-cache_folder: .demo_cache  # NOTE: this will be created if it doesn't exist
-block_list_file: .demo_cache/demo_block_list.json
-duplicates_list_file: .demo_cache/demo_bduplicates_list.json
+cache_folder: demo_cache  # NOTE: this will be created if it doesn't exist
+block_list_file: demo_cache/demo_block_list.json
+duplicates_list_file: demo_cache/demo_duplicates_list.json
 
 # Job search configuration
 search:
