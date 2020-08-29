@@ -1,3 +1,3 @@
 from jobfunnel.backend.tools.tools import (
-    get_webdriver, get_logger
+    get_webdriver, get_logger, Logger
 )
