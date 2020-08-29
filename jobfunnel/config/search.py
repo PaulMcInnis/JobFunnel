@@ -46,8 +46,9 @@ class SearchConfig(BaseConfig):
                 querying. If not passed, will set based on locale. (i.e. 'ca')
             remote: True if searching for remote jobs only TODO: impl. for scr.
         """
+        super().__init__()
         self.province_or_state = province_or_state
-        self.city = city.lower()
+        self.city = city.lower() if city else None
         self.radius = distance_radius or DEFAULT_SEARCH_RADIUS_KM
         self.locale = locale
         self.providers = providers
@@ -56,7 +57,6 @@ class SearchConfig(BaseConfig):
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
         self.remote = remote
-        self.__query_string = '' # type: str
 
         # Try to infer the domain string based on the locale.
         if not domain:
@@ -68,11 +68,9 @@ class SearchConfig(BaseConfig):
 
     @property
     def query_string(self) -> str:
-        """User-readable version of the keywords we are searching with
+        """User-readable version of the keywords we are searching with for CSV
         """
-        if not self.__query_string:
-            self.__query_string = ' '.join(self.keywords)
-        return self.__query_string
+        return ' '.join(self.keywords)
 
     def validate(self):
         """We need to have the right information set, not mixing stuff

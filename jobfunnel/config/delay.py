@@ -18,6 +18,7 @@ class DelayConfig(BaseConfig):
                  random: bool = DEFAULT_RANDOM_DELAY,
                  converge: bool = DEFAULT_RANDOM_CONVERGING_DELAY):
         # TODO: document
+        super().__init__()
         self.max_duration = max_duration
         self.min_duration = min_duration
         self.algorithm = algorithm
@@ -27,7 +28,16 @@ class DelayConfig(BaseConfig):
     def validate(self) -> None:
         if self.max_duration <= 0:
             raise ValueError("Your max delay is set to 0 or less.")
-        if self.min_duration < 0 or self.min_duration >= self.max_duration:
+        if self.min_duration <= 0 or self.min_duration >= self.max_duration:
             raise ValueError(
                 "Minimum delay is below 0, or more than or equal to delay."
+            )
+        if type(self.algorithm) != DelayAlgorithm:
+            raise ValueError(
+                f"Invalid Value for delaying algorithm: {self.algorithm}"
+            )
+        if self.converge and not self.random:
+            raise ValueError(
+                "You cannot configure convering random delay without also "
+                "enabling random delaying"
             )

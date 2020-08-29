@@ -7,6 +7,7 @@ class ProxyConfig(BaseConfig):
     """Simple config object to contain proxy configuration
     """
     def __init__(self, protocol: str, ip_address: str, port: int) -> None:
+        super().__init__()
         self.protocol = protocol
         self.ip_address = ip_address
         self.port = port

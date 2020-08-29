@@ -337,12 +337,12 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
             f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
         )
 
-    # Create any folders that we need
-    if output_folder:
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-    if not os.path.exists(config['cache_folder']):
-        os.makedirs(config['cache_folder'])
+    # Create folders that out output files are within if they don't exist
+    for path_attr in ['master_csv_file', 'user_block_list_file',
+                      'cache_folder', 'duplicates_list_file']:
+        output_dir = os.path.dirname(os.path.abspath(config[path_attr]))
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
     # Build JobFunnelConfigManager
     search_cfg = SearchConfig(

@@ -2,11 +2,11 @@
 """
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
 from jobfunnel.config import BaseConfig, DelayConfig, ProxyConfig, SearchConfig
-from jobfunnel.resources import BS4_PARSER, Locale, Provider
+from jobfunnel.resources import BS4_PARSER
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.backend.scrapers.base import BaseScraper
@@ -57,6 +57,7 @@ class JobFunnelConfigManager(BaseConfig):
             proxy_config (Optional[ProxyConfig], optional): proxy config object.
                  Defaults to None, which will result in no proxy being used
         """
+        super().__init__()
         self.master_csv_file = master_csv_file
         self.user_block_list_file = user_block_list_file
         self.duplicates_list_file = duplicates_list_file
@@ -73,16 +74,6 @@ class JobFunnelConfigManager(BaseConfig):
         else:
             self.delay_config = delay_config
         self.proxy_config = proxy_config
-
-        # Create folder that out output files are within, if it doesn't exist
-        for path_attr in [self.master_csv_file, self.user_block_list_file,
-                          self.cache_folder]:
-            if path_attr:
-                output_dir = os.path.dirname(os.path.abspath(path_attr))
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
-
-        self.validate()
 
     @property
     def scrapers(self) -> List['BaseScraper']:
@@ -105,12 +96,6 @@ class JobFunnelConfigManager(BaseConfig):
         """User-readable names of the scrapers we will be running
         """
         return [s.__name__ for s in self.scrapers]
-
-    def create_dirs(self) -> None:
-        """Create any missing dirs
-        """
-        if not os.path.exists(self.cache_folder):
-            os.makedirs(self.cache_folder)
 
     def validate(self) -> None:
         """Validate the config object i.e. paths exit
