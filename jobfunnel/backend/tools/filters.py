@@ -17,7 +17,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools import get_logger
+from jobfunnel.backend.tools import Logger
 from jobfunnel.resources import (
     DEFAULT_MAX_TFIDF_SIMILARITY, MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
     DuplicateType
@@ -28,7 +28,7 @@ DuplicatedJob = namedtuple(
 )
 
 
-class JobFilter:
+class JobFilter(Logger):
     """Class Used by JobFunnel and BaseScraper to filter collections of jobs
 
     TODO: make more configurable, maybe with a Filter class and a FilterBank.
@@ -56,20 +56,19 @@ class JobFilter:
                 company names disallowed from results. Defaults to None.
             max_job_date (Optional[datetime], optional): maximium date that a
                 job can be scraped. Defaults to None.
+            log_level (Optional[int], optional): log level. Defaults to INFO.
+            log_file (Optional[str], optional): log file, Defaults to None.
         """
+        super().__init__(
+            level=config.log_level,
+            file_path=config.log_file,
+        )
         self.user_block_jobs_dict = user_block_jobs_dict or {}
         self.duplicate_jobs_dict = duplicate_jobs_dict or {}
         self.blocked_company_names_list = blocked_company_names_list or []
         self.max_job_date = max_job_date
         self.max_similarity = max_similarity
         self.min_tfidf_corpus_size = min_tfidf_corpus_size
-        self.logger = get_logger(
-            self.__class__.__name__,
-            log_level,
-            log_file,
-            f"[%(asctime)s] [%(levelname)s] {self.__class__.__name__}: "
-            "%(message)s"
-        )
         # Retrieve stopwords if not already downloaded
         try:
             stopwords = nltk.corpus.stopwords.words('english')

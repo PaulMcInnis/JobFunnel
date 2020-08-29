@@ -7,7 +7,7 @@ import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep, time
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -16,48 +16,44 @@ from requests.packages.urllib3.util.retry import Retry
 from tqdm import tqdm
 
 from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend.tools import Logger
 from jobfunnel.backend.tools.delay import calculate_delays
-from jobfunnel.backend.tools import get_logger
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
                                  Locale)
-
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
 
 
-
-class BaseScraper(ABC):
+class BaseScraper(ABC, Logger):
     """Base scraper object, for scraping and filtering Jobs from a provider
     """
+
     def __init__(self, session: Session, config: 'JobFunnelConfigManager',
                  job_filter: JobFilter) -> None:
         """Init
-
-        TODO: we should have a way of establishing pre-requsites for set()
 
         Args:
             session (Session): session object used to make post and get requests
             config (JobFunnelConfigManager): config containing all needed paths,
                 search proxy, delaying and other metadata.
-            job_filter (JobFilter): filtering class used to perform on-the-fly
-                filtering of jobs to reduce the number of delayed get or set
-                (i.e. operations that make requests).
+            job_filter (JobFilter): object for filtering incoming jobs using
+                various internal filters, including a content-matching tool.
+                NOTE: this runs-on-the-fly as well, and preempts un-promising
+                job scrapes to minimize session() usage.
 
         Raises:
             ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
-        self.job_filter = job_filter  # We will use this for live-filtering
-        self.session = session
-        self.config = config
-        self.logger = get_logger(
-            self.__class__.__name__,
-            self.config.log_level,
-            self.config.log_file,
-            f"[%(asctime)s] [%(levelname)s] {self.__class__.__name__}: "
-            "%(message)s"
+        # Inits
+        super().__init__(
+            level=config.log_level,
+            file_path=config.log_file,
         )
+        self.job_filter=job_filter
+        self.session=session
+        self.config=config
         if self.headers:
             self.session.headers.update(self.headers)
 

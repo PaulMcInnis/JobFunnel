@@ -16,7 +16,7 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools.filters import JobFilter, DuplicatedJob
-from jobfunnel.backend.tools import get_logger
+from jobfunnel.backend.tools import Logger
 from jobfunnel.config import JobFunnelConfigManager
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
                                  MAX_CPU_WORKERS, JobStatus, Locale, T_NOW,
@@ -24,12 +24,12 @@ from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
                                  DuplicateType)
 
 
-class JobFunnel:
+class JobFunnel(Logger):
     """Class that initializes a Scraper and scrapes a website to get jobs
 
     NOTE: This is intended to be used with persistant cache and CSV files
           dedicated to a single, consistant job search.
-    FIXME: instead of Dic[str, Job] we should be using JobsDict
+    TODO: instead of Dic[str, Job] we should be using JobsDict
     """
 
     def __init__(self, config: JobFunnelConfigManager) -> None:
@@ -38,16 +38,13 @@ class JobFunnel:
         Args:
             config (JobFunnelConfigManager): config object containing paths etc.
         """
+        super().__init__(
+            level=config.log_level,
+            file_path=config.log_file,
+        )
         self.config = config
         self.config.create_dirs()
         self.config.validate()
-        self.logger = get_logger(
-            self.__class__.__name__,
-            self.config.log_level,
-            self.config.log_file,
-            f"[%(asctime)s] [%(levelname)s] {self.__class__.__name__}: "
-            "%(message)s"
-        )
         self.__date_string = date.today().strftime("%Y-%m-%d")
         self.master_jobs_dict = {}  # type: Dict[str, Job]
 
