@@ -22,7 +22,7 @@ from jobfunnel.backend.scrapers.base import (
 
 
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfig
+    from jobfunnel.config import JobFunnelConfigManager
 
 
 MAX_RESULTS_PER_MONSTER_PAGE = 25
@@ -40,7 +40,7 @@ class BaseMonsterScraper(BaseScraper):
         as of aug 2020. -pm
     """
 
-    def __init__(self, session: Session, config: 'JobFunnelConfig',
+    def __init__(self, session: Session, config: 'JobFunnelConfigManager',
                  job_filter: JobFilter) -> None:
         """Init that contains monster specific stuff
         """

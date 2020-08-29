@@ -13,7 +13,7 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.backend.scrapers.base import BaseScraper
 
 
-class JobFunnelConfig(BaseConfig):
+class JobFunnelConfigManager(BaseConfig):
     """Master config containing all the information we need to run jobfunnel
     """
 

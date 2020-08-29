@@ -1,4 +1,4 @@
-"""Default arguments for both JobFunnelConfig and CLI arguments.
+"""Default arguments for both JobFunnelConfigManager and CLI arguments.
 NOTE: we include defaults for all arguments so that JobFunnel is plug-n-play
 """
 import os
@@ -17,7 +17,6 @@ DEFAULT_COMPANY_BLOCK_LIST = []
 DEFAULT_OUTPUT_DIRECTORY = os.path.join(
     USER_HOME_DIRECTORY, 'job_search_results'
 )
-# FIXME: move to home when we have per-search caching
 DEFAULT_CACHE_DIRECTORY = os.path.join(DEFAULT_OUTPUT_DIRECTORY, '.cache')
 DEFAULT_BLOCK_LIST_FILE = os.path.join(DEFAULT_CACHE_DIRECTORY, 'block.json')
 DEFAULT_DUPLICATES_FILE = os.path.join(
@@ -30,7 +29,6 @@ DEFAULT_MAX_LISTING_DAYS = 60
 DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
-# NOTE: we do indeed first b/c it has most information, monster is missing keys
 # FIXME: re-enable glassdoor once we fix issue with it.
 DEFAULT_PROVIDERS = [Provider.MONSTER, Provider.INDEED] #, Provider.GLASSDOOR]
 DEFAULT_NO_SCRAPE = False

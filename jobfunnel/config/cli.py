@@ -1,4 +1,4 @@
-"""Configuration parsing module for CLI --> JobFunnelConfig
+"""Configuration parsing module for CLI --> JobFunnelConfigManager
 """
 import argparse
 import logging
@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 import yaml
 
 from jobfunnel.config import (
-    JobFunnelConfig, DelayConfig, SearchConfig, ProxyConfig,
+    JobFunnelConfigManager, DelayConfig, SearchConfig, ProxyConfig,
     SettingsValidator, SETTINGS_YAML_SCHEMA
 )
 from jobfunnel.backend.tools.tools import split_url
@@ -257,8 +257,8 @@ def parse_cli():
     return parser.parse_args()
 
 
-def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
-    """Parse the JobFunnel configuration settings into a JobFunnelConfig.
+def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
+    """Parse the JobFunnel configuration settings into a JobFunnelConfigManager.
 
         args [argparse.Namespace]: cli arguments from argparser
     """
@@ -345,7 +345,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
     if not os.path.exists(config['cache_folder']):
         os.makedirs(config['cache_folder'])
 
-    # Build JobFunnelConfig
+    # Build JobFunnelConfigManager
     search_cfg = SearchConfig(
         keywords=config['search']['keywords'],
         province_or_state=config['search']['province_or_state'],
@@ -375,7 +375,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
     else:
         proxy_cfg = None
 
-    funnel_cfg = JobFunnelConfig(
+    funnel_cfg_mgr = JobFunnelConfigManager(
         master_csv_file=config['master_csv_file'],
         user_block_list_file=config['block_list_file'],
         duplicates_list_file=config['duplicates_list_file'],
@@ -389,6 +389,6 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
     )
 
     # Validate funnel config as well (checks some stuff Cerberus doesn't rn)
-    funnel_cfg.validate()
+    funnel_cfg_mgr.validate()
 
-    return funnel_cfg
+    return funnel_cfg_mgr
