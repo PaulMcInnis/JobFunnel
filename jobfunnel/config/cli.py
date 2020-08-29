@@ -274,40 +274,52 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfig:
         config.update(
             yaml.load(open(settings_yaml_file, 'r'), Loader=yaml.FullLoader)
         )
+        # TODO: need a way to handle injecting defaults with YAML but also
+        # without an incomplete set of arguments here. Cerberus should do this
+        # if we further break down config into sub-configs.
+        missing_or_invalid_attrs = []  # type: List[str]
+        for attr in ['master_csv_file', 'block_list_file', 'cache_folder',
+                     'duplicates_list_file']:
+            if attr in config:
+                if os.path.exists(config[attr]):
+                    missing_or_invalid_attrs.append(attr)
+            else:
+                missing_or_invalid_attrs.append(attr)
+        if missing_or_invalid_attrs:
+            raise ValueError(
+                f"Passed YAML {settings_yaml_file} fields are missing or "
+                f"invalid: {missing_or_invalid_attrs}"
+            )
 
     # Handle output_folder argument which is a shortcut to specifying all paths
-    if (output_folder == DEFAULT_OUTPUT_DIRECTORY and not(
+    user_passed_paths = bool(
+        (
             args_dict['master_csv_file'] and args_dict['block_list_file'] and
-            args_dict['duplicates_list_file'] and args_dict['cache_folder'])):
+            args_dict['duplicates_list_file'] and args_dict['cache_folder']
+        ) or (
+            config['master_csv_file'] and config['block_list_file'] and
+            config['duplicates_list_file'] and config['cache_folder']
+        )
+    )
+    if output_folder == DEFAULT_OUTPUT_DIRECTORY and not user_passed_paths:
 
-        # We have been given an output folder, so we will use default paths
+        # We are using all defaults only (no -s or paths passed)
         config['master_csv_file'] = DEFAULT_MASTER_CSV_FILE
         config['block_list_file'] = DEFAULT_BLOCK_LIST_FILE
         config['duplicates_list_file'] = DEFAULT_DUPLICATES_FILE
         config['cache_folder'] = DEFAULT_CACHE_DIRECTORY
 
-    elif not output_folder:
+    elif output_folder != DEFAULT_OUTPUT_DIRECTORY and user_passed_paths:
 
-        # We have a combination
-        if not config['master_csv_file']:
-            config['master_csv_file'] = DEFAULT_MASTER_CSV_FILE
-        if not config['block_list_file']:
-            config['block_list_file'] = DEFAULT_BLOCK_LIST_FILE
-        if not config['duplicates_list_file']:
-            config['duplicates_list_file'] = DEFAULT_DUPLICATES_FILE
-        if not config['cache_folder']:
-            config['cache_folder'] = DEFAULT_CACHE_DIRECTORY
-
-    else:
         # User cannot specify both output folder and other paths
         raise ValueError(
             "When providing output_folder, do not also provide -csv, -blf"
-            ", -dlf, or -cache, as these are defined by the output folder."
-            " If specifying file paths you must pass all the arguments and"
-            " not pass -o."
+            ", -dlf,  -cache or -s, as paths are defined by the output folder."
+            " If specifying file paths you must pass all the arguments and "
+            "not pass -o."
         )
 
-    # Inject any cli, non-default attributes
+    # Inject any cli, non-default attributes (excluding paths)
     for key, value in args_dict.items():
         if value is not None:
             if key in SETTINGS_YAML_SCHEMA:
