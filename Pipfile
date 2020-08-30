@@ -1,9 +1,7 @@
 [[source]]
-name = "pypi"
-url = "https://pypi.org/simple"
+url = "https://pypi.python.org/simple"
 verify_ssl = true
-
-[dev-packages]
+name = "pypi"
 
 [packages]
 jobfunnel = {path = ".",editable = true}
@@ -11,4 +9,4 @@ selenium = "*"
 webdriver_manager = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.8"
