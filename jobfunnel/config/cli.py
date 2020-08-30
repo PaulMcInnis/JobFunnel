@@ -338,7 +338,7 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
         )
 
     # Create folders that out output files are within if they don't exist
-    for path_attr in ['master_csv_file', 'user_block_list_file',
+    for path_attr in ['master_csv_file', 'block_list_file',
                       'cache_folder', 'duplicates_list_file']:
         output_dir = os.path.dirname(os.path.abspath(config[path_attr]))
         if not os.path.exists(output_dir):

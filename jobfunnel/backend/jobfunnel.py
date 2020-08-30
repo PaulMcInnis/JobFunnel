@@ -43,8 +43,7 @@ class JobFunnel(Logger):
             file_path=config.log_file,
         )
         self.config = config
-        self.config.create_dirs()
-        self.config.validate()
+        self.config.validate()  # NOTE: this ensures directories exist
         self.__date_string = date.today().strftime("%Y-%m-%d")
         self.master_jobs_dict = {}  # type: Dict[str, Job]
 
