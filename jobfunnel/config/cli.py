@@ -76,11 +76,19 @@ def parse_cli():
     )
 
     parser.add_argument(
+        '-dl',
+        dest='duplicates_list_file',
+        nargs='*',
+        help='JSON file of jobs which have been detected to be duplicates of '
+             'existing jobs (usually this is in the output of previous '
+             f'jobfunnel results). Defaults to: {DEFAULT_DUPLICATES_FILE}'
+    )
+
+    parser.add_argument(
         '-lf',
         dest='log_file',
         type=str,
-        default=DEFAULT_LOG_FILE,
-        help='path to logging file.'
+        help=f'path to logging file. defaults to {DEFAULT_LOG_FILE}'
     )
 
     parser.add_argument(
@@ -89,15 +97,6 @@ def parse_cli():
         default=DEFAULT_LOG_LEVEL_NAME,
         choices=LOG_LEVEL_NAMES,
         help='Type of logging information shown on the terminal.'
-    )
-
-    parser.add_argument(
-        '-dl',
-        dest='duplicates_list_file',
-        nargs='*',
-        help='JSON file of jobs which have been detected to be duplicates of '
-             'existing jobs (usually this is in the output of previous '
-             f'jobfunnel results). Defaults to: {DEFAULT_DUPLICATES_FILE}'
     )
 
     parser.add_argument(
@@ -185,12 +184,6 @@ def parse_cli():
     )
 
     parser.add_argument(
-        '--save-duplicates',
-        action='store_true',
-        help='Save duplicate job key_ids into file.'
-    )
-
-    parser.add_argument(
         '--no-scrape',
         action='store_true',
         help='Do not make any get requests, and attempt to load from cache.'
@@ -261,85 +254,103 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
 
         args [argparse.Namespace]: cli arguments from argparser
     """
+    # NOTE: log_file and output_folder are specially handled
+    path_attrs = [
+        'master_csv_file', 'cache_folder',
+        'block_list_file', 'duplicates_list_file',
+    ]
     # Init and pop args that are cli-only and not in our schema
     args_dict = vars(args)
     settings_yaml_file = args_dict.pop('settings_yaml_file')
     output_folder = args_dict.pop('output_folder')
     args_dict.pop('do_recovery_mode')  # NOTE: this is handled in __main__
-
-    # Load config dict from the YAML if passed
     config = {'search': {}, 'delay': {}, 'proxy': {}}
+
+    # Build a config that respects CLI, defaults and YAML
     if settings_yaml_file:
+
+        # Ensure user isn't pasing output_folder as this cannot be used here
+        if output_folder != DEFAULT_OUTPUT_DIRECTORY:
+            raise ValueError(
+                "Cannot combine -s YAML and -o argument, all file paths must "
+                "be specified individually."
+            )
+
+        # Load YAML
         config.update(
             yaml.load(open(settings_yaml_file, 'r'), Loader=yaml.FullLoader)
         )
+        # Set defaults for our YAML
+        config = SettingsValidator.normalized(config)
 
-        # TODO: need a way to handle injecting defaults with YAML but also
-        # without an incomplete set of arguments here. Cerberus should do this
-        # if we further break down config into sub-configs.
-        missing_attrs = []  # type: List[str]
-        for attr in ['master_csv_file', 'block_list_file', 'cache_folder',
-                     'duplicates_list_file']:
-            if attr not in config:
-                missing_attrs.append(attr)
-        if missing_attrs:
+        # Validate the config passed via YAML
+        if not SettingsValidator.validate(config):
             raise ValueError(
-                f"Passed YAML {settings_yaml_file} fields are missing or "
-                f"invalid: {missing_attrs}"
+                f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
             )
 
-    # Handle output_folder argument which is a shortcut to specifying all paths
-    user_passed_paths = bool(
-        (
-            args_dict['master_csv_file'] and args_dict['block_list_file'] and
-            args_dict['duplicates_list_file'] and args_dict['cache_folder']
-        ) or (
-            config.get('master_csv_file') and config.get('block_list_file') and
-            config.get('duplicates_list_file') and config.get('cache_folder')
-        )
-    )
-    if output_folder == DEFAULT_OUTPUT_DIRECTORY and not user_passed_paths:
+    # Handle CLI arguments, overwriting YAML if needed
+    if output_folder:
+        if (output_folder != DEFAULT_OUTPUT_DIRECTORY
+                and (args_dict['master_csv_file'] or args_dict['cache_folder']
+                     or args_dict['block_list_file']
+                     or args_dict['duplicates_list_file'])):
+            # NOTE: we handle the -s with -o case before we get here
+            raise ValueError(
+                "Cannot combine -o with -blf, -cache, -dlf arguments, as -o"
+                " defines these paths."
+            )
+        else:
+            # Set paths based on passed output_folder:
+            # NOTE: these will match defaults if using DEFAULT_OUTPUT_PATH
+            config['master_csv_file'] = os.path.join(
+                output_folder, 'master.csv'
+            )
+            config['cache_folder'] = os.path.join(
+                output_folder, '.cache'
+            )
+            config['block_list_file'] = os.path.join(
+                config['cache_folder'], 'block.json'
+            )
+            config['duplicates_list_file'] = os.path.join(
+                config['cache_folder'], 'duplicates.json'
+            )
+            if not args_dict['log_file']:
+                # User can specify a different log location if they want.
+                config['log_file'] = os.path.join(
+                    output_folder, 'log.log'
+                )
+    else:
+        # We should have all the paths we need
+        for path_arg in path_attrs:
+            config[path_arg] = args_dict[path_arg]
 
-        # We are using all defaults only (no -s or paths passed)
-        config['master_csv_file'] = DEFAULT_MASTER_CSV_FILE
-        config['block_list_file'] = DEFAULT_BLOCK_LIST_FILE
-        config['duplicates_list_file'] = DEFAULT_DUPLICATES_FILE
-        config['cache_folder'] = DEFAULT_CACHE_DIRECTORY
+        if not args_dict['log_file']:
+            # We will define log to be where the csv is.
+            config['log_file'] = os.path.join(
+                os.path.dirname(os.path.abspath(config['cache_folder'])),
+                'log.log',
+            )
 
-    elif output_folder != DEFAULT_OUTPUT_DIRECTORY and user_passed_paths:
-
-        # User cannot specify both output folder and other paths
-        raise ValueError(
-            "When providing output_folder, do not also provide -csv, -blf"
-            ", -dlf,  -cache or -s, as paths are defined by the output folder."
-            " If specifying file paths you must pass all the arguments and "
-            "not pass -o."
-        )
-
-    # Inject any cli, non-default attributes (excluding paths)
-    for key, value in args_dict.items():
-        if value is not None:
-            if key in SETTINGS_YAML_SCHEMA:
-                config[key] = value
+    # Turn args_dict into config dict by nesting as-needed
+    for key, arg_value in args_dict.items():
+        if arg_value is not None:
+            if key == 'log_level' and arg_value != DEFAULT_LOG_LEVEL_NAME:
+                # We got a non-default log level, overwrite any YAML setting
+                config[key] = arg_value
+            elif key == 'no_scrape':
+                # Default is False.
+                config[key] = arg_value
             else:
+                # Set sub-config value
                 for sub_key in ['search', 'delay', 'proxy']:
                     if sub_key in key:
-                        config[sub_key][key.split(sub_key + '_')[1]] = value
+                        config[sub_key][key.split(sub_key + '_')[1]] = arg_value
                         break
 
-    # Set any defaults in our schema
-    config = SettingsValidator.normalized(config)
-
-    # Validate the config we have built
-    if not SettingsValidator.validate(config):
-        # TODO: some way to print allowed values in error msg?
-        raise ValueError(
-            f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
-        )
-
     # Create folders that out output files are within if they don't exist
-    for path_attr in ['master_csv_file', 'block_list_file',
-                      'cache_folder', 'duplicates_list_file']:
+    path_attrs.append('log_file')
+    for path_attr in path_attrs:
         output_dir = os.path.dirname(os.path.abspath(config[path_attr]))
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)

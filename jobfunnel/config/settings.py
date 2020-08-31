@@ -41,11 +41,6 @@ SETTINGS_YAML_SCHEMA = {
         'type': 'string',
         'default': DEFAULT_LOG_FILE,
     },
-    'save_duplicates': {
-        'required': False,
-        'type': 'boolean',
-        'default': DEFAULT_SAVE_DUPLICATES,
-    },
     'search': {
         'type': 'dict',
         'required': True,
@@ -99,26 +94,26 @@ SETTINGS_YAML_SCHEMA = {
                 'required': False,
                 'allowed': [d.name for d in DelayAlgorithm],
                 'default': DEFAULT_DELAY_ALGORITHM.name,
-             },
+            },
             # TODO: implement custom rule max > min
             'max_duration': {
                 'required': False,
                 'type': 'float',
                 'min': 0,
                 'default': DEFAULT_DELAY_MAX_DURATION,
-             },
+            },
             'min_duration': {
                 'required': False,
                 'type': 'float',
                 'min': 0,
                 'default': DEFAULT_DELAY_MIN_DURATION,
-             },
-             'random': {
+            },
+            'random': {
                 'required': False,
                 'type': 'boolean',
                 'default': DEFAULT_RANDOM_DELAY,
-             },
-             'converging': {
+            },
+            'converging': {
                 'required': False,
                 'type': 'boolean',
                 'default': DEFAULT_RANDOM_CONVERGING_DELAY,
@@ -132,16 +127,16 @@ SETTINGS_YAML_SCHEMA = {
             'protocol': {
                 'required': False,
                 'allowed': ['http', 'https'],
-             },
+            },
             'ip': {
                 'required': False,
                 'type': 'ipv4address',
-             },
+            },
             'port': {
                 'required': False,
                 'type': 'integer',
                 'min': 0,
-             },
+            },
         },
     },
 }

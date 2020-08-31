@@ -38,9 +38,9 @@ setup(
     author_email='paulmcinnis99@gmail.com',
     url=url,
     license='MIT License',
-    python_requires='>=3.6.0',
+    python_requires='>=3.8.0',
     install_requires=requires,
-    packages=find_packages(exclude=('demo', 'tests')),
+    packages=find_packages(exclude=('demo', 'tests', 'docs', 'images')),
     include_package_data=True,
     entry_points={'console_scripts': ['funnel = jobfunnel.__main__:main']}
 )
