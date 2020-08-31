@@ -44,10 +44,6 @@ search:
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: INFO
 
-# Saves duplicates removed by tfidf filter to duplicate_list.csv
-# TODO: document why this should be done.
-save_duplicates: False
-
 # Delaying algorithm configuration
 delay:
     # Functions used for delaying algorithm: CONSTANT, LINEAR, SIGMOID

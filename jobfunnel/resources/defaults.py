@@ -2,7 +2,6 @@
 NOTE: we include defaults for all arguments so that JobFunnel is plug-n-play
 """
 import os
-import logging
 from pathlib import Path
 from jobfunnel.resources.enums import Locale, DelayAlgorithm, Provider
 
