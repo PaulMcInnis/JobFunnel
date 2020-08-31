@@ -3,8 +3,10 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[dev-packages]
+
 [packages]
-jobfunnel = {path = ".",editable = true}
+jobfunnel = {path = ".", editable = true}
 selenium = "*"
 webdriver_manager = "*"
 
