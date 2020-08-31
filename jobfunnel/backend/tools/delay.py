@@ -2,13 +2,11 @@
 """
 from math import ceil, log, sqrt
 from random import uniform
-from time import time
-from typing import Dict, List, Union
+from typing import List, Union
 
 from numpy import arange
-from scipy.special import expit
+from scipy.special import expit  # pylint: disable=no-name-in-module
 
-from jobfunnel.backend import Job
 from jobfunnel.config import DelayConfig
 from jobfunnel.resources import DelayAlgorithm
 

@@ -1,14 +1,11 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
 """
-import logging
-import os
 import random
-import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Lock, Manager
-from time import sleep, time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from time import sleep
+from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -23,8 +20,10 @@ from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
                                  Locale)
 
+# pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
+# pylint: enable=using-constant-test,unused-import
 
 
 class BaseScraper(ABC, Logger):

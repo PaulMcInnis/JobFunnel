@@ -35,11 +35,13 @@ def get_logger(logger_name: str, level: int, file_path: str,
     """
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
-    logging.basicConfig(filename=file_path, level=level)
     formatter = logging.Formatter(message_format)
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
+    file_handler = logging.FileHandler(file_path)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
     return logger
 
 

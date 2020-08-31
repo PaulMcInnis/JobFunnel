@@ -1,15 +1,12 @@
 """Configuration parsing module for CLI --> JobFunnelConfigManager
 """
 import argparse
-import logging
 import os
-from typing import Any, Dict, List
 
 import yaml
 
-from jobfunnel.config import (SETTINGS_YAML_SCHEMA, DelayConfig,
-                              JobFunnelConfigManager, ProxyConfig,
-                              SearchConfig, SettingsValidator)
+from jobfunnel.config import (DelayConfig, JobFunnelConfigManager,
+                              ProxyConfig, SearchConfig, SettingsValidator)
 from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
                                  Provider)
 from jobfunnel.resources.defaults import *
@@ -85,14 +82,13 @@ def parse_cli():
     )
 
     parser.add_argument(
-        '-lf',
-        dest='log_file',
+        '-log-file',
         type=str,
         help=f'path to logging file. defaults to {DEFAULT_LOG_FILE}'
     )
 
     parser.add_argument(
-        '--log-level',
+        '-log-level',
         type=str,
         default=DEFAULT_LOG_LEVEL_NAME,
         choices=LOG_LEVEL_NAMES,

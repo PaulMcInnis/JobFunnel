@@ -1,28 +1,27 @@
 """Scraper for www.glassdoor.X
 FIXME: this is currently unable to get past page 1 of job results.
 """
-import logging
 import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import date, datetime, timedelta
 from math import ceil
-from time import sleep, time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from bs4 import BeautifulSoup
 from requests import Session
 
-from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper)
 from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Locale
+from jobfunnel.resources import MAX_CPU_WORKERS, JobField
 
+# pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
+# pylint: enable=using-constant-test,unused-import
 
 
 MAX_GLASSDOOR_LOCATIONS_TO_RETURN = 10

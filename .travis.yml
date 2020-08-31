@@ -8,7 +8,13 @@ install:
 before_script:
   - 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
 script:
-  - 'funnel -s demo/settings.yaml'
+  - 'funnel -s demo/settings.yaml -log-level DEBUG'
+  # NOTE: we might want to make below search somewhere else so it isn't
+  # so very specific.
+  - 'funnel -s demo/settings.yaml -kw Python Data Scientist PHD AI -ps WA -c Seattle -l USA_ENGLISH -log-level DEBUG'
   - 'pytest --cov=jobfunnel --cov-report=xml'
+  # - './tests/verify-artifacts.sh'  TODO: verify that JSON exist and are good
+  # - './tests/verify_time.sh'   TODO: some way of verifying execution time
 after_success:
   - 'bash <(curl -s https://codecov.io/bash)'
+  # - './demo/gen_call_graphs.sh'  TODO: some way of showing .dot on GitHub?

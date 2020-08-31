@@ -1,7 +1,6 @@
 """Settings YAML Schema w/ validator
 """
 import ipaddress
-import logging
 
 from cerberus import Validator
 
