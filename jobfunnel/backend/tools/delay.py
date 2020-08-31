@@ -105,7 +105,8 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         else:
             # lb = lower bounds, delay_vals = upper bound
             durations = [
-                round(uniform(delay_config.min_delay, x), 3) for x in delay_vals
+                round(uniform(delay_config.min_duration, x), 3)
+                for x in delay_vals
             ]
 
     else:
