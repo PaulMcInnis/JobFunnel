@@ -35,7 +35,7 @@ DEFAULT_USE_WEB_DRIVER = False
 DEFAULT_RECOVER = False
 DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_SAVE_DUPLICATES = False
-DEFAULT_RANDOM_DELAY= False
+DEFAULT_RANDOM_DELAY = False
 DEFAULT_RANDOM_CONVERGING_DELAY = False
 
 # Defaults we use from localization, the scraper can always override it.

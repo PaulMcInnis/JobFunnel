@@ -8,8 +8,10 @@ from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
 from jobfunnel.config import BaseConfig, DelayConfig, ProxyConfig, SearchConfig
 from jobfunnel.resources import BS4_PARSER
 
+# pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.backend.scrapers.base import BaseScraper
+# pylint: enable=using-constant-test,unused-import
 
 
 class JobFunnelConfigManager(BaseConfig):
