@@ -86,7 +86,7 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         raise ValueError(f"Cannot calculate delay for {delay_config.algorithm}")
 
     # Check if minimum delay is above 0 and less than last element
-    if 0 < delay_config.min_duration:
+    if delay_config.min_duration > 0:
         # sets min_duration to values greater than itself in delay_vals
         for i, n in enumerate(delay_vals):
             if n > delay_config.min_duration:
