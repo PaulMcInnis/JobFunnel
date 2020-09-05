@@ -250,6 +250,8 @@ def parse_cli():
 def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
+
+    FIXME: still doesn't handle CLI args only properly...
     """
     # Init and pop args that are cli-only and not in our schema
     settings_yaml_file = args_dict.pop('settings_yaml_file')
@@ -344,7 +346,6 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
                         config[sub_key][key.split(sub_key + '_')[1]] = arg_value
                         break
 
-    import pdb; pdb.set_trace()
     return config
 
 
