@@ -2,7 +2,7 @@
 """
 import argparse
 import os
-
+from typing import Dict, Any
 import yaml
 
 from jobfunnel.config import (DelayConfig, JobFunnelConfigManager,
@@ -10,6 +10,12 @@ from jobfunnel.config import (DelayConfig, JobFunnelConfigManager,
 from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
                                  Provider)
 from jobfunnel.resources.defaults import *
+
+
+PATH_ATTRS = [
+    'master_csv_file', 'cache_folder', 'log_file', 'block_list_file',
+    'duplicates_list_file',
+]
 
 
 def parse_cli():
@@ -37,7 +43,6 @@ def parse_cli():
     parser.add_argument(
         '-o',
         dest='output_folder',
-        default=DEFAULT_OUTPUT_DIRECTORY,
         help='Directory where the job search results will be stored. '
              'Pass an existing search results folder to continue a search '
              'by scraping new jobs and updating the CSV file. '
@@ -51,7 +56,6 @@ def parse_cli():
     parser.add_argument(
         '-csv',
         dest='master_csv_file',
-        nargs='*',
         help='Path to a master CSV file containing your search results. '
              f'Defaults to {DEFAULT_MASTER_CSV_FILE}'
     )
@@ -66,7 +70,6 @@ def parse_cli():
     parser.add_argument(
         '-blf',
         dest='block_list_file',
-        nargs='*',
         help='JSON file of jobs you want to omit from your job search '
              '(usually this is in the output of previous jobfunnel results). '
              f'Defaults to: {DEFAULT_BLOCK_LIST_FILE}'
@@ -75,7 +78,6 @@ def parse_cli():
     parser.add_argument(
         '-dl',
         dest='duplicates_list_file',
-        nargs='*',
         help='JSON file of jobs which have been detected to be duplicates of '
              'existing jobs (usually this is in the output of previous '
              f'jobfunnel results). Defaults to: {DEFAULT_DUPLICATES_FILE}'
@@ -242,35 +244,28 @@ def parse_cli():
         help='Select a function to calculate delay times with.'
     )
 
-    return parser.parse_args()
+    return vars(parser.parse_args())
 
 
-def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
-    """Parse the JobFunnel configuration settings into a JobFunnelConfigManager.
-
-        args [argparse.Namespace]: cli arguments from argparser
+def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Parse the JobFunnel configuration settings and combine CLI, YAML and
+    defaults to build a valid config dictionary for initializing config objects.
     """
-    # NOTE: log_file and output_folder are specially handled
-    path_attrs = [
-        'master_csv_file', 'cache_folder',
-        'block_list_file', 'duplicates_list_file',
-    ]
     # Init and pop args that are cli-only and not in our schema
-    args_dict = vars(args)
     settings_yaml_file = args_dict.pop('settings_yaml_file')
     output_folder = args_dict.pop('output_folder')
     args_dict.pop('do_recovery_mode')  # NOTE: this is handled in __main__
     config = {'search': {}, 'delay': {}, 'proxy': {}}
 
-    # Build a config that respects CLI, defaults and YAML
-    if settings_yaml_file:
+    # NOTE: these are mutually exclusive from output_folder
+    user_passed_paths = bool(
+       args_dict['master_csv_file'] or args_dict['cache_folder']
+       or args_dict['block_list_file'] or args_dict['duplicates_list_file']
+    )
 
-        # Ensure user isn't pasing output_folder as this cannot be used here
-        if output_folder != DEFAULT_OUTPUT_DIRECTORY:
-            raise ValueError(
-                "Cannot combine -s YAML and -o argument, all file paths must "
-                "be specified individually."
-            )
+    # Build a config that respects CLI, defaults and YAML
+    # NOTE: we a passed settings YAML first so we can inject CLI after if needed
+    if settings_yaml_file:
 
         # Load YAML
         config.update(
@@ -285,20 +280,27 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
                 f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
             )
 
-    # Handle CLI arguments, overwriting YAML if needed
     if output_folder:
-        if (output_folder != DEFAULT_OUTPUT_DIRECTORY
-                and (args_dict['master_csv_file'] or args_dict['cache_folder']
-                     or args_dict['block_list_file']
-                     or args_dict['duplicates_list_file'])):
-            # NOTE: we handle the -s with -o case before we get here
+
+        # We must build paths based on -o path exclusively
+        if user_passed_paths:
+
+            # This is an invalid case
             raise ValueError(
-                "Cannot combine -o with -blf, -cache, -dlf arguments, as -o"
-                " defines these paths."
+                "Cannot combine -o with -csv, -blf, -cache, -dlf arguments, "
+                "as -o defines these paths."
             )
+
+        elif settings_yaml_file:
+
+            # This is another invalid case
+            raise ValueError(
+                "Cannot combine -s YAML and -o argument, all file paths must "
+                "be specified individually."
+            )
+
         else:
-            # Set paths based on passed output_folder:
-            # NOTE: these will match defaults if using DEFAULT_OUTPUT_PATH
+            # Set paths based on passed output_folder directly:
             config['master_csv_file'] = os.path.join(
                 output_folder, 'master.csv'
             )
@@ -311,31 +313,29 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
             config['duplicates_list_file'] = os.path.join(
                 config['cache_folder'], 'duplicates.json'
             )
-            if not args_dict['log_file']:
-                # User can specify a different log location if they want.
+            if args_dict['log_file']:
+                config['log_file'] = args_dict['log_file']
+            else:
                 config['log_file'] = os.path.join(
                     output_folder, 'log.log'
                 )
+
+    elif user_passed_paths:
+
+        # Handle CLI arguments for paths, possibly overwriting YAML
+        for path_arg in PATH_ATTRS:
+            if args_dict.get(path_arg):
+                config[path_arg] = args_dict[path_arg]
     else:
-        # We should have all the paths we need
-        for path_arg in path_attrs:
-            config[path_arg] = args_dict[path_arg]
 
-        if not args_dict['log_file']:
-            # We will define log to be where the csv is.
-            config['log_file'] = os.path.join(
-                os.path.dirname(os.path.abspath(config['cache_folder'])),
-                'log.log',
-            )
+        # NOTE: we will do this so that we can run without any arguments passed
+        output_folder = DEFAULT_OUTPUT_DIRECTORY
 
-    # Turn args_dict into config dict by nesting as-needed
+    # Handle all the sub-configs, and non-path, non-default CLI args
     for key, arg_value in args_dict.items():
-        if arg_value is not None:
+        if arg_value:
             if key == 'log_level' and arg_value != DEFAULT_LOG_LEVEL_NAME:
                 # We got a non-default log level, overwrite any YAML setting
-                config[key] = arg_value
-            elif key == 'no_scrape':
-                # Default is False.
                 config[key] = arg_value
             else:
                 # Set sub-config value
@@ -344,9 +344,16 @@ def config_builder(args: argparse.Namespace) -> JobFunnelConfigManager:
                         config[sub_key][key.split(sub_key + '_')[1]] = arg_value
                         break
 
+    import pdb; pdb.set_trace()
+    return config
+
+
+def config_builder(config: Dict[str, Any]) -> JobFunnelConfigManager:
+    """Method to build Config* objects from a valid config dictionary
+    """
+
     # Create folders that out output files are within if they don't exist
-    path_attrs.append('log_file')
-    for path_attr in path_attrs:
+    for path_attr in PATH_ATTRS:
         output_dir = os.path.dirname(os.path.abspath(config[path_attr]))
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
