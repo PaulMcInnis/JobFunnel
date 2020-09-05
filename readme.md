@@ -13,7 +13,7 @@ git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnelabc
 cd jobfunnelabc
 git checkout ABCJobFunnel
 cd ../
-pip install -e abcjobfunnel
+pip install -e jobfunnelabc
 ```
 ----
 
