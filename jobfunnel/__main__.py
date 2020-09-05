@@ -3,13 +3,8 @@
 
 NOTE: you can test this from cloned source by running python -m jobfunnel
 """
-import argparse
-import sys
-from typing import Union
-import logging
-
 from .backend.jobfunnel import JobFunnel
-from .config import parse_cli, config_builder
+from .config import parse_cli, config_parser, config_builder
 
 
 def main():
@@ -17,8 +12,9 @@ def main():
     """
     # Parse CLI into a dict
     args = parse_cli()
-    do_recovery_mode = args.do_recovery_mode  # NOTE: we modify args for config
-    funnel_cfg = config_builder(args)
+    do_recovery_mode = args['do_recovery_mode']  # NOTE: we modify args below
+    cfg_dict = config_parser(args)
+    funnel_cfg = config_builder(cfg_dict)
     job_funnel = JobFunnel(funnel_cfg)
     if do_recovery_mode:
         job_funnel.recover()
