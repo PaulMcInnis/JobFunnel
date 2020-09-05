@@ -13,7 +13,7 @@ git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnelabc
 cd jobfunnelabc
 git checkout ABCJobFunnel
 cd ../
-pip install -e ABCJobFunnel
+pip install -e abcjobfunnel
 ```
 ----
 
@@ -98,7 +98,7 @@ Filter undesired companies by providing your own `yaml` configuration and adding
 ``` 
   - 'Indeed'
   - 'Monster'
-  #- 'GlassDoorStatic'
+  # - 'GlassDoorStatic'  
   # - 'GlassDoorDynamic'
 ```
 
