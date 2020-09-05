@@ -4,6 +4,19 @@
 
 Automated tool for scraping job postings into a `.csv` file.
 
+----
+__*Note (Sept 5 2020)*__: If you are having trouble scraping jobs on current release, please try `ABCJobFunnel` branch and report any bugs you encounter! Current known issues discussion in thread here: [#90](https://github.com/PaulMcInnis/JobFunnel/pull/90)
+
+Install this branch via:
+```
+git clone git@github.com:PaulMcInnis/JobFunnel.git jobfunnelabc
+cd jobfunnelabc
+git checkout ABCJobFunnel
+cd ../
+pip install -e ABCJobFunnel
+```
+----
+
 ### Benefits over job search sites:
 
 * Never see the same job twice!
