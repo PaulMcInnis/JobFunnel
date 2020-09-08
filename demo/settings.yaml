@@ -1,43 +1,41 @@
-# This is an example settings YAML, it closely mirrors our default search
+# This is an example of a feature-complete JobFunnel configuration YAML.
+# Try this out by simply running: "funnel load -s demo/settings.yaml"
 
 # Path where your master CSV, block-lists, and cache data will be stored
-# NOTE: when you are using CLI, you can just specify output_folder and we
-# will calculate these paths for you.
-master_csv_file: demo_search.csv
-cache_folder: demo_cache  # NOTE: this will be created if it doesn't exist
-block_list_file: demo_cache/demo_block_list.json
-duplicates_list_file: demo_cache/demo_duplicates_list.json
+# NOTE: we create any missing directories in these filepaths
+master_csv_file: demo_job_search_results/demo_search.csv
+cache_folder: demo_job_search_results/cache
+block_list_file: demo_job_search_results/demo_block_list.json
+duplicates_list_file: demo_job_search_results/demo_duplicates_list.json
 
 # Job search configuration
 search:
 
-  # Providers from which to search
+  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH:
+  # This tells JobFunnel where the website we are scraping is located, and
+  # what language the contents are in.
+  locale: CANADA_ENGLISH
+
+  # Job providers which we will search, one of INDEED, MONSTER, GLASSDOOR:
   # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
+  # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:
     - INDEED
     - MONSTER
 
-  # Locale settings (i.e. USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH)
-  # These are used to define the reference to what code implementation we should
-  # use for the scraper and the provider
-  locale: CANADA_ENGLISH
-
-  # Region that we are searching for jobs within
-  province_or_state: "ON"
-  city: "waterloo"
+  # Region that we are searching for jobs within:
+  province_or_state: "ON"  # NOTE: this is generally 2 characters long.
+  city: "Waterloo"  # NOTE: this is the full city / town name.
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
-  # These are the terms you would be typing into the website's search field
-  # NOTE: we will search with all the provided keywords and format according
-  # to the input format of job provider (i.e. the GET URLs).
+  # These are the terms you would be typing into the website's search field:
   keywords:
     - Python
 
-  # Don't return any listings older than this
+  # Don't return any listings older than this:
   max_listing_days: 35
 
-  # Blocked company names that will never appear in any results
-  # TODO: refactor --> block_list
+  # Blocked company names that will never appear in any results:
   company_block_list:
     - "Infox Consulting"
 
