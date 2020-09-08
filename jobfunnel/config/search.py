@@ -4,7 +4,7 @@ from typing import List, Optional
 from jobfunnel.config import BaseConfig
 from jobfunnel.resources import Locale, Provider
 from jobfunnel.resources.defaults import (
-    DEFAULT_SEARCH_RADIUS_KM, DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_SEARCH_RADIUS, DEFAULT_MAX_LISTING_DAYS,
     DEFAULT_DOMAIN_FROM_LOCALE,
 )
 
@@ -35,7 +35,7 @@ class SearchConfig(BaseConfig):
                 domain and the scrapers we will use to scrape it.
             city (Optional[str], optional): city. Defaults to None.
             distance_radius (Optional[int], optional): km/m radius. Defaults to
-                DEFAULT_SEARCH_RADIUS_KM.
+                DEFAULT_SEARCH_RADIUS.
             return_similar_results (Optional[bool], optional): return similar.
                 results (indeed), Defaults to False.
             max_listing_days (Optional[int], optional): oldest listing to show.
@@ -49,7 +49,7 @@ class SearchConfig(BaseConfig):
         super().__init__()
         self.province_or_state = province_or_state
         self.city = city.lower() if city else None
-        self.radius = distance_radius or DEFAULT_SEARCH_RADIUS_KM
+        self.radius = distance_radius or DEFAULT_SEARCH_RADIUS
         self.locale = locale
         self.providers = providers
         self.keywords = keywords

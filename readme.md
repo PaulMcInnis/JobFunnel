@@ -52,24 +52,23 @@ pip install -e ./JobFunnel
 
 ### Using JobFunnel
 
-After installation you can run with default settings and locale just by
-running:
+After installation you can search for jobs with YAML configuration files or by passing command arguments.
+
+Run the below commands to perform a demonstration job search that saves results in your local directory within a folder called `demo_job_search_results`.
 
 ```
-funnel
+wget https://www.github.com/PaulMcInnis/JobFunnel/demo/settings.yaml
+funnel load -s settings.yaml
 ```
 
-or you can review the extensive options available via CLI by running:
+If you would prefer to use the extensive CLI arguments in-place of a configuration
+YAML file, review the command structure by running the below command:
 
 ```
-funnel -h
+funnel custom -h
 ```
 
-or you can build your own `settings.yaml` file from the example provided in [demo/readme.md][demo] and run:
-
-```
-funnel -s my_own_job_search_settings.yaml
-```
+The recommended approach is to build your own `settings.yaml` file from the example provided in [demo/readme.md][demo] and run `funnel load -s <your_settings.yaml>`
 
 ----
 
@@ -77,9 +76,9 @@ funnel -s my_own_job_search_settings.yaml
 
 Follow these steps to continuously-improve your job search results CSV:
 
-1. Set your job search preferences in the `yaml` configuration file (or use `-kw`).
-2. Run `funnel` to scrape all-available job listings.
-3. Review jobs in the master-list, update the job `status` to reflect your interest or progression: `interested`, `applied`, `interview` or `offer`.
+1. Set your job search preferences in a `yaml` configuration file.
+2. Run `funnel load -s ...` to scrape all-available job listings.
+3. Review jobs in the master-list CSV, and update the job `status` to reflect your interest or progression: `interested`, `applied`, `interview` or `offer`.
 4. Set any a job `status` to `archive`, `rejected` or `delete` to  remove them from the `.csv`. ___Note: listings you filter away by `status` are persistant___
 
 ----
@@ -99,10 +98,10 @@ _NOTE: `status` values are not case-sensitive_
 ### Advanced Usage
 
 * **Managing Multiple Searches** <br />
-  JobFunnel works best if you keep distinct searches in their own `.csv` files:
+  JobFunnel works best if you keep distinct searches in their own `.csv` files, i.e.:
   ```
-  funnel -kw Python -c Waterloo -ps ON -l CANADA_ENGLISH -o canada_python
-  funnel -kw AI Machine Learning -c Seattle -ps WA -l USA_ENGLISH -o USA_ML
+  funnel custom -kw Python -c Waterloo -ps ON -l CANADA_ENGLISH -o canada_python
+  funnel custom -kw AI Machine Learning -c Seattle -ps WA -l USA_ENGLISH -o USA_ML
   ```
 
 * **Automating Searches** <br />
@@ -116,9 +115,9 @@ _NOTE: `status` values are not case-sensitive_
   JobFunnel supports scraping jobs from the same job website across differnt locales. If you are interested in adding support, you may only need to define session headers and domain strings, Review the [BaseScraper][BaseScraper] for further implementation details.
 
 * **Recovering Lost Master-list** <br />
-  JobFunnel can re-build your master CSV from the scrape cache, where all the historic scrape data is located:
+  JobFunnel can re-build your master CSV from your search's scrape cache, where all the historic scrape data is located:
   ```
-  funnel --recover
+  funnel --recover load -s my_search_settings.yaml
   ```
 
 * **Filtering Undesired Companies** <br />

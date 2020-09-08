@@ -59,7 +59,7 @@ SETTINGS_YAML_SCHEMA = {
                 'required': False,
                 'type': 'integer',
                 'min': 0,
-                'default': DEFAULT_SEARCH_RADIUS_KM,
+                'default': DEFAULT_SEARCH_RADIUS,
             },
             'similar_results': {
                 'required': False,
