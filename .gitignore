@@ -1,4 +1,8 @@
+# Outputs
 *.csv
+
+# IntelliJ/Pycharm configs
+.idea/
 
 # GraphViz
 *.dot
