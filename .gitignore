@@ -1,7 +1,4 @@
-data/
 *.csv
-demo/data/
-demo_cache
 
 # GraphViz
 *.dot
