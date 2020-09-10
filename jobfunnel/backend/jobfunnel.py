@@ -38,10 +38,9 @@ class JobFunnel(Logger):
         Args:
             config (JobFunnelConfigManager): config object containing paths etc.
         """
+        config.validate()  # NOTE: this ensures logger gets a good path
         super().__init__(level=config.log_level, file_path=config.log_file)
         self.config = config
-        self.config.create_dirs()
-        self.config.validate()
         self.__date_string = date.today().strftime("%Y-%m-%d")
         self.master_jobs_dict = {}  # type: Dict[str, Job]
 

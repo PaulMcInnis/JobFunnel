@@ -17,6 +17,7 @@ def main():
 
     # Build config manager
     funnel_cfg = get_config_manager(cfg_dict)
+    funnel_cfg.create_dirs()
 
     # Init
     job_funnel = JobFunnel(funnel_cfg)
