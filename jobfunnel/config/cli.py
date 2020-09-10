@@ -2,7 +2,7 @@
 """
 import argparse
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List
 import yaml
 
 from jobfunnel.config import (DelayConfig, JobFunnelConfigManager,
@@ -12,13 +12,7 @@ from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
 from jobfunnel.resources.defaults import *
 
 
-PATH_ATTRS = [
-    'master_csv_file', 'cache_folder', 'log_file', 'block_list_file',
-    'duplicates_list_file',
-]
-
-
-def parse_cli() -> Dict[str, Any]:
+def parse_cli(args: List[str]) -> Dict[str, Any]:
     """Parse the command line arguments into an Dict[arg_name, arg_value]
 
     TODO: need to ensure users can try out JobFunnel as easily as possible.
@@ -35,37 +29,39 @@ def parse_cli() -> Dict[str, Any]:
              'CSV, it is intended for starting fresh / recovering from a bad '
              'state.',
     )
-    
+
     base_subparsers = base_parser.add_subparsers(required=False)
-    
+
     # Configure everything via a YAML (NOTE: no other parsers may be passed)
     yaml_parser = base_subparsers.add_parser(
         'load',
         help='Run using an existing configuration YAML.',
     )
-    
+
     yaml_parser.add_argument(
         '-s',
         dest='settings_yaml_file',
         type=str,
-        help='Path to a settings YAML file containing your job search config.'
+        help='Path to a settings YAML file containing your job search config.',
+        required=True,
     )
-    
+
     yaml_parser.add_argument(
         '--no-scrape',
         action='store_true',
         help='Do not make any get requests, instead, load jobs from cache '
              'and update filters + CSV file. NOTE: overrides setting in YAML.',
     )
-    
+
     yaml_parser.add_argument(
         '-log-level',
         type=str,
         choices=LOG_LEVEL_NAMES,
         help='Type of logging information shown on the terminal. NOTE: '
-             'is passed, overrides the setting in YAML.',
+             'if passed, overrides the setting in YAML.',
+        required=False,
     )
-    
+
     # We are using CLI for all arguments.
     cli_parser = base_subparsers.add_parser(
         'custom',
@@ -255,7 +251,7 @@ def parse_cli() -> Dict[str, Any]:
 
     delay_group.add_argument(
         '-max',
-        dest='delay.max',
+        dest='delay.max_duration',
         type=float,
         default=DEFAULT_DELAY_MAX_DURATION,
         help='Set the maximum delay duration in seconds.',
@@ -263,7 +259,7 @@ def parse_cli() -> Dict[str, Any]:
 
     delay_group.add_argument(
         '-min',
-        dest='delay.min',
+        dest='delay.min_duration',
         type=float,
         default=DEFAULT_DELAY_MIN_DURATION,
         help='Set the minimum delay duration in seconds',
@@ -276,11 +272,10 @@ def parse_cli() -> Dict[str, Any]:
         default=DEFAULT_DELAY_ALGORITHM.name,
         help='Select a function to calculate delay times with.',
     )
+    return vars(base_parser.parse_args(args))
 
-    return vars(base_parser.parse_args())
 
-
-def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
+def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
     """
@@ -290,15 +285,15 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
 
         # Load YAML
         config = yaml.load(
-            open(args_dict['settings_yaml_file'], 'r'), 
+            open(args_dict['settings_yaml_file'], 'r'),
             Loader=yaml.FullLoader,
         )
-            
+
         # Inject any base level args (--no-scrape, -log-level)
         config['no_scrape'] = args_dict['no_scrape']
-        if args_dict['log-level']:
-            config['log-level'] = args_dict['log_level']
-        
+        if args_dict.get('log_level'):
+            config['log_level'] = args_dict['log_level']
+
         # Set defaults for our YAML
         config = SettingsValidator.normalized(config)
 
@@ -318,8 +313,8 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in args_dict.items():
             if key == 'do_recovery_mode':
                 # This is not present in the schema, it is CLI only.
-                continue  
-            elif value:
+                continue
+            elif value is not None:
                 if any([sub_key in key for sub_key in sub_keys]):
                     # Set sub-config value
                     key_sub_strings = key.split('.')
@@ -333,8 +328,8 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     return config
 
 
-def config_builder(config: Dict[str, Any]) -> JobFunnelConfigManager:
-    """Method to build Config* objects from a valid config dictionary
+def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
+    """Method to build JobFunnelConfigManager from a config dictionary
     """
 
     # Build JobFunnelConfigManager
@@ -380,15 +375,4 @@ def config_builder(config: Dict[str, Any]) -> JobFunnelConfigManager:
         proxy_config=proxy_cfg,
     )
 
-    # Create folders that out output files are within if they don't exist
-    # TODO: perhaps we should move this elsewhere?
-    for path_attr in PATH_ATTRS:
-        output_dir = os.path.dirname(os.path.abspath(config[path_attr]))
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-    # Validate funnel config as well (checks some stuff Cerberus doesn't rn)
-    funnel_cfg_mgr.validate()
-
     return funnel_cfg_mgr
-    
