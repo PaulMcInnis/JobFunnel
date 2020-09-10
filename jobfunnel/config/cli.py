@@ -167,6 +167,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         type=str,
         dest='search.company_block_list',
         nargs='+',
+        default=[],
         help='List of company names to omit from all search results '
              '(i.e. SpamCompany, Cash5Gold).',
         required=False,
