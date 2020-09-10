@@ -7,6 +7,7 @@ master_csv_file: demo_job_search_results/demo_search.csv
 cache_folder: demo_job_search_results/cache
 block_list_file: demo_job_search_results/demo_block_list.json
 duplicates_list_file: demo_job_search_results/demo_duplicates_list.json
+log_file: demo_job_search_results/log.log
 
 # Job search configuration
 search:

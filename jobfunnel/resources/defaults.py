@@ -1,5 +1,5 @@
 """Default arguments for both JobFunnelConfigManager and CLI arguments.
-NOTE: we include defaults for all arguments so that JobFunnel is plug-n-play
+FIXME: we need to remove un-used defaults from here
 """
 import os
 from pathlib import Path
@@ -30,7 +30,7 @@ DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
 # FIXME: re-enable glassdoor once we fix issue with it. (#87)
 DEFAULT_PROVIDERS = [Provider.MONSTER, Provider.INDEED] #, Provider.GLASSDOOR]
-DEFAULT_PROVIDER_NAMES = [p.name for p in DEFAULT_PROVIDERS] 
+DEFAULT_PROVIDER_NAMES = [p.name for p in DEFAULT_PROVIDERS]
 DEFAULT_NO_SCRAPE = False
 DEFAULT_USE_WEB_DRIVER = False
 DEFAULT_RECOVER = False

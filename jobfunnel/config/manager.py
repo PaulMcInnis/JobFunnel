@@ -99,6 +99,17 @@ class JobFunnelConfigManager(BaseConfig):
         """
         return [s.__name__ for s in self.scrapers]
 
+    def create_dirs(self) -> None:
+        """Create the directories for attributes which refer to files / folders
+        NOTE: should be called before we validate()
+        """
+        for path_attr in [self.master_csv_file, self.user_block_list_file,
+                          self.duplicates_list_file, self.cache_folder,
+                          self.log_file]:
+            output_dir = os.path.dirname(os.path.abspath(path_attr))
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
     def validate(self) -> None:
         """Validate the config object i.e. paths exit
         NOTE: will raise exceptions if issues are encountered.
