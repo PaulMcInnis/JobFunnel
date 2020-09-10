@@ -1,11 +1,9 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
-import re
-import string
 from copy import deepcopy
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import date, datetime
+from typing import Dict, List, Optional
 
 from bs4 import BeautifulSoup
 

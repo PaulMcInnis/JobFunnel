@@ -237,17 +237,16 @@ class BaseScraper(ABC, Logger):
                     )
                 )
 
-            # Loops through futures as completed and removes if successfully parsed
-            # For each job-soup object, scrape the soup into a Job  (w/o desc.)
+            # For each job-soup object, scrape the soup into a Job (w/o desc.)
             for future in tqdm(as_completed(futures), total=n_soups):
                 job = future.result()
                 if job:
-                    # Handle duplicates that exist within the scraped data itself.
-                    # NOTE: if you see alot of these our scrape for key_id is bad
+                    # Handle inter-scraped data duplicates by key.
+                    # TODO: move this functionality into duplicates filter
                     if job.key_id in jobs_dict:
                         self.logger.error(
-                            f"Job {job.title} and {jobs_dict[job.key_id].title} "
-                            f"share duplicate key_id: {job.key_id}"
+                            f"Job {job.title} and {jobs_dict[job.key_id].title}"
+                            f" share duplicate key_id: {job.key_id}"
                         )
                     jobs_dict[job.key_id] = job
 
@@ -326,27 +325,30 @@ class BaseScraper(ABC, Logger):
 
             except Exception as err:
 
+                # TODO: we should really dump the soup object to an XML file
+                # so that users encountering bugs can submit it and we can
+                # quickly fix any failing scraping.
+
                 if field in self.min_required_job_fields:
                     raise ValueError(
                         "Unable to scrape minimum-required job field: "
-                        f"{field.name} Got error:{str(err)}"
+                        f"{field.name} Got error:{str(err)}. {job.url}"
                     )
                 else:
                     # Crash out gracefully so we can continue scraping.
                     self.logger.warning(
                         f"Unable to scrape {field.name.lower()} for job:"
-                        f"\n\t{str(err)}"
+                        f"\n\t{str(err)}. {job.url}"
                     )
-                # Log the job url if we have it.
-                # TODO: we should really dump the soup object to an XML file
-                # so that users encountering bugs can submit it and we can
-                # quickly fix any failing scraping.
-                if job.url:
-                    self.logger.debug(f"Job URL was {job.url}")
 
         # Validate job fields if we got something
         if job:
-            job.validate()
+            try:
+                job.validate()
+            except Exception as err:
+                # Bad job scrapes can't take down execution!
+                self.logger.error(f"Job failed validation: {err}")
+                return None
 
         return job
     # pylint: enable=no-member

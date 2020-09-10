@@ -6,21 +6,18 @@ import json
 import logging
 import os
 import pickle
-import sys
-from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from time import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from requests import Session
 
+from jobfunnel import __version__
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools import Logger
 from jobfunnel.backend.tools.filters import DuplicatedJob, JobFilter
 from jobfunnel.config import JobFunnelConfigManager
-from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
-                                 MAX_CPU_WORKERS,
-                                 MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH, T_NOW,
+from jobfunnel.resources import (CSV_HEADER, T_NOW,
                                  DuplicateType, JobStatus, Locale)
 
 
@@ -98,7 +95,7 @@ class JobFunnel(Logger):
         if self.master_jobs_dict:
             self.update_user_block_list()
         else:
-            logging.debug(
+            self.logger.debug(
                 "No master-CSV present, did not update block-list: "
                 f"{self.config.user_block_list_file}"
             )
@@ -276,7 +273,15 @@ class JobFunnel(Logger):
                 f"{cache_file} not found! Have you scraped any jobs today?"
             )
         else:
-            jobs_dict = pickle.load(open(cache_file, 'rb'))
+            cache_dict = pickle.load(open(cache_file, 'rb'))
+            jobs_dict = cache_dict['jobs_dict']
+            version = cache_dict['version']
+            if version != __version__:
+                # NOTE: this may be an error in the future
+                self.logger.warning(
+                    "Loaded jobs cache has version mismatch! "
+                    f"cache version: {version}, current version: {__version__}"
+                )
             self.logger.info(
                 f"Read {len(jobs_dict.keys())} jobs from previously-scraped "
                 f"jobs cache: {cache_file}."
@@ -302,7 +307,13 @@ class JobFunnel(Logger):
         cache_file = cache_file if cache_file else self.daily_cache_file
         for job in jobs_dict.values():
             job._raw_scrape_data = None
-        pickle.dump(jobs_dict, open(cache_file, 'wb'))
+        pickle.dump(
+            {
+                'version': __version__,
+                'jobs_dict': jobs_dict,
+            },
+            open(cache_file, 'wb'),
+        )
         self.logger.debug(
             f"Dumped {len(jobs_dict.keys())} jobs to {cache_file}"
         )

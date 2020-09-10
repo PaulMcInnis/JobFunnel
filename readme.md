@@ -1,4 +1,4 @@
-<img src="logo/jobfunnel_banner.png" alt="JobFunnel Banner"/><br/>
+<img src="logo/jobfunnel_banner.svg" alt="JobFunnel Banner" width=400/><br/>
 [![Build Status](https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master)](https://travis-ci.com/PaulMcInnis/JobFunnel)
 [![Code Coverage](https://codecov.io/gh/PaulMcInnis/JobFunnel/branch/master/graph/badge.svg)](https://codecov.io/gh/PaulMcInnis/JobFunnel)
 
@@ -55,14 +55,6 @@ By combining regular scraping with regular reviewing, you can cut through the no
 
 # Advanced Usage
 
-* **Managing Multiple Searches** <br />
-  JobFunnel works best if you keep distinct searches in their own distinct `.csv` files, i.e.:
-  ```
-  funnel custom -kw Python ... -csv python_jobs.csv
-
-  funnel custom -kw AI Machine Learning ... -csv ml_jobs.cs
-  ```
-
 * **Automating Searches** <br />
   JobFunnel can be easily automated to run nightly with [crontab][cron] <br />
   For more information see the [crontab document][cron_doc].
@@ -76,7 +68,7 @@ By combining regular scraping with regular reviewing, you can cut through the no
 * **Blocking Companies** <br />
   Filter undesired companies by adding them to your `company_block_list` in your YAML or pass them by command line as `-cbl`.
 
-* **Filtering Old Jobs**<br />
+* **Job Age Filter**<br />
   You can configure the maximum age of scraped listings (in days) by configuring `max_listing_days`.
 
 * **Reviewing Jobs in Terminal** <br />
