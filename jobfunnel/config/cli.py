@@ -25,7 +25,7 @@ def parse_cli() -> Dict[str, Any]:
     """
     base_parser = argparse.ArgumentParser('Job Search CLI.')
 
-    # Independant arguments    
+    # Independant arguments
     base_parser.add_argument(
         '--recover',
         dest='do_recovery_mode',
@@ -62,9 +62,8 @@ def parse_cli() -> Dict[str, Any]:
         '-log-level',
         type=str,
         choices=LOG_LEVEL_NAMES,
-        default=DEFAULT_LOG_LEVEL_NAME,
         help='Type of logging information shown on the terminal. NOTE: '
-             'overrides setting in YAML.',
+             'is passed, overrides the setting in YAML.',
     )
     
     # We are using CLI for all arguments.
@@ -285,9 +284,6 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
     """
-    # NOTE: this is handled in __main__
-    args_dict.pop('do_recovery_mode')  
-
     # Build a config that respects CLI, defaults and YAML
     # NOTE: we a passed settings YAML first so we can inject CLI after if needed
     if 'settings_yaml_file' in args_dict:
@@ -298,8 +294,10 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
             Loader=yaml.FullLoader,
         )
             
-        # Inject any --no-scrape
+        # Inject any base level args (--no-scrape, -log-level)
         config['no_scrape'] = args_dict['no_scrape']
+        if args_dict['log-level']:
+            config['log-level'] = args_dict['log_level']
         
         # Set defaults for our YAML
         config = SettingsValidator.normalized(config)
@@ -318,7 +316,10 @@ def config_parser(args_dict: Dict[str, Any]) -> Dict[str, Any]:
 
         # Handle all the sub-configs, and non-path, non-default CLI args
         for key, value in args_dict.items():
-            if value:
+            if key == 'do_recovery_mode':
+                # This is not present in the schema, it is CLI only.
+                continue  
+            elif value:
                 if any([sub_key in key for sub_key in sub_keys]):
                     # Set sub-config value
                     key_sub_strings = key.split('.')
