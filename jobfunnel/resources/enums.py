@@ -7,10 +7,6 @@ class Locale(Enum):
 
     Locale must be set as it defines the code implementation to use for forming
     the correct GET requests, to allow us to interact with a job-source.
-
-    NOTE: add locales here as you need them, we do them per-country per-language
-    becuase scrapers are written per-language-per-country as this matches how
-    the information is served by job websites.
     """
     CANADA_ENGLISH = 1
     CANADA_FRENCH = 2
@@ -59,7 +55,7 @@ class JobField(Enum):
 
 class DuplicateType(Enum):
     """Ways in which a job can be a duplicate
-    NOTE: we use these to determine what action(s) to take
+    NOTE: we use these to determine what action(s) to take for a duplicate
     """
     KEY_ID = 0
     EXISTING_TFIDF = 1

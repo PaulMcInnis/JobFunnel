@@ -3,7 +3,6 @@ Paul McInnis 2020
 """
 import csv
 import json
-import logging
 import os
 import pickle
 from datetime import date, datetime, timedelta
@@ -23,10 +22,6 @@ from jobfunnel.resources import (CSV_HEADER, T_NOW,
 
 class JobFunnel(Logger):
     """Class that initializes a Scraper and scrapes a website to get jobs
-
-    NOTE: This is intended to be used with persistant cache and CSV files
-          dedicated to a single, consistant job search.
-    TODO: instead of Dic[str, Job] we should be using JobsDict
     """
 
     def __init__(self, config: JobFunnelConfigManager) -> None:
@@ -35,7 +30,7 @@ class JobFunnel(Logger):
         Args:
             config (JobFunnelConfigManager): config object containing paths etc.
         """
-        config.validate()  # NOTE: this ensures logger gets a good path
+        config.validate()  # NOTE: this ensures log file path exists
         super().__init__(level=config.log_level, file_path=config.log_file)
         self.config = config
         self.__date_string = date.today().strftime("%Y-%m-%d")
@@ -96,8 +91,8 @@ class JobFunnel(Logger):
             self.update_user_block_list()
         else:
             self.logger.debug(
-                "No master-CSV present, did not update block-list: "
-                f"{self.config.user_block_list_file}"
+                "No master-CSV present, did not update block-list: %s",
+                self.config.user_block_list_file
             )
 
         # Scrape jobs or load them from a cache if one exists (--no-scrape)
@@ -110,7 +105,7 @@ class JobFunnel(Logger):
                 scraped_jobs_dict = self.load_cache(self.daily_cache_file)
             else:
                 self.logger.warning(
-                    f"No incoming jobs, missing cache: {self.daily_cache_file}"
+                    "No incoming jobs, missing cache: %s", self.daily_cache_file
                 )
         else:
 
@@ -130,7 +125,8 @@ class JobFunnel(Logger):
             )
 
         # Parse duplicate jobs into updates for master jobs dict
-        # FIXME: we need to search for duplicates without master jobs too!
+        # NOTE: we prevent inter-scrape duplicates by key-id within BaseScraper
+        # FIXME: impl. TFIDF on inter-scrape duplicates
         duplicate_jobs = []  # type: List[DuplicatedJob]
         if self.master_jobs_dict and scraped_jobs_dict:
 
@@ -158,12 +154,13 @@ class JobFunnel(Logger):
                     # Got a key-id match, pop from scrape dict and maybe update
                     upd = self.master_jobs_dict[
                         match.duplicate.key_id].update_if_newer(
-                            scraped_jobs_dict.pop(match.duplicate.key_id)
-                    )
+                            scraped_jobs_dict.pop(match.duplicate.key_id))
+
                     self.logger.debug(
-                        f"Identified duplicate {match.duplicate.key_id} and "
-                        f"{'updated older' if upd else 'did not update'} "
-                        f"original job of same key-id with its data."
+                        "Identified duplicate %s by key-id and %s original job "
+                        "with its data.",
+                        match.duplicate.key_id,
+                        'updated older' if upd else 'did not update',
                     )
 
                 # Was it a content-match?
@@ -175,10 +172,11 @@ class JobFunnel(Logger):
                             scraped_jobs_dict.pop(match.duplicate.key_id)
                         )
                     self.logger.debug(
-                        f"Identified {match.duplicate.key_id} as a "
-                        "duplicate by contents and "
-                        f"{'updated older' if upd else 'did not update'} "
-                        f"original job {match.original.key_id} with its data."
+                        "Identified %s as a duplicate by description and %s "
+                        "original job %s with its data.",
+                        match.duplicate.key_id,
+                        'updated older' if upd else 'did not update',
+                        match.original.key_id,
                     )
 
         # Update duplicates file (if any updates are incoming)
@@ -195,7 +193,8 @@ class JobFunnel(Logger):
             # Write our updated jobs out (if none, dont make the file at all)
             self.write_master_csv(self.master_jobs_dict)
             self.logger.info(
-                f"Done. View your current jobs in {self.config.master_csv_file}"
+                "Done. View your current jobs in %s",
+                self.config.master_csv_file
             )
 
         else:
@@ -207,12 +206,25 @@ class JobFunnel(Logger):
             else:
                 self.logger.warning("No new jobs were added to CSV.")
 
+    def _check_for_inter_scraper_validity(self, existing_jobs: Dict[str, Job],
+                                           incoming_jobs: Dict[str, Job],
+                                           ) -> None:
+        """Verify that we aren't overwriting jobs by key-id between scrapers
+        NOTE: this is a slow check, would be cool to improve the O(n) on this
+        """
+        existing_job_keys = existing_jobs.keys()
+        for inc_key_id in incoming_jobs.keys():
+            for exist_key_id in existing_job_keys:
+                if inc_key_id == exist_key_id:
+                    raise ValueError(
+                        f"Inter-scraper key-id duplicate! {exist_key_id}"
+                    )
 
     def scrape(self) ->Dict[str, Job]:
         """Run each of the desired Scraper.scrape() with threading and delaying
         """
         self.logger.info(
-            f"Scraping local providers with: {self.config.scraper_names}"
+            "Scraping local providers with: %s", self.config.scraper_names
         )
 
         # Iterate thru scrapers and run their scrape.
@@ -220,15 +232,25 @@ class JobFunnel(Logger):
         for scraper_cls in self.config.scrapers:
             start = time()
             scraper = scraper_cls(self.session, self.config, self.job_filter)
-            # TODO: add a warning for overwriting different jobs with same key!
-            jobs.update(scraper.scrape())
-            end = time()
-            self.logger.debug(
-                f"Scraped {len(jobs.items())} jobs from {scraper_cls.__name__},"
-                f" took {(end - start):.3f}s"
+            incoming_jobs_dict = scraper.scrape()
+
+            # Ensure we have no duplicates between our scrapers by key-id
+            # (since we are updating the jobs dict with results)
+            self._check_for_inter_scraper_validity(
+                incoming_jobs_dict,
+                jobs,
             )
 
-        self.logger.info(f"Completed all scraping, found {len(jobs)} new jobs.")
+            jobs.update()
+            end = time()
+            self.logger.debug(
+                "Scraped %d jobs from %s, took %.3fs",
+                len(jobs.items()), scraper_cls.__name__, (end - start),
+            )
+
+        self.logger.info(
+            "Completed all scraping, found %d new jobs.", len(jobs)
+        )
         return jobs
 
     def recover(self) -> None:
@@ -238,8 +260,8 @@ class JobFunnel(Logger):
         if os.path.exists(self.config.user_block_list_file):
             self.logger.warning(
                 "Running recovery mode, but with existing block-list, delete "
-                f"{self.config.user_block_list_file} if you want to start fresh"
-                " from the cached data and not filter any jobs away."
+                "%s if you want to start fresh from the cached data and not "
+                "filter any jobs away.", self.config.user_block_list_file
             )
         all_jobs_dict = {}  # type: Dict[str, Job]
         for file in os.listdir(self.config.cache_folder):
@@ -280,11 +302,12 @@ class JobFunnel(Logger):
                 # NOTE: this may be an error in the future
                 self.logger.warning(
                     "Loaded jobs cache has version mismatch! "
-                    f"cache version: {version}, current version: {__version__}"
+                    "cache version: %s, current version: %s",
+                    version, __version__
                 )
             self.logger.info(
-                f"Read {len(jobs_dict.keys())} jobs from previously-scraped "
-                f"jobs cache: {cache_file}."
+                "Read %d jobs from previously-scraped jobs cache: %s.",
+                len(jobs_dict.keys()), cache_file,
             )
             self.logger.debug(
                 "NOTE: you may see many duplicate IDs detected if these jobs "
@@ -298,7 +321,6 @@ class JobFunnel(Logger):
 
         TODO: write search_config into the cache file and jobfunnel version
         TODO: some way to cache Job.RAW without hitting recursion limit
-        FIXME: add versioning to this
 
         Args:
             jobs_dict (Dict[str, Job]): jobs dict to dump into cache.
@@ -306,7 +328,7 @@ class JobFunnel(Logger):
         """
         cache_file = cache_file if cache_file else self.daily_cache_file
         for job in jobs_dict.values():
-            job._raw_scrape_data = None
+            job._raw_scrape_data = None  # pylint: disable=protected-access
         pickle.dump(
             {
                 'version': __version__,
@@ -315,7 +337,7 @@ class JobFunnel(Logger):
             open(cache_file, 'wb'),
         )
         self.logger.debug(
-            f"Dumped {len(jobs_dict.keys())} jobs to {cache_file}"
+            "Dumped %d jobs to %s", len(jobs_dict.keys()), cache_file
         )
 
     def read_master_csv(self) -> Dict[str, Job]:
@@ -362,7 +384,7 @@ class JobFunnel(Logger):
                             break
                 if not status:
                     self.logger.warning(
-                        f"Unknown status {status_str}, setting to UNKNOWN"
+                        "Unknown status %s, setting to UNKNOWN", status_str
                     )
                     status = JobStatus.UNKNOWN
 
@@ -376,7 +398,7 @@ class JobFunnel(Logger):
                             break
                 if not locale:
                     self.logger.warning(
-                        f"Unknown locale {locale_str}, setting to UNKNOWN"
+                        "Unknown locale %s, setting to UNKNOWN", locale_str
                     )
                     locale = locale.UNKNOWN
 
@@ -401,8 +423,8 @@ class JobFunnel(Logger):
                 jobs_dict[job.key_id] = job
 
         self.logger.debug(
-            f"Read {len(jobs_dict.keys())} jobs from master-CSV: "
-            f"{self.config.master_csv_file}"
+            "Read %d jobs from master-CSV: %s",
+            len(jobs_dict.keys()), self.config.master_csv_file
         )
         return jobs_dict
 
@@ -419,7 +441,7 @@ class JobFunnel(Logger):
                 job.validate()
                 writer.writerow(job.as_row)
         self.logger.debug(
-            f"Wrote {len(jobs)} jobs to {self.config.master_csv_file}"
+            "Wrote %d jobs to %s", len(jobs), self.config.master_csv_file,
         )
 
     def update_user_block_list(self) -> None:
@@ -437,7 +459,7 @@ class JobFunnel(Logger):
         # Try to load from CSV if master_jobs_dict is un-set
         if not self.master_jobs_dict:
             if os.path.isfile(self.config.master_csv_file):
-                self.master_jobs_dict or self.read_master_csv()
+                self.master_jobs_dict = self.read_master_csv()
             else:
                 raise FileNotFoundError(
                     f"Cannot update {self.config.user_block_list_file} without "
@@ -452,14 +474,16 @@ class JobFunnel(Logger):
                     n_jobs_added += 1
                     self.job_filter.user_block_jobs_dict[
                         job.key_id] = job.as_json_entry
-                    logging.info(
-                        f'Added {job.key_id} to '
-                        f'{self.config.user_block_list_file}'
+                    self.logger.info(
+                        "Added %s to %s",
+                        job.key_id,
+                        self.config.user_block_list_file
                     )
                 else:
+                    # This could happen if we are somehow mishandling block list
                     self.logger.warning(
-                        f"Job {job.key_id} has been set to a removable status "
-                        "and removed from master CSV multiple times."
+                        "Job %s has been set to a removable status and removed "
+                        "from master CSV multiple times.", job.key_id
                     )
 
         if n_jobs_added:
@@ -478,8 +502,8 @@ class JobFunnel(Logger):
                 )
 
             self.logger.info(
-                f"Moved {n_jobs_added} jobs into block-list due to removable "
-                f"statuses: {self.config.user_block_list_file}"
+                "Moved %d jobs into block-list due to removable statuses: %s",
+                n_jobs_added, self.config.user_block_list_file
             )
 
     def update_duplicates_file(self) -> None:

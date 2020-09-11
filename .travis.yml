@@ -11,7 +11,7 @@ script:
   # Run CANADA_ENGLISH demo by settings YAML
   - 'funnel load -s demo/settings.yaml -log-level DEBUG'
   # Run an american search by CLI
-  - 'funnel custom -kw Python Data Scientist PHD AI -ps WA -c Seattle -l USA_ENGLISH -log-level DEBUG -csv demo_job_search_results/demo_search.csv -cache demo_job_search_results/cache2 -blf demo_job_search_results/demo_block_list.json -dl demo_job_search_results/demo_duplicates_list.json -log-file demo_job_search_results/log.log'
+  - 'funnel inline -kw Python Data Scientist PHD AI -ps WA -c Seattle -l USA_ENGLISH -log-level DEBUG -csv demo_job_search_results/demo_search.csv -cache demo_job_search_results/cache2 -blf demo_job_search_results/demo_block_list.json -dl demo_job_search_results/demo_duplicates_list.json -log-file demo_job_search_results/log.log'
   - 'pytest --cov=jobfunnel --cov-report=xml'
   # - './tests/verify-artifacts.sh'  TODO: verify that JSON exist and are good
   # - './tests/verify_time.sh'   TODO: some way of verifying execution time

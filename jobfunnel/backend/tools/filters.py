@@ -1,9 +1,8 @@
 """Filters that are used in jobfunnel's filter() method or as intermediate
 filters to reduce un-necessesary scraping
+Paul McInnis 2020
 """
-import json
 import logging
-import os
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
@@ -138,7 +137,7 @@ class JobFilter(Logger):
                         ) -> List[DuplicatedJob]:
         """Remove all known duplicates from jobs_dict and update original data
 
-        FIXME: we assume there are no duplicates by content in existing jobs
+        TODO: find duplicates by content within existing jobs
 
         Args:
             existing_jobs_dict (Dict[str, Job]): dict of jobs keyed by key_id.
@@ -178,7 +177,7 @@ class JobFilter(Logger):
                 )
                 duplicate_jobs_list.append(
                     DuplicatedJob(
-                        original=None, # FIXME: we should keep original ref.
+                        original=None, # TODO: load ref from duplicates dict
                         duplicate=incoming_job,
                         type=DuplicateType.EXISTING_TFIDF,
                     )
@@ -209,7 +208,7 @@ class JobFilter(Logger):
             )
 
         # Update duplicates list with more JSON-friendly entries
-        # FIXME: we should retain a reference to the original job contents
+        # TODO: we should retain a reference to the original job's contents
         self.duplicate_jobs_dict.update({
             j.duplicate.key_id: j.duplicate.as_json_entry
             for j in duplicate_jobs_list
@@ -227,7 +226,7 @@ class JobFilter(Logger):
             removed any duplicates by key_id
         NOTE: this only uses job descriptions to do the content matching.
         NOTE: it is recommended that you have at least around 25 ish Jobs.
-        FIXME: need to handle existing_jobs_dict = None
+        TODO: need to handle existing_jobs_dict = None
         TODO: have this raise an exception if there are too few words.
         TODO: we should consider caching the transformed corpus.
 
@@ -258,7 +257,7 @@ class JobFilter(Logger):
                 if is_incoming and job.key_id in self.duplicate_jobs_dict:
                     # NOTE: we should never see this for incoming jobs.
                     # we will see it for existing jobs since duplicates can
-                    # share a key_id. FIXME: need to look closer into this.
+                    # share a key_id.
                     raise ValueError(
                         "Attempting to run TFIDF with existing duplicate "
                         f"{job.key_id}"
@@ -301,7 +300,7 @@ class JobFilter(Logger):
             corpus = query_words
 
         # Provide a warning if we have few words.
-        # FIXME: warning should reflect actual corpus size
+        # TODO: warning should reflect actual corpus size
         if len(corpus) < self.min_tfidf_corpus_size:
             self.logger.warning(
                 "It is not recommended to use this filter with less than "
@@ -331,7 +330,7 @@ class JobFilter(Logger):
 
             # Identify the jobs in existing_jobs_dict that our query is a
             # duplicate of
-            # FIXME: handle if everything is highly similar!
+            # TODO: handle if everything is highly similar!
             similar_indeces = np.where(
                 query_similarities >= self.max_similarity
             )[0]

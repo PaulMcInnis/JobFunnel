@@ -1,6 +1,9 @@
 coverage:
+  # FIXME: Set these back to automatic once we up coverage more
   status:
     patch:
       default:
         target: 30%
-
+    project:
+      default:
+        target: 30%

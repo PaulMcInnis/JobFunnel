@@ -1,5 +1,5 @@
 """Default arguments for both JobFunnelConfigManager and CLI arguments.
-FIXME: we need to remove un-used defaults from here
+NOTE: Not all defaults here are used, as we rely on YAML for demo and not kwargs
 """
 import os
 from pathlib import Path

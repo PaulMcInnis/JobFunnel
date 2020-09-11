@@ -16,7 +16,7 @@ TEST_YAML = os.path.join('tests', 'data', 'test_config.yml')
     (['load', '-s', TEST_YAML, '-log-level', 'WARNING'], None),
     (['load', '-s', TEST_YAML, '--no-scrape'], None),
     # Test schema from CLI
-    (['custom', '-csv', 'TEST_search', '-log-level', 'DEBUG', '-cache',
+    (['inline', '-csv', 'TEST_search', '-log-level', 'DEBUG', '-cache',
       'TEST_cache', '-blf', 'TEST_block_list', '-dl', 'TEST_duplicates_list',
       '-log-file', 'TEST_log_file', '-kw', 'I', 'Am', 'Testing', '-l',
       'CANADA_ENGLISH', '-ps', 'TESTPS', '-c', 'TestCity', '-cbl',
@@ -26,7 +26,7 @@ TEST_YAML = os.path.join('tests', 'data', 'test_config.yml')
     # Invalid cases
     (['load'], SystemExit),
     (['load', '-csv', 'boo'], SystemExit),
-    (['custom', '-csv', 'TEST_search', '-log-level', 'DEBUG', '-cache',
+    (['inline', '-csv', 'TEST_search', '-log-level', 'DEBUG', '-cache',
       'TEST_cache', '-blf', 'TEST_block_list', '-dl',
       'TEST_duplicates_list'], SystemExit),
     (['-csv', 'test.csv'], SystemExit),

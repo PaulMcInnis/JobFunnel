@@ -23,35 +23,34 @@ pip install git+https://github.com/PaulMcInnis/JobFunnel.git
 ```
 
 # Usage
+By performing regular scraping and reviewing, you can cut through the noise of even the busiest job markets.
 
-After installation you can search for jobs with YAML configuration files or by passing command arguments.
+## Configure
+You can search for jobs with YAML configuration files or by passing command arguments.
 
-## Configuring
-
-Begin by customizing our [demo settings][demo_yaml] to suit your needs:
+Get started by customizing our demo [settings.yaml][demo_yaml] to suit your needs:
 ```
 wget https://raw.githubusercontent.com/PaulMcInnis/JobFunnel/master/demo/settings.yaml -O my_settings.yaml
 nano my_settings.yaml
 ```
 
-_NOTE: It is recommended to provide as few search keywords as possible (i.e. try using `AI`, `Python` instead of `Software`, `Developer`, `Python`, `AI`)._
+_NOTE: It is recommended to provide as few search keywords as possible (i.e. try using `Python`, `AI` instead of `Software`, `Developer`, `Python`, `AI`)._
 
-## Scraping
-Run `funnel` to populate your master CSV file with jobs:
+## Scrape
+
+Run `funnel` to populate your master CSV file with jobs from available providers:
 
 ```
 funnel load -s my_settings.yaml
 ```
 
-## Reviewing
+## Review
 
-Open the master CSV file and update the jobs' `status`:
+Open the master CSV file and update the per-job `status`:
 
-* Set to `interested`, `applied`, `interview` or `offer` to reflect interest or progression on the job.
+* Set to `interested`, `applied`, `interview` or `offer` to reflect your progression on the job.
 
-* Set to `archive`, `rejected` or `delete` to  remove a job from the `.csv` permanently (for this search). You can review 'blocked' jobs within your `block_list_file`.
-
-By combining regular scraping with regular reviewing, you can cut through the noise of even the busiest job markets.
+* Set to `archive`, `rejected` or `delete` to remove a job from this search. You can review 'blocked' jobs within your `block_list_file`.
 
 # Advanced Usage
 
@@ -68,7 +67,7 @@ By combining regular scraping with regular reviewing, you can cut through the no
 * **Blocking Companies** <br />
   Filter undesired companies by adding them to your `company_block_list` in your YAML or pass them by command line as `-cbl`.
 
-* **Job Age Filter**<br />
+* **Job Age Filter** <br />
   You can configure the maximum age of scraped listings (in days) by configuring `max_listing_days`.
 
 * **Reviewing Jobs in Terminal** <br />
@@ -91,7 +90,7 @@ By combining regular scraping with regular reviewing, you can cut through the no
 * **Running by CLI** <br />
   You can run JobFunnel using CLI only, review the command structure via:
   ```
-  funnel custom -h
+  funnel inline -h
   ```
 
 <!-- links -->

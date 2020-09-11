@@ -1,7 +1,6 @@
 """Configuration parsing module for CLI --> JobFunnelConfigManager
 """
 import argparse
-import os
 from typing import Dict, Any, List
 import yaml
 
@@ -64,7 +63,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
 
     # We are using CLI for all arguments.
     cli_parser = base_subparsers.add_parser(
-        'custom',
+        'inline',
         help='Configure search query and data providers via CLI.',
     )
 
@@ -121,7 +120,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         '-log-file',
         type=str,
         help='Path to log file.',
-        required=True,  # FIXME: This should be optional (no writing to it all).
+        required=True,  # TODO: This should be optional (no writing to it all).
     )
 
     # SearchConfig via CLI args subparser
@@ -167,7 +166,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         type=str,
         dest='search.company_block_list',
         nargs='+',
-        default=[],
+        default=DEFAULT_COMPANY_BLOCK_LIST,
         help='List of company names to omit from all search results '
              '(i.e. SpamCompany, Cash5Gold).',
         required=False,

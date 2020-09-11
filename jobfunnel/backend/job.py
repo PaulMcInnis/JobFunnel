@@ -114,7 +114,6 @@ class Job():
         on the same day, the comparison will favour the extra info as newer!
         TODO: we should do more checks to ensure we are not seeing a totally
         different job by accident (since this check is usually done by key_id)
-        TODO: more elegant way? maybe we can deepcopy self?
         TODO: Currently we do day precision but if we wanted to update because
         something is newer by hours we will need to revisit this limitation and
         store scrape hour/etc in the CSV as well.
@@ -139,7 +138,9 @@ class Job():
             self.scrape_date = deepcopy(job.scrape_date)
             self.tags = deepcopy(job.tags)
             self.short_description = deepcopy(job.short_description)
+            # pylint: disable=protected-access
             self._raw_scrape_data = deepcopy(job._raw_scrape_data)
+            # pylint: enable=protected-access
             return True
         else:
             return False
@@ -189,31 +190,29 @@ class Job():
     def as_json_entry(self) -> Dict[str, str]:
         """This formats a job for the purpose of saving it to a block JSON
         i.e. duplicates list file or user's block list file
-        NOTE: we truncate descriptions in block lists, TODO: use 'short' desc
+        NOTE: we truncate descriptions in block lists
         """
         return {
             'title': self.title,
             'company': self.company,
             'post_date': self.post_date.strftime('%Y-%m-%d'),
             'description': (
-                    self.description[:MAX_BLOCK_LIST_DESC_CHARS]
-                    + '..'
-                )
-                if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS
-                else self.description,
+                self.description[:MAX_BLOCK_LIST_DESC_CHARS] + '..'
+            ) if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS else (
+                self.description
+            ),
             'status': self.status.name,
         }
 
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
-        TODO: do this automatically upon assignment (override assignment)
         TODO: maybe we can use stopwords?
         """
         for attr in [self.title, self.company, self.description, self.tags,
                      self.url, self.key_id, self.provider, self.query,
                      self.wage]:
             attr = ''.join(
-                filter(lambda x: x in PRINTABLE_STRINGS, self.title)
+                filter(lambda x: x in PRINTABLE_STRINGS, attr)
             )
 
     def validate(self) -> None:

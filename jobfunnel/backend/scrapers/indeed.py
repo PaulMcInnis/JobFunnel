@@ -104,7 +104,7 @@ class BaseIndeedScraper(BaseScraper):
         # Parse total results, and calculate the # of pages needed
         pages = self._get_num_search_result_pages(search_url)
         self.logger.info(
-            f"Found {pages} pages of search results for query={self.query}"
+            "Found %d pages of search results for query=%s", pages, self.query
         )
 
         # Init list of job soups
@@ -208,7 +208,7 @@ class BaseIndeedScraper(BaseScraper):
                     self.query,
                     self.config.search_config.city.replace(' ', '+',),
                     self.config.search_config.province_or_state.upper(),
-                    self._convert_radius(self.config.search_config.radius),
+                    self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
                     int(self.config.search_config.return_similar_results)
                 )
@@ -219,7 +219,7 @@ class BaseIndeedScraper(BaseScraper):
         else:
             raise ValueError(f'No html method {method} exists')
 
-    def _convert_radius(self, radius: int) -> int:
+    def _quantize_radius(self, radius: int) -> int:
         """Quantizes the user input radius to a valid radius value into:
         5, 10, 15, 25, 50, 100, and 200 kilometers or miles.
         TODO: implement with numpy instead of if/else cases.
@@ -280,9 +280,8 @@ class BaseIndeedScraper(BaseScraper):
 class IndeedScraperCANEng(BaseIndeedScraper, BaseCANEngScraper):
     """Scrapes jobs from www.indeed.ca
     """
-    pass
+
 
 class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
     """Scrapes jobs from www.indeed.com
     """
-    pass

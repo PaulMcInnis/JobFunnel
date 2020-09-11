@@ -68,7 +68,7 @@ class JobFunnelConfigManager(BaseConfig):
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
-        self.bs4_parser = bs4_parser  # TODO: add to config YAML?
+        self.bs4_parser = bs4_parser  # NOTE: this is not currently configurable
         self.return_similar_results = return_similar_results
         if not delay_config:
             # We will always use a delay config to be respectful

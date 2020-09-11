@@ -1,7 +1,5 @@
 #!python
 """Builds a config from CLI, runs desired scrapers and updates JSON + CSV
-
-NOTE: you can test this from cloned source by running python -m jobfunnel
 """
 import sys
 from .backend.jobfunnel import JobFunnel
