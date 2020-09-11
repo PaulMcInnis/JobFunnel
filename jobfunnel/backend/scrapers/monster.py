@@ -168,7 +168,7 @@ class BaseMonsterScraper(BaseScraper):
         # Parse total results, and calculate the # of pages needed
         n_pages = self._get_num_search_result_pages(initial_search_results_soup)
         self.logger.info(
-            f"Found {n_pages} pages of search results for query={self.query}"
+            "Found %d pages of search results for query=%s", n_pages, self.query
         )
 
         # Get first page of listing soups from our search results listings page
@@ -256,7 +256,6 @@ class BaseMonsterScraper(BaseScraper):
     def _convert_radius(self, radius: int) -> int:
         """NOTE: radius conversion is units/locale specific
         """
-        pass
 
 class MonsterScraperCANEng(BaseMonsterScraper, BaseCANEngScraper):
     """Scrapes jobs from www.monster.ca

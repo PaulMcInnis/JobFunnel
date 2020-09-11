@@ -53,7 +53,6 @@ class BaseGlassDoorScraper(BaseScraper):
     def quantize_radius(self, radius: int) -> int:
         """Get the glassdoor-quantized radius
         """
-        pass
 
     @property
     def job_get_fields(self) -> str:

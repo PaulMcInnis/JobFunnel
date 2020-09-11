@@ -1,4 +1,5 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
+Paul McInnis 2020
 """
 import random
 from abc import ABC, abstractmethod
@@ -47,13 +48,10 @@ class BaseScraper(ABC, Logger):
             ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
         # Inits
-        super().__init__(
-            level=config.log_level,
-            file_path=config.log_file,
-        )
-        self.job_filter=job_filter
-        self.session=session
-        self.config=config
+        super().__init__(level=config.log_level, file_path=config.log_file)
+        self.job_filter = job_filter
+        self.session = session
+        self.config = config
         if self.headers:
             self.session.headers.update(self.headers)
 
@@ -127,37 +125,6 @@ class BaseScraper(ABC, Logger):
         ]
 
     @property
-    @abstractmethod
-    def job_get_fields(self) -> List[JobField]:
-        """Call self.get(...) for the JobFields in this list when scraping a Job.
-
-        NOTE: these will be passed job listing soups, if you have data you need
-        to populate that exists in the Job.RAW (the soup from the listing's own
-        page), you should use job_set_fields.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def job_set_fields(self) -> List[JobField]:
-        """Call self.set(...) for the JobFields in this list when scraping a Job
-
-        NOTE: You should generally set the job's own page as soup to RAW first
-        and then populate other fields from this soup, or from each-other here.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def delayed_get_set_fields(self) -> List[JobField]:
-        """Delay execution when getting /setting any of these attributes of a
-        job.
-
-        TODO: handle this within an overridden self.session.get()
-        """
-        pass
-
-    @property
     def high_priority_get_set_fields(self) -> List[JobField]:
         """These get() and/or set() fields will be populated first.
 
@@ -167,6 +134,34 @@ class BaseScraper(ABC, Logger):
         NOTE: override as needed.
         """
         return []
+
+    @property
+    @abstractmethod
+    def job_get_fields(self) -> List[JobField]:
+        """Call self.get(...) for the JobFields in this list when scraping a Job.
+
+        NOTE: these will be passed job listing soups, if you have data you need
+        to populate that exists in the Job.RAW (the soup from the listing's own
+        page), you should use job_set_fields.
+        """
+
+    @property
+    @abstractmethod
+    def job_set_fields(self) -> List[JobField]:
+        """Call self.set(...) for the JobFields in this list when scraping a Job
+
+        NOTE: You should generally set the job's own page as soup to RAW first
+        and then populate other fields from this soup, or from each-other here.
+        """
+
+    @property
+    @abstractmethod
+    def delayed_get_set_fields(self) -> List[JobField]:
+        """Delay execution when getting /setting any of these attributes of a
+        job.
+
+        TODO: handle this within an overridden self.session.get()
+        """
 
     @property
     @abstractmethod
@@ -180,7 +175,6 @@ class BaseScraper(ABC, Logger):
 
         NOTE: it is best to inherit this from Base<Locale>Class (btm. of file)
         """
-        pass
 
     @property
     @abstractmethod
@@ -188,7 +182,6 @@ class BaseScraper(ABC, Logger):
         """The Session headers for this scraper to be used with
         requests.Session.headers.update()
         """
-        pass
 
     def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
@@ -208,11 +201,10 @@ class BaseScraper(ABC, Logger):
             )
         n_soups = len(job_soups)
         self.logger.info(
-            f"Scraped {n_soups} job listings from search results pages"
+            "Scraped %s job listings from search results pages", n_soups
         )
 
         # Init a Manager so we can control delaying
-        # TODO: make session use async io to coordinate on-the-fly delaying.
         # this is assuming every job will incur one delayed session.get()
         # NOTE pylint issue: https://github.com/PyCQA/pylint/issues/3313
         delay_lock = self.thread_manager.Lock()  # pylint: disable=no-member
@@ -245,10 +237,11 @@ class BaseScraper(ABC, Logger):
                     # TODO: move this functionality into duplicates filter
                     if job.key_id in jobs_dict:
                         self.logger.error(
-                            f"Job {job.title} and {jobs_dict[job.key_id].title}"
-                            f" share duplicate key_id: {job.key_id}"
+                            "Job %s and %s share duplicate key_id: %s",
+                            job.title, jobs_dict[job.key_id].title, job.key_id
                         )
-                    jobs_dict[job.key_id] = job
+                    else:
+                        jobs_dict[job.key_id] = job
 
         finally:
             # Cleanup
@@ -284,28 +277,28 @@ class BaseScraper(ABC, Logger):
 
             # Break out immediately because we have failed a filterable
             # condition with something we initialized while scraping.
-            # NOTE: if we pre-empt scraping duplicates we cannot update
-            # the existing job listing with the new information!
-            # TODO: make this configurable?
             if job and self.job_filter.filterable(job):
                 if self.job_filter.is_duplicate(job):
-                    # FIXME: make this configurable
+                    # NOTE: if we pre-empt scraping duplicates we cannot update
+                    # the existing job listing with the new information!
+                    # TODO: make this behaviour configurable? ('minimal-get' ?)
                     self.logger.debug(
-                        f"Scraped job {job.key_id} has key_id "
-                        "in known duplicates list. Continuing scrape of job "
-                        "to update existing job attributes."
+                        "Scraped job %s has key_id in known duplicates list. "
+                        "Continuing scrape of job to update existing job "
+                        "attributes.",
+                        job.key_id
                     )
                 else:
                     self.logger.debug(
-                        f"Cancelled scraping of {job.key_id}, failed JobFilter"
-                    )  # TODO a reason would be nice maybe JobFilterFailure ?
+                        "Cancelled scraping of %s, failed JobFilter",
+                        job.key_id
+                    )
                     break
 
             # Respectfully delay if it's configured to do so.
-            # TODO: move into overriden session and manage this access there.
             if field in self.delayed_get_set_fields:
                 if delay_lock:
-                    self.logger.debug(f"Delaying for {delay}")
+                    self.logger.debug("Delaying for %.4f", delay)
                     with delay_lock:
                         sleep(delay)
                 else:
@@ -337,8 +330,10 @@ class BaseScraper(ABC, Logger):
                 else:
                     # Crash out gracefully so we can continue scraping.
                     self.logger.warning(
-                        f"Unable to scrape {field.name.lower()} for job:"
-                        f"\n\t{str(err)}. {job.url}"
+                        "Unable to scrape %s for job: %s. %s",
+                        field.name.lower(),
+                        err,
+                        job.url,
                     )
 
         # Validate job fields if we got something
@@ -347,7 +342,7 @@ class BaseScraper(ABC, Logger):
                 job.validate()
             except Exception as err:
                 # Bad job scrapes can't take down execution!
-                self.logger.error(f"Job failed validation: {err}")
+                self.logger.error("Job failed validation: %s", err)
                 return None
 
         return job
@@ -364,7 +359,6 @@ class BaseScraper(ABC, Logger):
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make a Job
         """
-        pass
 
     @abstractmethod
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
@@ -373,7 +367,6 @@ class BaseScraper(ABC, Logger):
         i.e. if param is JobField.COMPANY --> scrape from soup --> return str
         TODO: better way to handle ret type?
         """
-        pass
 
     @abstractmethod
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
@@ -384,11 +377,7 @@ class BaseScraper(ABC, Logger):
 
         i.e. I can set() the Job.RAW to be the soup of it's own dedicated web
         page (Job.URL), then I can set() my Job.DESCRIPTION from the Job.RAW
-
-        NOTE: (remember) do not return anything in here! it sets job attribs
-        FIXME: have this automatically set the attribute by JobField.
         """
-        pass
 
     def _validate_get_set(self) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect
@@ -421,19 +410,18 @@ class BaseScraper(ABC, Logger):
                               JobField.SHORT_DESCRIPTION, JobField.RAW]
                     and field not in self.job_get_fields
                     and field not in self.job_set_fields):
-                        excluded_fields.append(field)
+                excluded_fields.append(field)
         if excluded_fields:
             # NOTE: INFO level because this is OK, but ideally ppl see this
             # so they are motivated to help and understand why stuff might
             # be missing in the CSV
             self.logger.info(
-                "No get() or set() will be done for Job attrs: "
-                f"{[field.name for field in excluded_fields]}"
+                "No get() or set() will be done for Job attrs: %s",
+                [field.name for field in excluded_fields]
             )
 
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
-# TODO: move into own file once we get enough of em...
 class BaseUSAEngScraper(BaseScraper):
     """Localized scraper for USA English
     """

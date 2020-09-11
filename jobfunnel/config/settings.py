@@ -36,7 +36,7 @@ SETTINGS_YAML_SCHEMA = {
         'default': DEFAULT_LOG_LEVEL_NAME,
     },
     'log_file': {
-        'required': False,
+        'required': True,  # TODO: allow this to be optional
         'type': 'string',
         'default': DEFAULT_LOG_FILE,
     },
@@ -139,6 +139,7 @@ SETTINGS_YAML_SCHEMA = {
         },
     },
 }
+
 
 
 class JobFunnelSettingsValidator(Validator):

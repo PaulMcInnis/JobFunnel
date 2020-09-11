@@ -17,7 +17,20 @@ class DelayConfig(BaseConfig):
                  algorithm: DelayAlgorithm = DEFAULT_DELAY_ALGORITHM,
                  random: bool = DEFAULT_RANDOM_DELAY,
                  converge: bool = DEFAULT_RANDOM_CONVERGING_DELAY):
-        # TODO: document
+        """Delaying Configuration for GET requests
+
+        Args:
+            max_duration (float, optional): max duration.
+                Defaults to DEFAULT_DELAY_MAX_DURATION.
+            min_duration (float, optional): min duration.
+                Defaults to DEFAULT_DELAY_MIN_DURATION.
+            algorithm (DelayAlgorithm, optional): algorithm.
+                Defaults to DEFAULT_DELAY_ALGORITHM.
+            random (bool, optional): [enable random delaying.
+                Defaults to DEFAULT_RANDOM_DELAY.
+            converge (bool, optional): enable random converging delaying.
+                Defaults to DEFAULT_RANDOM_CONVERGING_DELAY.
+        """
         super().__init__()
         self.max_duration = max_duration
         self.min_duration = min_duration

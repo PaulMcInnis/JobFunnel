@@ -53,7 +53,7 @@ class SearchConfig(BaseConfig):
         self.locale = locale
         self.providers = providers
         self.keywords = keywords
-        self.return_similar_results = return_similar_results  # indeed thing
+        self.return_similar_results = return_similar_results  # Indeed.X thing
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
         self.remote = remote
@@ -74,6 +74,11 @@ class SearchConfig(BaseConfig):
 
     def validate(self):
         """We need to have the right information set, not mixing stuff
-        TODO: impl. with _validate_type_ipv4address
         """
-        pass
+        assert self.province_or_state, "Province/State not set"
+        assert self.city, "City not set"
+        assert self.locale, "Locale not set"
+        assert self.providers and len(self.providers) >= 1, "Providers not set"
+        assert self.keywords and len(self.keywords) >= 1, "Keywords not set"
+        assert self.max_listing_days >= 1, "Cannot set max posting days < 1"
+        assert self.domain and '.' in self.domain, "Invalid domain"
