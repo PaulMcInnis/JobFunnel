@@ -1,5 +1,6 @@
 # Outputs
 *.csv
+demo_job_search_results
 
 # IntelliJ/Pycharm configs
 .idea/
