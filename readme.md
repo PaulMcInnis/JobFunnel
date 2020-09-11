@@ -28,13 +28,14 @@ By performing regular scraping and reviewing, you can cut through the noise of e
 ## Configure
 You can search for jobs with YAML configuration files or by passing command arguments.
 
-Get started by customizing our demo [settings.yaml][demo_yaml] to suit your needs:
+Get started by customizing our demo [settings.yaml][demo_yaml] to suit your needs (or just run it as-is):
 ```
 wget https://raw.githubusercontent.com/PaulMcInnis/JobFunnel/master/demo/settings.yaml -O my_settings.yaml
-nano my_settings.yaml
 ```
+_NOTE:_
+* _It is recommended to provide as few search keywords as possible (i.e. `Python`, `AI`)._
 
-_NOTE: It is recommended to provide as few search keywords as possible (i.e. try using `Python`, `AI` instead of `Software`, `Developer`, `Python`, `AI`)._
+* _JobFunnel currently only supports `CANADA_ENGLISH` and `USA_ENGLISH` locales._
 
 ## Scrape
 
@@ -84,7 +85,7 @@ Open the master CSV file and update the per-job `status`:
 * **Recovering Lost Data** <br />
   JobFunnel can re-build your master CSV from your `cache_folder` where all the historic scrape data is located:
   ```
-  funnel --recover ...
+  funnel --recover
   ```
 
 * **Running by CLI** <br />

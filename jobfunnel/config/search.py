@@ -81,4 +81,4 @@ class SearchConfig(BaseConfig):
         assert self.providers and len(self.providers) >= 1, "Providers not set"
         assert self.keywords and len(self.keywords) >= 1, "Keywords not set"
         assert self.max_listing_days >= 1, "Cannot set max posting days < 1"
-        assert self.domain and '.' in self.domain, "Invalid domain"
+        assert self.domain, "Domain not set"
