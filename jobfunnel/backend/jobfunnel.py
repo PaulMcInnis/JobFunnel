@@ -474,7 +474,7 @@ class JobFunnel(Logger):
                     n_jobs_added += 1
                     self.job_filter.user_block_jobs_dict[
                         job.key_id] = job.as_json_entry
-                    self.logger.info(
+                    self.logger.debug(
                         "Added %s to %s",
                         job.key_id,
                         self.config.user_block_list_file

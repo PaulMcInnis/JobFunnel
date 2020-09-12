@@ -167,6 +167,16 @@ class BaseMonsterScraper(BaseScraper):
 
         # Parse total results, and calculate the # of pages needed
         n_pages = self._get_num_search_result_pages(initial_search_results_soup)
+
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not n_pages:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+
         self.logger.info(
             "Found %d pages of search results for query=%s", n_pages, self.query
         )

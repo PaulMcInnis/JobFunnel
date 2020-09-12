@@ -28,10 +28,12 @@ By performing regular scraping and reviewing, you can cut through the noise of e
 ## Configure
 You can search for jobs with YAML configuration files or by passing command arguments.
 
-Get started by customizing our demo [settings.yaml][demo_yaml] to suit your needs (or just run it as-is):
+Download the demo [settings.yaml][demo_yaml] by running the below command:
+
 ```
-wget https://raw.githubusercontent.com/PaulMcInnis/JobFunnel/master/demo/settings.yaml -O my_settings.yaml
+wget https://git.io/JUWer -O my_settings.yaml
 ```
+
 _NOTE:_
 * _It is recommended to provide as few search keywords as possible (i.e. `Python`, `AI`)._
 
@@ -39,7 +41,7 @@ _NOTE:_
 
 ## Scrape
 
-Run `funnel` to populate your master CSV file with jobs from available providers:
+Run `funnel` with your settings YAML to populate your master CSV file with jobs from available providers:
 
 ```
 funnel load -s my_settings.yaml

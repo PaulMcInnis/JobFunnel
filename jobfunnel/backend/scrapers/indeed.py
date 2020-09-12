@@ -266,7 +266,17 @@ class BaseIndeedScraper(BaseScraper):
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
         query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id='searchCountPages').contents[0].strip()
+        num_res = query_resp.find(id='searchCountPages')
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not num_res:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+
+        num_res = num_res.contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
         number_of_pages = int(ceil(num_res / self.max_results_per_page))
         if max_pages == 0:

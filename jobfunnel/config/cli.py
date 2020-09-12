@@ -29,7 +29,11 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
              'state.',
     )
 
-    base_subparsers = base_parser.add_subparsers(required=False)
+    base_subparsers = base_parser.add_subparsers(
+        dest='load | inline',
+        help='Pass load with a YAML config or inline to pass args by CLI.',
+        required=True,
+    )
 
     # Configure everything via a YAML (NOTE: no other parsers may be passed)
     yaml_parser = base_subparsers.add_parser(
