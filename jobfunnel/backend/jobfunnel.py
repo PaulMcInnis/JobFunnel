@@ -241,7 +241,7 @@ class JobFunnel(Logger):
                 jobs,
             )
 
-            jobs.update()
+            jobs.update(incoming_jobs_dict)
             end = time()
             self.logger.debug(
                 "Scraped %d jobs from %s, took %.3fs",
