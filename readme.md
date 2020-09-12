@@ -31,7 +31,7 @@ You can search for jobs with YAML configuration files or by passing command argu
 Download the demo [settings.yaml][demo_yaml] by running the below command:
 
 ```
-wget https://git.io/JUWer -O my_settings.yaml
+wget https://git.io/JUWeP -O my_settings.yaml
 ```
 
 _NOTE:_
