@@ -200,10 +200,10 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     search_group.add_argument(
         '-remoteness',
         dest='search.remoteness',
-        type=int,
-        default=DEFAULT_SEARCH_RADIUS,
-        help='The maximum distance a job should be from the specified city. '
-             'NOTE: units are [km] CANADA locales and [mi] for US locales.',
+        type=str,
+        default=DEFAULT_REMOTENESS,
+        help='The level of remoteness of the job, (i.e. FULLY_REMOTE) '
+             'Defaults to ANY.',
         required=False,
     )
 
