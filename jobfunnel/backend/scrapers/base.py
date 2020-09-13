@@ -342,6 +342,8 @@ class BaseScraper(ABC, Logger):
                 job.validate()
             except Exception as err:
                 # Bad job scrapes can't take down execution!
+                # NOTE: desc too short etc, usually indicates that the job
+                # is an empty page. Not sure why this comes up once in awhile...
                 self.logger.error("Job failed validation: %s", err)
                 return None
 

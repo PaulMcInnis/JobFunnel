@@ -201,7 +201,8 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         '-remoteness',
         dest='search.remoteness',
         type=str,
-        default=DEFAULT_REMOTENESS,
+        choices=[p.name for p in Remoteness],
+        default=DEFAULT_REMOTENESS.name,
         help='The level of remoteness of the job, (i.e. FULLY_REMOTE) '
              'Defaults to ANY.',
         required=False,
