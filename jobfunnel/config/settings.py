@@ -87,7 +87,7 @@ SETTINGS_YAML_SCHEMA = {
                 'required': False,
                 'type': 'string',
                 'allowed': [r.name for r in Remoteness],
-                'default': DEFAULT_REMOTENESS,
+                'default': DEFAULT_REMOTENESS.name,
             }
         },
     },
