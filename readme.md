@@ -9,7 +9,6 @@ Automated tool for scraping job postings into a `.csv` file.
 * Never see the same job twice!
 * No advertising.
 * See jobs from multiple job search websites all in one place.
-* Get results which are explicitly remote, not just _temporarily_ remote.
 
 ![masterlist.csv][masterlist]
 
@@ -63,6 +62,9 @@ Open the master CSV file and update the per-job `status`:
 
 * **Writing your own Scrapers** <br />
   If you have a job website you'd like to write a scraper for, you are welcome to implement it, Review the [Base Scraper][basescraper] for implementation details.
+
+* **Remote Work** <br />
+  Bypass a frustrating user experience looking for remote work by setting the search parameter `remoteness` to match your desired level, i.e. `FULLY_REMOTE`.
 
 * **Adding Support for X Language / Job Website** <br />
   JobFunnel supports scraping jobs from the same job website across locales & domains. If you are interested in adding support, you may only need to define session headers and domain strings, Review the [Base Scraper][basescraper] for further implementation details.
