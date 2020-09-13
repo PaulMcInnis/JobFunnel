@@ -50,7 +50,18 @@ class JobField(Enum):
     RAW = 13
     TAGS = 14
     WAGE = 15
-    REMOTE = 16
+    REMOTENESS = 16
+
+
+class Remoteness(Enum):
+    """What level of remoteness is a Job?
+    """
+    UNKNOWN = 1  # NOTE: invalid state
+    IN_PERSON = 2
+    TEMPORARILY_REMOTE = 3  # AKA Cuz' COVID, realistically this is not remote!
+    PARTIALLY_REMOTE = 4
+    FULLY_REMOTE = 5
+    ANY = 6
 
 
 class DuplicateType(Enum):

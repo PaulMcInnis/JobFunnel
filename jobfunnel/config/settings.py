@@ -5,8 +5,9 @@ import ipaddress
 from cerberus import Validator
 
 from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
-                                 Provider)
+                                 Provider, Remoteness)
 from jobfunnel.resources.defaults import *
+
 
 SETTINGS_YAML_SCHEMA = {
     'master_csv_file': {
@@ -25,20 +26,19 @@ SETTINGS_YAML_SCHEMA = {
         'required': True,
         'type': 'string',
     },
+    'log_file': {
+        'required': True,  # TODO: allow this to be optional
+        'type': 'string',
+    },
     'no_scrape': {
-        'required': False,
+        'required': False,  # TODO: we should consider making this CLI only
         'type': 'boolean',
-        'default': DEFAULT_NO_SCRAPE,
+        'default': False,
     },
     'log_level': {
         'required': False,
         'allowed': LOG_LEVEL_NAMES,
         'default': DEFAULT_LOG_LEVEL_NAME,
-    },
-    'log_file': {
-        'required': True,  # TODO: allow this to be optional
-        'type': 'string',
-        'default': DEFAULT_LOG_FILE,
     },
     'search': {
         'type': 'dict',
@@ -83,6 +83,12 @@ SETTINGS_YAML_SCHEMA = {
                 'schema': {'type': 'string'},
                 'default': DEFAULT_COMPANY_BLOCK_LIST,
             },
+            'remoteness' : {
+                'required': False,
+                'type': 'string',
+                'allowed': [r.name for r in Remoteness],
+                'default': DEFAULT_REMOTENESS,
+            }
         },
     },
     'delay': {

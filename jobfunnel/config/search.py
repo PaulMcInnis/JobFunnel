@@ -2,7 +2,7 @@
 """
 from typing import List, Optional
 from jobfunnel.config import BaseConfig
-from jobfunnel.resources import Locale, Provider
+from jobfunnel.resources import Locale, Provider, Remoteness
 from jobfunnel.resources.defaults import (
     DEFAULT_SEARCH_RADIUS, DEFAULT_MAX_LISTING_DAYS,
     DEFAULT_DOMAIN_FROM_LOCALE,
@@ -25,7 +25,7 @@ class SearchConfig(BaseConfig):
                  max_listing_days: Optional[int] = None,
                  blocked_company_names: Optional[List[str]] = None,
                  domain: Optional[str] = None,
-                 remote: bool = False,):
+                 remoteness: Optional[Remoteness] = Remoteness.ANY):
         """Search config for all job sources
 
         Args:
@@ -44,7 +44,7 @@ class SearchConfig(BaseConfig):
                 companies that we never want to see in our results.
             domain (Optional[str], optional): domain string to use for search
                 querying. If not passed, will set based on locale. (i.e. 'ca')
-            remote: True if searching for remote jobs only TODO: impl. for scr.
+            remoteness: The level of work-remoteness desired. Defaults to any.
         """
         super().__init__()
         self.province_or_state = province_or_state
@@ -56,7 +56,7 @@ class SearchConfig(BaseConfig):
         self.return_similar_results = return_similar_results  # Indeed.X thing
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
-        self.remote = remote
+        self.remoteness = remoteness
 
         # Try to infer the domain string based on the locale.
         if not domain:
@@ -82,3 +82,4 @@ class SearchConfig(BaseConfig):
         assert self.keywords and len(self.keywords) >= 1, "Keywords not set"
         assert self.max_listing_days >= 1, "Cannot set max posting days < 1"
         assert self.domain, "Domain not set"
+        assert self.remoteness != Remoteness.UNKNOWN, "Remoteness is UNKNOWN!"

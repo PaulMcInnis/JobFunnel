@@ -40,6 +40,9 @@ search:
   company_block_list:
     - "Infox Consulting"
 
+  # The desired level of work-remoteness (i.e. IN_PERSON, FULLY_REMOTE, ANY)
+  remoteness: ANY
+
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: INFO
 

@@ -7,7 +7,7 @@ import yaml
 from jobfunnel.config import (DelayConfig, JobFunnelConfigManager,
                               ProxyConfig, SearchConfig, SettingsValidator)
 from jobfunnel.resources import (LOG_LEVEL_NAMES, DelayAlgorithm, Locale,
-                                 Provider)
+                                 Provider, Remoteness)
 from jobfunnel.resources.defaults import *
 
 
@@ -198,6 +198,16 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     search_group.add_argument(
+        '-remoteness',
+        dest='search.remoteness',
+        type=int,
+        default=DEFAULT_SEARCH_RADIUS,
+        help='The maximum distance a job should be from the specified city. '
+             'NOTE: units are [km] CANADA locales and [mi] for US locales.',
+        required=False,
+    )
+
+    search_group.add_argument(
         '-max-listing-days',
         dest='search.max_listing_days',
         type=int,
@@ -347,6 +357,7 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         blocked_company_names=config['search']['company_block_list'],
         locale=Locale[config['search']['locale']],
         providers=[Provider[p] for p in config['search']['providers']],
+        remoteness=Remoteness[config['search']['remoteness']],
     )
 
     delay_cfg = DelayConfig(

@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
                                  MIN_DESCRIPTION_CHARS, PRINTABLE_STRINGS,
-                                 JobStatus, Locale)
+                                 JobStatus, Locale, Remoteness)
 
 # If job.status == one of these we filter it out of results
 JOB_REMOVE_STATUSES = [
@@ -37,7 +37,7 @@ class Job():
                  raw: Optional[BeautifulSoup] = None,
                  wage: Optional[str] = None,
                  tags: Optional[List[str]] = None,
-                 remote: Optional[str] = None) -> None:
+                 remoteness: Optional[Remoteness] = Remoteness.UNKNOWN) -> None:
         """Object to represent a single job that we have scraped
 
         TODO integrate init with JobField somehow, ideally with validation.
@@ -71,8 +71,9 @@ class Job():
             wage (Optional[str], optional): string describing wage (may be est)
             tags (Optional[List[str]], optional): additional key-words that are
                 in the job posting that identify the job. Defaults to [].
-            remote (Optional[str], optional): string describing remote work
-                allowance/status i.e. ('temporarily remote', 'fully remote' etc)
+            remoteness (Optional[Remoteness], optional): what level of
+                remoteness is this work? i.e. (temporarily, fully etc...).
+                Defaults to UNKNOWN.
         """
         # These must be populated by a Scraper
         self.title = title
@@ -86,7 +87,7 @@ class Job():
         self.provider = provider
         self.status = status
         self.wage = wage
-        self.remote = remote
+        self.remoteness = remoteness
 
         # These may not always be populated in our job source
         self.post_date = post_date
@@ -133,7 +134,7 @@ class Job():
             self.provider = deepcopy(job.provider)
             self.status = deepcopy(job.status)
             self.wage = deepcopy(job.wage)
-            self.remote = deepcopy(job.remote)
+            self.remoteness = deepcopy(job.remoteness)
             self.post_date = deepcopy(job.post_date)
             self.scrape_date = deepcopy(job.scrape_date)
             self.tags = deepcopy(job.tags)
@@ -181,7 +182,7 @@ class Job():
                     self.query,
                     self.locale.name,
                     self.wage,
-                    self.remote,
+                    self.remoteness.name,
                 ]
             )
         ])

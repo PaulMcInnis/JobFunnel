@@ -16,7 +16,7 @@ from jobfunnel.backend import Job
 from jobfunnel.backend.tools import Logger
 from jobfunnel.backend.tools.filters import DuplicatedJob, JobFilter
 from jobfunnel.config import JobFunnelConfigManager
-from jobfunnel.resources import (CSV_HEADER, T_NOW,
+from jobfunnel.resources import (CSV_HEADER, T_NOW, Remoteness,
                                  DuplicateType, JobStatus, Locale)
 
 
@@ -63,6 +63,7 @@ class JobFunnel(Logger):
             duplicate_jobs_dict,
             self.config.search_config.blocked_company_names,
             T_NOW - timedelta(days=self.config.search_config.max_listing_days),
+            desired_remoteness=self.config.search_config.remoteness,
             log_level=self.config.log_level,
             log_file=self.config.log_file,
         )
@@ -374,6 +375,7 @@ class JobFunnel(Logger):
                 else:
                     raw = None
 
+                # FIXME: this is the wrong way to compare row val to Enum.name!
                 # We need to convert from user statuses
                 status = None
                 if 'status' in row:
@@ -402,6 +404,17 @@ class JobFunnel(Logger):
                     )
                     locale = locale.UNKNOWN
 
+                # Check for remoteness (handle if not present for legacy)
+                remoteness = Remoteness.UNKNOWN
+                if 'remoteness' in row:
+                    remote_str = row['remoteness'].strip()
+                    remoteness = Remoteness[remote_str]
+                if not locale:
+                    self.logger.warning(
+                        "Unknown locale %s, setting to UNKNOWN", locale_str
+                    )
+                    locale = locale.UNKNOWN
+
                 job = Job(
                     title=row['title'],
                     company=row['company'],
@@ -418,6 +431,7 @@ class JobFunnel(Logger):
                     scrape_date=scrape_date,
                     raw=raw,
                     tags=row['tags'].split(','),
+                    remoteness=remoteness,
                 )
                 job.validate()
                 jobs_dict[job.key_id] = job

@@ -13,7 +13,7 @@ from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField
+from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -22,6 +22,20 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 
 ID_REGEX = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
 MAX_RESULTS_PER_INDEED_PAGE = 50
+# NOTE: these magic strings stick for both the US and CAN indeed websites...
+FULLY_REMOTE_MAGIC_STRING = "&remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11"
+COVID_REMOTE_MAGIC_STRING = "&remotejob=7e3167e4-ccb4-49cb-b761-9bae564a0a63"
+REMOTENESS_TO_QUERY = {
+    Remoteness.IN_PERSON: '',
+    Remoteness.TEMPORARILY_REMOTE: COVID_REMOTE_MAGIC_STRING,
+    Remoteness.PARTIALLY_REMOTE: '',
+    Remoteness.FULLY_REMOTE: FULLY_REMOTE_MAGIC_STRING,
+    Remoteness.ANY: FULLY_REMOTE_MAGIC_STRING,
+}
+REMOTENESS_STR_MAP = {
+    'remote': Remoteness.FULLY_REMOTE,
+    'temporarily remote': Remoteness.TEMPORARILY_REMOTE,
+}
 
 
 class BaseIndeedScraper(BaseScraper):
@@ -36,6 +50,10 @@ class BaseIndeedScraper(BaseScraper):
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
         self.query = '+'.join(self.config.search_config.keywords)
 
+        # Log if we can't do their remoteness query (Indeed only has 2 lvls.)
+        if self.config.search_config.remoteness == Remoteness.PARTIALLY_REMOTE:
+            self.logger.warning("Indeed does not support PARTIALLY_REMOTE jobs")
+
     @property
     def job_get_fields(self) -> str:
         """Call self.get(...) for the JobFields in this list when scraping a Job
@@ -45,8 +63,8 @@ class BaseIndeedScraper(BaseScraper):
         return [
             JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
             JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
-            # JobField.WAGE, JobField.REMOTE
-            # TODO: wage and remote are available in listings sometimes
+            JobField.REMOTENESS, # JobField.WAGE
+            # TODO: wage
         ]
 
     @property
@@ -153,7 +171,14 @@ class BaseIndeedScraper(BaseScraper):
                         'td', attrs={'class': 'jobCardShelfItem'}
                     )
                 ]
-        # elif parameter == JobField.REMOTE:
+        elif parameter == JobField.REMOTENESS:
+            remote_field = soup.find('span', attrs={'class': 'remote'})
+            if remote_field:
+                remoteness_str = remote_field.text.strip().lower()
+                if remoteness_str in REMOTENESS_STR_MAP:
+                    return REMOTENESS_STR_MAP[remoteness_str]
+            return Remoteness.UNKNOWN
+
         # TODO: Impl, this is available in listings as: <span class="remote">...
         # elif parameter == JobField.WAGE:
         # TODO: Impl, this is available as: <span class="salaryText">...
@@ -199,22 +224,20 @@ class BaseIndeedScraper(BaseScraper):
         TODO: use Enum for method instead of str.
         """
         if method == 'get':
-            # TODO: impl. &remotejob=.... string which allows for remote search
-            # i.e &remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11
             return (
-                "https://www.indeed.{0}/jobs?q={1}&l={2}%2C+{3}&radius={4}&"
-                "limit={5}&filter={6}".format(
+                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
+                "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
                     self.config.search_config.city.replace(' ', '+',),
                     self.config.search_config.province_or_state.upper(),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results)
+                    int(self.config.search_config.return_similar_results),
+                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
                 )
             )
         elif method == 'post':
-            # TODO: implement post style for indeed.X
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
@@ -245,6 +268,8 @@ class BaseIndeedScraper(BaseScraper):
                                         ) -> None:
         """Scrapes the indeed page for a list of job soups
         NOTE: modifies the job_soup_list in-place
+        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
+            ... need to add some kind of filtering for this!
         """
         url = f'{search}&start={int(page * self.max_results_per_page)}'
         job_soup_list.extend(
@@ -265,6 +290,9 @@ class BaseIndeedScraper(BaseScraper):
         """
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
+        self.logger.debug(
+            "Got Base search results page: %s", search_url
+        )
         query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
         num_res = query_resp.find(id='searchCountPages')
         # TODO: we should consider expanding the error cases (scrape error page)

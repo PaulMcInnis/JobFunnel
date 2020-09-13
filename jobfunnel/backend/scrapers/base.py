@@ -19,7 +19,7 @@ from jobfunnel.backend.tools import Logger
 from jobfunnel.backend.tools.delay import calculate_delays
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (MAX_CPU_WORKERS, USER_AGENT_LIST, JobField,
-                                 Locale)
+                                 Locale, Remoteness)
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -105,7 +105,7 @@ class BaseScraper(ABC, Logger):
             JobField.SHORT_DESCRIPTION: '',
             JobField.RAW: None,
             JobField.PROVIDER: self.__class__.__name__,
-            JobField.REMOTE: '',
+            JobField.REMOTENESS: Remoteness.UNKNOWN,
             JobField.WAGE: '',
         }
 
