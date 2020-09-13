@@ -13,7 +13,7 @@ from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import JobField
+from jobfunnel.resources import JobField, Remoteness
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -44,6 +44,10 @@ class BaseMonsterScraper(BaseScraper):
         self.query = '-'.join(
             self.config.search_config.keywords
         ).replace(' ', '-')
+
+        # This is currently not scrapable through Monster site (contents maybe)
+        if self.config.search_config.remoteness != Remoteness.ANY:
+            self.logger.warning("Monster does not support remoteness in query.")
 
     @property
     def job_get_fields(self) -> str:

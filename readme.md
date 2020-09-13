@@ -9,7 +9,7 @@ Automated tool for scraping job postings into a `.csv` file.
 * Never see the same job twice!
 * No advertising.
 * See jobs from multiple job search websites all in one place.
-* Compare job search results between locations, and queries.
+* Get results which are explicitly remote, not just _temporarily_ remote.
 
 ![masterlist.csv][masterlist]
 

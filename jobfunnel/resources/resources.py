@@ -8,7 +8,7 @@ import string
 # TODO: need to add short and long descriptions (breaking change)
 CSV_HEADER = [
     'status', 'title', 'company', 'location', 'date', 'blurb', 'tags', 'link',
-    'id', 'provider', 'query', 'locale', 'wage', 'remote',
+    'id', 'provider', 'query', 'locale', 'wage', 'remoteness',
 ]
 
 LOG_LEVEL_NAMES = [

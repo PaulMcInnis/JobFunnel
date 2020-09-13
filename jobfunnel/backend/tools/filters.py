@@ -17,7 +17,7 @@ from jobfunnel.backend import Job
 from jobfunnel.backend.tools import Logger
 from jobfunnel.resources import (DEFAULT_MAX_TFIDF_SIMILARITY,
                                  MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
-                                 DuplicateType)
+                                 DuplicateType, Remoteness)
 
 DuplicatedJob = namedtuple(
     'DuplicatedJob', ['original', 'duplicate', 'type'],
@@ -35,6 +35,7 @@ class JobFilter(Logger):
                  blocked_company_names_list: Optional[List[str]] = None,
                  max_job_date: Optional[datetime] = None,
                  max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
+                 desired_remoteness: Remoteness = Remoteness.ANY,
                  min_tfidf_corpus_size:
                     int = MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
                  log_level: int = logging.INFO,
@@ -52,6 +53,8 @@ class JobFilter(Logger):
                 company names disallowed from results. Defaults to None.
             max_job_date (Optional[datetime], optional): maximium date that a
                 job can be scraped. Defaults to None.
+            desired_remoteness (Remoteness, optional): The desired level of
+                work-remoteness. ANY will impart no restriction.
             log_level (Optional[int], optional): log level. Defaults to INFO.
             log_file (Optional[str], optional): log file, Defaults to None.
         """
@@ -64,6 +67,7 @@ class JobFilter(Logger):
         self.blocked_company_names_list = blocked_company_names_list or []
         self.max_job_date = max_job_date
         self.max_similarity = max_similarity
+        self.desired_remoteness = desired_remoteness
         self.min_tfidf_corpus_size = min_tfidf_corpus_size
 
         # Retrieve stopwords if not already downloaded
@@ -108,6 +112,8 @@ class JobFilter(Logger):
         """Filter jobs out using all our available filters
 
         NOTE: this allows job to be partially initialized
+        NOTE: if a job has UNKNOWN remoteness, we will include it anyways
+        TODO: we should probably add some logging to this?
 
         Arguments:
             check_existing_duplicates: pass True to check if ID was previously
@@ -124,6 +130,9 @@ class JobFilter(Logger):
             or (job.key_id and self.user_block_jobs_dict
                 and job.key_id in self.user_block_jobs_dict)
             or (check_existing_duplicates and self.is_duplicate(job))
+            or (job.remoteness != Remoteness.UNKNOWN
+                and self.desired_remoteness != Remoteness.ANY
+                and job.remoteness != self.desired_remoteness)
         )
 
     def is_duplicate(self, job: Job) -> bool:
