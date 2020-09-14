@@ -32,8 +32,8 @@ ID_REGEX = re.compile(
 class BaseMonsterScraper(BaseScraper):
     """Scraper for www.monster.X
 
-    NOTE: I dont think it's possible to scrape REMOTE other than from desc.
-        as of aug 2020. -pm
+    NOTE: I dont think it's possible to scrape REMOTE other than from title/desc
+        as of sept 2020. -PM
     """
 
     def __init__(self, session: Session, config: 'JobFunnelConfigManager',
@@ -62,7 +62,9 @@ class BaseMonsterScraper(BaseScraper):
     def job_set_fields(self) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job
         """
-        return [JobField.RAW, JobField.DESCRIPTION, JobField.TAGS]
+        return [
+            JobField.RAW, JobField.DESCRIPTION, JobField.TAGS, JobField.WAGE,
+        ]
 
     @property
     def high_priority_get_set_fields(self) -> List[JobField]:
@@ -132,6 +134,14 @@ class BaseMonsterScraper(BaseScraper):
             job._raw_scrape_data = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
+        elif parameter == JobField.WAGE:
+            pot_wage_cell = job._raw_scrape_data.find(
+                'div', attrs={'class': 'col-xs-12 cell'}
+            )
+            if pot_wage_cell:
+                pot_wage_value = pot_wage_cell.find('div')
+                if pot_wage_value:
+                    job.wage = pot_wage_value.text.strip()
         elif parameter == JobField.DESCRIPTION:
             assert job._raw_scrape_data
             job.description = job._raw_scrape_data.find(

@@ -63,8 +63,7 @@ class BaseIndeedScraper(BaseScraper):
         return [
             JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
             JobField.KEY_ID, JobField.TAGS, JobField.POST_DATE,
-            JobField.REMOTENESS, # JobField.WAGE
-            # TODO: wage
+            JobField.REMOTENESS, JobField.WAGE,
         ]
 
     @property
@@ -171,6 +170,8 @@ class BaseIndeedScraper(BaseScraper):
                         'td', attrs={'class': 'jobCardShelfItem'}
                     )
                 ]
+            else:
+                return []
         elif parameter == JobField.REMOTENESS:
             remote_field = soup.find('span', attrs={'class': 'remote'})
             if remote_field:
@@ -178,10 +179,13 @@ class BaseIndeedScraper(BaseScraper):
                 if remoteness_str in REMOTENESS_STR_MAP:
                     return REMOTENESS_STR_MAP[remoteness_str]
             return Remoteness.UNKNOWN
-
-        # TODO: Impl, this is available in listings as: <span class="remote">...
-        # elif parameter == JobField.WAGE:
-        # TODO: Impl, this is available as: <span class="salaryText">...
+        elif parameter == JobField.WAGE:
+            # We may not be able to obtain a wage
+            potential = soup.find('span', attrs={'class': 'salaryText'})
+            if potential:
+                return potential.text.strip()
+            else:
+                return ''
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(
                 soup.find('span', attrs={'class': 'date'}).text.strip()
