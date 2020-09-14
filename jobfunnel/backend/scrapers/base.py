@@ -322,10 +322,11 @@ class BaseScraper(ABC, Logger):
                 # so that users encountering bugs can submit it and we can
                 # quickly fix any failing scraping.
 
+                url_str = job.url if job else ''
                 if field in self.min_required_job_fields:
                     raise ValueError(
                         "Unable to scrape minimum-required job field: "
-                        f"{field.name} Got error:{str(err)}. {job.url}"
+                        f"{field.name} Got error:{err}. {url_str}"
                     )
                 else:
                     # Crash out gracefully so we can continue scraping.
@@ -333,7 +334,7 @@ class BaseScraper(ABC, Logger):
                         "Unable to scrape %s for job: %s. %s",
                         field.name.lower(),
                         err,
-                        job.url,
+                        url_str,
                     )
 
         # Validate job fields if we got something

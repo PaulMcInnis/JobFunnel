@@ -230,6 +230,8 @@ class BaseGlassDoorScraper(BaseScraper):
             wage = soup.find('span', attrs={'class': 'gray salary'})
             if wage is not None:
                 return wage.text.strip()
+            else:
+                return ''
         elif parameter == JobField.KEY_ID:
             return soup.get('data-id')
         elif parameter == JobField.URL:
