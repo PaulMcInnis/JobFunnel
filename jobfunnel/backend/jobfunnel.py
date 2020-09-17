@@ -415,6 +415,11 @@ class JobFunnel(Logger):
                     )
                     locale = locale.UNKNOWN
 
+                # Check for wage (handle if not present for legacy
+                wage = ''
+                if 'wage' in row:
+                    wage = row['wage'].strip()
+                    
                 job = Job(
                     title=row['title'],
                     company=row['company'],
