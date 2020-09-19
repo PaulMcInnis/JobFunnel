@@ -10,7 +10,8 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper, BaseUKEngScraper)
+                                             BaseUSAEngScraper,
+                                             BaseUKEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
@@ -225,6 +226,14 @@ class BaseIndeedScraper(BaseScraper):
 
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
+
+        Returns URL string for US and CANADA:
+        f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}%2C+{_province}"
+        "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
+
+        Returns URL string for UK:
+        f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}"
+        "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
         TODO: use Enum for method instead of str.
         """
         url = "https://www.indeed."
@@ -245,14 +254,23 @@ class BaseIndeedScraper(BaseScraper):
         _remoteness = REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
 
         if method == 'get':
-            if _url != "co.uk":
-                return url + _url + jobs + _jobs + city + _city + province \
-                        + _province + radius + _radius + limit \
-                        + _limit + filters + _filters + _remoteness
+            if _url == "co.uk":
+                return (url + _url +
+                        jobs + _jobs +
+                        city + _city +
+                        radius + _radius +
+                        limit + _limit +
+                        filters + _filters +
+                        _remoteness)
             else:
-                return url + _url + jobs + _jobs + city + _city + radius\
-                        + _radius + limit + _limit + filters \
-                        + _filters + _remoteness
+                return (url + _url +
+                        jobs + _jobs +
+                        city + _city +
+                        province + _province +
+                        radius + _radius +
+                        limit + _limit +
+                        filters + _filters +
+                        _remoteness)
 
         elif method == 'post':
             raise NotImplementedError()
