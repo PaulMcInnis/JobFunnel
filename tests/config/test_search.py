@@ -31,6 +31,7 @@ def test_search_config_query_string(mocker, keywords, exp_query_str):
     (Locale.CANADA_ENGLISH, None, 'ca'),
     (Locale.CANADA_FRENCH, None, 'ca'),
     (Locale.USA_ENGLISH, None, 'com'),
+    (Locale.UK_ENGLISH, None, 'co.uk'),
     (Locale.USA_ENGLISH, 'xyz', 'xyz'),
     (None, None, None),
 ])

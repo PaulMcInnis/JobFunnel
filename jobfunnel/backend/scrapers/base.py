@@ -439,3 +439,11 @@ class BaseCANEngScraper(BaseScraper):
     @property
     def locale(self) -> Locale:
         return Locale.CANADA_ENGLISH
+
+
+class BaseUKEngScraper(BaseScraper):
+    """Localized scraper for UK English
+    """
+    @property
+    def locale(self) -> Locale:
+        return Locale.UK_ENGLISH

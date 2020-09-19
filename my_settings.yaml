@@ -12,31 +12,34 @@ log_file: demo_job_search_results/log.log
 # Job search configuration
 search:
 
-  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH, UK_ENGLISH:
+  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
-  locale: USA_ENGLISH
+  locale: UK_ENGLISH
 
   # Job providers which we will search, one of INDEED, MONSTER, GLASSDOOR:
   # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
   # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:
     - INDEED
-    - MONSTER
+    # - MONSTER
+    # - GLASSDOOR
 
   # Region that we are searching for jobs within:
-  province_or_state: "Texas"  # NOTE: this is generally 2 characters long.
-  city: "Richardson"  # NOTE: this is the full city / town name.
-  radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
+  province_or_state: UK  # NOTE: this is generally 2 characters long.
+  city: "london"  # NOTE: this is the full city / town name.
+  radius: 30  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
   keywords:
-    - Python
-    - Senior
-    - AI
+    # - Junior Python
+    # - Entry Level Python
+    # - Junior Data Architect
+    - Junior Data Engineer
+    # - Junior Data Analyst
 
   # Don't return any listings older than this:
-  max_listing_days: 35
+  max_listing_days: 5
 
   # Blocked company names that will never appear in any results:
   company_block_list:
