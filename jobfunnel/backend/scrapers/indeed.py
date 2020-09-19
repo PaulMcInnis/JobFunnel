@@ -231,7 +231,7 @@ class BaseIndeedScraper(BaseScraper):
         f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}%2C+{_province}"
         "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
 
-        Returns URL string for UK:
+        Returns URL string for UK or searching in USA or Canada for city:remote:
         f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}"
         "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
         TODO: use Enum for method instead of str.
