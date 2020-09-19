@@ -238,39 +238,47 @@ class BaseIndeedScraper(BaseScraper):
         """
         url = "https://www.indeed."
         jobs = "/jobs?q="
-        city = "&l="
-        province = "%2C+"
+        location = "&l="
+        location_province = "%2C+"
         radius = "&radius="
         limit = "&limit="
         filters = "&filter="
 
         _url = self.config.search_config.domain
         _jobs = self.query
-        _city = self.config.search_config.city.replace(' ', '+',)
-        _province = self.config.search_config.province_or_state.upper()
+        _location_city = self.config.search_config.city.replace(' ', '+',)
+        _location_province = self.config.search_config.province_or_state.upper()
         _radius = str(self._quantize_radius(self.config.search_config.radius))
         _limit = str(self.max_results_per_page)
-        _filters = str(self.config.search_config.return_similar_results)
-        _remoteness = REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
+        _filter_similar = str(self.config.search_config.return_similar_results)
+        _filter_remoteness = REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
 
         if method == 'get':
             if _url == "co.uk":
                 return (url + _url +
                         jobs + _jobs +
-                        city + _city +
+                        location + _location_city +
                         radius + _radius +
                         limit + _limit +
-                        filters + _filters +
-                        _remoteness)
+                        filters + _filter_similar +
+                        _filter_remoteness)
+            elif (_url == "com" or _url == "ca") and _location_city == "remote":
+                return (url + _url +
+                        jobs + _jobs +
+                        location + '"remote"' +
+                        radius + _radius +
+                        limit + _limit +
+                        filters + _filter_similar +
+                        _filter_remoteness)
             else:
                 return (url + _url +
                         jobs + _jobs +
-                        city + _city +
-                        province + _province +
+                        location + _location_city +
+                        location_province + _location_province +
                         radius + _radius +
                         limit + _limit +
-                        filters + _filters +
-                        _remoteness)
+                        filters + _filter_similar +
+                        _filter_remoteness)
 
         elif method == 'post':
             raise NotImplementedError()
