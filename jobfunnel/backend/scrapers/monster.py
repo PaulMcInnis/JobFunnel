@@ -253,24 +253,66 @@ class BaseMonsterScraper(BaseScraper):
     def _get_search_url(self, method: Optional[str] = 'get',
                         page: int = 1) -> str:
         """Get the monster search url from SearchTerms
+        Returns URL string for US and CANADA:
+        f"https://www.monster.{_url}/jobs/search/?{_jobs}q={_query}"
+        "&where={_location_city}__2C-{_location_province}&rad={_radius}"
+
+        Returns URL string for UK or when city:remote:
+        f"https://www.monster.{_url}/jobs/search/?{_jobs}q={_query}"
+        "&where={_location_city}"
+
         TODO: implement fulltime/part-time portion + company search?
         TODO: implement POST
         NOTE: unfortunately we cannot start on any page other than 1,
               so the jobs displayed just scrolls forever and we will see
               all previous jobs as we go.
         """
+        url = "https://www.monster."
+        jobs = "/jobs/search/?"
+        query = "q="
+        location = "&where="
+        location_province = "__2C-"
+        radius = "&rad="
+
+        _url = self.config.search_config.domain
+        _jobs = f'page={str(page)}&' if page > 1 else ''
+        _query = self.query
+        _location_city = self.config.search_config.city.replace(' ', '-')
+        _location_province = self.config.search_config.province_or_state
+        _radius = str(self._convert_radius(self.config.search_config.radius))
         if method == 'get':
-            return (
-                'https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}'
-                    '&rad={}'.format(
-                        self.config.search_config.domain,
-                        f'page={page}&' if page > 1 else '',
-                        self.query,
-                        self.config.search_config.city.replace(' ', '-'),
-                        self.config.search_config.province_or_state,
-                        self._convert_radius(self.config.search_config.radius)
-                )
-            )
+            if _url == "co.uk" or _location_city == "remote":
+                return (url + _url +
+                        jobs + _jobs +
+                        query + _query +
+                        location + _location_city +
+                        radius + _radius)
+            else:
+                return (url + _url +
+                        jobs + _jobs +
+                        query + _query +
+                        location + _location_city +
+                        location + _location_province +
+                        radius + _radius)
+            #     return (
+            #     'https://www.monster.{}/jobs/search/?{}q={}&where={}'.format(
+            #             self.config.search_config.domain,
+            #             f'page={page}&' if page > 1 else '',
+            #             self.query,
+            #             self.config.search_config.city.replace(' ', '-'))
+            #     )
+            # else:
+            #     return (
+            #         'https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}'
+            #             '&rad={}'.format(
+            #                 self.config.search_config.domain,
+            #                 f'page={page}&' if page > 1 else '',
+            #                 self.query,
+            #                 self.config.search_config.city.replace(' ', '-'),
+            #                 self.config.search_config.province_or_state,
+            #                 self._convert_radius(self.config.search_config.radius)
+            #         )
+            #     )
         elif method == 'post':
             raise NotImplementedError()
         else:
