@@ -10,7 +10,7 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper)
+                                             BaseUSAEngScraper, BaseUKEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
@@ -227,20 +227,33 @@ class BaseIndeedScraper(BaseScraper):
         """Get the indeed search url from SearchTerms
         TODO: use Enum for method instead of str.
         """
+        url = "https://www.indeed."
+        jobs = "/jobs?q="
+        city = "&l="
+        province = "%2C+"
+        radius = "&radius="
+        limit = "&limit="
+        filters = "&filter="
+
+        _url = self.config.search_config.domain
+        _jobs = self.query
+        _city = self.config.search_config.city.replace(' ', '+',)
+        _province = self.config.search_config.province_or_state.upper()
+        _radius = str(self._quantize_radius(self.config.search_config.radius))
+        _limit = str(self.max_results_per_page)
+        _filters = str(self.config.search_config.return_similar_results)
+        _remoteness = REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
+
         if method == 'get':
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(' ', '+',),
-                    self.config.search_config.province_or_state.upper(),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
+            if _url != "co.uk":
+                return url + _url + jobs + _jobs + city + _city + province \
+                        + _province + radius + _radius + limit \
+                        + _limit + filters + _filters + _remoteness
+            else:
+                return url + _url + jobs + _jobs + city + _city + radius\
+                        + _radius + limit + _limit + filters \
+                        + _filters + _remoteness
+
         elif method == 'post':
             raise NotImplementedError()
         else:
@@ -326,4 +339,8 @@ class IndeedScraperCANEng(BaseIndeedScraper, BaseCANEngScraper):
 
 class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
     """Scrapes jobs from www.indeed.com
+    """
+
+class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
+    """Scrapes jobs from www.indeed.co.uk
     """

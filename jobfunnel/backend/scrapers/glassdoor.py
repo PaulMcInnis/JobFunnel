@@ -12,7 +12,7 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper)
+                                             BaseUSAEngScraper, BaseUKEngScraper)
 from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
@@ -351,4 +351,27 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
             radius = 50
         elif radius >= 100:
             radius = 100
+        return GLASSDOOR_RADIUS_MAP[radius]
+
+
+class GlassDoorScraperUKEng(BaseGlassDoorScraper, BaseUKEngScraper):
+
+    def quantize_radius(self, radius: int) -> int:
+        """Get a UK raduius (km)
+        FIXME: use numpy.digitize instead
+        """
+        if radius < 10:
+            radius = 0
+        elif 10 <= radius < 20:
+            radius = 10
+        elif 20 <= radius < 30:
+            radius = 20
+        elif 30 <= radius < 50:
+            radius = 30
+        elif 50 <= radius < 100:
+            radius = 50
+        elif 100 <= radius < 200:
+            radius = 100
+        elif radius >= 200:
+            radius = 200
         return GLASSDOOR_RADIUS_MAP[radius]

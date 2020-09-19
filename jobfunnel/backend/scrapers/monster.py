@@ -10,7 +10,7 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper)
+                                             BaseUSAEngScraper, BaseUKEngScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import JobField, Remoteness
@@ -333,4 +333,25 @@ class MonsterScraperUSAEng(BaseMonsterScraper, BaseUSAEngScraper):
             radius = 150
         elif radius >= 200:
             radius = 200
+        return radius
+
+
+class MonsterScraperUKEng(BaseMonsterScraper, BaseUKEngScraper):
+    """Scrapes jobs from www.monster.co.uk
+    """
+    def _convert_radius(self, radius: int) -> int:
+        """convert radius in miles TODO replace with numpy
+        """
+        if radius < 5:
+            radius = 0
+        elif 5 <= radius < 10:
+            radius = 5
+        elif 10 <= radius < 20:
+            radius = 10
+        elif 20 <= radius < 50:
+            radius = 20
+        elif 50 <= radius < 100:
+            radius = 50
+        elif radius >= 100:
+            radius = 100
         return radius
