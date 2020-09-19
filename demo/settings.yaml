@@ -28,7 +28,7 @@ search:
   # Region that we are searching for jobs within:
   province_or_state: "ON"  # NOTE: this is generally 2 characters long.
   city: "Waterloo"  # NOTE: this is the full city / town name. If set to "remote"
-  # and searching Indeed in the U.S. or Canada, will search the entire country
+  # and searching Indeed in the U.S. or Canada, or Monster, will search the entire country
   # for remote listings instead of remote listings within designated area.
   # province_or_state needs to have a value, but will be omitted upon setting "remote"
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
