@@ -226,60 +226,22 @@ class BaseIndeedScraper(BaseScraper):
 
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
-
-        Returns URL string for US and CANADA:
-        f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}%2C+{_province}"
-        "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
-
-        Returns URL string for UK or searching in USA or Canada for city:remote:
-        f"https://www.indeed.{_url}/jobs?q={_jobs}&l={_city}"
-        "&radius={_radius}&limit={_limit}&filter={_filters}{_remoteness}"
         TODO: use Enum for method instead of str.
         """
-        url = "https://www.indeed."
-        jobs = "/jobs?q="
-        location = "&l="
-        location_province = "%2C+"
-        radius = "&radius="
-        limit = "&limit="
-        filters = "&filter="
-
-        _url = self.config.search_config.domain
-        _jobs = self.query
-        _location_city = self.config.search_config.city.replace(' ', '+',)
-        _location_province = self.config.search_config.province_or_state.upper()
-        _radius = str(self._quantize_radius(self.config.search_config.radius))
-        _limit = str(self.max_results_per_page)
-        _filter_similar = str(self.config.search_config.return_similar_results)
-        _filter_remoteness = REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
-
         if method == 'get':
-            if _url == "co.uk":
-                return (url + _url +
-                        jobs + _jobs +
-                        location + _location_city +
-                        radius + _radius +
-                        limit + _limit +
-                        filters + _filter_similar +
-                        _filter_remoteness)
-            elif (_url == "com" or _url == "ca") and _location_city == "remote":
-                return (url + _url +
-                        jobs + _jobs +
-                        location + '"remote"' +
-                        radius + _radius +
-                        limit + _limit +
-                        filters + _filter_similar +
-                        _filter_remoteness)
-            else:
-                return (url + _url +
-                        jobs + _jobs +
-                        location + _location_city +
-                        location_province + _location_province +
-                        radius + _radius +
-                        limit + _limit +
-                        filters + _filter_similar +
-                        _filter_remoteness)
-
+            return (
+                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
+                "limit={}&filter={}{}".format(
+                    self.config.search_config.domain,
+                    self.query,
+                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.province_or_state.upper(),
+                    self._quantize_radius(self.config.search_config.radius),
+                    self.max_results_per_page,
+                    int(self.config.search_config.return_similar_results),
+                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+                )
+            )
         elif method == 'post':
             raise NotImplementedError()
         else:
@@ -370,3 +332,24 @@ class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
 class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """Scrapes jobs from www.indeed.co.uk
     """
+    def _get_search_url(self, method: Optional[str] = 'get') -> str:
+        """Get the indeed search url from SearchTerms
+        TODO: use Enum for method instead of str.
+        """
+        if method == 'get':
+            return (
+                "https://www.indeed.{}/jobs?q={}&l={}&radius={}&"
+                "limit={}&filter={}{}".format(
+                    self.config.search_config.domain,
+                    self.query,
+                    self.config.search_config.city.replace(' ', '+',),
+                    self._quantize_radius(self.config.search_config.radius),
+                    self.max_results_per_page,
+                    int(self.config.search_config.return_similar_results),
+                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+                )
+            )
+        elif method == 'post':
+            raise NotImplementedError()
+        else:
+            raise ValueError(f'No html method {method} exists')
