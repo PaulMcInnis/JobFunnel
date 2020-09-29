@@ -12,7 +12,8 @@ log_file: demo_job_search_results/log.log
 # Job search configuration
 search:
 
-  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH, UK_ENGLISH:
+  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
+  # UK_ENGLISH:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
   locale: USA_ENGLISH
@@ -26,11 +27,7 @@ search:
 
   # Region that we are searching for jobs within:
   province_or_state: "Texas"  # NOTE: this is generally 2 characters long.
-  city: "Richardson"  # NOTE: this is the full city / town name. If set to "remote"
-  # and searching Indeed in the U.S. or Canada, or Monster U.S., UK. or Canada,
-  # will search the entire country for remote listings instead of remote listings
-  # within designated area. province_or_state needs to have a value,
-  #but will be omitted upon setting "remote"
+  city: "Richardson"  # NOTE: this is the full city / town name.
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:

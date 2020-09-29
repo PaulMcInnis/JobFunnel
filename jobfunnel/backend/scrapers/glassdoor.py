@@ -308,11 +308,13 @@ class BaseGlassDoorScraper(BaseScraper):
         )
 
 
-class GlassDoorScraperCANEng(BaseGlassDoorScraper, BaseCANEngScraper):
+class GlassDoorMetricRadius:
+    """Metric units shared by GlassDoorScraperCANEng
+        and GlassDoorScraperUKEng
+    """
 
     def quantize_radius(self, radius: int) -> int:
-        """Get a Canadian raduius (km)
-        FIXME: use numpy.digitize instead
+        """convert radius to km FIXME: use numpy.digitize instead
         """
         if radius < 10:
             radius = 0
@@ -331,10 +333,18 @@ class GlassDoorScraperCANEng(BaseGlassDoorScraper, BaseCANEngScraper):
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
+class GlassDoorScraperCANEng(GlassDoorMetricRadius, BaseGlassDoorScraper,
+                             BaseCANEngScraper):
+    """Scrapes jobs from www.glassdoor.ca
+    """
+
+
 class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
+    """Scrapes jobs from www.glassdoor.com
+    """
 
     def quantize_radius(self, radius: int) -> int:
-        """Get a USA raduius (miles)
+        """Get a USA radius (miles)
         FIXME: use numpy.digitize instead
         """
         if radius < 5:
@@ -354,24 +364,7 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
-class GlassDoorScraperUKEng(BaseGlassDoorScraper, BaseUKEngScraper):
-
-    def quantize_radius(self, radius: int) -> int:
-        """Get a UK raduius (km)
-        FIXME: use numpy.digitize instead
-        """
-        if radius < 10:
-            radius = 0
-        elif 10 <= radius < 20:
-            radius = 10
-        elif 20 <= radius < 30:
-            radius = 20
-        elif 30 <= radius < 50:
-            radius = 30
-        elif 50 <= radius < 100:
-            radius = 50
-        elif 100 <= radius < 200:
-            radius = 100
-        elif radius >= 200:
-            radius = 200
-        return GLASSDOOR_RADIUS_MAP[radius]
+class GlassDoorScraperUKEng(GlassDoorMetricRadius, BaseGlassDoorScraper,
+                            BaseUKEngScraper):
+    """Scrapes jobs from www.glassdoor.co.uk
+    """
