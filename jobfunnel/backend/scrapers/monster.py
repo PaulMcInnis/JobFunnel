@@ -281,11 +281,14 @@ class BaseMonsterScraper(BaseScraper):
         """NOTE: radius conversion is units/locale specific
         """
 
-class MonsterScraperCANEng(BaseMonsterScraper, BaseCANEngScraper):
-    """Scrapes jobs from www.monster.ca
+
+class MonsterMetricRadius:
+    """Metric units shared by MonsterScraperCANEng
+        and MonsterScraperUKEng
     """
+
     def _convert_radius(self, radius: int) -> int:
-        """convert radius in miles TODO replace with numpy
+        """ convert radius in miles TODO replace with numpy
         """
         if radius < 5:
             radius = 0
@@ -300,6 +303,12 @@ class MonsterScraperCANEng(BaseMonsterScraper, BaseCANEngScraper):
         elif radius >= 100:
             radius = 100
         return radius
+
+
+class MonsterScraperCANEng(MonsterMetricRadius, BaseMonsterScraper,
+                           BaseCANEngScraper):
+    """Scrapes jobs from www.monster.ca
+    """
 
 
 class MonsterScraperUSAEng(BaseMonsterScraper, BaseUSAEngScraper):
@@ -336,7 +345,8 @@ class MonsterScraperUSAEng(BaseMonsterScraper, BaseUSAEngScraper):
         return radius
 
 
-class MonsterScraperUKEng(BaseMonsterScraper, BaseUKEngScraper):
+class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
+                          BaseUKEngScraper):
     """Scrapes jobs from www.monster.co.uk
     """
 
@@ -364,20 +374,3 @@ class MonsterScraperUKEng(BaseMonsterScraper, BaseUKEngScraper):
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
-
-    def _convert_radius(self, radius: int) -> int:
-        """convert radius in miles TODO replace with numpy
-        """
-        if radius < 5:
-            radius = 0
-        elif 5 <= radius < 10:
-            radius = 5
-        elif 10 <= radius < 20:
-            radius = 10
-        elif 20 <= radius < 50:
-            radius = 20
-        elif 50 <= radius < 100:
-            radius = 50
-        elif radius >= 100:
-            radius = 100
-        return radius

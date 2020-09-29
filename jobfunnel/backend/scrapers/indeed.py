@@ -329,6 +329,7 @@ class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
     """Scrapes jobs from www.indeed.com
     """
 
+
 class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """Scrapes jobs from www.indeed.co.uk
     """
