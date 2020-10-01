@@ -1,4 +1,5 @@
 """Install JobFunnel as a package
+# osm
 """
 from setuptools import setup, find_packages
 
