@@ -21,7 +21,7 @@ _JobFunnel requires [Python][python] 3.8 or later._
 pip install git+https://github.com/PaulMcInnis/JobFunnel.git
 ```
 
-# Usage
+# Usage. for project
 By performing regular scraping and reviewing, you can cut through the noise of even the busiest job markets.
 
 ## Configure
