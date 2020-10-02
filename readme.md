@@ -4,7 +4,7 @@
 
 Automated tool for scraping job postings into a `.csv` file.
 
-### Benefits over job search sites:
+###unemployment Benefits over job search sites:
 
 * Never see the same job twice!
 * No advertising.
