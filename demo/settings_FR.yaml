@@ -25,13 +25,13 @@ search:
     - MONSTER
 
   # Region that we are searching for jobs within:
-  province_or_state: "Ile-de-France"  # NOTE: this is generally 2 characters long.
-  city: "Paris"  # NOTE: this is the full city / town name.
+  province_or_state: "13"  # NOTE: this is generally 2 characters long.
+  city: "Marseille"  # NOTE: this is the full city / town name.
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
   keywords:
-    - Machine Learning
+    - Data scientist
 
   # Don't return any listings older than this:
   max_listing_days: 35

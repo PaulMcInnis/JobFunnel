@@ -361,6 +361,30 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
 class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
     """Scrapes jobs from www.indeed.fr
     """
+    def _get_search_url(self, method: Optional[str] = 'get') -> str:
+        """Get the indeed search url from SearchTerms
+        TODO: use Enum for method instead of str.
+        """
+        if method == 'get':
+            return (
+                "https://www.indeed.{}/jobs?q={}&l={}+%28{}%29&radius={}&"
+                "limit={}&filter={}{}".format(
+                    self.config.search_config.domain,
+                    self.query,
+                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.province_or_state.upper(),
+                    self._quantize_radius(self.config.search_config.radius),
+                    self.max_results_per_page,
+                    int(self.config.search_config.return_similar_results),
+                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+                )
+            )
+        elif method == 'post':
+            raise NotImplementedError()
+        else:
+            raise ValueError(f'No html method {method} exists')
+
+
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
@@ -388,7 +412,8 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
             )
 
         num_res = normalize("NFKD", num_res.contents[0].strip())
-        number_of_pages = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+        num_res = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+        number_of_pages = int(ceil(num_res / self.max_results_per_page))
         if max_pages == 0:
             return number_of_pages
         elif number_of_pages < max_pages:
