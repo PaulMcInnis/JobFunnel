@@ -10,7 +10,8 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper, BaseUKEngScraper)
+                                             BaseUSAEngScraper, BaseUKEngScraper,
+                                             BaseFRFreScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import JobField, Remoteness
@@ -374,3 +375,9 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
+
+
+class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper,
+                           BaseFRFreScraper):
+    """Scrapes jobs from www.monster.fr
+    """
