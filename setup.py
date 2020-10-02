@@ -1,5 +1,4 @@
-"""Install JobFunnel as a package
-"""
+from pathlib import Path
 from setuptools import setup, find_packages
 
 from jobfunnel import __version__ as version
@@ -23,9 +22,8 @@ requires = [
     'Cerberus>=1.3.2',
     'tqdm>=4.47.0',
 ]
-
-with open('readme.md', 'r') as f:
-    readme = f.read()
+here = Path(__file__).parent
+readme = (here / "readme.md").read_text()
 
 setup(
     name='JobFunnel',
@@ -40,7 +38,12 @@ setup(
     license='MIT License',
     python_requires='>=3.8.0',
     install_requires=requires,
-    packages=find_packages(exclude=('demo', 'tests', 'docs', 'images')),
+    packages=find_packages(exclude=('tests', 'docs', 'images')),
     include_package_data=True,
-    entry_points={'console_scripts': ['funnel = jobfunnel.__main__:main']}
+    entry_points={'console_scripts': ['funnel = jobfunnel.__main__:main']},
+    classifiers=[
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+    ],
 )
