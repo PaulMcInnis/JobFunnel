@@ -151,18 +151,20 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     search_group.add_argument(
         '-ps',
         dest='search.province_or_state',
-        type=str,
+        type=None,
+        default=None,
         help='Province/state value for your job-search area of interest. '
              '(i.e. Ontario).',
-        required=True,
+        required=False,
     )
 
     search_group.add_argument(
         '-c',
         dest='search.city',
-        type=str,
+        type=None,
+        default=None,
         help='City/town value for job-search region (i.e. Waterloo).',
-        required=True,
+        required=False,
     )
 
     search_group.add_argument(
