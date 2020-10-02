@@ -13,7 +13,7 @@ log_file: demo_job_search_results/log.log
 search:
 
   # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
-  # UK_ENGLISH:
+  # UK_ENGLISH, FRANCE_FRENCH:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
   locale: USA_ENGLISH

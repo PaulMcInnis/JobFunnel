@@ -4,6 +4,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
 from typing import Any, Dict, List, Optional
+from unicodedata import normalize
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -11,7 +12,8 @@ from requests import Session
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper,
-                                             BaseUKEngScraper)
+                                             BaseUKEngScraper,
+                                             BaseFRFreScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
@@ -354,3 +356,42 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
+
+
+class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
+    """Scrapes jobs from www.indeed.fr
+    """
+    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Args:
+			max_pages: the maximum number of pages to be scraped.
+        Returns:
+            The number of pages to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        request_html = self.session.get(search_url)
+        self.logger.debug(
+            "Got Base search results page: %s", search_url
+        )
+        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        num_res = query_resp.find(id='searchCountPages')
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not num_res:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+
+        num_res = normalize("NFKD", num_res.contents[0].strip())
+        number_of_pages = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+        if max_pages == 0:
+            return number_of_pages
+        elif number_of_pages < max_pages:
+            return number_of_pages
+        else:
+            return max_pages
