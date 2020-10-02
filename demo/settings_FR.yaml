@@ -21,6 +21,7 @@ search:
   # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
   # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:
+    - INDEED
     - MONSTER
 
   # Region that we are searching for jobs within:
