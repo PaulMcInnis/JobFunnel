@@ -3,7 +3,7 @@
 import re
 from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -180,21 +180,6 @@ class BaseIndeedScraper(BaseScraper):
         else:
             return max_pages
 
-    def _get_job_soups_page(self, page: int, 
-                            job_soup_list: List[BeautifulSoup]) -> None:
-        """Scrapes the indeed page for a list of job soups
-        NOTE: modifies the job_soup_list in-place
-        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
-            ... need to add some kind of filtering for this!
-        """
-        page = int(page * self.max_results_per_page)
-        r_html = self._get_search_page(page=page)
-        job_soup_list.extend(
-            BeautifulSoup(
-                r_html.text, self.config.bs4_parser
-            ).find_all('div', attrs={'data-tn-component': 'organicJob'})
-        )
-
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
         """
@@ -270,6 +255,12 @@ class BaseIndeedScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
+    def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
+                                   ) -> List[BeautifulSoup]:
+        """Parse a page of job listings HTML text into job soups
+        """
+        return page_soup.find_all('div', attrs={'data-tn-component': 'organicJob'})
+
     def _get_search_stem_url(self) -> str:
         """Get the search stem url for initial search."""
         return f"https://www.indeed.{self.config.search_config.domain}/jobs"
@@ -283,6 +274,10 @@ class BaseIndeedScraper(BaseScraper):
             'limit': self.max_results_per_page,
             'filter': f"{int(self.config.search_config.return_similar_results)}{REMOTENESS_TO_QUERY[self.config.search_config.remoteness]}",
         }
+
+    def _get_page_query(self, page: int) -> Tuple[str, str]:
+        """Return query parameter and value for specific provider."""
+        return ('start', int(page * self.max_results_per_page))
 
     def _quantize_radius(self, radius: int) -> int:
         """Quantizes the user input radius to a valid radius value into:
