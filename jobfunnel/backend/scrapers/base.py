@@ -6,11 +6,12 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Lock, Manager
 from time import sleep
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
-from requests import Session
+from requests import Session, Response
 from requests.adapters import HTTPAdapter
+from urllib.parse import urlencode
 from tqdm import tqdm
 from urllib3.util import Retry
 
@@ -193,7 +194,7 @@ class BaseScraper(ABC, Logger):
         # Get a list of job soups from the initial search results page
         # These wont contain enough information to do more than initialize Job
         try:
-            job_soups = self.get_job_soups_from_search_result_listings()
+            job_soups = self.get_job_soups()
         except Exception as err:
             raise ValueError(
                 "Unable to extract jobs from initial search result page:\n\t"
@@ -352,7 +353,7 @@ class BaseScraper(ABC, Logger):
     # pylint: enable=no-member
 
     @abstractmethod
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+    def get_job_soups(self) -> List[BeautifulSoup]:
         """Scrapes a job provider's response to a search query where we are
         shown many job listings at once.
 
@@ -422,6 +423,44 @@ class BaseScraper(ABC, Logger):
                 "No get() or set() will be done for Job attrs: %s",
                 [field.name for field in excluded_fields]
             )
+
+    def _get_search_page(self, method='get', page: int = 0) -> Response:
+        """Return the session of the initial search
+
+        Args:
+            method: either GET or POST
+            page: which page to select (if possible)
+        Returns:
+            a valid session.
+        """
+        search_stem_url = self._get_search_stem_url()
+        search_args = self._get_search_args()
+
+        # append page query (provider depended)
+        if page > 0:
+            pg_name, pg_val = self._get_page_query(page)
+            search_args[pg_name] = pg_val
+
+        if method == 'get':
+            # encode url to URI encoding
+            url = f"{search_stem_url}?{urlencode(search_args)}"
+            return self.session.get(url)
+        elif method == 'post':
+            return self.session.post(search_stem_url, data=search_args)
+        else:
+            return ValueError(f"Method should be either post or get not {method}")
+
+    @abstractmethod
+    def _get_search_stem_url(self) -> str:
+        """Get the search stem url for initial search."""
+
+    @abstractmethod
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+
+    @abstractmethod
+    def _get_page_query(self, page: int) -> Tuple[str, str]:
+        """Return query parameter and value for specific provider."""
 
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
