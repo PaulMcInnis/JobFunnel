@@ -221,7 +221,7 @@ class JobFunnel(Logger):
                         f"Inter-scraper key-id duplicate! {exist_key_id}"
                     )
 
-    def scrape(self) ->Dict[str, Job]:
+    def scrape(self) -> Dict[str, Job]:
         """Run each of the desired Scraper.scrape() with threading and delaying
         """
         self.logger.info(

@@ -15,6 +15,9 @@ script:
   - 'funnel inline -kw Python Data Scientist PHD AI -ps WA -c Seattle -l USA_ENGLISH -log-level DEBUG -csv demo_job_search_results/demo_search.csv -cache demo_job_search_results/cache2 -blf demo_job_search_results/demo_block_list.json -dl demo_job_search_results/demo_duplicates_list.json -log-file demo_job_search_results/log.log'
   # Run a Remote jobs only scrape
   - 'funnel inline -kw Python -ps ON -c Toronto -l CANADA_ENGLISH -remoteness FULLY_REMOTE -p INDEED -log-level DEBUG -csv demo_job_search_results/demo_remote_search.csv -cache demo_job_search_results/cache3 -blf demo_job_search_results/demo_block_list.json -dl demo_job_search_results/demo_duplicates_list.json -log-file demo_job_search_results/log.log'
+  # Run a FRANCE_FRENCH demo by settings YAML
+  - 'funnel load -s demo/settings_FR.yaml -log-level DEBUG'
+  # Obtain coverage
   - 'pytest --cov=jobfunnel --cov-report=xml'
   # TODO: modify some job statuses and run with --no-scrape...
   # - './tests/verify_time.sh'   TODO: some way of verifying execution time

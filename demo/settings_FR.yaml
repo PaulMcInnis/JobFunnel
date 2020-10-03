@@ -12,11 +12,10 @@ log_file: demo_job_search_results/log.log
 # Job search configuration
 search:
 
-  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
-  # UK_ENGLISH, FRANCE_FRENCH:
+  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
-  locale: CANADA_ENGLISH
+  locale: FRANCE_FRENCH
 
   # Job providers which we will search, one of INDEED, MONSTER, GLASSDOOR:
   # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
@@ -26,13 +25,13 @@ search:
     - MONSTER
 
   # Region that we are searching for jobs within:
-  province_or_state: "ON"  # NOTE: this is generally 2 characters long.
-  city: "Waterloo"  # NOTE: this is the full city / town name.
+  province_or_state: "75"  # NOTE: this is generally 2 characters long.
+  city: "Paris"  # NOTE: this is the full city / town name.
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
   keywords:
-    - Python
+    - Business Analyst
 
   # Don't return any listings older than this:
   max_listing_days: 35
@@ -57,7 +56,7 @@ delay:
     # Minimum delay/lower bound for random delay
     min_duration: 1.0
     # Random delay
-    random: False
+    random: True
     # Converging random delay, only used if 'random' is set to True
     converging: False
 
