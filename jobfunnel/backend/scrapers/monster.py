@@ -3,7 +3,7 @@
 import re
 from abc import abstractmethod
 from math import ceil
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -187,7 +187,7 @@ class BaseMonsterScraper(BaseScraper):
         """Get all arguments used for the search query."""
         return {
             'q': self.query,
-            'where': f"{self.config.search_config.city.replace(' ', '-')}__2C-{self.config.search_config.province_or_state}",
+            'where': f"{self.config.search_config.city}__2C-{self.config.search_config.province_or_state}",
             'rad': self._convert_radius(self.config.search_config.radius),
         }
 
@@ -274,6 +274,7 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
         args = super()._get_search_args()
         args['where'] = self.config.search_config.city
 
+        return args
 
 class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper,
                            BaseFRFreScraper):

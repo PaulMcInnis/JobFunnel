@@ -267,6 +267,7 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
         args = super()._get_search_args()
         args['l'] = self.config.search_config.city
 
+        return args
 
 class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
     """Scrapes jobs from www.indeed.fr
@@ -277,6 +278,7 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
         args = super()._get_search_args()
         args['l'] = f"{self.config.search_config.city} ({self.config.search_config.province_or_state})"
 
+        return args
 
     def _extract_pages_and_total_listings(self, soup: BeautifulSoup) -> Tuple[int, int]:
         """Method to extract the total number of listings and pages."""
