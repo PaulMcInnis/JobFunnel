@@ -3,9 +3,8 @@ FIXME: this is currently unable to get past page 1 of job results.
 """
 import re
 from abc import abstractmethod
-from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -16,7 +15,7 @@ from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
 from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField
+from jobfunnel.resources import JobField
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -93,21 +92,14 @@ class BaseGlassDoorScraper(BaseScraper):
             'Connection': 'keep-alive',
         }
 
-    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
-        """Scrape total number of results, and calculate the # pages needed
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self._get_search_page(method='post')
-        search_url = request_html.url
-        self.logger.debug(
-            "Got base search results page: %s", search_url
-        )
-        soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)
-
-        # extract number
-        num_res = soup_base.find('p', attrs={'class', 'jobsCount'}).text.strip()
+    def _extract_pages_and_total_listings(self, soup: BeautifulSoup) -> Tuple[int, int]:
+        """Method to extract the total number of listings and pages."""
+        # scrape total number of results, and calculate the # pages needed
+        num_res = soup.find('p', attrs={'class', 'jobsCount'}).text.strip()
         num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
-        return int(ceil(num_res / self.max_results_per_page))
+        n_pages = int(ceil(num_res / self.max_results_per_page))
+
+        return (num_res, n_pages)
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField

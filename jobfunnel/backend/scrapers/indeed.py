@@ -1,6 +1,7 @@
 """Scraper designed to get jobs from www.indeed.X
 """
 import re
+from math import ceil
 from typing import Any, Dict, List, Tuple
 from unicodedata import normalize
 

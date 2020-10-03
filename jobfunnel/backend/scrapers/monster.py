@@ -99,39 +99,15 @@ class BaseMonsterScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
-
-        Returns:
-            The number of pages of job listings to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self._get_search_page()
-        search_url = request_html.url
-        self.logger.debug(
-            "Got base search results page: %s", search_url
-        )
-        base_soup = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        
+    def _extract_pages_and_total_listings(self, soup: BeautifulSoup) -> Tuple[int, int]:
+        """Method to extract the total number of listings and pages."""
         # scrape total number of results, and calculate the # pages needed
-        partial = base_soup.find('h2', 'figure').text.strip()
+        partial = soup.find('h2', 'figure').text.strip()
         assert partial, "Unable to identify number of search results"
         num_res = int(re.findall(r'(\d+)', partial)[0])
         n_pages = int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
 
-        self.logger.debug(f"Found {num_res} job postings resulting in {n_pages} pages")
-
-        # TODO: we should consider expanding the error cases (scrape error page)
-        if not n_pages:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-        )
-        return n_pages
+        return (num_res, n_pages)
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField

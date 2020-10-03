@@ -442,9 +442,32 @@ class BaseScraper(ABC, Logger):
 
         return list(job_soup_dict.values())
 
-    @abstractmethod
     def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
-        """Calculates the number of pages of job listings to be scraped."""
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Args:
+			max_pages: the maximum number of pages to be scraped.
+        Returns:
+            The number of pages to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        first_soup = self._get_search_page_soup()
+        num_res, n_pages = self._extract_pages_and_total_listings(first_soup)
+
+        self.logger.debug(f"Found {num_res} job postings resulting in {n_pages} pages")
+
+        if not max_pages:
+            return n_pages
+        elif n_pages < max_pages:
+            return n_pages
+        else:
+            return max_pages
+
+    @abstractmethod
+    def _extract_pages_and_total_listings(self, soup: BeautifulSoup) -> Tuple[int, int]:
+        """Method to extract the total number of listings and pages."""
 
     def _get_job_soups_page(self, page: int, 
                             job_soup_dict: Dict[str, BeautifulSoup]) -> None:
