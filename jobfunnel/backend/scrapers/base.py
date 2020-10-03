@@ -424,6 +424,16 @@ class BaseScraper(ABC, Logger):
                 [field.name for field in excluded_fields]
             )
 
+    def _get_job_soups_page(self, page: int, 
+                            job_soup_list: List[BeautifulSoup]) -> None:
+        """Scrapes the indeed page for a list of job soups
+        NOTE: modifies the job_soup_list in-place
+        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
+            ... need to add some kind of filtering for this!
+        """
+        r_soup = self._get_search_page_soup(page=page)
+        job_soup_list.extend(self._parse_job_listings_to_bs4(r_soup))
+
     def _get_search_page(self, method='get', page: int = 0) -> Response:
         """Return the session of the initial search
 
@@ -449,6 +459,17 @@ class BaseScraper(ABC, Logger):
             return self.session.post(search_stem_url, data=search_args)
         else:
             return ValueError(f"Method should be either post or get not {method}")
+
+    def _get_search_page_soup(self, method='get', page: int = 0) -> BeautifulSoup:
+        """Wrapper around get_search_page to obtain response in soup form."""
+        return BeautifulSoup(
+            self._get_search_page(method, page), self.config.bs4_parser
+        )
+
+    @abstractmethod
+    def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
+                                   ) -> List[BeautifulSoup]:
+        """Parse a page of job listings HTML text into job soups."""
 
     @abstractmethod
     def _get_search_stem_url(self) -> str:
