@@ -5,7 +5,7 @@ import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -210,19 +210,20 @@ class BaseGlassDoorScraper(BaseScraper):
 
     def _get_page_query(self, page: int) -> Tuple[str, str]:
         """Return query parameter and value for specific provider."""
-        part_url = soup_base.find(
-            'li', attrs={'class', 'next'}
-        ).find('a').get('href')
+        # part_url = soup_base.find(
+        #     'li', attrs={'class', 'next'}
+        # ).find('a').get('href')
 
-        assert part_url is not None, "Unable to find next page in listing soup!"
+        # assert part_url is not None, "Unable to find next page in listing soup!"
 
-        # Uses partial url to construct next page url
-        return re.sub(
-            r'_IP\d+\.',
-            f'_IP{results_page_number}.',
-            f'https://www.glassdoor.{self.config.search_config.domain}'
-            f'{part_url}',
-        )
+        # # Uses partial url to construct next page url
+        # return re.sub(
+        #     r'_IP\d+\.',
+        #     f'_IP{results_page_number}.',
+        #     f'https://www.glassdoor.{self.config.search_config.domain}'
+        #     f'{part_url}',
+        # )
+        return ("", "")
 
 
 class GlassDoorMetricRadius:
