@@ -187,7 +187,7 @@ class BaseMonsterScraper(BaseScraper):
         """Get all arguments used for the search query."""
         return {
             'q': self.query,
-            'l': f"{self.config.search_config.city.replace(' ', '-')}__2C-{self.config.search_config.province_or_state}",
+            'where': f"{self.config.search_config.city.replace(' ', '-')}__2C-{self.config.search_config.province_or_state}",
             'rad': self._convert_radius(self.config.search_config.radius),
         }
 
@@ -268,59 +268,17 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
                           BaseUKEngScraper):
     """Scrapes jobs from www.monster.co.uk
     """
-
-    def _get_search_url(self, method: Optional[str] = 'get',
-                        page: int = 1) -> str:
-        """Get the monster search url from SearchTerms
-        TODO: implement fulltime/part-time portion + company search?
-        TODO: implement POST
-        NOTE: unfortunately we cannot start on any page other than 1,
-            so the jobs displayed just scrolls forever and we will see
-            all previous jobs as we go.
-        """
-        if method == 'get':
-            return (
-                'https://www.monster.{}/jobs/search/?{}q={}&where={}'
-                    '&rad={}'.format(
-                        self.config.search_config.domain,
-                        f'page={page}&' if page > 1 else '',
-                        self.query,
-                        self.config.search_config.city.replace(' ', '-'),
-                        self._convert_radius(self.config.search_config.radius)
-                )
-            )
-        elif method == 'post':
-            raise NotImplementedError()
-        else:
-            raise ValueError(f'No html method {method} exists')
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        # first get arguments from parent class, then override the location
+        args = super()._get_search_args()
+        args['where'] = self.config.search_config.city
 
 
 class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper,
                            BaseFRFreScraper):
     """Scrapes jobs from www.monster.fr
     """
-    def _get_search_url(self, method: Optional[str] = 'get',
-                        page: int = 1) -> str:
-        """Get the monster search url from SearchTerms
-        TODO: implement fulltime/part-time portion + company search?
-        TODO: implement POST
-        NOTE: unfortunately we cannot start on any page other than 1,
-              so the jobs displayed just scrolls forever and we will see
-              all previous jobs as we go.
-        """
-        if method == 'get':
-            return (
-                'https://www.monster.{}/emploi/recherche/?{}q={}&where={}__2C-{}'
-                    '&rad={}'.format(
-                        self.config.search_config.domain,
-                        f'page={page}&' if page > 1 else '',
-                        self.query,
-                        self.config.search_config.city.replace(' ', '-'),
-                        self.config.search_config.province_or_state,
-                        self._convert_radius(self.config.search_config.radius)
-                )
-            )
-        elif method == 'post':
-            raise NotImplementedError()
-        else:
-            raise ValueError(f'No html method {method} exists')   
+    def _get_search_stem_url(self) -> str:
+        """Get the search stem url for initial search."""
+        return f"https://www.monster.{self.config.search_config.domain}/emploi/recherche/"
