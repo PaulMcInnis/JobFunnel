@@ -1,9 +1,8 @@
 """Scraper designed to get jobs from www.indeed.X
 """
 import re
-from concurrent.futures import ThreadPoolExecutor, wait
-from math import ceil
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
+from unicodedata import normalize
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -11,10 +10,11 @@ from requests import Session
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper,
-                                             BaseUKEngScraper)
+                                             BaseUKEngScraper,
+                                             BaseFRFreScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
+from jobfunnel.resources import JobField, Remoteness
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -110,46 +110,21 @@ class BaseIndeedScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
-
-        Args:
-			max_pages: the maximum number of pages to be scraped.
-        Returns:
-            The number of pages to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self._get_search_page()
-        search_url = request_html.url
-        self.logger.debug(
-            "Got base search results page: %s", search_url
-        )
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-
-        # obtain the page number. 
-        # TODO: this process is not robust at all.
-        num_res = query_resp.find(id='searchCountPages')
+    def _extract_pages_and_total_listings(self, soup: BeautifulSoup) -> Tuple[int, int]:
+        """Method to extract the total number of listings and pages."""
+        num_res = soup.find(id='searchCountPages')
         if not num_res:
             raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
+                "Unable to identify number of pages of results"
                 " Please ensure linked page contains results, you may have"
                 " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
+                " province or state."
             )
         num_res = num_res.contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
         n_pages = int(ceil(num_res / self.max_results_per_page))
 
-        self.logger.debug(f"Found {num_res} job postings resulting in {n_pages} pages")
-
-        if not max_pages:
-            return n_pages
-        elif n_pages < max_pages:
-            return n_pages
-        else:
-            return max_pages
+        return (num_res, n_pages)
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
@@ -289,4 +264,51 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
         """Get all arguments used for the search query."""
         # first get arguments from parent class, then override the location
         args = super()._get_search_args()
-        args['l'] = self.config.search_config.city.replace(' ', '+',)
+        args['l'] = self.config.search_config.city
+
+
+class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
+    """Scrapes jobs from www.indeed.fr
+    """
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        # first get arguments from parent class, then override the location
+        args = super()._get_search_args()
+        args['l'] = f"{self.config.search_config.city} ({self.config.search_config.province_or_state})"
+
+
+    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Args:
+			max_pages: the maximum number of pages to be scraped.
+        Returns:
+            The number of pages to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        request_html = self.session.get(search_url)
+        self.logger.debug(
+            "Got Base search results page: %s", search_url
+        )
+        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        num_res = query_resp.find(id='searchCountPages')
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not num_res:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+
+        num_res = normalize("NFKD", num_res.contents[0].strip())
+        num_res = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+        number_of_pages = int(ceil(num_res / self.max_results_per_page))
+        if max_pages == 0:
+            return number_of_pages
+        elif number_of_pages < max_pages:
+            return number_of_pages
+        else:
+            return max_pages

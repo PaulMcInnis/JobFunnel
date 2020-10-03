@@ -12,6 +12,7 @@ class Locale(Enum):
     CANADA_FRENCH = 2
     USA_ENGLISH = 3
     UK_ENGLISH = 4
+    FRANCE_FRENCH = 5
 
 
 class JobStatus(Enum):

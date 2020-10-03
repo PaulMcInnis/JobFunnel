@@ -31,4 +31,5 @@ DEFAULT_DOMAIN_FROM_LOCALE = {
     Locale.CANADA_FRENCH: 'ca',
     Locale.USA_ENGLISH: 'com',
     Locale.UK_ENGLISH: 'co.uk',
+    Locale.FRANCE_FRENCH: 'fr',
 }

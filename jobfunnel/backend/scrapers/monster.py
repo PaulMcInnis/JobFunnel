@@ -10,7 +10,8 @@ from requests import Session
 
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper, BaseUKEngScraper)
+                                             BaseUSAEngScraper, BaseUKEngScraper,
+                                             BaseFRFreScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import JobField, Remoteness
@@ -316,3 +317,34 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
+
+
+class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper,
+                           BaseFRFreScraper):
+    """Scrapes jobs from www.monster.fr
+    """
+    def _get_search_url(self, method: Optional[str] = 'get',
+                        page: int = 1) -> str:
+        """Get the monster search url from SearchTerms
+        TODO: implement fulltime/part-time portion + company search?
+        TODO: implement POST
+        NOTE: unfortunately we cannot start on any page other than 1,
+              so the jobs displayed just scrolls forever and we will see
+              all previous jobs as we go.
+        """
+        if method == 'get':
+            return (
+                'https://www.monster.{}/emploi/recherche/?{}q={}&where={}__2C-{}'
+                    '&rad={}'.format(
+                        self.config.search_config.domain,
+                        f'page={page}&' if page > 1 else '',
+                        self.query,
+                        self.config.search_config.city.replace(' ', '-'),
+                        self.config.search_config.province_or_state,
+                        self._convert_radius(self.config.search_config.radius)
+                )
+            )
+        elif method == 'post':
+            raise NotImplementedError()
+        else:
+            raise ValueError(f'No html method {method} exists')   
