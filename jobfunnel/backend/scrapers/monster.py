@@ -172,7 +172,7 @@ class BaseMonsterScraper(BaseScraper):
         """
         # Get the search url
         search_url = self._get_search_url()
-        print(search_url)
+
         # Load our initial search results listings page
         initial_search_results_html = self.session.get(search_url)
         initial_search_results_soup = BeautifulSoup(

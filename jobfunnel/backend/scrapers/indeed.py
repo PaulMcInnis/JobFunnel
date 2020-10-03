@@ -118,8 +118,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         # Get the search url
         search_url = self._get_search_url()
-        print(search_url)
-        print(self.config.search_config.remote_within_country)
+
         # Parse total results, and calculate the # of pages needed
         pages = self._get_num_search_result_pages(search_url)
         self.logger.info(
