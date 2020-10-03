@@ -98,7 +98,7 @@ class BaseMonsterScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def _get_n_pages(self, , max_pages: Optional[int] = None) -> int:
+    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
         i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
@@ -119,6 +119,8 @@ class BaseMonsterScraper(BaseScraper):
         assert partial, "Unable to identify number of search results"
         num_res = int(re.findall(r'(\d+)', partial)[0])
         n_pages = int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
+
+        self.logger.debug(f"Found {num_res} job postings resulting in {n_pages} pages")
 
         # TODO: we should consider expanding the error cases (scrape error page)
         if not n_pages:
