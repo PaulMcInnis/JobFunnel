@@ -110,20 +110,14 @@ class BaseIndeedScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+    def get_job_soups(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
-        # Get the search url
-        search_url = self._get_search_url()
-
-        # Parse total results, and calculate the # of pages needed
-        pages = self._get_num_search_result_pages(search_url)
-        self.logger.info(
-            "Found %d pages of search results for query=%s", pages, self.query
-        )
+        # get number of pages
+        n_pages = self._get_n_pages()
 
         # Init list of job soups
         job_soup_list = []  # type: List[Any]
@@ -133,21 +127,73 @@ class BaseIndeedScraper(BaseScraper):
         try:
             # Scrape soups for all the result pages containing many job listings
             futures = []
-            for page in range(0, pages):
+            for page in range(0, n_pages):
                 futures.append(
                     threads.submit(
-                        self._get_job_soups_from_search_page, search_url, page,
-                        job_soup_list
+                        self._get_job_soups_page, page, job_soup_list
                     )
                 )
 
             # Wait for all scrape jobs to finish
             wait(futures)
-
         finally:
             threads.shutdown()
 
         return job_soup_list
+
+    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Args:
+			max_pages: the maximum number of pages to be scraped.
+        Returns:
+            The number of pages to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        request_html = self._get_search_page()
+        search_url = request_html.url
+        self.logger.debug(
+            "Got base search results page: %s", search_url
+        )
+        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
+
+        # obtain the page number. 
+        # TODO: this process is not robust at all.
+        num_res = query_resp.find(id='searchCountPages')
+        if not num_res:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+        num_res = num_res.contents[0].strip()
+        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
+        number_of_pages = int(ceil(num_res / self.max_results_per_page))
+
+        if not max_pages:
+            return number_of_pages
+        elif number_of_pages < max_pages:
+            return number_of_pages
+        else:
+            return max_pages
+
+    def _get_job_soups_page(self, page: int, 
+                            job_soup_list: List[BeautifulSoup]) -> None:
+        """Scrapes the indeed page for a list of job soups
+        NOTE: modifies the job_soup_list in-place
+        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
+            ... need to add some kind of filtering for this!
+        """
+        page = int(page * self.max_results_per_page)
+        r_html = self._get_search_page(page=page)
+        job_soup_list.extend(
+            BeautifulSoup(
+                r_html.text, self.config.bs4_parser
+            ).find_all('div', attrs={'data-tn-component': 'organicJob'})
+        )
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
@@ -224,28 +270,19 @@ class BaseIndeedScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def _get_search_url(self, method: Optional[str] = 'get') -> str:
-        """Get the indeed search url from SearchTerms
-        TODO: use Enum for method instead of str.
-        """
-        if method == 'get':
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(' ', '+',),
-                    self.config.search_config.province_or_state.upper(),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == 'post':
-            raise NotImplementedError()
-        else:
-            raise ValueError(f'No html method {method} exists')
+    def _get_search_stem_url(self) -> str:
+        """Get the search stem url for initial search."""
+        return f"https://www.indeed.{self.config.search_config.domain}/jobs"
+
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        return {
+            'q': self.query,
+            'l': f"{self.config.search_config.city.replace(' ', '+',)}%2C+{self.config.search_config.province_or_state.upper()}",
+            'radius': self._quantize_radius(self.config.search_config.radius),
+            'limit': self.max_results_per_page,
+            'filter': f"{int(self.config.search_config.return_similar_results)}{REMOTENESS_TO_QUERY[self.config.search_config.remoteness]}",
+        }
 
     def _quantize_radius(self, radius: int) -> int:
         """Quantizes the user input radius to a valid radius value into:
@@ -268,57 +305,6 @@ class BaseIndeedScraper(BaseScraper):
             radius = 100
         return radius
 
-    def _get_job_soups_from_search_page(self, search: str, page: str,
-                                        job_soup_list: List[BeautifulSoup]
-                                        ) -> None:
-        """Scrapes the indeed page for a list of job soups
-        NOTE: modifies the job_soup_list in-place
-        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
-            ... need to add some kind of filtering for this!
-        """
-        url = f'{search}&start={int(page * self.max_results_per_page)}'
-        job_soup_list.extend(
-            BeautifulSoup(
-                self.session.get(url).text, self.config.bs4_parser
-            ).find_all('div', attrs={'data-tn-component': 'organicJob'})
-        )
-
-    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
-
-        Args:
-			max_pages: the maximum number of pages to be scraped.
-        Returns:
-            The number of pages to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self.session.get(search_url)
-        self.logger.debug(
-            "Got Base search results page: %s", search_url
-        )
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id='searchCountPages')
-        # TODO: we should consider expanding the error cases (scrape error page)
-        if not num_res:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-            )
-
-        num_res = num_res.contents[0].strip()
-        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
-        number_of_pages = int(ceil(num_res / self.max_results_per_page))
-        if max_pages == 0:
-            return number_of_pages
-        elif number_of_pages < max_pages:
-            return number_of_pages
-        else:
-            return max_pages
-
 
 class IndeedScraperCANEng(BaseIndeedScraper, BaseCANEngScraper):
     """Scrapes jobs from www.indeed.ca
@@ -333,24 +319,7 @@ class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
 class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """Scrapes jobs from www.indeed.co.uk
     """
-    def _get_search_url(self, method: Optional[str] = 'get') -> str:
-        """Get the indeed search url from SearchTerms
-        TODO: use Enum for method instead of str.
-        """
-        if method == 'get':
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(' ', '+',),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == 'post':
-            raise NotImplementedError()
-        else:
-            raise ValueError(f'No html method {method} exists')
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        args = super()._get_search_args()
+        args['l'] = self.config.search_config.city.replace(' ', '+',)
