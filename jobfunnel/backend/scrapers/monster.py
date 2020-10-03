@@ -3,7 +3,7 @@
 import re
 from abc import abstractmethod
 from math import ceil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -98,6 +98,38 @@ class BaseMonsterScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
+    def _get_n_pages(self, , max_pages: Optional[int] = None) -> int:
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Returns:
+            The number of pages of job listings to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        request_html = self._get_search_page()
+        search_url = request_html.url
+        self.logger.debug(
+            "Got base search results page: %s", search_url
+        )
+        base_soup = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        
+        # scrape total number of results, and calculate the # pages needed
+        partial = base_soup.find('h2', 'figure').text.strip()
+        assert partial, "Unable to identify number of search results"
+        num_res = int(re.findall(r'(\d+)', partial)[0])
+        n_pages = int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
+
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not n_pages:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+        )
+        return n_pages
+
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
         NOTE: priority is all the same.
@@ -162,119 +194,27 @@ class BaseMonsterScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
-        """Scrapes raw data from a job source into a list of job-soups
-
-        TODO: use threading here too
-
-        Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job init
+    def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
+                                   ) -> List[BeautifulSoup]:
+        """Parse a page of job listings HTML text into job soups
         """
-        # Get the search url
-        search_url = self._get_search_url()
+        return page_soup.find_all('div', attrs={'class': 'flex-row'})
 
-        # Load our initial search results listings page
-        initial_search_results_html = self.session.get(search_url)
-        initial_search_results_soup = BeautifulSoup(
-            initial_search_results_html.text, self.config.bs4_parser
-        )
+    def _get_search_stem_url(self) -> str:
+        """Get the search stem url for initial search."""
+        return f"https://www.monster.{self.config.search_config.domain}/jobs/search/"
 
-        # Parse total results, and calculate the # of pages needed
-        n_pages = self._get_num_search_result_pages(initial_search_results_soup)
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        return {
+            'q': self.query,
+            'l': f"{self.config.search_config.city.replace(' ', '-')}__2C-{self.config.search_config.province_or_state}",
+            'rad': self._convert_radius(self.config.search_config.radius),
+        }
 
-        # TODO: we should consider expanding the error cases (scrape error page)
-        if not n_pages:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-            )
-
-        self.logger.info(
-            "Found %d pages of search results for query=%s", n_pages, self.query
-        )
-
-        # Get first page of listing soups from our search results listings page
-        # NOTE: Monster is an endless-scroll style of job site so we have to
-        # Remove previous pages as we go.
-        # TODO: better error handling here?
-        # TODO: maybe we can move this into get set / BaseScraper somehow?
-        def __get_job_soups_by_key_id(result_listings: BeautifulSoup
-                                      ) -> Dict[str, BeautifulSoup]:
-            return {
-                self.get(JobField.KEY_ID, job_soup): job_soup
-                for job_soup in self._get_job_soups_from_search_page(
-                    result_listings
-                )
-            }
-
-        job_soups_dict = __get_job_soups_by_key_id(initial_search_results_soup)
-
-        # Get all the other pages
-        if n_pages > 1:
-            for page in range(2, n_pages):
-                next_listings_page_soup = BeautifulSoup(
-                    self.session.get(self._get_search_url(page=page)).text,
-                    self.config.bs4_parser,
-                )
-                # Add only the jobs that we didn't 'scroll' past already
-                job_soups_dict.update(
-                    __get_job_soups_by_key_id(next_listings_page_soup)
-                )
-
-        # TODO: would be cool if we could avoid key_id scrape duplication in get
-        return list(job_soups_dict.values())
-
-    def _get_job_soups_from_search_page(self,
-                                        initial_results_soup: BeautifulSoup,
-                                        ) -> List[BeautifulSoup]:
-        """Get individual job listing soups from a results page of many jobs
-        """
-        return initial_results_soup.find_all('div', attrs={'class': 'flex-row'})
-
-    def _get_num_search_result_pages(self, initial_results_soup: BeautifulSoup,
-                                     ) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
-
-        Args:
-            initial_results_soup: the soup for the first search results page
-        Returns:
-            The number of pages of job listings to be scraped.
-        """
-        # scrape total number of results, and calculate the # pages needed
-        partial = initial_results_soup.find('h2', 'figure').text.strip()
-        assert partial, "Unable to identify number of search results"
-        num_res = int(re.findall(r'(\d+)', partial)[0])
-        return int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
-
-    def _get_search_url(self, method: Optional[str] = 'get',
-                        page: int = 1) -> str:
-        """Get the monster search url from SearchTerms
-        TODO: implement fulltime/part-time portion + company search?
-        TODO: implement POST
-        NOTE: unfortunately we cannot start on any page other than 1,
-              so the jobs displayed just scrolls forever and we will see
-              all previous jobs as we go.
-        """
-        if method == 'get':
-            return (
-                'https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}'
-                    '&rad={}'.format(
-                        self.config.search_config.domain,
-                        f'page={page}&' if page > 1 else '',
-                        self.query,
-                        self.config.search_config.city.replace(' ', '-'),
-                        self.config.search_config.province_or_state,
-                        self._convert_radius(self.config.search_config.radius)
-                )
-            )
-        elif method == 'post':
-            raise NotImplementedError()
-        else:
-            raise ValueError(f'No html method {method} exists')
+    def _get_page_query(self, page: int) -> Tuple[str, str]:
+        """Return query parameter and value for specific provider."""
+        return ('page', page)
 
     @abstractmethod
     def _convert_radius(self, radius: int) -> int:

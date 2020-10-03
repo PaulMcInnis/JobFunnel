@@ -110,37 +110,6 @@ class BaseIndeedScraper(BaseScraper):
             'Connection': 'keep-alive'
         }
 
-    def get_job_soups(self) -> List[BeautifulSoup]:
-        """Scrapes raw data from a job source into a list of job-soups
-
-        Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job init
-        """
-        # get number of pages
-        n_pages = self._get_n_pages()
-
-        # Init list of job soups
-        job_soup_list = []  # type: List[Any]
-
-        # Init threads & futures list FIXME: we should probably delay here too
-        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
-        try:
-            # Scrape soups for all the result pages containing many job listings
-            futures = []
-            for page in range(0, n_pages):
-                futures.append(
-                    threads.submit(
-                        self._get_job_soups_page, page, job_soup_list
-                    )
-                )
-
-            # Wait for all scrape jobs to finish
-            wait(futures)
-        finally:
-            threads.shutdown()
-
-        return job_soup_list
-
     def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
@@ -316,5 +285,6 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """
     def _get_search_args(self) -> Dict[str, str]:
         """Get all arguments used for the search query."""
+        # first get arguments from parent class, then override the location
         args = super()._get_search_args()
         args['l'] = self.config.search_config.city.replace(' ', '+',)

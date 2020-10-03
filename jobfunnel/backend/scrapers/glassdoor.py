@@ -93,105 +93,21 @@ class BaseGlassDoorScraper(BaseScraper):
             'Connection': 'keep-alive',
         }
 
-    def get_search_url(self,
-                       method='get') -> Union[str, Tuple[str, Dict[str,str]]]:
-        """Gets the glassdoor search url
-        NOTE: we this relies on your city, not the state / province!
+    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
+        """Scrape total number of results, and calculate the # pages needed
         """
-        # Form the location lookup request data
-        data = {
-            'term': self.config.search_config.city,
-            'maxLocationsToReturn': MAX_GLASSDOOR_LOCATIONS_TO_RETURN,
-        }
-
-        # Get the location id for search location
-        location_id = self.session.post(
-            LOCATION_BASE_URL, headers=self.headers, data=data
-        ).json()[0]['locationId']
-
-        if method == 'get':
-
-            # Form job search url
-            search = (
-                'https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn'
-                '&sc.keyword={}&locT=C&locId={}&jobType=&radius={}'.format(
-                    self.config.search_config.domain,
-                    self.query,
-                    location_id,
-                    self.quantize_radius(self.config.search_config.radius),
-                )
-            )
-            return search
-
-        elif method == 'post':
-
-            # Form the job search url
-            search = (
-                f"https://www.glassdoor.{self.config.search_config.domain}"
-                "/Job/jobs.htm"
-            )
-
-            # Form the job search data
-            data = {
-                'clickSource': 'searchBtn',
-                'sc.keyword': self.query,
-                'locT': 'C',
-                'locId': location_id,
-                'jobType': '',
-                'radius':
-                    self.quantize_radius(self.config.search_config.radius),
-            }
-
-            return search, data
-        else:
-
-            raise ValueError(f'No html method {method} exists')
-
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
-        """Scrapes raw data from a job source into a list of job-soups
-
-        Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job init
-        """
-        # Get the search url
-        search_url, data = self.get_search_url(method='post')
-
-        # Get the search page result.
-        request_html = self.session.post(search_url, data=data)
+        # Get the html data, initialize bs4 with lxml
+        request_html = self._get_search_page(method='post')
+        search_url = request_html.url
+        self.logger.debug(
+            "Got base search results page: %s", search_url
+        )
         soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)
 
-        # Parse total results, and calculate the # of pages needed
-        n_pages = self._get_num_search_result_pages(soup_base)
-        self.logger.info(
-            f"Found {n_pages} pages of search results for query={self.query}"
-        )
-
-        # Get the first page of job soups from the search results listings
-        job_soup_list = self._parse_job_listings_to_bs4(soup_base)
-
-        # Init threads & futures list FIXME: we should probably delay here too
-        threads = ThreadPoolExecutor(MAX_CPU_WORKERS)
-        try:
-            # Search the remaining pages to extract the list of job soups
-            # FIXME: we can't load page 2, it redirects to page 1.
-            # There is toast that shows to get email notifs that shows up if
-            # I click it myself, must be an event listener?
-            futures = []
-            if n_pages > 1:
-                for page in range(2, n_pages + 1):
-                    futures.append(
-                        threads.submit(
-                            self._search_page_for_job_soups,
-                            self._get_next_page_url(soup_base, page),
-                            job_soup_list,
-                        )
-                    )
-
-            wait(futures)  # wait for all scrape jobs to finish
-        finally:
-            threads.shutdown()
-
-        return job_soup_list
+        # extract number
+        num_res = soup_base.find('p', attrs={'class', 'jobsCount'}).text.strip()
+        num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
+        return int(ceil(num_res / self.max_results_per_page))
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
@@ -261,38 +177,39 @@ class BaseGlassDoorScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def _search_page_for_job_soups(self, listings_page_url: str,
-                                   job_soup_list: List[BeautifulSoup]) -> None:
-        """Get a list of job soups from a glassdoor page, by loading the page.
-        NOTE: this makes GET requests and should be respectfully delayed.
-        """
-        self.logger.debug(f"Scraping listings page {listings_page_url}")
-        job_soup_list.extend(
-            self._parse_job_listings_to_bs4(
-                BeautifulSoup(
-                    self.session.get(listings_page_url).text,
-                    self.config.bs4_parser,
-                )
-            )
-        )
-
     def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
                                    ) -> List[BeautifulSoup]:
         """Parse a page of job listings HTML text into job soups
         """
         return page_soup.find_all('li', attrs={'class', 'jl'})
 
-    def _get_num_search_result_pages(self, soup_base: BeautifulSoup) -> int:
-        # scrape total number of results, and calculate the # pages needed
-        num_res = soup_base.find('p', attrs={'class', 'jobsCount'}).text.strip()
-        num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
-        return int(ceil(num_res / self.max_results_per_page))
+    def _get_search_stem_url(self) -> str:
+        """Get the search stem url for initial search."""
+        return f"https://www.glassdoor.{self.config.search_config.domain}/Job/jobs.htm"
 
-    def _get_next_page_url(self, soup_base: BeautifulSoup,
-                           results_page_number: int) -> str:
-        """Construct the next page of search results from the initial search
-        results page BeautifulSoup.
-        """
+    def _get_search_args(self) -> Dict[str, str]:
+        """Get all arguments used for the search query."""
+        # obtain location id using service
+        location_id = self.session.post(
+            LOCATION_BASE_URL, 
+            headers=self.headers, 
+            data={
+                'term': self.config.search_config.city,
+                'maxLocationsToReturn': MAX_GLASSDOOR_LOCATIONS_TO_RETURN,
+            }
+        ).json()[0]['locationId']
+
+        return {
+            'clickSource': 'searchBtn',
+            'sc.keyword': self.query,
+            'locT': 'C',
+            'locId': location_id,
+            'jobType': '',
+            'radius': self.quantize_radius(self.config.search_config.radius),
+        }
+
+    def _get_page_query(self, page: int) -> Tuple[str, str]:
+        """Return query parameter and value for specific provider."""
         part_url = soup_base.find(
             'li', attrs={'class', 'next'}
         ).find('a').get('href')
