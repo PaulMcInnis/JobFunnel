@@ -140,12 +140,14 @@ class BaseIndeedScraper(BaseScraper):
             )
         num_res = num_res.contents[0].strip()
         num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
-        number_of_pages = int(ceil(num_res / self.max_results_per_page))
+        n_pages = int(ceil(num_res / self.max_results_per_page))
+
+        self.logger.debug(f"Found {num_res} job postings resulting in {n_pages} pages")
 
         if not max_pages:
-            return number_of_pages
-        elif number_of_pages < max_pages:
-            return number_of_pages
+            return n_pages
+        elif n_pages < max_pages:
+            return n_pages
         else:
             return max_pages
 
@@ -238,7 +240,7 @@ class BaseIndeedScraper(BaseScraper):
         """Get all arguments used for the search query."""
         return {
             'q': self.query,
-            'l': f"{self.config.search_config.city.replace(' ', '+',)}%2C+{self.config.search_config.province_or_state.upper()}",
+            'l': f"{self.config.search_config.city}, {self.config.search_config.province_or_state}",
             'radius': self._quantize_radius(self.config.search_config.radius),
             'limit': self.max_results_per_page,
             'filter': f"{int(self.config.search_config.return_similar_results)}{REMOTENESS_TO_QUERY[self.config.search_config.remoteness]}",
@@ -246,7 +248,7 @@ class BaseIndeedScraper(BaseScraper):
 
     def _get_page_query(self, page: int) -> Tuple[str, str]:
         """Return query parameter and value for specific provider."""
-        return ('start', int(page * self.max_results_per_page))
+        return ('start', int((page - 1) * self.max_results_per_page))
 
     def _quantize_radius(self, radius: int) -> int:
         """Quantizes the user input radius to a valid radius value into:
