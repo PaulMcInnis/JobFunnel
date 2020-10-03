@@ -428,7 +428,7 @@ class BaseScraper(ABC, Logger):
         try:
             # Scrape soups for all the result pages containing many job listings
             futures = []
-            for page in range(1, n_pages):
+            for page in range(1, n_pages+1):
                 futures.append(
                     threads.submit(
                         self._get_job_soups_page, page, job_soup_dict
@@ -440,7 +440,7 @@ class BaseScraper(ABC, Logger):
         finally:
             threads.shutdown()
 
-        return list(job_soup_dict)
+        return list(job_soup_dict.values())
 
     @abstractmethod
     def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
@@ -459,8 +459,8 @@ class BaseScraper(ABC, Logger):
         # add (or overwite new job listings)
         for job_soup in self._parse_job_listings_to_bs4(r_soup):
             job_id = self.get(JobField.KEY_ID, job_soup)
-            if job_id not in job_soup_dict:
-                job_soup_dict = job_soup
+            if job_id not in job_soup_dict.keys():
+                job_soup_dict[job_id] = job_soup
 
     def _get_search_page(self, method='get', page: int = 1) -> Response:
         """Return the session of the initial search
@@ -491,7 +491,7 @@ class BaseScraper(ABC, Logger):
     def _get_search_page_soup(self, method='get', page: int = 1) -> BeautifulSoup:
         """Wrapper around get_search_page to obtain response in soup form."""
         return BeautifulSoup(
-            self._get_search_page(method, page), self.config.bs4_parser
+            self._get_search_page(method, page).text, self.config.bs4_parser
         )
 
     @abstractmethod
