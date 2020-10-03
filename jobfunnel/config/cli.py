@@ -168,6 +168,14 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     search_group.add_argument(
+        '-remote_in_ctry',
+        dest='search.remote_within_country',
+        action='store_false',
+        help='Remote within locale',
+        required=False,
+    )
+
+    search_group.add_argument(
         '-cbl',
         type=str,
         dest='search.company_block_list',
@@ -360,6 +368,7 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         blocked_company_names=config['search']['company_block_list'],
         locale=Locale[config['search']['locale']],
         providers=[Provider[p] for p in config['search']['providers']],
+        remote_within_country=config['search']['remote_within_country'],
         remoteness=Remoteness[config['search']['remoteness']],
     )
 

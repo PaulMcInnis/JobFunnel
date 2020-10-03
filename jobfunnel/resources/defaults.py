@@ -23,6 +23,7 @@ DEFAULT_PROVIDER_NAMES = [p.name for p in DEFAULT_PROVIDERS]
 DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_RANDOM_DELAY = False
 DEFAULT_RANDOM_CONVERGING_DELAY = False
+DEFAULT_REMOTE_WITHIN_COUNTRY = False
 DEFAULT_REMOTENESS = Remoteness.ANY
 
 # Defaults we use from localization, the scraper can always override it.

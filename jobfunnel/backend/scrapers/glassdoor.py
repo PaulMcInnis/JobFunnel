@@ -155,7 +155,6 @@ class BaseGlassDoorScraper(BaseScraper):
         """
         # Get the search url
         search_url, data = self.get_search_url(method='post')
-
         # Get the search page result.
         request_html = self.session.post(search_url, data=data)
         soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)

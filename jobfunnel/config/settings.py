@@ -53,8 +53,21 @@ SETTINGS_YAML_SCHEMA = {
                 'required': True,
                 'allowed': [l.name for l in Locale],
             },
-            'province_or_state': {'required': True, 'type': 'string'},
-            'city': {'required': True, 'type': 'string'},
+            'province_or_state': {
+                'required': True,
+                'type': 'string',
+                'nullable': True
+            },
+            'city': {
+                'required': True,
+                'type': 'string',
+                'nullable': True
+            },
+            'remote_within_country': {
+                'required': True,
+                'type': 'boolean',
+                'default': DEFAULT_REMOTE_WITHIN_COUNTRY
+            },
             'radius': {
                 'required': False,
                 'type': 'integer',

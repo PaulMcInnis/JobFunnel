@@ -118,7 +118,8 @@ class BaseIndeedScraper(BaseScraper):
         """
         # Get the search url
         search_url = self._get_search_url()
-
+        print(search_url)
+        print(self.config.search_config.remote_within_country)
         # Parse total results, and calculate the # of pages needed
         pages = self._get_num_search_result_pages(search_url)
         self.logger.info(
@@ -229,11 +230,42 @@ class BaseIndeedScraper(BaseScraper):
         TODO: use Enum for method instead of str.
         """
         if method == 'get':
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
-                "limit={}&filter={}{}".format(
+            search_url = "https://www.indeed.{}/jobs?q={}".format(
                     self.config.search_config.domain,
-                    self.query,
+                    self.query
+                )
+            # search countrywide supposing one is open to relocating within
+            # the country (includes remote)
+            if self.config.search_config.city is None and \
+                self.config.search_config.province_or_state is None and \
+                self.config.search_config.remote_within_country is False:
+                return search_url
+            # search remote within the country
+            if self.config.search_config.remote_within_country is True:
+                return (
+                        search_url + "&l=remote&"
+                        "limit={}&filter={}{}".format(
+                        self.config.search_config.province_or_state.upper(),
+                        self.max_results_per_page,
+                        int(self.config.search_config.return_similar_results),
+                        REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
+                    )
+                )
+            # search by state or province with no city
+            elif self.config.search_config.city is None and \
+                self.config.search_config.province_or_state:
+                return (
+                        search_url + "&l={}&"
+                        "limit={}&filter={}{}".format(
+                        self.config.search_config.province_or_state.upper(),
+                        self.max_results_per_page,
+                        int(self.config.search_config.return_similar_results),
+                        REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
+                    )
+                )
+            return (
+                    search_url + "&l={}%2C+{}&radius={}&"
+                    "limit={}&filter={}{}".format(
                     self.config.search_config.city.replace(' ', '+',),
                     self.config.search_config.province_or_state.upper(),
                     self._quantize_radius(self.config.search_config.radius),
@@ -338,11 +370,42 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
         TODO: use Enum for method instead of str.
         """
         if method == 'get':
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}&radius={}&"
-                "limit={}&filter={}{}".format(
+            search_url = "https://www.indeed.{}/jobs?q={}".format(
                     self.config.search_config.domain,
-                    self.query,
+                    self.query
+                )
+            # search countrywide supposing one is open to relocating within
+            # the country (includes remote)
+            if self.config.search_config.city is None and \
+                self.config.search_config.province_or_state is None and \
+                self.config.search_config.remote_within_country is False:
+                return search_url
+            # search remote within the country
+            elif self.config.search_config.remote_within_country is True:
+                return (
+                        search_url + "&l=remote&"
+                        "limit={}&filter={}{}".format(
+                        self.max_results_per_page,
+                        int(self.config.search_config.return_similar_results),
+                        REMOTENESS_TO_QUERY[self.config.search_config.remoteness]
+                    )
+                )
+            # search by state or province, does not factor in city or radius
+            elif self.config.search_config.city is None and \
+                self.config.search_config.province_or_state and \
+                self.config.search_config.remote_within_country is False:
+                return (
+                        search_url + "&l={}&"
+                        "limit={}&filter={}{}".format(
+                        self.config.search_config.province_or_state.upper(),
+                        self.max_results_per_page,
+                        int(self.config.search_config.return_similar_results),
+                        REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+                    )
+                )
+            return (
+                    search_url + "&l={}&radius={}&"
+                    "limit={}&filter={}{}".format(
                     self.config.search_config.city.replace(' ', '+',),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,

@@ -172,7 +172,7 @@ class BaseMonsterScraper(BaseScraper):
         """
         # Get the search url
         search_url = self._get_search_url()
-
+        print(search_url)
         # Load our initial search results listings page
         initial_search_results_html = self.session.get(search_url)
         initial_search_results_soup = BeautifulSoup(
@@ -260,15 +260,32 @@ class BaseMonsterScraper(BaseScraper):
               all previous jobs as we go.
         """
         if method == 'get':
-            return (
-                'https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}'
-                    '&rad={}'.format(
+            search_url = 'https://www.monster.{}/jobs/search/?{}q={}'.format(
                         self.config.search_config.domain,
                         f'page={page}&' if page > 1 else '',
                         self.query,
-                        self.config.search_config.city.replace(' ', '-'),
+                )
+            # search countrywide supposing one is open to relocating within
+            # the country (includes remote)
+            if self.config.search_config.city is None and \
+                self.config.search_config.province_or_state is None and \
+                self.config.search_config.remote_within_country is False:
+                return search_url
+            # search remote within the country
+            elif self.config.search_config.remote_within_country is True:
+                return search_url + '-remote'
+            # search by state or province, does not factor in city or radius
+            elif self.config.search_config.city is None and \
+                self.config.search_config.province_or_state and \
+                self.config.search_config.remote_within_country is False:
+                return search_url + '&where={}'.format(
                         self.config.search_config.province_or_state,
-                        self._convert_radius(self.config.search_config.radius)
+                )
+            return (
+                search_url + '&where={}__2C-{}&rad={}'.format(
+                    self.config.search_config.city.replace(' ', '-'),
+                    self.config.search_config.province_or_state,
+                    self._convert_radius(self.config.search_config.radius)
                 )
             )
         elif method == 'post':
@@ -360,14 +377,31 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper,
             all previous jobs as we go.
         """
         if method == 'get':
-            return (
-                'https://www.monster.{}/jobs/search/?{}q={}&where={}'
-                    '&rad={}'.format(
+            search_url = 'https://www.monster.{}/jobs/search/?{}q={}'.format(
                         self.config.search_config.domain,
                         f'page={page}&' if page > 1 else '',
                         self.query,
-                        self.config.search_config.city.replace(' ', '-'),
-                        self._convert_radius(self.config.search_config.radius)
+                )
+            # search countrywide supposing one is open to relocating within
+            # the country (includes remote)
+            if self.config.search_config.city is None and \
+                self.config.search_config.province_or_state is None and \
+                self.config.search_config.remote_within_country is False:
+                return search_url
+            # search remote within the country
+            elif self.config.search_config.remote_within_country is True:
+                return search_url + '-remote'
+            # search by state or province, does not factor in city or radius
+            elif self.config.search_config.city is None and \
+                self.config.search_config.province_or_state and \
+                self.config.search_config.remote_within_country is False:
+                return search_url + '&where={}'.format(
+                        self.config.search_config.province_or_state,
+                )
+            return (
+                search_url + '&where={}&rad={}'.format(
+                    self.config.search_config.city.replace(' ', '-'),
+                    self._convert_radius(self.config.search_config.radius)
                 )
             )
         elif method == 'post':

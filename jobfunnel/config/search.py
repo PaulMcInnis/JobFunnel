@@ -25,6 +25,7 @@ class SearchConfig(BaseConfig):
                  max_listing_days: Optional[int] = None,
                  blocked_company_names: Optional[List[str]] = None,
                  domain: Optional[str] = None,
+                 remote_within_country: bool = False,
                  remoteness: Optional[Remoteness] = Remoteness.ANY):
         """Search config for all job sources
 
@@ -56,6 +57,7 @@ class SearchConfig(BaseConfig):
         self.return_similar_results = return_similar_results  # Indeed.X thing
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
+        self.remote_within_country = remote_within_country
         self.remoteness = remoteness
 
         # Try to infer the domain string based on the locale.

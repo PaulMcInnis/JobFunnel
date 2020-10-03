@@ -26,9 +26,29 @@ search:
     - MONSTER
 
   # Region that we are searching for jobs within:
-  province_or_state: "ON"  # NOTE: this is generally 2 characters long.
-  city: "Waterloo"  # NOTE: this is the full city / town name.
+  # NOTE: this is generally 2 characters long, but can be 'Null' (no quotes)
+  # to search by country, or can be some value while city is 'Null' to search
+  # within the province or state.
+  province_or_state: "ON"
+  # NOTE: this is the full city / town name, but can be 'Null', with
+  # province_or_state set to 'Null' to search country-wide.
+  city: "Waterloo"
   radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
+  remote_within_country: False
+
+  # To search entire country if one is willing to relocate anywhere:
+  # province_or_state: Null
+  # city: Null
+  # remote_within_country: False
+  # To search within entire province or state (radius will not be accounted):
+  # province_or_state: (ie. Scotland)
+  # city: Null
+  # remote_within_country: False
+  # To search entire country for remote roles:
+  # province_or_state: Null
+  # city: Null
+  # remote_within_country: True
+
 
   # These are the terms you would be typing into the website's search field:
   keywords:
@@ -41,8 +61,8 @@ search:
   company_block_list:
     - "Infox Consulting"
 
-  # The desired level of work-remoteness (i.e. IN_PERSON, FULLY_REMOTE, ANY,
-  # TEMPORARILY_REMOTE, PARTIALLY_REMOTE)
+  # The desired level of work-remoteness if label exists in job listing
+  #(i.e. IN_PERSON, FULLY_REMOTE, ANY, TEMPORARILY_REMOTE, PARTIALLY_REMOTE)
   remoteness: ANY
 
 # Logging level options are: critical, error, warning, info, debug, notset
