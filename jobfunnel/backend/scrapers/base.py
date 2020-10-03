@@ -3,7 +3,7 @@ Paul McInnis 2020
 """
 import random
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 from multiprocessing import Lock, Manager
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -353,18 +353,6 @@ class BaseScraper(ABC, Logger):
     # pylint: enable=no-member
 
     @abstractmethod
-    def get_job_soups(self) -> List[BeautifulSoup]:
-        """Scrapes a job provider's response to a search query where we are
-        shown many job listings at once.
-
-        NOTE: the soups list returned by this method should contain enough
-        information to set your self.min_required_job_fields with get()
-
-        Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make a Job
-        """
-
-    @abstractmethod
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
 
@@ -424,17 +412,57 @@ class BaseScraper(ABC, Logger):
                 [field.name for field in excluded_fields]
             )
 
+    def get_job_soups(self) -> List[BeautifulSoup]:
+        """Scrapes raw data from a job source into a list of job-soups
+
+        Returns:
+            List[BeautifulSoup]: list of jobs soups we can use to make Job init
+        """
+        n_pages = self._get_n_pages()
+
+        # Init list of job soups
+        job_soup_dict = {}  # type: List[Any]
+
+        # Init threads & futures list FIXME: we should probably delay here too
+        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+        try:
+            # Scrape soups for all the result pages containing many job listings
+            futures = []
+            for page in range(1, n_pages):
+                futures.append(
+                    threads.submit(
+                        self._get_job_soups_page, page, job_soup_dict
+                    )
+                )
+
+            # Wait for all scrape jobs to finish
+            wait(futures)
+        finally:
+            threads.shutdown()
+
+        return list(job_soup_dict)
+
+    @abstractmethod
+    def _get_n_pages(self, max_pages: Optional[int] = None) -> int:
+        """Calculates the number of pages of job listings to be scraped."""
+
     def _get_job_soups_page(self, page: int, 
-                            job_soup_list: List[BeautifulSoup]) -> None:
+                            job_soup_dict: Dict[str, BeautifulSoup]) -> None:
         """Scrapes the indeed page for a list of job soups
         NOTE: modifies the job_soup_list in-place
         NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
             ... need to add some kind of filtering for this!
         """
+        # get the soup for the page
         r_soup = self._get_search_page_soup(page=page)
-        job_soup_list.extend(self._parse_job_listings_to_bs4(r_soup))
 
-    def _get_search_page(self, method='get', page: int = 0) -> Response:
+        # add (or overwite new job listings)
+        for job_soup in self._parse_job_listings_to_bs4(r_soup):
+            job_id = self.get(JobField.KEY_ID, job_soup)
+            if job_id not in job_soup_dict:
+                job_soup_dict = job_soup
+
+    def _get_search_page(self, method='get', page: int = 1) -> Response:
         """Return the session of the initial search
 
         Args:
@@ -447,7 +475,7 @@ class BaseScraper(ABC, Logger):
         search_args = self._get_search_args()
 
         # append page query (provider depended)
-        if page > 0:
+        if page > 1:
             pg_name, pg_val = self._get_page_query(page)
             search_args[pg_name] = pg_val
 
@@ -460,7 +488,7 @@ class BaseScraper(ABC, Logger):
         else:
             return ValueError(f"Method should be either post or get not {method}")
 
-    def _get_search_page_soup(self, method='get', page: int = 0) -> BeautifulSoup:
+    def _get_search_page_soup(self, method='get', page: int = 1) -> BeautifulSoup:
         """Wrapper around get_search_page to obtain response in soup form."""
         return BeautifulSoup(
             self._get_search_page(method, page), self.config.bs4_parser
