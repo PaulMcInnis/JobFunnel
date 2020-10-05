@@ -25,8 +25,8 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 ID_REGEX = re.compile(r'id=\"sj_([a-zA-Z0-9]*)\"')
 MAX_RESULTS_PER_INDEED_PAGE = 50
 # NOTE: these magic strings stick for both the US and CAN indeed websites...
-FULLY_REMOTE_MAGIC_STRING = "&remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11"
-COVID_REMOTE_MAGIC_STRING = "&remotejob=7e3167e4-ccb4-49cb-b761-9bae564a0a63"
+FULLY_REMOTE_MAGIC_STRING = "032b3046-06a3-4876-8dfd-474eb5e7ed11"
+COVID_REMOTE_MAGIC_STRING = "7e3167e4-ccb4-49cb-b761-9bae564a0a63"
 REMOTENESS_TO_QUERY = {
     Remoteness.IN_PERSON: '',
     Remoteness.TEMPORARILY_REMOTE: COVID_REMOTE_MAGIC_STRING,
@@ -50,7 +50,6 @@ class BaseIndeedScraper(BaseScraper):
         """
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
-        self.query = '+'.join(self.config.search_config.keywords)
 
         # Log if we can't do their remoteness query (Indeed only has 2 lvls.)
         if self.config.search_config.remoteness == Remoteness.PARTIALLY_REMOTE:
@@ -213,13 +212,14 @@ class BaseIndeedScraper(BaseScraper):
         return f"https://www.indeed.{self.config.search_config.domain}/jobs"
 
     def _get_search_args(self) -> Dict[str, str]:
-        """Get all arguments used for the search query."""
+        """Get all argumentsself.query used for the search query."""
         return {
             'q': self.query,
             'l': f"{self.config.search_config.city}, {self.config.search_config.province_or_state}",
             'radius': self._quantize_radius(self.config.search_config.radius),
             'limit': self.max_results_per_page,
-            'filter': f"{int(self.config.search_config.return_similar_results)}{REMOTENESS_TO_QUERY[self.config.search_config.remoteness]}",
+            'filter': int(self.config.search_config.return_similar_results),
+            'remotejob': REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
         }
 
     def _get_page_query(self, page: int) -> Tuple[str, str]:

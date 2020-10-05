@@ -53,6 +53,7 @@ class BaseScraper(ABC, Logger):
         self.job_filter = job_filter
         self.session = session
         self.config = config
+        self.query = ' '.join(config.search_config.keywords)
         if self.headers:
             self.session.headers.update(self.headers)
 
@@ -513,9 +514,13 @@ class BaseScraper(ABC, Logger):
 
     def _get_search_page_soup(self, method='get', page: int = 1) -> BeautifulSoup:
         """Wrapper around get_search_page to obtain response in soup form."""
-        return BeautifulSoup(
-            self._get_search_page(method, page).text, self.config.bs4_parser
-        )
+        # get response html
+        response_html = self._get_search_page(method, page)
+
+        # log url
+        self.logger.info(f"Scraped from url: {response_html.url}")
+
+        return BeautifulSoup(response_html.text, self.config.bs4_parser)
 
     @abstractmethod
     def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup

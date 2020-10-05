@@ -42,9 +42,6 @@ class BaseMonsterScraper(BaseScraper):
         """Init that contains monster specific stuff
         """
         super().__init__(session, config, job_filter)
-        self.query = '-'.join(
-            self.config.search_config.keywords
-        ).replace(' ', '-')
 
         # This is currently not scrapable through Monster site (contents maybe)
         if self.config.search_config.remoteness != Remoteness.ANY:
