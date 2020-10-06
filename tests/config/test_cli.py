@@ -78,6 +78,10 @@ def test_parse_cli_build_config_dict(argv, exp_exception):
             assert cfg['search']['similar_results']
         else:
             assert not cfg['search']['similar_results']
+        if '--exact-result' in argv:
+            assert cfg['search']['exact_result']
+        else:
+            assert not cfg['search']['exact_result']
 
         assert cfg['delay']['algorithm'] == 'LINEAR'
         assert cfg['delay']['max_duration'] == 8

@@ -66,6 +66,11 @@ SETTINGS_YAML_SCHEMA = {
                 'type': 'boolean',
                 'default': DEFAULT_RETURN_SIMILAR_RESULTS,
             },
+            'exact_result': {
+                'required': False,
+                'type': 'boolean',
+                'default': DEFAULT_EXACT_RESULT,
+            },
             'keywords': {
                 'required': True,
                 'type': 'list',

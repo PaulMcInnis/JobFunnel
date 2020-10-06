@@ -54,6 +54,9 @@ class BaseScraper(ABC, Logger):
         self.session = session
         self.config = config
         self.query = ' '.join(config.search_config.keywords)
+        # if we match exact result, we add quotes.
+        if self.config.search_config.exact_result: 
+            self.query = f'"{self.query}"'
         if self.headers:
             self.session.headers.update(self.headers)
 

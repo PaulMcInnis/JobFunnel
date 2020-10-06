@@ -22,6 +22,7 @@ class SearchConfig(BaseConfig):
                  city: Optional[str] = None,
                  distance_radius: Optional[int] = None,
                  return_similar_results: bool = False,
+                 exact_result: bool = False,
                  max_listing_days: Optional[int] = None,
                  blocked_company_names: Optional[List[str]] = None,
                  domain: Optional[str] = None,
@@ -38,6 +39,7 @@ class SearchConfig(BaseConfig):
                 DEFAULT_SEARCH_RADIUS.
             return_similar_results (Optional[bool], optional): return similar.
                 results (indeed), Defaults to False.
+            exact_result: search for exact query.
             max_listing_days (Optional[int], optional): oldest listing to show.
                 Defaults to DEFAULT_MAX_LISTING_DAYS.
             blocked_company_names (Optional[List[str]]): list of names of
@@ -54,6 +56,7 @@ class SearchConfig(BaseConfig):
         self.providers = providers
         self.keywords = keywords
         self.return_similar_results = return_similar_results  # Indeed.X thing
+        self.exact_result = exact_result
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
         self.remoteness = remoteness

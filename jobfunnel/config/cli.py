@@ -226,6 +226,13 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
              '(NOTE: this is only available for Indeed provider).',
     )
 
+    search_group.add_argument(
+        '--exact-result',
+        dest='search.exact_result',
+        action='store_true',
+        help='Match exact search query',
+    )
+
     # Proxy stuff. TODO: way to tell argparse if proxy is seen all are req'd?
     proxy_group = cli_parser.add_argument_group('proxy')
     proxy_group.add_argument(
@@ -354,6 +361,7 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         city=config['search']['city'],
         distance_radius=config['search']['radius'],
         return_similar_results=config['search']['similar_results'],
+        exact_result=config['search']['exact_result'],
         max_listing_days=config['search']['max_listing_days'],
         blocked_company_names=config['search']['company_block_list'],
         locale=Locale[config['search']['locale']],
