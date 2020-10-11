@@ -272,6 +272,7 @@ class BaseScraper(ABC, Logger):
         # Scrape the data for the post, requiring a minimum of info...
         # NOTE: if we perform a self.session.get we may get respectfully delayed
         job = None  # type: Optional[Job]
+        invalid_job = False  # type: bool
         job_init_kwargs = self.job_init_kwargs  # NOTE: faster?
         for is_get, field in self._actions_list:
 
@@ -293,6 +294,7 @@ class BaseScraper(ABC, Logger):
                         "Cancelled scraping of %s, failed JobFilter",
                         job.key_id
                     )
+                    invalid_job = True
                     break
 
             # Respectfully delay if it's configured to do so.
@@ -338,7 +340,7 @@ class BaseScraper(ABC, Logger):
                     )
 
         # Validate job fields if we got something
-        if job:
+        if job and not invalid_job:
             try:
                 job.validate()
             except Exception as err:
