@@ -36,7 +36,7 @@ wget https://git.io/JUWeP -O my_settings.yaml
 _NOTE:_
 * _It is recommended to provide as few search keywords as possible (i.e. `Python`, `AI`)._
 
-* _JobFunnel currently only supports `CANADA_ENGLISH` and `USA_ENGLISH` locales._
+* _JobFunnel currently supports `CANADA_ENGLISH`, `USA_ENGLISH`, `UK_ENGLISH` and `FRANCE_FRENCH` locales._
 
 ## Scrape
 
