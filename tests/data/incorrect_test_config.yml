@@ -1,0 +1,28 @@
+master_csv_file: TEST_search
+cache_folder: TEST_cache
+block_list_file: TEST_block_list
+duplicates_list_file: TEST_duplicates_list
+log_file: TEST_log_file
+search:
+  locale: CANADA_ENGLISH
+  providers:
+    - INDEED
+    - MONSTER
+  province_or_state: TESTPS
+  city: TestCity
+  radius: 'forty-two'
+  keywords:
+    - I
+    - Am
+    - Testing
+  max_listing_days: 44
+  company_block_list:
+    - "Blocked Company"
+    - "Blocked Company 2"
+log_level: INFO
+delay:
+    algorithm: LINEAR
+    max_duration: 8
+    min_duration: 2
+    random: True
+    converging: True
