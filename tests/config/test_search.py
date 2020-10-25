@@ -4,6 +4,7 @@ import pytest
 
 from jobfunnel.config import SearchConfig
 from jobfunnel.resources import Locale
+from jobfunnel.resources import enums
 
 
 @pytest.mark.parametrize("keywords, exp_query_str", [
@@ -60,3 +61,72 @@ def test_search_config_init(mocker, locale, domain, exp_domain):
 
         # Assertions
         assert cfg.domain == exp_domain
+
+
+@pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
+                         [([], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin')])
+def test_search_config_validate_invalid_keywords(keywords, province_or_state, locale, providers, in_city):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
+
+    with pytest.raises(AssertionError) as e:
+        cfg.validate()
+
+    assert str(e.value) == 'Keywords not set'
+
+
+@pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
+                         [(['Python', 'Space'], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], None)])
+def test_search_config_validate_invalid_city(keywords, province_or_state, locale, providers, in_city):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
+
+    with pytest.raises(AssertionError) as e:
+        cfg.validate()
+
+    assert str(e.value) == "City not set"
+
+
+@pytest.mark.parametrize('keywords, province_or_state,  locale, providers, in_city,  in_domain',
+                         [(['Python', 'Space'], 'Texas', None, [enums.Provider.INDEED], 'Austin', 'com')])
+def test_search_config_validate_invalid_locale(keywords, province_or_state, locale, providers, in_city, in_domain):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, domain=in_domain)
+
+    with pytest.raises(AssertionError) as e:
+        cfg.validate()
+
+    assert str(e.value) == "Locale not set"
+
+
+@pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
+                         [(['Ice Cream', 'Spiderman'], None, Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin')])
+def test_search_config_validate_invalid_province(keywords, province_or_state, locale, providers, in_city):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
+
+    with pytest.raises(AssertionError) as e:
+        cfg.validate()
+
+    assert str(e.value) == "Province/State not set"
+
+
+@pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city, in_max_listing_days',
+                         [(['Ice Cream', 'Spiderman'], Locale.USA_ENGLISH, Locale.USA_ENGLISH, [enums.Provider.INDEED],
+                           'Austin', -1)])
+def test_search_config_validate_invalid_province(keywords, province_or_state, locale, providers, in_city,
+                                                 in_max_listing_days):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, max_listing_days=in_max_listing_days)
+
+    with pytest.raises(AssertionError) as e:
+        cfg.validate()
+
+    assert str(e.value) == "Cannot set max posting days < 1"
+
+
+@pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
+                         [(['Ice Cream', 'Spiderman'], Locale.USA_ENGLISH, Locale.USA_ENGLISH, [enums.Provider.INDEED],
+                           'Austin')])
+def test_search_config_validate_invalid_province(keywords, province_or_state, locale, providers, in_city):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
+
+    # with pytest.raises(AssertionError) as e:
+    cfg.validate()
+
+    # assert str(e.value) == "Cannot set max posting days < 1"
