@@ -16,7 +16,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
 
     TODO: need to ensure users can try out JobFunnel as easily as possible.
     """
-    base_parser = argparse.ArgumentParser('Job Search CLI.')
+    base_parser = argparse.ArgumentParser()
 
     # Independant arguments
     base_parser.add_argument(
