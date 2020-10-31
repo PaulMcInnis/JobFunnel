@@ -67,10 +67,8 @@ def test_search_config_init(mocker, locale, domain, exp_domain):
 def test_search_config_validate_invalid_province(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Province/State not set"):
         cfg.validate()
-
-    assert str(e.value) == "Province/State not set"
 
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
@@ -78,10 +76,8 @@ def test_search_config_validate_invalid_province(keywords, province_or_state, lo
 def test_search_config_validate_invalid_city(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="City not set"):
         cfg.validate()
-
-    assert str(e.value) == "City not set"
 
 
 @pytest.mark.parametrize('keywords, province_or_state,  locale, providers, in_city,  in_domain',
@@ -89,10 +85,8 @@ def test_search_config_validate_invalid_city(keywords, province_or_state, locale
 def test_search_config_validate_invalid_locale(keywords, province_or_state, locale, providers, in_city, in_domain):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, domain=in_domain)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Locale not set"):
         cfg.validate()
-
-    assert str(e.value) == "Locale not set"
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
                          [(['Ice Cream', 'Spiderman'], 'Texas', Locale.USA_ENGLISH, [],
@@ -100,21 +94,16 @@ def test_search_config_validate_invalid_locale(keywords, province_or_state, loca
 def test_search_config_validate_invalid_providers(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Providers not set"):
         cfg.validate()
-
-    assert str(e.value) == "Providers not set"
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
                          [([], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin')])
 def test_search_config_validate_invalid_keywords(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match='Keywords not set'):
         cfg.validate()
-
-    assert str(e.value) == 'Keywords not set'
-
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city, in_max_listing_days',
                          [(['Ice Cream', 'Spiderman'], Locale.USA_ENGLISH, Locale.USA_ENGLISH, [enums.Provider.INDEED],
@@ -123,10 +112,8 @@ def test_search_config_validate_invalid_max_posting_days(keywords, province_or_s
                                                  in_max_listing_days):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, max_listing_days=in_max_listing_days)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Cannot set max posting days < 1"):
         cfg.validate()
-
-    assert str(e.value) == "Cannot set max posting days < 1"
 
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
@@ -137,11 +124,8 @@ def test_search_config_validate_domain(keywords, province_or_state, locale, prov
     # We have to force an invalid domain because the constructor ensures that it is valid.
     cfg.domain = None
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Domain not set"):
         cfg.validate()
-
-    assert str(e.value) == "Domain not set"
-
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city, in_remoteness',
                          [(['Ice Cream', 'Spiderman'], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin',
@@ -149,7 +133,5 @@ def test_search_config_validate_domain(keywords, province_or_state, locale, prov
 def test_search_config_validate_remoteness(keywords, province_or_state, locale, providers, in_city, in_remoteness):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, remoteness= in_remoteness)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError, match="Remoteness is UNKNOWN!"):
         cfg.validate()
-
-    assert str(e.value) == "Remoteness is UNKNOWN!"
