@@ -88,6 +88,7 @@ def test_search_config_validate_invalid_locale(keywords, province_or_state, loca
     with pytest.raises(AssertionError, match="Locale not set"):
         cfg.validate()
 
+
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
                          [(['Ice Cream', 'Spiderman'], 'Texas', Locale.USA_ENGLISH, [],
                            'Austin')])
@@ -97,6 +98,7 @@ def test_search_config_validate_invalid_providers(keywords, province_or_state, l
     with pytest.raises(AssertionError, match="Providers not set"):
         cfg.validate()
 
+
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city',
                          [([], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin')])
 def test_search_config_validate_invalid_keywords(keywords, province_or_state, locale, providers, in_city):
@@ -104,6 +106,7 @@ def test_search_config_validate_invalid_keywords(keywords, province_or_state, lo
 
     with pytest.raises(AssertionError, match='Keywords not set'):
         cfg.validate()
+
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city, in_max_listing_days',
                          [(['Ice Cream', 'Spiderman'], Locale.USA_ENGLISH, Locale.USA_ENGLISH, [enums.Provider.INDEED],
@@ -126,6 +129,7 @@ def test_search_config_validate_domain(keywords, province_or_state, locale, prov
 
     with pytest.raises(AssertionError, match="Domain not set"):
         cfg.validate()
+
 
 @pytest.mark.parametrize('keywords, province_or_state, locale, providers, in_city, in_remoteness',
                          [(['Ice Cream', 'Spiderman'], 'Texas', Locale.USA_ENGLISH, [enums.Provider.INDEED], 'Austin',
