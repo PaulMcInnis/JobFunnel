@@ -21,6 +21,9 @@ requires = [
     'webdriver-manager>=2.4.0',
     'Cerberus>=1.3.2',
     'tqdm>=4.47.0',
+    'flake8',
+    'pipenv',
+    'pytest-cov',
 ]
 here = Path(__file__).parent
 readme = (here / "readme.md").read_text()
