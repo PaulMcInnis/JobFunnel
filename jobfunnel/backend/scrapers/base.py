@@ -230,7 +230,7 @@ class BaseScraper(ABC, Logger):
                 )
 
             # For each job-soup object, scrape the soup into a Job (w/o desc.)
-            for future in tqdm(as_completed(futures), total=n_soups):
+            for future in tqdm(as_completed(futures), total=n_soups, ascii=True):
                 job = future.result()
                 if job:
                     # Handle inter-scraped data duplicates by key.
