@@ -67,4 +67,4 @@ delay:
 # proxy:
 #   protocol: https  # NOTE: you can also set to 'http'
 #   ip: "1.1.1.1"
-#   port: '200'
+#   port: 200

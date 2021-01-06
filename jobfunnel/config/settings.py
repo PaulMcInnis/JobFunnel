@@ -152,7 +152,7 @@ class JobFunnelSettingsValidator(Validator):
     """A simple JSON data validator with a custom data type for IPv4 addresses
     https://codingnetworker.com/2016/03/validate-json-data-using-cerberus/
     """
-    def _validate_type_ipv4address(self, field, value):
+    def _validate_type_ipv4address(self, value):
         """
         checks that the given value is a valid IPv4 address
         """
@@ -160,8 +160,9 @@ class JobFunnelSettingsValidator(Validator):
             # try to create an IPv4 address object using the python3 ipaddress
             # module
             ipaddress.IPv4Address(value)
+            return True
         except:
-            self._error(field, "Not a valid IPv4 address")
+            self._error(value, "Not a valid IPv4 address")
 
 
 SettingsValidator = JobFunnelSettingsValidator(SETTINGS_YAML_SCHEMA)
