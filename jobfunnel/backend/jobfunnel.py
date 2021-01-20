@@ -112,11 +112,11 @@ class JobFunnel(Logger):
 
             # Scrape new jobs from all our configured providers and cache them
             scraped_jobs_dict = self.scrape()
-            self.write_cache(scraped_jobs_dict)
 
         # Filter out any jobs we have rejected, archived or block-listed
         # NOTE: we do not remove duplicates here as these may trigger updates
         if scraped_jobs_dict:
+            self.write_cache(scraped_jobs_dict)
             scraped_jobs_dict = self.job_filter.filter(
                 scraped_jobs_dict, remove_existing_duplicate_keys=False
             )
@@ -230,10 +230,14 @@ class JobFunnel(Logger):
 
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
+        incoming_jobs_dict = {}
         for scraper_cls in self.config.scrapers:
             start = time()
             scraper = scraper_cls(self.session, self.config, self.job_filter)
-            incoming_jobs_dict = scraper.scrape()
+            try:
+                incoming_jobs_dict = scraper.scrape()
+            except Exception as e:
+                self.logger.error(f"Failed to scrape jobs for {scraper_cls.__name__}")
 
             # Ensure we have no duplicates between our scrapers by key-id
             # (since we are updating the jobs dict with results)
