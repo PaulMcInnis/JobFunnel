@@ -13,7 +13,7 @@ class Locale(Enum):
     USA_ENGLISH = 3
     UK_ENGLISH = 4
     FRANCE_FRENCH = 5
-
+    GERMANY_GERMAN = 6
 
 class JobStatus(Enum):
     """Job statuses that are built-into jobfunnel

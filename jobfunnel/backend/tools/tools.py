@@ -17,10 +17,10 @@ from webdriver_manager.opera import OperaDriverManager
 from jobfunnel.backend import Job
 
 # Initialize list and store regex objects of date quantifiers
-HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr|heure)')
-DAY_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d|jour)')
-MONTH_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?month|mois')
-YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year|annee')
+HOUR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:hour|hr|heure|Stunde)')
+DAY_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?(?:day|d|jour|Tag)')
+MONTH_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?month|mois|Monat')
+YEAR_REGEX = re.compile(r'(\d+)(?:[ +]{1,3})?year|annee|Jahr')
 RECENT_REGEX_A = re.compile(r'[tT]oday|[jJ]ust [pP]osted')
 RECENT_REGEX_B = re.compile(r'[yY]esterday')
 

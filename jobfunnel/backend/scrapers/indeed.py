@@ -13,7 +13,8 @@ from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper,
                                              BaseUKEngScraper,
-                                             BaseFRFreScraper)
+                                             BaseFRFreScraper,
+                                             BaseGEGerScraper)
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
@@ -386,6 +387,68 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
 
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
+        """Calculates the number of pages of job listings to be scraped.
+
+        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+
+        Args:
+			max_pages: the maximum number of pages to be scraped.
+        Returns:
+            The number of pages to be scraped.
+        """
+        # Get the html data, initialize bs4 with lxml
+        request_html = self.session.get(search_url)
+        self.logger.debug(
+            "Got Base search results page: %s", search_url
+        )
+        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        num_res = query_resp.find(id='searchCountPages')
+        # TODO: we should consider expanding the error cases (scrape error page)
+        if not num_res:
+            raise ValueError(
+                "Unable to identify number of pages of results for query: {}"
+                " Please ensure linked page contains results, you may have"
+                " provided a city for which there are no results within this"
+                " province or state.".format(search_url)
+            )
+
+        num_res = normalize("NFKD", num_res.contents[0].strip())
+        num_res = int(re.findall(r'(\d+) ', num_res.replace(',', ''))[1])
+        number_of_pages = int(ceil(num_res / self.max_results_per_page))
+        if max_pages == 0:
+            return number_of_pages
+        elif number_of_pages < max_pages:
+            return number_of_pages
+        else:
+            return max_pages
+
+
+class IndeedScraperGEGer(BaseIndeedScraper, BaseGEGerScraper):
+     '''Scrapes jobos from indeed.de
+     '''
+     def _get_search_url(self, method: Optional[str] = 'get') -> str:
+        """Get the indeed search url from SearchTerms
+        TODO: use Enum for method instead of str.
+        """
+        if method == 'get':
+            return (
+                "https://www.indeed.{}/jobs?q={}&l={}&radius={}&"
+                "limit={}&filter={}{}".format(
+                    self.config.search_config.domain,
+                    self.query,
+                    self.config.search_config.city.replace(' ', '+',),
+                    self._quantize_radius(self.config.search_config.radius),
+                    self.max_results_per_page,
+                    int(self.config.search_config.return_similar_results),
+                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+                )
+            )
+        elif method == 'post':
+            raise NotImplementedError()
+        else:
+           raise ValueError(f'No html method {method} exists')
+
+     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
         i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs

@@ -7,11 +7,13 @@ from jobfunnel.resources import Locale, Provider
 
 from jobfunnel.backend.scrapers.indeed import (
     IndeedScraperCANEng, IndeedScraperUSAEng,
-    IndeedScraperUKEng, IndeedScraperFRFre
+    IndeedScraperUKEng, IndeedScraperFRFre,
+    IndeedScraperGEGer
 )
 from jobfunnel.backend.scrapers.monster import (
     MonsterScraperCANEng, MonsterScraperUSAEng,
-    MonsterScraperUKEng, MonsterScraperFRFre
+    MonsterScraperUKEng, MonsterScraperFRFre,
+    MonsterScraperGEGer
 )
 from jobfunnel.backend.scrapers.glassdoor import (
     GlassDoorScraperCANEng, GlassDoorScraperUSAEng,
@@ -25,6 +27,7 @@ SCRAPER_FROM_LOCALE = {
         Locale.USA_ENGLISH: IndeedScraperUSAEng,
         Locale.UK_ENGLISH: IndeedScraperUKEng,
         Locale.FRANCE_FRENCH: IndeedScraperFRFre,
+        Locale.GERMANY_GERMAN: IndeedScraperGEGer
     },
     Provider.GLASSDOOR: {
         Locale.CANADA_ENGLISH: GlassDoorScraperCANEng,
@@ -36,5 +39,6 @@ SCRAPER_FROM_LOCALE = {
         Locale.USA_ENGLISH: MonsterScraperUSAEng,
         Locale.UK_ENGLISH: MonsterScraperUKEng,
         Locale.FRANCE_FRENCH: MonsterScraperFRFre,
+        Locale.GERMANY_GERMAN:MonsterScraperGEGer
     },
 }
