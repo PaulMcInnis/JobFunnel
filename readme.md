@@ -97,6 +97,11 @@ Open the master CSV file and update the per-job `status`:
   ```
   funnel inline -h
   ```
+ 
+# CAPTCHA
+  JobFunnel does not solve CAPTCHA. If, while scraping, you receive a 
+  `Unable to extract jobs from initial search result page:\` error. 
+  Then open that url on your browser and solve the CAPTCHA manually.
 
 <!-- links -->
 [requirements]:requirements.txt
