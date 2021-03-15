@@ -42,6 +42,9 @@ jobs:
     - name: Run a FRANCE_FRENCH demo by settings YAML
       run: |
         funnel load -s demo/settings_FR.yaml -log-level DEBUG
+    - name: Run a GERMANY_GERMAN demo by settings YAML
+      run: |
+        funnel load -s demo/settings_DE.yaml -log-level DEBUG
     - name: Obtain coverage
       run: |
         pytest --cov=jobfunnel --cov-report=xml
