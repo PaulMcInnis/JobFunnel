@@ -343,15 +343,17 @@ class BaseScraper(ABC, Logger):
         if job and not invalid_job:
             try:
                 job.validate()
-                # Prefix the id with the scraper name to avoid key conflicts
-                new_key_id = job.provider + '_' + job.key_id
-                job.key_id = new_key_id
+
             except Exception as err:
                 # Bad job scrapes can't take down execution!
                 # NOTE: desc too short etc, usually indicates that the job
                 # is an empty page. Not sure why this comes up once in awhile...
                 self.logger.error("Job failed validation: %s", err)
                 return None
+
+        # Prefix the id with the scraper name to avoid key conflicts
+        new_key_id = job.provider + '_' + job.key_id
+        job.key_id = new_key_id
 
         return job
     # pylint: enable=no-member
