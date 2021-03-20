@@ -230,8 +230,8 @@ class JobFunnel(Logger):
 
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
-        incoming_jobs_dict = {}
         for scraper_cls in self.config.scrapers:
+            incoming_jobs_dict = {}
             start = time()
             scraper = scraper_cls(self.session, self.config, self.job_filter)
             try:
@@ -242,8 +242,8 @@ class JobFunnel(Logger):
             # Ensure we have no duplicates between our scrapers by key-id
             # (since we are updating the jobs dict with results)
             self._check_for_inter_scraper_validity(
-                incoming_jobs_dict,
                 jobs,
+                incoming_jobs_dict,
             )
 
             jobs.update(incoming_jobs_dict)
