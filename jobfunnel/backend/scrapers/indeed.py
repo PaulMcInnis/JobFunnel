@@ -102,7 +102,7 @@ class BaseIndeedScraper(BaseScraper):
         return {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
             'q=0.9,image/webp,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, sdch, br',
+            'accept-encoding': 'gzip, deflate, sdch',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer':
                 f'https://www.indeed.{self.config.search_config.domain}/',
