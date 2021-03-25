@@ -454,7 +454,6 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
         else:
             raise ValueError(f'No html method {method} exists')
 
-
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
