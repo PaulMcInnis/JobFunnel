@@ -6,6 +6,8 @@ from math import ceil
 from typing import Any, Dict, List, Optional
 from unicodedata import normalize
 
+from inspect import currentframe, getframeinfo
+
 from bs4 import BeautifulSoup
 from requests import Session
 
@@ -18,6 +20,7 @@ from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
+from selenium import webdriver
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -119,6 +122,11 @@ class BaseIndeedScraper(BaseScraper):
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
+
+        frameinfo = getframeinfo(currentframe())
+
+        print(frameinfo.filename, frameinfo.lineno)
+        print("get_job_soups_from_search_result_listings", )
         # Get the search url
         search_url = self._get_search_url()
 
@@ -127,6 +135,8 @@ class BaseIndeedScraper(BaseScraper):
         self.logger.info(
             "Found %d pages of search results for query=%s", pages, self.query
         )
+
+        print("get_job_soups_from_search_result_listings#3")
 
         # Init list of job soups
         job_soup_list = []  # type: List[Any]
@@ -296,13 +306,43 @@ class BaseIndeedScraper(BaseScraper):
         Returns:
             The number of pages to be scraped.
         """
+
+
+        print("#2")
+
+
+        # initialize the webdriver
+        try:
+            print("#3")
+            self.driver = webdriver.Firefox()
+            print("6")
+        except Exception as e:
+            print('#5')
+            print(f"e:{e}")
+            raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
+
+        print("#4")
+        self.driver.get(search_url)
+
+        # print(f'self.driver.page_source:{self.driver.page_source}')
+
+        print(f"get_job_soups_from_search_result_listings{search_url}")
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
         self.logger.debug(
             "Got Base search results page: %s", search_url
         )
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id='searchCountPages')
+        print("_get_num_search_result_pages")
+        query_resp = BeautifulSoup(self.driver.page_source, self.config.bs4_parser)
+
+        f = query_resp.find_all("div", {"class": "searchCountContainer"})
+        # f[0]
+        print(f"request_html.text:{f}")
+
+        # for p in query_resp.find_all('a'):
+        #     print(f'p:{p}')
+        num_res = query_resp.find(class_="searchCountContainer")
+        print(f"num_res:{num_res}")
         # TODO: we should consider expanding the error cases (scrape error page)
         if not num_res:
             raise ValueError(
