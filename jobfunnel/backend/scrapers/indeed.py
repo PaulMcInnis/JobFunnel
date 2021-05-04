@@ -314,7 +314,9 @@ class BaseIndeedScraper(BaseScraper):
         # initialize the webdriver
         try:
             print("#3")
-            self.driver = webdriver.Firefox()
+            fireFoxOptions = webdriver.FirefoxOptions()
+            fireFoxOptions.headless = True
+            self.driver = webdriver.Firefox(firefox_options=fireFoxOptions)
             print("6")
         except Exception as e:
             print('#5')
