@@ -290,11 +290,30 @@ class BaseIndeedScraper(BaseScraper):
             ... need to add some kind of filtering for this!
         """
         url = f'{search}&start={int(page * self.max_results_per_page)}'
+
+        print('_get_job_soups_from_search_page:')
+
+        # self.driver = webdriver.Remote(command_executor=self.s_url, desired_capabilities={})
+        # self.driver.close()  # this prevents the dummy browser
+        # self.driver.session_id = self.session_id
+
+        # self.driver.current_url
+
+        print('_get_job_soups_from_search_page:2', self.driver.current_url )
+
+        print('_get_job_soups_from_search_page:2', self.driver.get(self.driver.current_url + url))
+
         job_soup_list.extend(
             BeautifulSoup(
-                self.session.get(url).text, self.config.bs4_parser
+                self.driver.get(url).text, self.config.bs4_parser
             ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         )
+
+        # job_soup_list.extend(
+        #     BeautifulSoup(
+        #         self.session.get(url).text, self.config.bs4_parser
+        #     ).find_all('div', attrs={'data-tn-component': 'organicJob'})
+        # )
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
@@ -306,27 +325,20 @@ class BaseIndeedScraper(BaseScraper):
         Returns:
             The number of pages to be scraped.
         """
-
-
-        print("#2")
-
-
         # initialize the webdriver
         try:
-            print("#3")
             fireFoxOptions = webdriver.FirefoxOptions()
             fireFoxOptions.headless = True
             self.driver = webdriver.Firefox(firefox_options=fireFoxOptions)
-            print("6")
+            # self.driver.start_session({})
+            print('started session')
         except Exception as e:
-            print('#5')
-            print(f"e:{e}")
+            print('exception:', e)
             raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
 
-        print("#4")
+        self.s_url = self.driver.command_executor._url  # "http://127.0.0.1:60622/hub"
+        self.session_id = self.driver.session_id
         self.driver.get(search_url)
-
-        # print(f'self.driver.page_source:{self.driver.page_source}')
 
         print(f"get_job_soups_from_search_result_listings{search_url}")
         # Get the html data, initialize bs4 with lxml
@@ -336,14 +348,7 @@ class BaseIndeedScraper(BaseScraper):
         )
         print("_get_num_search_result_pages")
         query_resp = BeautifulSoup(self.driver.page_source, self.config.bs4_parser)
-
-        f = query_resp.find_all("div", {"class": "searchCountContainer"})
-        # f[0]
-        print(f"request_html.text:{f}")
-
-        # for p in query_resp.find_all('a'):
-        #     print(f'p:{p}')
-        num_res = query_resp.find(class_="searchCountContainer")
+        num_res = query_resp.find("div", {"id": 'searchCountPages'})
         print(f"num_res:{num_res}")
         # TODO: we should consider expanding the error cases (scrape error page)
         if not num_res:
@@ -354,8 +359,13 @@ class BaseIndeedScraper(BaseScraper):
                 " province or state.".format(search_url)
             )
 
+        # print(f"num_res2:{num_res.contents[1].strip()}")
         num_res = num_res.contents[0].strip()
-        num_res = int(re.findall(r'f (\d+) ', num_res.replace(',', ''))[0])
+        print(f"num_res2:{num_res}")
+        print('num_res.replace',re.findall(r'f (\d+) ', num_res.replace(',', '')))
+        num_res = int(re.findall(r'of (\d+) ', num_res.replace(',', ''))[0])
+        print(f"num_res3:{num_res}")
+
         number_of_pages = int(ceil(num_res / self.max_results_per_page))
         if max_pages == 0:
             return number_of_pages
