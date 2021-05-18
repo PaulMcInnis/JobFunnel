@@ -289,9 +289,13 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
             ... need to add some kind of filtering for this!
         """
+        "https://www.indeed.com/viewjob?jk=52aed31c60a2dec3&tk=1f5uecsbrhij3800&from=serp&vjs=3&advn=9433740669847232&adid=366636702&ad=-6NYlbfkN0A3LmKGJrRdG8-GibsnagGmC1U8qn1FiBTMFAUobQ0wT0Grlusje-Iz40GlqxxxnwJYwjeD1wcjkLfFbOjUqFKbnxMpu92AE4cYWIRrHtXbCrIm7fZLDFYnmDmDnnG5sXhm2i2cua2XLyoqiyuoT_9f0vwjfvcwkeKJER0Iy6-id6Jfxx3G6m7s-zTvggHGydkZ5WXiTrahbuVRSGEdqkM5PLtC67kj73ag67zxWFBbyfGV7zIUmMOYjGJZeIlJQZszQjgCRRhyVb_Th6Jx-M2EDxB66JrmszxCC3YAQtXaDQHFMbc-5F9tUqRORFH3ZPm_7ZM43Hni2g==&sjdu=6ByzYMZLGYUgyrbSdN0cjHNjrvV60uloA1SbaLbYkGE_-FMtQSBEFjat36ivxQkoFONXxFt4ja99Byb4WLGnXHYqbvK1YMCAIxYOa7a1LwhfVwuv5f1LMkntAxl6F-OlFlR6aJvmfyUGGUF0gqVgWLwi6SbxTCfQPBTP_YN_h6v6bwS-7qbnzR6Og1XUfxagacR1Zxc1cn5xTyPyehOBsI0xqQwlkA53avfym8YQWMp6jCciK9XbWNGqQyZCn9r5IOZru4WWHExOsnTmaJhsJPCUYZEFrz_h5ZoI15MZTFcYAw51vVTIROLC-_Rz3ZKO"
         url = f'{search}&start={int(page * self.max_results_per_page)}'
+        url = f'{search}&start={int(50)}'
 
         print('_get_job_soups_from_search_page:')
+
+        print(f"url:{url}")
 
         # self.driver = webdriver.Remote(command_executor=self.s_url, desired_capabilities={})
         # self.driver.close()  # this prevents the dummy browser
@@ -301,13 +305,30 @@ class BaseIndeedScraper(BaseScraper):
 
         print('_get_job_soups_from_search_page:2', self.driver.current_url )
 
-        print('_get_job_soups_from_search_page:2', self.driver.get(self.driver.current_url + url))
+        print(f'requesting url: {url}')
+
+        print('_get_job_soups_from_search_page$$:', self.driver.get( url))
+
+        print(f'content:{self.driver.get(url)}')
+        # print(f'content---->:{self.driver.page_source}')
+
+        # job_soup_list.extend(
+        #     BeautifulSoup(
+        #         self.driver.get(url).text, self.config.bs4_parser
+        #     ).find_all('div', attrs={'data-tn-component': 'organicJob'})
+        # )
 
         job_soup_list.extend(
             BeautifulSoup(
-                self.driver.get(url).text, self.config.bs4_parser
+                self.driver.page_source, self.config.bs4_parser
             ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         )
+
+        if(len(job_soup_list) > 0):
+            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+            print(f'content for soup:{job_soup_list[0]}')
+            print("job_list--->", job_soup_list[0].soup.find(
+                'a', attrs={'data-tn-element': 'jobTitle'}))
 
         # job_soup_list.extend(
         #     BeautifulSoup(
@@ -328,7 +349,7 @@ class BaseIndeedScraper(BaseScraper):
         # initialize the webdriver
         try:
             fireFoxOptions = webdriver.FirefoxOptions()
-            fireFoxOptions.headless = True
+            fireFoxOptions.headless = False
             self.driver = webdriver.Firefox(firefox_options=fireFoxOptions)
             # self.driver.start_session({})
             print('started session')
