@@ -291,7 +291,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         "https://www.indeed.com/viewjob?jk=52aed31c60a2dec3&tk=1f5uecsbrhij3800&from=serp&vjs=3&advn=9433740669847232&adid=366636702&ad=-6NYlbfkN0A3LmKGJrRdG8-GibsnagGmC1U8qn1FiBTMFAUobQ0wT0Grlusje-Iz40GlqxxxnwJYwjeD1wcjkLfFbOjUqFKbnxMpu92AE4cYWIRrHtXbCrIm7fZLDFYnmDmDnnG5sXhm2i2cua2XLyoqiyuoT_9f0vwjfvcwkeKJER0Iy6-id6Jfxx3G6m7s-zTvggHGydkZ5WXiTrahbuVRSGEdqkM5PLtC67kj73ag67zxWFBbyfGV7zIUmMOYjGJZeIlJQZszQjgCRRhyVb_Th6Jx-M2EDxB66JrmszxCC3YAQtXaDQHFMbc-5F9tUqRORFH3ZPm_7ZM43Hni2g==&sjdu=6ByzYMZLGYUgyrbSdN0cjHNjrvV60uloA1SbaLbYkGE_-FMtQSBEFjat36ivxQkoFONXxFt4ja99Byb4WLGnXHYqbvK1YMCAIxYOa7a1LwhfVwuv5f1LMkntAxl6F-OlFlR6aJvmfyUGGUF0gqVgWLwi6SbxTCfQPBTP_YN_h6v6bwS-7qbnzR6Og1XUfxagacR1Zxc1cn5xTyPyehOBsI0xqQwlkA53avfym8YQWMp6jCciK9XbWNGqQyZCn9r5IOZru4WWHExOsnTmaJhsJPCUYZEFrz_h5ZoI15MZTFcYAw51vVTIROLC-_Rz3ZKO"
         url = f'{search}&start={int(page * self.max_results_per_page)}'
-        url = f'{search}&start={int(50)}'
+         # url = f'{search}&start={int(50)}'
 
         print('_get_job_soups_from_search_page:')
 
@@ -317,7 +317,8 @@ class BaseIndeedScraper(BaseScraper):
         #         self.driver.get(url).text, self.config.bs4_parser
         #     ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         # )
-
+        self.driver.get(url)
+        print("self.driver.page_source-->", self.driver.page_source)
         job_soup_list.extend(
             BeautifulSoup(
                 self.driver.page_source, self.config.bs4_parser
@@ -363,7 +364,8 @@ class BaseIndeedScraper(BaseScraper):
 
         print(f"get_job_soups_from_search_result_listings{search_url}")
         # Get the html data, initialize bs4 with lxml
-        request_html = self.session.get(search_url)
+        # request_html = self.session.get(search_url)
+        input()
         self.logger.debug(
             "Got Base search results page: %s", search_url
         )
