@@ -158,6 +158,7 @@ class BaseIndeedScraper(BaseScraper):
             wait(futures)
 
         finally:
+            print("finally")
             threads.shutdown()
 
         return job_soup_list
@@ -220,11 +221,19 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: URL is high-priority, since we need it to get RAW.
         """
         if parameter == JobField.RAW:
+            self.driver.get(job.url)
+            print("job url:" + job.url)
             job._raw_scrape_data = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
+                self.driver.page_source, self.config.bs4_parser
             )
         elif parameter == JobField.DESCRIPTION:
+            print("assert description 1")
+            with open('soup_output.txt', 'w+') as f:
+                print("job raw:", job._raw_scrape_data)
+                f.write(job._raw_scrape_data)
             assert job._raw_scrape_data
+            print("assert description 2")
+            print("raw data:", job._raw_scrape_data)
             job.description = job._raw_scrape_data.find(
                 id='jobDescriptionText'
             ).text.strip()
@@ -318,19 +327,24 @@ class BaseIndeedScraper(BaseScraper):
         #     ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         # )
         self.driver.get(url)
-        print("self.driver.page_source-->", self.driver.page_source)
+        # print("self.driver.page_source-->", self.driver.page_source)
+        print("1")
         job_soup_list.extend(
             BeautifulSoup(
                 self.driver.page_source, self.config.bs4_parser
             ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         )
+        print("2")
+        # print("jobList:", job_soup_list)
+        with open('soup_output.txt', 'w+') as f:
+            f.write(self.driver.page_source)
 
         if(len(job_soup_list) > 0):
             print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-            print(f'content for soup:{job_soup_list[0]}')
-            print("job_list--->", job_soup_list[0].soup.find(
-                'a', attrs={'data-tn-element': 'jobTitle'}))
-
+            # print(f'content for soup:{job_soup_list[0]}')
+            # print("job_list--->", job_soup_list[0].soup.find(
+            #     'a', attrs={'data-tn-element': 'jobTitle'}))
+        print("3")
         # job_soup_list.extend(
         #     BeautifulSoup(
         #         self.session.get(url).text, self.config.bs4_parser

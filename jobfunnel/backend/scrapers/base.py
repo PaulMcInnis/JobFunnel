@@ -308,15 +308,20 @@ class BaseScraper(ABC, Logger):
 
             try:
                 if is_get:
+                    print("field:", field)
                     job_init_kwargs[field] = self.get(field, job_soup)
+                    print("field:", field)
                 else:
+                    print("else field:", field)
                     if not job:
                         # Build initial job object + populate all the job
                         job = Job(**{
                             k.name.lower(): v for k, v
                             in job_init_kwargs.items()
                         })
+                        print("else field2:", field)
                     self.set(field, job, job_soup)
+                    print("else field3:", field)
 
             except Exception as err:
 
