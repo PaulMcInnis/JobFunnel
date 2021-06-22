@@ -1,16 +1,17 @@
 """Scraper designed to get jobs from www.indeed.X
 """
 import re
-from concurrent.futures import ThreadPoolExecutor, wait
+# from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
 from typing import Any, Dict, List, Optional
 from unicodedata import normalize
-
+from time import sleep
 from inspect import currentframe, getframeinfo
 
 from bs4 import BeautifulSoup
 from requests import Session
-
+from selenium.webdriver import FirefoxProfile
+import requests
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper,
@@ -44,6 +45,45 @@ REMOTENESS_STR_MAP = {
     'temporarily remote': Remoteness.TEMPORARILY_REMOTE,
 }
 
+def get_proxies():
+    requests.get("https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt")
+
+def wait_for_web_driver_to_close(driver):
+    is_browser_open = True
+    while(is_browser_open):
+        print("browser open")
+        try:
+            print(driver.title)
+        except Exception as e:
+            is_browser_open = False
+    print("browser closed")
+
+def get_web_driver(driver):
+    """
+    Factory function to initialize a Selenium web driver
+    """
+    # initialize the webdriver
+    wait_for_web_driver_to_close(driver)
+    try:
+        fireFoxOptions = webdriver.FirefoxOptions()
+        fireFoxOptions.headless = True
+        profile = FirefoxProfile()
+        profile.set_preference("network.proxy.type", 1)
+        profile.set_preference("network.proxy.http", "localhost")
+        profile.set_preference("network.proxy.http_port", 3128)
+        driver = webdriver.Firefox(firefox_options=fireFoxOptions, firefox_profile=profile)
+        # self.driver.start_session({})
+        print('started session')
+    except Exception as e:
+        print('exception:', e)
+        raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
+
+    driver.s_url = driver.command_executor._url  # "http://127.0.0.1:60622/hub"
+    driver.session_id = driver.session_id
+
+    # driver.get_screenshot_as_file()
+
+    return driver
 
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
@@ -123,9 +163,9 @@ class BaseIndeedScraper(BaseScraper):
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
 
-        frameinfo = getframeinfo(currentframe())
-
-        print(frameinfo.filename, frameinfo.lineno)
+        # frameinfo = getframeinfo(currentframe())
+        #
+        # print(frameinfo.filename, frameinfo.lineno)
         print("get_job_soups_from_search_result_listings", )
         # Get the search url
         search_url = self._get_search_url()
@@ -142,25 +182,31 @@ class BaseIndeedScraper(BaseScraper):
         job_soup_list = []  # type: List[Any]
 
         # Init threads & futures list FIXME: we should probably delay here too
-        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
+        # threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
         try:
             # Scrape soups for all the result pages containing many job listings
             futures = []
             for page in range(0, pages):
-                futures.append(
-                    threads.submit(
-                        self._get_job_soups_from_search_page, search_url, page,
-                        job_soup_list
-                    )
-                )
+                sleep(3)
+                self._get_job_soups_from_search_page(search_url, page, job_soup_list)
+                # futures.append(
+                #     threads.submit(
+                #         self._get_job_soups_from_search_page, search_url, page,
+                #         job_soup_list
+                #     )
+                # )
 
             # Wait for all scrape jobs to finish
-            wait(futures)
+            # wait(futures)
+
+        except Exception as e:
+            print("exception on get_job_soups_from_search_result_listings-->" + str(e))
+
 
         finally:
             print("finally")
-            threads.shutdown()
-
+            # threads.shutdown()
+        print("return on get_job_soups_from_search_result_listings")
         return job_soup_list
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
@@ -221,6 +267,11 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: URL is high-priority, since we need it to get RAW.
         """
         if parameter == JobField.RAW:
+            print("new web driver")
+            self.driver.close()
+            self.driver.quit()
+            self.driver = get_web_driver(self.driver)
+            sleep(3)
             self.driver.get(job.url)
             print("job url:" + job.url)
             job._raw_scrape_data = BeautifulSoup(
@@ -290,7 +341,7 @@ class BaseIndeedScraper(BaseScraper):
             radius = 100
         return radius
 
-    def _get_job_soups_from_search_page(self, search: str, page: str,
+    def _get_job_soups_from_search_page(self, search: str, page: int,
                                         job_soup_list: List[BeautifulSoup]
                                         ) -> None:
         """Scrapes the indeed page for a list of job soups
@@ -345,6 +396,7 @@ class BaseIndeedScraper(BaseScraper):
             # print("job_list--->", job_soup_list[0].soup.find(
             #     'a', attrs={'data-tn-element': 'jobTitle'}))
         print("3")
+        print("4")
         # job_soup_list.extend(
         #     BeautifulSoup(
         #         self.session.get(url).text, self.config.bs4_parser

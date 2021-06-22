@@ -1,8 +1,13 @@
 #!python
 """Builds a config from CLI, runs desired scrapers and updates JSON + CSV
 """
+import logging
 import os
 import sys
+
+import requests
+from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+
 from .backend.jobfunnel import JobFunnel
 from .config import parse_cli, build_config_dict, get_config_manager
 
@@ -11,6 +16,10 @@ def main():
     """Parse CLI and call jobfunnel() to manage scrapers and lists
     """
     # Parse CLI into validated schema
+    req_proxy = RequestProxy(log_level=logging.ERROR)
+    print("Size: {0}".format(len(req_proxy.get_proxy_list())))
+    r = requests.get("https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt")
+    print("r", r.text )
     args = parse_cli(sys.argv[1:])
     cfg_dict = build_config_dict(args)
 
