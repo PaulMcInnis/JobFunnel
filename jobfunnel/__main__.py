@@ -16,9 +16,9 @@ def main():
     """Parse CLI and call jobfunnel() to manage scrapers and lists
     """
     # Parse CLI into validated schema
-    req_proxy = RequestProxy(log_level=logging.ERROR)
-    print("Size: {0}".format(len(req_proxy.get_proxy_list())))
-    r = requests.get("https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt")
+    # req_proxy = RequestProxy(log_level=logging.ERROR)
+    # print("Size: {0}".format(len(req_proxy.get_proxy_list())))
+    r = requests.get("https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt")
     print("r", r.text )
     args = parse_cli(sys.argv[1:])
     cfg_dict = build_config_dict(args)
