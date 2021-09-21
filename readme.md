@@ -24,6 +24,8 @@ pip install git+https://github.com/PaulMcInnis/JobFunnel.git
 # Usage
 By performing regular scraping and reviewing, you can cut through the noise of even the busiest job markets.
 
+_NOTE: since this project was developed, a number of job websites have implemented CAPTCHA, impacting functionality ([discussion](https://github.com/PaulMcInnis/JobFunnel/discussions/148))._
+
 ## Configure
 You can search for jobs with YAML configuration files or by passing command arguments.
 
