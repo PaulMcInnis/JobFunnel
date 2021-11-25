@@ -4,6 +4,8 @@
 
 Automated tool for scraping job postings into a `.csv` file.
 
+_[Since this project was developed, CAPTCHA has clamped down hard, help us re-build the backend and make this tool useful again!](https://github.com/PaulMcInnis/JobFunnel/discussions/148)_
+
 ### Benefits over job search sites:
 
 * Never see the same job twice!
@@ -23,8 +25,6 @@ pip install git+https://github.com/PaulMcInnis/JobFunnel.git
 
 # Usage
 By performing regular scraping and reviewing, you can cut through the noise of even the busiest job markets.
-
-_NOTE: since this project was developed, a number of job websites have implemented CAPTCHA, impacting functionality ([discussion](https://github.com/PaulMcInnis/JobFunnel/discussions/148))._
 
 ## Configure
 You can search for jobs with YAML configuration files or by passing command arguments.
