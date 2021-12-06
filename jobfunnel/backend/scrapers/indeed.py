@@ -10,8 +10,10 @@ from inspect import currentframe, getframeinfo
 
 from bs4 import BeautifulSoup
 from requests import Session
-from selenium.webdriver import FirefoxProfile
+from selenium.webdriver import FirefoxProfile, Proxy
 import requests
+from webdriver_manager.firefox import GeckoDriverManager
+
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
                                              BaseUSAEngScraper,
@@ -22,6 +24,8 @@ from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
 from selenium import webdriver
+
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -45,18 +49,21 @@ REMOTENESS_STR_MAP = {
     'temporarily remote': Remoteness.TEMPORARILY_REMOTE,
 }
 
+
 def get_proxies():
     requests.get("https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt")
 
+
 def wait_for_web_driver_to_close(driver):
     is_browser_open = True
-    while(is_browser_open):
+    while (is_browser_open):
         print("browser open")
         try:
             print(driver.title)
         except Exception as e:
             is_browser_open = False
     print("browser closed")
+
 
 def get_web_driver(driver):
     """
@@ -71,7 +78,7 @@ def get_web_driver(driver):
         profile.set_preference("network.proxy.type", 1)
         profile.set_preference("network.proxy.http", "localhost")
         profile.set_preference("network.proxy.http_port", 3128)
-        driver = webdriver.Firefox(firefox_options=fireFoxOptions, firefox_profile=profile)
+        driver = webdriver.Firefox(options=fireFoxOptions, firefox_profile=profile)
         # self.driver.start_session({})
         print('started session')
     except Exception as e:
@@ -84,6 +91,7 @@ def get_web_driver(driver):
     # driver.get_screenshot_as_file()
 
     return driver
+
 
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X
@@ -145,7 +153,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         return {
             'accept': 'text/html,application/xhtml+xml,application/xml;'
-            'q=0.9,image/webp,*/*;q=0.8',
+                      'q=0.9,image/webp,*/*;q=0.8',
             'accept-encoding': 'gzip, deflate, sdch, br',
             'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
             'referer':
@@ -307,7 +315,7 @@ class BaseIndeedScraper(BaseScraper):
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.city.replace(' ', '+', ),
                     self.config.search_config.province_or_state.upper(),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
@@ -351,7 +359,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         "https://www.indeed.com/viewjob?jk=52aed31c60a2dec3&tk=1f5uecsbrhij3800&from=serp&vjs=3&advn=9433740669847232&adid=366636702&ad=-6NYlbfkN0A3LmKGJrRdG8-GibsnagGmC1U8qn1FiBTMFAUobQ0wT0Grlusje-Iz40GlqxxxnwJYwjeD1wcjkLfFbOjUqFKbnxMpu92AE4cYWIRrHtXbCrIm7fZLDFYnmDmDnnG5sXhm2i2cua2XLyoqiyuoT_9f0vwjfvcwkeKJER0Iy6-id6Jfxx3G6m7s-zTvggHGydkZ5WXiTrahbuVRSGEdqkM5PLtC67kj73ag67zxWFBbyfGV7zIUmMOYjGJZeIlJQZszQjgCRRhyVb_Th6Jx-M2EDxB66JrmszxCC3YAQtXaDQHFMbc-5F9tUqRORFH3ZPm_7ZM43Hni2g==&sjdu=6ByzYMZLGYUgyrbSdN0cjHNjrvV60uloA1SbaLbYkGE_-FMtQSBEFjat36ivxQkoFONXxFt4ja99Byb4WLGnXHYqbvK1YMCAIxYOa7a1LwhfVwuv5f1LMkntAxl6F-OlFlR6aJvmfyUGGUF0gqVgWLwi6SbxTCfQPBTP_YN_h6v6bwS-7qbnzR6Og1XUfxagacR1Zxc1cn5xTyPyehOBsI0xqQwlkA53avfym8YQWMp6jCciK9XbWNGqQyZCn9r5IOZru4WWHExOsnTmaJhsJPCUYZEFrz_h5ZoI15MZTFcYAw51vVTIROLC-_Rz3ZKO"
         url = f'{search}&start={int(page * self.max_results_per_page)}'
-         # url = f'{search}&start={int(50)}'
+        # url = f'{search}&start={int(50)}'
 
         print('_get_job_soups_from_search_page:')
 
@@ -363,11 +371,11 @@ class BaseIndeedScraper(BaseScraper):
 
         # self.driver.current_url
 
-        print('_get_job_soups_from_search_page:2', self.driver.current_url )
+        print('_get_job_soups_from_search_page:2', self.driver.current_url)
 
         print(f'requesting url: {url}')
 
-        print('_get_job_soups_from_search_page$$:', self.driver.get( url))
+        print('_get_job_soups_from_search_page$$:', self.driver.get(url))
 
         print(f'content:{self.driver.get(url)}')
         # print(f'content---->:{self.driver.page_source}')
@@ -390,7 +398,7 @@ class BaseIndeedScraper(BaseScraper):
         with open('soup_output.txt', 'w+') as f:
             f.write(self.driver.page_source)
 
-        if(len(job_soup_list) > 0):
+        if (len(job_soup_list) > 0):
             print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
             # print(f'content for soup:{job_soup_list[0]}')
             # print("job_list--->", job_soup_list[0].soup.find(
@@ -415,9 +423,20 @@ class BaseIndeedScraper(BaseScraper):
         """
         # initialize the webdriver
         try:
-            fireFoxOptions = webdriver.FirefoxOptions()
-            fireFoxOptions.headless = False
-            self.driver = webdriver.Firefox(firefox_options=fireFoxOptions)
+            fire_fox_options = webdriver.FirefoxOptions()
+            myProxy = "187.95.34.135:8080"
+
+            proxy = Proxy({
+                'proxyType': ProxyType.MANUAL,
+                'httpProxy': myProxy,
+                'ftpProxy': myProxy,
+                'sslProxy': myProxy,
+                'noProxy': ''  # set this value as desired
+            })
+
+            fire_fox_options.headless = False
+            self.driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(),
+                                            options=fire_fox_options, proxy=proxy)
             # self.driver.start_session({})
             print('started session')
         except Exception as e:
@@ -451,7 +470,7 @@ class BaseIndeedScraper(BaseScraper):
         # print(f"num_res2:{num_res.contents[1].strip()}")
         num_res = num_res.contents[0].strip()
         print(f"num_res2:{num_res}")
-        print('num_res.replace',re.findall(r'f (\d+) ', num_res.replace(',', '')))
+        print('num_res.replace', re.findall(r'f (\d+) ', num_res.replace(',', '')))
         num_res = int(re.findall(r'of (\d+) ', num_res.replace(',', ''))[0])
         print(f"num_res3:{num_res}")
 
@@ -477,6 +496,7 @@ class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
 class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """Scrapes jobs from www.indeed.co.uk
     """
+
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
         TODO: use Enum for method instead of str.
@@ -487,7 +507,7 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.city.replace(' ', '+', ),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
                     int(self.config.search_config.return_similar_results),
@@ -503,6 +523,7 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
 class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
     """Scrapes jobs from www.indeed.fr
     """
+
     def _get_search_url(self, method: Optional[str] = 'get') -> str:
         """Get the indeed search url from SearchTerms
         TODO: use Enum for method instead of str.
@@ -513,7 +534,7 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.city.replace(' ', '+', ),
                     self.config.search_config.province_or_state.upper(),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
@@ -525,7 +546,6 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
-
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
@@ -583,7 +603,7 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+',),
+                    self.config.search_config.city.replace(' ', '+', ),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
                     int(self.config.search_config.return_similar_results),
@@ -594,7 +614,6 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
             raise NotImplementedError()
         else:
             raise ValueError(f'No html method {method} exists')
-
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
