@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import pickle
+import random
 from datetime import date, datetime, timedelta
 from time import time
 from typing import Dict, List
@@ -560,3 +561,4 @@ class JobFunnel(Logger):
                 "file set. Saving to a duplicates file will ensure "
                 "that jobs detected to be duplicates by contents persist."
             )
+

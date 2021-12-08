@@ -10,8 +10,7 @@ from inspect import currentframe, getframeinfo
 
 from bs4 import BeautifulSoup
 from requests import Session
-from selenium.webdriver import FirefoxProfile, Proxy
-import requests
+from selenium.webdriver import FirefoxProfile
 from webdriver_manager.firefox import GeckoDriverManager
 
 from jobfunnel.backend import Job
@@ -48,10 +47,6 @@ REMOTENESS_STR_MAP = {
     'remote': Remoteness.FULLY_REMOTE,
     'temporarily remote': Remoteness.TEMPORARILY_REMOTE,
 }
-
-
-def get_proxies():
-    requests.get("https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt")
 
 
 def wait_for_web_driver_to_close(driver):
@@ -387,12 +382,17 @@ class BaseIndeedScraper(BaseScraper):
         # )
         self.driver.get(url)
         # print("self.driver.page_source-->", self.driver.page_source)
+
+        with open('funnel_debug.txt', 'w') as f:
+            f.write(self.driver.page_source)
         print("1")
         job_soup_list.extend(
             BeautifulSoup(
                 self.driver.page_source, self.config.bs4_parser
             ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         )
+
+        print('job_soup_list&&&&--->', job_soup_list)
         print("2")
         # print("jobList:", job_soup_list)
         with open('soup_output.txt', 'w+') as f:
@@ -424,7 +424,7 @@ class BaseIndeedScraper(BaseScraper):
         # initialize the webdriver
         try:
             fire_fox_options = webdriver.FirefoxOptions()
-            myProxy = "187.95.34.135:8080"
+            myProxy = self.get_random_proxy()
 
             proxy = Proxy({
                 'proxyType': ProxyType.MANUAL,
@@ -439,6 +439,7 @@ class BaseIndeedScraper(BaseScraper):
                                             options=fire_fox_options, proxy=proxy)
             # self.driver.start_session({})
             print('started session')
+            # input()
         except Exception as e:
             print('exception:', e)
             raise FileNotFoundError('Sorry, chromedriver or geckodriver must de installed to scrape')
@@ -450,7 +451,7 @@ class BaseIndeedScraper(BaseScraper):
         print(f"get_job_soups_from_search_result_listings{search_url}")
         # Get the html data, initialize bs4 with lxml
         # request_html = self.session.get(search_url)
-        input()
+        # input()
         self.logger.debug(
             "Got Base search results page: %s", search_url
         )

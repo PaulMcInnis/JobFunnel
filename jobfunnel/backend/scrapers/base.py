@@ -8,6 +8,7 @@ from multiprocessing import Lock, Manager
 from time import sleep
 from typing import Any, Dict, List, Optional
 
+import requests
 from bs4 import BeautifulSoup
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -434,6 +435,11 @@ class BaseScraper(ABC, Logger):
                 "No get() or set() will be done for Job attrs: %s",
                 [field.name for field in excluded_fields]
             )
+
+    def get_random_proxy(self):
+        proxies = requests.get("https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt")
+        proxy_list = proxies.text.split("\n")
+        return proxy_list[random.randint(0, len(proxy_list))]
 
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
