@@ -209,20 +209,33 @@ class BaseIndeedScraper(BaseScraper):
         finally:
             print("finally")
             # threads.shutdown()
-        print("return on get_job_soups_from_search_result_listings")
+        # print("return on get_job_soups_from_search_result_listings")
         return job_soup_list
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
         """
         if parameter == JobField.TITLE:
-            return soup.find(
-                'a', attrs={'data-tn-element': 'jobTitle'}
-            ).text.strip()
+            # return soup.find(
+            #     'a', attrs={'data-tn-element': 'jobTitle'}
+            # ).text.strip()
+            print(f"result TITLE-->{soup.find('hq', attrs={'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'})}")
+            return soup.find('h1', attrs={'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'}).text.strip()
         elif parameter == JobField.COMPANY:
-            return soup.find('span', attrs={'class': 'company'}).text.strip()
+            print(f"result COMPANY-->   {soup.find('span', attrs={'class': 'company'})}")
+            return soup.find(
+                'div', attrs={'class': 'icl-u-lg-mr--sm icl-u-xs-mr--xs'}
+            ).find('a').text.strip()
         elif parameter == JobField.LOCATION:
-            return soup.find('span', attrs={'class': 'location'}).text.strip()
+            result = soup.find("div")
+            if result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
+                return result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary '
+                                                          'jobsearch-JobInfoHeader-subtitle '
+                                                          'jobsearch-DesktopStickyContainer-subtitle'}).findAll("div")[1]
+            elif result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
+                return result.find("div", attrs={'class': 'jobsearch-jobLocationHeader-location'}).text
+
+            return ""
         elif parameter == JobField.TAGS:
             # tags may not be on page and that's ok.
             table_soup = soup.find(
@@ -255,13 +268,19 @@ class BaseIndeedScraper(BaseScraper):
                 soup.find('span', attrs={'class': 'date'}).text.strip()
             )
         elif parameter == JobField.KEY_ID:
-            return ID_REGEX.findall(
-                str(
-                    soup.find(
-                        'a', attrs={'class': 'sl resultLink save-job-link'}
-                    )
-                )
-            )[0]
+            # return ID_REGEX.findall(
+            #     str(
+            #         soup.find(
+            #             'a', attrs={'class': 'sl resultLink save-job-link'}
+            #         )
+            #     )
+            # )[0]
+            print(f'Key from get function:{soup.text[soup.text.find("jk=")+3:]}')
+
+            ref_text = soup.find(
+                'div', attrs={'class': 'icl-u-lg-mr--sm icl-u-xs-mr--xs'}
+            ).find('a')['href'].text
+            return ref_text[ref_text.find("jk=")+3]
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
@@ -270,27 +289,28 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: URL is high-priority, since we need it to get RAW.
         """
         if parameter == JobField.RAW:
-            print("new web driver")
+            # print("new web driver")
             self.driver.close()
             self.driver.quit()
             self.driver = get_web_driver(self.driver)
             sleep(3)
             self.driver.get(job.url)
-            print("job url:" + job.url)
+            # print("job url:" + job.url)
             job._raw_scrape_data = BeautifulSoup(
                 self.driver.page_source, self.config.bs4_parser
             )
         elif parameter == JobField.DESCRIPTION:
             print("assert description 1")
-            with open('soup_output.txt', 'w+') as f:
-                print("job raw:", job._raw_scrape_data)
-                f.write(job._raw_scrape_data)
+            # with open('soup_output.txt', 'w+') as f:
+            #     print("job raw:", job._raw_scrape_data)
+            #     f.write(job._raw_scrape_data)
             assert job._raw_scrape_data
-            print("assert description 2")
-            print("raw data:", job._raw_scrape_data)
-            job.description = job._raw_scrape_data.find(
+            if job._raw_scrape_data.find(
                 id='jobDescriptionText'
-            ).text.strip()
+            ):
+                job.description = job._raw_scrape_data.find(
+                    id='jobDescriptionText'
+                ).text.strip()
         elif parameter == JobField.URL:
             assert job.key_id
             job.url = (
@@ -352,7 +372,6 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
             ... need to add some kind of filtering for this!
         """
-        "https://www.indeed.com/viewjob?jk=52aed31c60a2dec3&tk=1f5uecsbrhij3800&from=serp&vjs=3&advn=9433740669847232&adid=366636702&ad=-6NYlbfkN0A3LmKGJrRdG8-GibsnagGmC1U8qn1FiBTMFAUobQ0wT0Grlusje-Iz40GlqxxxnwJYwjeD1wcjkLfFbOjUqFKbnxMpu92AE4cYWIRrHtXbCrIm7fZLDFYnmDmDnnG5sXhm2i2cua2XLyoqiyuoT_9f0vwjfvcwkeKJER0Iy6-id6Jfxx3G6m7s-zTvggHGydkZ5WXiTrahbuVRSGEdqkM5PLtC67kj73ag67zxWFBbyfGV7zIUmMOYjGJZeIlJQZszQjgCRRhyVb_Th6Jx-M2EDxB66JrmszxCC3YAQtXaDQHFMbc-5F9tUqRORFH3ZPm_7ZM43Hni2g==&sjdu=6ByzYMZLGYUgyrbSdN0cjHNjrvV60uloA1SbaLbYkGE_-FMtQSBEFjat36ivxQkoFONXxFt4ja99Byb4WLGnXHYqbvK1YMCAIxYOa7a1LwhfVwuv5f1LMkntAxl6F-OlFlR6aJvmfyUGGUF0gqVgWLwi6SbxTCfQPBTP_YN_h6v6bwS-7qbnzR6Og1XUfxagacR1Zxc1cn5xTyPyehOBsI0xqQwlkA53avfym8YQWMp6jCciK9XbWNGqQyZCn9r5IOZru4WWHExOsnTmaJhsJPCUYZEFrz_h5ZoI15MZTFcYAw51vVTIROLC-_Rz3ZKO"
         url = f'{search}&start={int(page * self.max_results_per_page)}'
         # url = f'{search}&start={int(50)}'
 
@@ -386,17 +405,25 @@ class BaseIndeedScraper(BaseScraper):
         with open('funnel_debug.txt', 'w') as f:
             f.write(self.driver.page_source)
         print("1")
-        job_soup_list.extend(
-            BeautifulSoup(
-                self.driver.page_source, self.config.bs4_parser
-            ).find_all('div', attrs={'data-tn-component': 'organicJob'})
-        )
 
-        print('job_soup_list&&&&--->', job_soup_list)
-        print("2")
+        # print('job_soup_list&&&&--->', job_soup_list)
+        keys = self.get_job_keys_from_page(self.driver.page_source)
+
+        for key in keys[:3]:
+            job_url = (
+                f"http://www.indeed.{self.config.search_config.domain}/"
+                f"viewjob?jk={key}"
+            )
+            self.logger.info(f'Fetching {job_url}')
+            sleep(5)
+            self.driver.get(job_url)
+            job_soup_list.extend(
+                BeautifulSoup(
+                    self.driver.page_source, self.config.bs4_parser))
+
         # print("jobList:", job_soup_list)
-        with open('soup_output.txt', 'w+') as f:
-            f.write(self.driver.page_source)
+        # with open('soup_output.txt', 'w+') as f:
+        #     f.write(self.driver.page_source)
 
         if (len(job_soup_list) > 0):
             print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
@@ -410,6 +437,17 @@ class BaseIndeedScraper(BaseScraper):
         #         self.session.get(url).text, self.config.bs4_parser
         #     ).find_all('div', attrs={'data-tn-component': 'organicJob'})
         # )
+
+    def get_job_keys_from_page(self, page_source) -> List[str]:
+        keys = []
+        soup = BeautifulSoup(
+            page_source, self.config.bs4_parser
+        )
+        for result in soup.find_all('a'):
+            if result.get('data-jk') is not None:
+                keys.append(result.get('data-jk'))
+
+        return keys
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
@@ -435,6 +473,7 @@ class BaseIndeedScraper(BaseScraper):
             })
 
             fire_fox_options.headless = False
+            print('proxy-->', myProxy)
             self.driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(),
                                             options=fire_fox_options, proxy=proxy)
             # self.driver.start_session({})
@@ -446,6 +485,7 @@ class BaseIndeedScraper(BaseScraper):
 
         self.s_url = self.driver.command_executor._url  # "http://127.0.0.1:60622/hub"
         self.session_id = self.driver.session_id
+        sleep(10)
         self.driver.get(search_url)
 
         print(f"get_job_soups_from_search_result_listings{search_url}")

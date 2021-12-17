@@ -309,9 +309,11 @@ class BaseScraper(ABC, Logger):
 
             try:
                 if is_get:
+                    print('is_get_BEGIN')
                     print("field:", field)
                     job_init_kwargs[field] = self.get(field, job_soup)
-                    print("field:", field)
+                    print("Field result:", job_init_kwargs[field])
+                    print('is_get_END')
                 else:
                     print("else field:", field)
                     if not job:
