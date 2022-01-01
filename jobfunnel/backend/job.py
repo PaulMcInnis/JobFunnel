@@ -224,5 +224,7 @@ class Job():
         assert self.title, "Title is unset!"
         assert self.company, "Company is unset!"
         assert self.url, "URL is unset!"
+        if self.post_date is None:
+            self.post_date = date.today()
         if len(self.description) < MIN_DESCRIPTION_CHARS:
             raise ValueError("Description too short!")

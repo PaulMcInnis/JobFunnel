@@ -6,6 +6,7 @@ import json
 import os
 import pickle
 import random
+import traceback
 from datetime import date, datetime, timedelta
 from time import time
 from typing import Dict, List
@@ -238,6 +239,7 @@ class JobFunnel(Logger):
             try:
                 incoming_jobs_dict = scraper.scrape()
             except Exception as e:
+                self.logger.info(f"e-->{e}")
                 self.logger.error(f"Failed to scrape jobs for {scraper_cls.__name__}")
 
             # Ensure we have no duplicates between our scrapers by key-id

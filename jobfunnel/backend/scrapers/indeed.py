@@ -224,10 +224,16 @@ class BaseIndeedScraper(BaseScraper):
             return soup.find('h1', attrs={
                 'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'}).text.strip()
         elif parameter == JobField.COMPANY:
-            print(f"result COMPANY-->   {soup.find('span', attrs={'class': 'company'})}")
-            return soup.find(
+            print(f"result COMPANY--> {soup.find('div', attrs={'class': 'icl-u-lg-mr--sm icl-u-xs-mr--xs'}).find('a')}")
+            company = soup.find(
                 'div', attrs={'class': 'icl-u-lg-mr--sm icl-u-xs-mr--xs'}
-            ).find('a').text.strip()
+            ).find('a')
+            if company:
+                company = company.text.strip()
+            else:
+                company = "UNKNOWN"
+
+            return company
         elif parameter == JobField.LOCATION:
             result = soup.find("div")
             if result.find("div", attrs={
@@ -322,6 +328,8 @@ class BaseIndeedScraper(BaseScraper):
             if job._raw_scrape_data.find(
                     id='jobDescriptionText'
             ):
+                # print("Description text-->#1")
+                # print(f"Description text--> {job._raw_scrape_data.find(id='jobDescriptionText')}")
                 job.description = job._raw_scrape_data.find(
                     id='jobDescriptionText'
                 ).text.strip()
@@ -486,7 +494,7 @@ class BaseIndeedScraper(BaseScraper):
                 'noProxy': ''  # set this value as desired
             })
 
-            fire_fox_options.headless = False
+            fire_fox_options.headless = True
             print('proxy-->', myProxy)
             self.driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(),
                                             options=fire_fox_options, proxy=proxy)

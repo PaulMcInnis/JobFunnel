@@ -110,6 +110,7 @@ def calc_post_date_from_relative_str(date_str: str) -> date:
                         post_date -= timedelta(days=int(1))
                     elif not post_date:
                         # We have failed to correctly evaluate date.
+                        return post_date
                         raise ValueError(
                             f"Unable to calculate date from:\n{date_str}"
                         )

@@ -108,6 +108,7 @@ class BaseScraper(ABC, Logger):
             JobField.PROVIDER: self.__class__.__name__,
             JobField.REMOTENESS: Remoteness.UNKNOWN,
             JobField.WAGE: '',
+            JobField.COMPANY: '',
         }
 
     @property
@@ -349,6 +350,7 @@ class BaseScraper(ABC, Logger):
 
         # Validate job fields if we got something
         if job and not invalid_job:
+            self.logger.info("scrape_job#1")
             try:
                 job.validate()
 
