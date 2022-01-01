@@ -219,8 +219,10 @@ class BaseIndeedScraper(BaseScraper):
             # return soup.find(
             #     'a', attrs={'data-tn-element': 'jobTitle'}
             # ).text.strip()
-            print(f"result TITLE-->{soup.find('hq', attrs={'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'})}")
-            return soup.find('h1', attrs={'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'}).text.strip()
+            print(
+                f"result TITLE-->{soup.find('hq', attrs={'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'})}")
+            return soup.find('h1', attrs={
+                'class': 'icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title'}).text.strip()
         elif parameter == JobField.COMPANY:
             print(f"result COMPANY-->   {soup.find('span', attrs={'class': 'company'})}")
             return soup.find(
@@ -228,11 +230,14 @@ class BaseIndeedScraper(BaseScraper):
             ).find('a').text.strip()
         elif parameter == JobField.LOCATION:
             result = soup.find("div")
-            if result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
+            if result.find("div", attrs={
+                'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
                 return result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary '
                                                           'jobsearch-JobInfoHeader-subtitle '
-                                                          'jobsearch-DesktopStickyContainer-subtitle'}).findAll("div")[1]
-            elif result.find("div", attrs={'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
+                                                          'jobsearch-DesktopStickyContainer-subtitle'}).findAll("div")[
+                    1]
+            elif result.find("div", attrs={
+                'class': 'icl-u-xs-mt--xs icl-u-textColor--secondary jobsearch-JobInfoHeader-subtitle jobsearch-DesktopStickyContainer-subtitle'}):
                 return result.find("div", attrs={'class': 'jobsearch-jobLocationHeader-location'}).text
 
             return ""
@@ -262,10 +267,11 @@ class BaseIndeedScraper(BaseScraper):
             if potential:
                 return potential.text.strip()
             else:
-                return ''
+                return ""
         elif parameter == JobField.POST_DATE:
+            print("date before calc_post_date_from_relative_str -->", soup.find('div', attrs={'class': 'jobsearch-JobMetadataFooter'}).findAll('div')[1])
             return calc_post_date_from_relative_str(
-                soup.find('span', attrs={'class': 'date'}).text.strip()
+                soup.find('div', attrs={'class': 'jobsearch-JobMetadataFooter'}).findAll('div')[1].strip()
             )
         elif parameter == JobField.KEY_ID:
             # return ID_REGEX.findall(
@@ -275,12 +281,20 @@ class BaseIndeedScraper(BaseScraper):
             #         )
             #     )
             # )[0]
-            print(f'Key from get function:{soup.text[soup.text.find("jk=")+3:]}')
+            ref_text = soup.findAll('head')
 
-            ref_text = soup.find(
-                'div', attrs={'class': 'icl-u-lg-mr--sm icl-u-xs-mr--xs'}
-            ).find('a')['href'].text
-            return ref_text[ref_text.find("jk=")+3]
+            # ref_text = soup.findAll(
+            #     'meta'
+            # ).text
+            if ref_text:
+                for node in ref_text:
+                    if node.findAll("meta", attrs={'id': "indeed-share-url"}):
+                        for meta_tag in node.findAll("meta", attrs={'id': "indeed-share-url"}):
+                            key_text = meta_tag["content"]
+                            key_text = key_text[key_text.find("jk=") + 3:]
+                            print(f'Key from get function1:{key_text}')
+            # print(f'Key from get function2:{ref_text[ref_text.find("jk=")+3]}')
+            return key_text
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
@@ -290,23 +304,23 @@ class BaseIndeedScraper(BaseScraper):
         """
         if parameter == JobField.RAW:
             # print("new web driver")
-            self.driver.close()
-            self.driver.quit()
-            self.driver = get_web_driver(self.driver)
+            # self.driver.close()
+            # self.driver.quit()
+            # self.driver = get_web_driver(self.driver)
             sleep(3)
-            self.driver.get(job.url)
+            # self.driver.get(job.url)
             # print("job url:" + job.url)
-            job._raw_scrape_data = BeautifulSoup(
-                self.driver.page_source, self.config.bs4_parser
-            )
+            job._raw_scrape_data = soup
         elif parameter == JobField.DESCRIPTION:
-            print("assert description 1")
+            job._raw_scrape_data = soup
+            print('job-->', job)
+            # print("assert description 1-->", job._raw_scrape_data)
             # with open('soup_output.txt', 'w+') as f:
             #     print("job raw:", job._raw_scrape_data)
             #     f.write(job._raw_scrape_data)
             assert job._raw_scrape_data
             if job._raw_scrape_data.find(
-                id='jobDescriptionText'
+                    id='jobDescriptionText'
             ):
                 job.description = job._raw_scrape_data.find(
                     id='jobDescriptionText'

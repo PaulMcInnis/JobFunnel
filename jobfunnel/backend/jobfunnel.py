@@ -114,13 +114,13 @@ class JobFunnel(Logger):
             # Scrape new jobs from all our configured providers and cache them
             scraped_jobs_dict = self.scrape()
 
-        # Filter out any jobs we have rejected, archived or block-listed
-        # NOTE: we do not remove duplicates here as these may trigger updates
-        if scraped_jobs_dict:
-            self.write_cache(scraped_jobs_dict)
-            scraped_jobs_dict = self.job_filter.filter(
-                scraped_jobs_dict, remove_existing_duplicate_keys=False
-            )
+        # # Filter out any jobs we have rejected, archived or block-listed
+        # # NOTE: we do not remove duplicates here as these may trigger updates
+        # if scraped_jobs_dict:
+        #     self.write_cache(scraped_jobs_dict)
+        #     scraped_jobs_dict = self.job_filter.filter(
+        #         scraped_jobs_dict, remove_existing_duplicate_keys=False
+        #     )
         if self.master_jobs_dict:
             self.master_jobs_dict = self.job_filter.filter(
                 self.master_jobs_dict, remove_existing_duplicate_keys=False,
