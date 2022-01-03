@@ -75,7 +75,7 @@ class SearchConfig(BaseConfig):
     def validate(self):
         """We need to have the right information set, not mixing stuff
         """
-        assert self.province_or_state, "Province/State not set"
+        assert self.province_or_state is not None, "Province/State not set"
         assert self.city, "City not set"
         assert self.locale, "Locale not set"
         assert self.providers and len(self.providers) >= 1, "Providers not set"

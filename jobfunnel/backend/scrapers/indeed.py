@@ -666,7 +666,7 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
-                    self.config.search_config.city.replace(' ', '+', ),
+                    self.config.search_config.city.replace(' ', '+',),
                     self._quantize_radius(self.config.search_config.radius),
                     self.max_results_per_page,
                     int(self.config.search_config.return_similar_results),

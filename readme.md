@@ -4,6 +4,8 @@
 
 Automated tool for scraping job postings into a `.csv` file.
 
+_[Since this project was developed, CAPTCHA has clamped down hard, help us re-build the backend and make this tool useful again!](https://github.com/PaulMcInnis/JobFunnel/discussions/148)_
+
 ### Benefits over job search sites:
 
 * Never see the same job twice!
