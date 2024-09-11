@@ -11,7 +11,6 @@ log_file: demo_job_search_results/log.log
 
 # Job search configuration
 search:
-
   # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
   # UK_ENGLISH, FRANCE_FRENCH:
   # This tells JobFunnel where the website we are scraping is located, and
@@ -23,18 +22,17 @@ search:
   # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:
     - INDEED
-    - MONSTER
 
   # Region that we are searching for jobs within:
-  province_or_state: "Texas"  # NOTE: this is generally 2 characters long.
-  city: "Richardson"  # NOTE: this is the full city / town name.
-  radius: 25  # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
+  province_or_state: "CA" # NOTE: this is generally 2 characters long.
+  city: "San Fransisco" # NOTE: this is the full city / town name.
+  radius: 25 # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
   keywords:
-    - Python
-    - Senior
-    - AI
+    - Data Science
+    - Machine Learning
+    - Software Engineer
 
   # Don't return any listings older than this:
   max_listing_days: 35
@@ -48,21 +46,20 @@ search:
   remoteness: ANY
 
 # Logging level options are: critical, error, warning, info, debug, notset
-log_level: INFO
+log_level: DEBUG
 
 # Delaying algorithm configuration
 delay:
-    # Functions used for delaying algorithm: CONSTANT, LINEAR, SIGMOID
-    algorithm: LINEAR
-    # Maximum delay/upper bound for converging random delay
-    max_duration: 5.0
-    # Minimum delay/lower bound for random delay
-    min_duration: 1.0
-    # Random delay
-    random: False
-    # Converging random delay, only used if 'random' is set to True
-    converging: False
-
+  # Functions used for delaying algorithm: CONSTANT, LINEAR, SIGMOID
+  algorithm: LINEAR
+  # Maximum delay/upper bound for converging random delay
+  max_duration: 5.0
+  # Minimum delay/lower bound for random delay
+  min_duration: 1.0
+  # Random delay
+  random: False
+  # Converging random delay, only used if 'random' is set to True
+  converging: False
 # # Proxy settings
 # proxy:
 #   protocol: https  # NOTE: you can also set to 'http'
