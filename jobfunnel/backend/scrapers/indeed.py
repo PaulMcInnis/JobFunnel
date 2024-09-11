@@ -7,6 +7,7 @@ from math import ceil
 from typing import Any, Dict, List, Optional
 from unicodedata import normalize
 import json
+import random
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -22,7 +23,12 @@ from jobfunnel.backend.scrapers.base import (
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
+from jobfunnel.resources import (
+    MAX_CPU_WORKERS,
+    JobField,
+    Remoteness,
+    USER_AGENT_LIST_MOBILE,
+)
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -85,6 +91,11 @@ class BaseIndeedScraper(BaseScraper):
         # Log if we can't do their remoteness query (Indeed only has 2 lvls.)
         if self.config.search_config.remoteness == Remoteness.PARTIALLY_REMOTE:
             self.logger.warning("Indeed does not support PARTIALLY_REMOTE jobs")
+
+    @property
+    def user_agent(self) -> str:
+        """Get a randomized user agent for this scraper"""
+        return random.choice(USER_AGENT_LIST_MOBILE)
 
     @property
     def job_get_fields(self) -> str:
