@@ -1,4 +1,1 @@
-from jobfunnel.backend.job import (
-    Job,
-    JobStatus,
-)
+from jobfunnel.backend.job import Job, JobStatus

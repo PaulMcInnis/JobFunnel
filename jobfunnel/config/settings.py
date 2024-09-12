@@ -3,9 +3,7 @@
 
 import ipaddress
 
-from cerberus import (
-    Validator,
-)
+from cerberus import Validator
 
 from jobfunnel.resources import (
     LOG_LEVEL_NAMES,
@@ -54,27 +52,15 @@ SETTINGS_YAML_SCHEMA = {
         "schema": {
             "providers": {
                 "required": False,
-                "allowed": [
-                    p.name
-                    for p in Provider
-                ],
+                "allowed": [p.name for p in Provider],
                 "default": DEFAULT_PROVIDERS,
             },
             "locale": {
                 "required": True,
-                "allowed": [
-                    l.name
-                    for l in Locale
-                ],
+                "allowed": [l.name for l in Locale],
             },
-            "province_or_state": {
-                "required": True,
-                "type": "string",
-            },
-            "city": {
-                "required": True,
-                "type": "string",
-            },
+            "province_or_state": {"required": True, "type": "string"},
+            "city": {"required": True, "type": "string"},
             "radius": {
                 "required": False,
                 "type": "integer",
@@ -89,9 +75,7 @@ SETTINGS_YAML_SCHEMA = {
             "keywords": {
                 "required": True,
                 "type": "list",
-                "schema": {
-                    "type": "string"
-                },
+                "schema": {"type": "string"},
             },
             "max_listing_days": {
                 "required": False,
@@ -102,18 +86,13 @@ SETTINGS_YAML_SCHEMA = {
             "company_block_list": {
                 "required": False,
                 "type": "list",
-                "schema": {
-                    "type": "string"
-                },
+                "schema": {"type": "string"},
                 "default": DEFAULT_COMPANY_BLOCK_LIST,
             },
             "remoteness": {
                 "required": False,
                 "type": "string",
-                "allowed": [
-                    r.name
-                    for r in Remoteness
-                ],
+                "allowed": [r.name for r in Remoteness],
                 "default": DEFAULT_REMOTENESS.name,
             },
         },
@@ -124,10 +103,7 @@ SETTINGS_YAML_SCHEMA = {
         "schema": {
             "algorithm": {
                 "required": False,
-                "allowed": [
-                    d.name
-                    for d in DelayAlgorithm
-                ],
+                "allowed": [d.name for d in DelayAlgorithm],
                 "default": DEFAULT_DELAY_ALGORITHM.name,
             },
             # TODO: implement custom rule max > min
@@ -161,10 +137,7 @@ SETTINGS_YAML_SCHEMA = {
         "schema": {
             "protocol": {
                 "required": False,
-                "allowed": [
-                    "http",
-                    "https",
-                ],
+                "allowed": ["http", "https"],
             },
             "ip": {
                 "required": False,
@@ -180,34 +153,22 @@ SETTINGS_YAML_SCHEMA = {
 }
 
 
-class JobFunnelSettingsValidator(
-    Validator
-):
+class JobFunnelSettingsValidator(Validator):
     """A simple JSON data validator with a custom data type for IPv4 addresses
     https://codingnetworker.com/2016/03/validate-json-data-using-cerberus/
     """
 
-    def _validate_type_ipv4address(
-        self,
-        value,
-    ):
+    def _validate_type_ipv4address(self, value):
         """
         checks that the given value is a valid IPv4 address
         """
         try:
             # try to create an IPv4 address object using the python3 ipaddress
             # module
-            ipaddress.IPv4Address(
-                value
-            )
+            ipaddress.IPv4Address(value)
             return True
         except:
-            self._error(
-                value,
-                "Not a valid IPv4 address",
-            )
+            self._error(value, "Not a valid IPv4 address")
 
 
-SettingsValidator = JobFunnelSettingsValidator(
-    SETTINGS_YAML_SCHEMA
-)
+SettingsValidator = JobFunnelSettingsValidator(SETTINGS_YAML_SCHEMA)

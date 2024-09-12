@@ -4,10 +4,7 @@ NOTE: if you implement a scraper you must add it here
 TODO: there must be a better way to do this by using class attrib of Provider
 """
 
-from jobfunnel.resources import (
-    Locale,
-    Provider,
-)
+from jobfunnel.resources import Locale, Provider
 
 from jobfunnel.backend.scrapers.indeed import (
     IndeedScraperCANEng,

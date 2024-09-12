@@ -3,57 +3,22 @@ Paul McInnis 2020
 """
 
 import random
-from abc import (
-    ABC,
-    abstractmethod,
-)
-from concurrent.futures import (
-    ThreadPoolExecutor,
-    as_completed,
-)
-from multiprocessing import (
-    Lock,
-    Manager,
-)
-from time import (
-    sleep,
-)
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-)
+from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import Lock, Manager
+from time import sleep
+from typing import Any, Dict, List, Optional
 
-from bs4 import (
-    BeautifulSoup,
-)
-from requests import (
-    Session,
-)
-from requests.adapters import (
-    HTTPAdapter,
-)
-from tqdm import (
-    tqdm,
-)
-from urllib3.util import (
-    Retry,
-)
+from bs4 import BeautifulSoup
+from requests import Session
+from requests.adapters import HTTPAdapter
+from tqdm import tqdm
+from urllib3.util import Retry
 
-from jobfunnel.backend import (
-    Job,
-    JobStatus,
-)
-from jobfunnel.backend.tools import (
-    Logger,
-)
-from jobfunnel.backend.tools.delay import (
-    calculate_delays,
-)
-from jobfunnel.backend.tools.filters import (
-    JobFilter,
-)
+from jobfunnel.backend import Job, JobStatus
+from jobfunnel.backend.tools import Logger
+from jobfunnel.backend.tools.delay import calculate_delays
+from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.resources import (
     MAX_CPU_WORKERS,
     USER_AGENT_LIST,
@@ -63,26 +28,16 @@ from jobfunnel.resources import (
 )
 
 # pylint: disable=using-constant-test,unused-import
-if (
-    False
-):  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import (
-        JobFunnelConfigManager,
-    )
+if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+    from jobfunnel.config import JobFunnelConfigManager
 # pylint: enable=using-constant-test,unused-import
 
 
-class BaseScraper(
-    ABC,
-    Logger,
-):
+class BaseScraper(ABC, Logger):
     """Base scraper object, for scraping and filtering Jobs from a provider"""
 
     def __init__(
-        self,
-        session: Session,
-        config: "JobFunnelConfigManager",
-        job_filter: JobFilter,
+        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
     ) -> None:
         """Init
 
@@ -99,43 +54,22 @@ class BaseScraper(
             ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
         # Inits
-        super().__init__(
-            level=config.log_level,
-            file_path=config.log_file,
-        )
+        super().__init__(level=config.log_level, file_path=config.log_file)
         self.job_filter = job_filter
         self.session = session
         self.config = config
-        if (
-            self.headers
-        ):
-            self.session.headers.update(
-                self.headers
-            )
+        if self.headers:
+            self.session.headers.update(self.headers)
 
         # Elongate the retries TODO: make configurable
-        retry = Retry(
-            connect=3,
-            backoff_factor=0.5,
-        )
-        adapter = HTTPAdapter(
-            max_retries=retry
-        )
-        self.session.mount(
-            "http://",
-            adapter,
-        )
-        self.session.mount(
-            "https://",
-            adapter,
-        )
+        retry = Retry(connect=3, backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
         # Ensure that the locale we want to use matches the locale that the
         # scraper was written to scrape in:
-        if (
-            self.config.search_config.locale
-            != self.locale
-        ):
+        if self.config.search_config.locale != self.locale:
             raise ValueError(
                 f"Attempting to use scraper designed for {self.locale.name} "
                 "when config indicates user is searching with "
@@ -144,53 +78,28 @@ class BaseScraper(
 
         # Ensure our properties satisfy constraints
         self._validate_get_set()
-        self.thread_manager = (
-            Manager()
-        )
+        self.thread_manager = Manager()
 
         # Construct actions list which respects priority for scraping Jobs
-        self._actions_list = [
-            (
-                True,
-                f,
-            )
-            for f in self.job_get_fields
+        self._actions_list = [(True, f) for f in self.job_get_fields]
+        self._actions_list += [
+            (False, f)
+            for f in self.job_set_fields
+            if f in self.high_priority_get_set_fields
         ]
         self._actions_list += [
-            (
-                False,
-                f,
-            )
+            (False, f)
             for f in self.job_set_fields
-            if f
-            in self.high_priority_get_set_fields
-        ]
-        self._actions_list += [
-            (
-                False,
-                f,
-            )
-            for f in self.job_set_fields
-            if f
-            not in self.high_priority_get_set_fields
+            if f not in self.high_priority_get_set_fields
         ]
 
     @property
-    def user_agent(
-        self,
-    ) -> str:
+    def user_agent(self) -> str:
         """Get a randomized user agent for this scraper"""
-        return random.choice(
-            USER_AGENT_LIST
-        )
+        return random.choice(USER_AGENT_LIST)
 
     @property
-    def job_init_kwargs(
-        self,
-    ) -> Dict[
-        JobField,
-        Any,
-    ]:
+    def job_init_kwargs(self) -> Dict[JobField, Any]:
         """This is a helper property that stores a Dict of JobField : value that
         we set defaults for when scraping. If the scraper fails to get/set these
         we can fail back to the empty value from here.
@@ -212,11 +121,7 @@ class BaseScraper(
         }
 
     @property
-    def min_required_job_fields(
-        self,
-    ) -> List[
-        JobField
-    ]:
+    def min_required_job_fields(self) -> List[JobField]:
         """If we dont get() or set() any of these fields, we will raise an
         exception instead of continuing without that information.
 
@@ -234,11 +139,7 @@ class BaseScraper(
         ]
 
     @property
-    def high_priority_get_set_fields(
-        self,
-    ) -> List[
-        JobField
-    ]:
+    def high_priority_get_set_fields(self) -> List[JobField]:
         """These get() and/or set() fields will be populated first.
 
         i.e we need the RAW populated before DESCRIPTION, so RAW should be high.
@@ -246,17 +147,11 @@ class BaseScraper(
 
         NOTE: override as needed.
         """
-        return (
-            []
-        )
+        return []
 
     @property
     @abstractmethod
-    def job_get_fields(
-        self,
-    ) -> List[
-        JobField
-    ]:
+    def job_get_fields(self) -> List[JobField]:
         """Call self.get(...) for the JobFields in this list when scraping a Job.
 
         NOTE: these will be passed job listing soups, if you have data you need
@@ -266,11 +161,7 @@ class BaseScraper(
 
     @property
     @abstractmethod
-    def job_set_fields(
-        self,
-    ) -> List[
-        JobField
-    ]:
+    def job_set_fields(self) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job
 
         NOTE: You should generally set the job's own page as soup to RAW first
@@ -279,11 +170,7 @@ class BaseScraper(
 
     @property
     @abstractmethod
-    def delayed_get_set_fields(
-        self,
-    ) -> List[
-        JobField
-    ]:
+    def delayed_get_set_fields(self) -> List[JobField]:
         """Delay execution when getting /setting any of these attributes of a
         job.
 
@@ -292,9 +179,7 @@ class BaseScraper(
 
     @property
     @abstractmethod
-    def locale(
-        self,
-    ) -> Locale:
+    def locale(self) -> Locale:
         """The localization that this scraper was built for.
 
         i.e. I am looking for jobs on the Canadian version of Indeed, and I
@@ -307,22 +192,12 @@ class BaseScraper(
 
     @property
     @abstractmethod
-    def headers(
-        self,
-    ) -> Dict[
-        str,
-        str,
-    ]:
+    def headers(self) -> Dict[str, str]:
         """The Session headers for this scraper to be used with
         requests.Session.headers.update()
         """
 
-    def scrape(
-        self,
-    ) -> Dict[
-        str,
-        Job,
-    ]:
+    def scrape(self) -> Dict[str, Job]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
         Returns:
@@ -332,55 +207,31 @@ class BaseScraper(
         # Get a list of job soups from the initial search results page
         # These wont contain enough information to do more than initialize Job
         try:
-            job_soups = (
-                self.get_job_soups_from_search_result_listings()
-            )
+            job_soups = self.get_job_soups_from_search_result_listings()
         except Exception as err:
             raise ValueError(
                 "Unable to extract jobs from initial search result page:\n\t"
                 f"{str(err)}"
             )
-        n_soups = len(
-            job_soups
-        )
-        self.logger.info(
-            "Scraped %s job listings from search results pages",
-            n_soups,
-        )
+        n_soups = len(job_soups)
+        self.logger.info("Scraped %s job listings from search results pages", n_soups)
 
         # Init a Manager so we can control delaying
         # this is assuming every job will incur one delayed session.get()
         # NOTE pylint issue: https://github.com/PyCQA/pylint/issues/3313
-        delay_lock = (
-            self.thread_manager.Lock()
-        )  # pylint: disable=no-member
-        threads = ThreadPoolExecutor(
-            max_workers=MAX_CPU_WORKERS
-        )
+        delay_lock = self.thread_manager.Lock()  # pylint: disable=no-member
+        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
 
         # Distribute work to N workers such that each worker is building one
         # Job at a time, getting and setting all required attributes
-        jobs_dict = (
-            {}
-        )  # type: Dict[str, Job]
+        jobs_dict = {}  # type: Dict[str, Job]
         try:
             # Calculate delays for get/set calls per-job NOTE: only get/set
             # calls in self.delayed_get_set_fields will be delayed.
             # and it busy-waits.
-            delays = calculate_delays(
-                n_soups,
-                self.config.delay_config,
-            )
-            futures = (
-                []
-            )
-            for (
-                job_soup,
-                delay,
-            ) in zip(
-                job_soups,
-                delays,
-            ):
+            delays = calculate_delays(n_soups, self.config.delay_config)
+            futures = []
+            for job_soup, delay in zip(job_soups, delays):
                 futures.append(
                     threads.submit(
                         self.scrape_job,
@@ -391,35 +242,20 @@ class BaseScraper(
                 )
 
             # For each job-soup object, scrape the soup into a Job (w/o desc.)
-            for future in tqdm(
-                as_completed(
-                    futures
-                ),
-                total=n_soups,
-                ascii=True,
-            ):
-                job = (
-                    future.result()
-                )
+            for future in tqdm(as_completed(futures), total=n_soups, ascii=True):
+                job = future.result()
                 if job:
                     # Handle inter-scraped data duplicates by key.
                     # TODO: move this functionality into duplicates filter
-                    if (
-                        job.key_id
-                        in jobs_dict
-                    ):
+                    if job.key_id in jobs_dict:
                         self.logger.error(
                             "Job %s and %s share duplicate key_id: %s",
                             job.title,
-                            jobs_dict[
-                                job.key_id
-                            ].title,
+                            jobs_dict[job.key_id].title,
                             job.key_id,
                         )
                     else:
-                        jobs_dict[
-                            job.key_id
-                        ] = job
+                        jobs_dict[job.key_id] = job
 
         finally:
             # Cleanup
@@ -429,15 +265,8 @@ class BaseScraper(
 
     # pylint: disable=no-member
     def scrape_job(
-        self,
-        job_soup: BeautifulSoup,
-        delay: float,
-        delay_lock: Optional[
-            Lock
-        ] = None,
-    ) -> Optional[
-        Job
-    ]:
+        self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Lock] = None
+    ) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
             job_soup (BeautifulSoup): This is a soup object that your get/set
@@ -459,27 +288,13 @@ class BaseScraper(
         # NOTE: if we perform a self.session.get we may get respectfully delayed
         job = None  # type: Optional[Job]
         invalid_job = False  # type: bool
-        job_init_kwargs = (
-            self.job_init_kwargs
-        )  # NOTE: faster?
-        for (
-            is_get,
-            field,
-        ) in (
-            self._actions_list
-        ):
+        job_init_kwargs = self.job_init_kwargs  # NOTE: faster?
+        for is_get, field in self._actions_list:
 
             # Break out immediately because we have failed a filterable
             # condition with something we initialized while scraping.
-            if (
-                job
-                and self.job_filter.filterable(
-                    job
-                )
-            ):
-                if self.job_filter.is_duplicate(
-                    job
-                ):
+            if job and self.job_filter.filterable(job):
+                if self.job_filter.is_duplicate(job):
                     # NOTE: if we pre-empt scraping duplicates we cannot update
                     # the existing job listing with the new information!
                     # TODO: make this behaviour configurable? ('minimal-get' ?)
@@ -491,55 +306,30 @@ class BaseScraper(
                     )
                 else:
                     self.logger.debug(
-                        "Cancelled scraping of %s, failed JobFilter",
-                        job.key_id,
+                        "Cancelled scraping of %s, failed JobFilter", job.key_id
                     )
                     invalid_job = True
                     break
 
             # Respectfully delay if it's configured to do so.
-            if (
-                field
-                in self.delayed_get_set_fields
-            ):
+            if field in self.delayed_get_set_fields:
                 if delay_lock:
-                    self.logger.debug(
-                        "Delaying for %.4f",
-                        delay,
-                    )
+                    self.logger.debug("Delaying for %.4f", delay)
                     with delay_lock:
-                        sleep(
-                            delay
-                        )
+                        sleep(delay)
                 else:
-                    sleep(
-                        delay
-                    )
+                    sleep(delay)
 
             try:
                 if is_get:
-                    job_init_kwargs[
-                        field
-                    ] = self.get(
-                        field,
-                        job_soup,
-                    )
+                    job_init_kwargs[field] = self.get(field, job_soup)
                 else:
-                    if (
-                        not job
-                    ):
+                    if not job:
                         # Build initial job object + populate all the job
                         job = Job(
-                            **{
-                                k.name.lower(): v
-                                for k, v in job_init_kwargs.items()
-                            }
+                            **{k.name.lower(): v for k, v in job_init_kwargs.items()}
                         )
-                    self.set(
-                        field,
-                        job,
-                        job_soup,
-                    )
+                    self.set(field, job, job_soup)
 
             except Exception as err:
 
@@ -547,15 +337,8 @@ class BaseScraper(
                 # so that users encountering bugs can submit it and we can
                 # quickly fix any failing scraping.
 
-                url_str = (
-                    job.url
-                    if job
-                    else ""
-                )
-                if (
-                    field
-                    in self.min_required_job_fields
-                ):
+                url_str = job.url if job else ""
+                if field in self.min_required_job_fields:
                     raise ValueError(
                         "Unable to scrape minimum-required job field: "
                         f"{field.name} Got error:{err}. {url_str}"
@@ -570,10 +353,7 @@ class BaseScraper(
                     )
 
         # Validate job fields if we got something
-        if (
-            job
-            and not invalid_job
-        ):
+        if job and not invalid_job:
             try:
                 job.validate()
 
@@ -581,18 +361,11 @@ class BaseScraper(
                 # Bad job scrapes can't take down execution!
                 # NOTE: desc too short etc, usually indicates that the job
                 # is an empty page. Not sure why this comes up once in awhile...
-                self.logger.error(
-                    "Job failed validation: %s",
-                    err,
-                )
+                self.logger.error("Job failed validation: %s", err)
                 return None
 
         # Prefix the id with the scraper name to avoid key conflicts
-        new_key_id = (
-            job.provider
-            + "_"
-            + job.key_id
-        )
+        new_key_id = job.provider + "_" + job.key_id
         job.key_id = new_key_id
 
         return job
@@ -600,11 +373,7 @@ class BaseScraper(
     # pylint: enable=no-member
 
     @abstractmethod
-    def get_job_soups_from_search_result_listings(
-        self,
-    ) -> List[
-        BeautifulSoup
-    ]:
+    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes a job provider's response to a search query where we are
         shown many job listings at once.
 
@@ -616,11 +385,7 @@ class BaseScraper(
         """
 
     @abstractmethod
-    def get(
-        self,
-        parameter: JobField,
-        soup: BeautifulSoup,
-    ) -> Any:
+    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
         """Get a single job attribute from a soup object by JobField
 
         i.e. if param is JobField.COMPANY --> scrape from soup --> return str
@@ -628,12 +393,7 @@ class BaseScraper(
         """
 
     @abstractmethod
-    def set(
-        self,
-        parameter: JobField,
-        job: Job,
-        soup: BeautifulSoup,
-    ) -> None:
+    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField
 
         Use this to set Job attribs that rely on Job existing already
@@ -643,45 +403,27 @@ class BaseScraper(
         page (Job.URL), then I can set() my Job.DESCRIPTION from the Job.RAW
         """
 
-    def _validate_get_set(
-        self,
-    ) -> None:
+    def _validate_get_set(self) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect"""
-        set_job_get_fields = set(
-            self.job_get_fields
-        )
-        set_job_set_fields = set(
-            self.job_set_fields
-        )
-        all_set_get_fields = set(
-            self.job_get_fields
-            + self.job_set_fields
-        )
-        set_min_fields = set(
-            self.min_required_job_fields
-        )
+        set_job_get_fields = set(self.job_get_fields)
+        set_job_set_fields = set(self.job_set_fields)
+        all_set_get_fields = set(self.job_get_fields + self.job_set_fields)
+        set_min_fields = set(self.min_required_job_fields)
 
-        set_missing_req_fields = (
-            set_min_fields
-            - all_set_get_fields
-        )
+        set_missing_req_fields = set_min_fields - all_set_get_fields
         if set_missing_req_fields:
             raise ValueError(
                 f"Scraper: {self.__class__.__name__} Job attributes: "
                 f"{set_missing_req_fields} are required and not implemented."
             )
 
-        field_intersection = set_job_get_fields.intersection(
-            set_job_set_fields
-        )
+        field_intersection = set_job_get_fields.intersection(set_job_set_fields)
         if field_intersection:
             raise ValueError(
                 f"Scraper: {self.__class__.__name__} Job attributes: "
                 f"{field_intersection} are implemented by both get() and set()!"
             )
-        excluded_fields = (
-            []
-        )  # type: List[JobField]
+        excluded_fields = []  # type: List[JobField]
         for field in JobField:
             # NOTE: we exclude status, locale, query, provider and scrape date
             # because these are set without needing any scrape data.
@@ -697,93 +439,56 @@ class BaseScraper(
                     JobField.SHORT_DESCRIPTION,
                     JobField.RAW,
                 ]
-                and field
-                not in self.job_get_fields
-                and field
-                not in self.job_set_fields
+                and field not in self.job_get_fields
+                and field not in self.job_set_fields
             ):
-                excluded_fields.append(
-                    field
-                )
+                excluded_fields.append(field)
         if excluded_fields:
             # NOTE: INFO level because this is OK, but ideally ppl see this
             # so they are motivated to help and understand why stuff might
             # be missing in the CSV
             self.logger.info(
                 "No get() or set() will be done for Job attrs: %s",
-                [
-                    field.name
-                    for field in excluded_fields
-                ],
+                [field.name for field in excluded_fields],
             )
 
 
 # Just some basic localized scrapers, you can inherit these to set the locale.
-class BaseUSAEngScraper(
-    BaseScraper
-):
+class BaseUSAEngScraper(BaseScraper):
     """Localized scraper for USA English"""
 
     @property
-    def locale(
-        self,
-    ) -> Locale:
-        return (
-            Locale.USA_ENGLISH
-        )
+    def locale(self) -> Locale:
+        return Locale.USA_ENGLISH
 
 
-class BaseCANEngScraper(
-    BaseScraper
-):
+class BaseCANEngScraper(BaseScraper):
     """Localized scraper for Canada English"""
 
     @property
-    def locale(
-        self,
-    ) -> Locale:
-        return (
-            Locale.CANADA_ENGLISH
-        )
+    def locale(self) -> Locale:
+        return Locale.CANADA_ENGLISH
 
 
-class BaseUKEngScraper(
-    BaseScraper
-):
+class BaseUKEngScraper(BaseScraper):
     """Localized scraper for UK English"""
 
     @property
-    def locale(
-        self,
-    ) -> Locale:
-        return (
-            Locale.UK_ENGLISH
-        )
+    def locale(self) -> Locale:
+        return Locale.UK_ENGLISH
 
 
-class BaseFRFreScraper(
-    BaseScraper
-):
+class BaseFRFreScraper(BaseScraper):
     """Localized scraper for France French"""
 
     @property
-    def locale(
-        self,
-    ) -> Locale:
-        return (
-            Locale.FRANCE_FRENCH
-        )
+    def locale(self) -> Locale:
+        return Locale.FRANCE_FRENCH
 
 
-class BaseDEGerScraper(
-    BaseScraper
-):
+class BaseDEGerScraper(BaseScraper):
     """Localized scraper for Germany German"""
 
     @property
-    def locale(
-        self,
-    ) -> Locale:
-        return (
-            Locale.GERMANY_GERMAN
-        )
+    def locale(self) -> Locale:
+        return Locale.GERMANY_GERMAN
