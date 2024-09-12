@@ -3,29 +3,15 @@
 
 import logging
 import os
-from typing import (
-    List,
-    Optional,
-)
+from typing import List, Optional
 
-from jobfunnel.backend.scrapers.registry import (
-    SCRAPER_FROM_LOCALE,
-)
-from jobfunnel.config import (
-    BaseConfig,
-    DelayConfig,
-    ProxyConfig,
-    SearchConfig,
-)
-from jobfunnel.resources import (
-    BS4_PARSER,
-)
+from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
+from jobfunnel.config import BaseConfig, DelayConfig, ProxyConfig, SearchConfig
+from jobfunnel.resources import BS4_PARSER
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.backend.scrapers.base import (
-        BaseScraper,
-    )
+    from jobfunnel.backend.scrapers.base import BaseScraper
 # pylint: enable=using-constant-test,unused-import
 
 
@@ -94,9 +80,7 @@ class JobFunnelConfigManager(BaseConfig):
         self.proxy_config = proxy_config
 
     @property
-    def scrapers(
-        self,
-    ) -> List["BaseScraper"]:
+    def scrapers(self) -> List["BaseScraper"]:
         """All the compatible scrapers for the provider_name"""
         scrapers = []  # type: List[BaseScraper]
         for pr in self.search_config.providers:
@@ -107,15 +91,11 @@ class JobFunnelConfigManager(BaseConfig):
         return scrapers
 
     @property
-    def scraper_names(
-        self,
-    ) -> List[str]:
+    def scraper_names(self) -> List[str]:
         """User-readable names of the scrapers we will be running"""
         return [s.__name__ for s in self.scrapers]
 
-    def create_dirs(
-        self,
-    ) -> None:
+    def create_dirs(self) -> None:
         """Create the directories for attributes which refer to files / folders
         NOTE: should be called before we validate()
         """
@@ -131,9 +111,7 @@ class JobFunnelConfigManager(BaseConfig):
         if not os.path.exists(self.cache_folder):
             os.makedirs(self.cache_folder)
 
-    def validate(
-        self,
-    ) -> None:
+    def validate(self) -> None:
         """Validate the config object i.e. paths exit
         NOTE: will raise exceptions if issues are encountered.
         TODO: impl. more validation here

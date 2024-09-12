@@ -3,9 +3,7 @@
 
 import ipaddress
 
-from cerberus import (
-    Validator,
-)
+from cerberus import Validator
 
 from jobfunnel.resources import (
     LOG_LEVEL_NAMES,
@@ -61,14 +59,8 @@ SETTINGS_YAML_SCHEMA = {
                 "required": True,
                 "allowed": [l.name for l in Locale],
             },
-            "province_or_state": {
-                "required": True,
-                "type": "string",
-            },
-            "city": {
-                "required": True,
-                "type": "string",
-            },
+            "province_or_state": {"required": True, "type": "string"},
+            "city": {"required": True, "type": "string"},
             "radius": {
                 "required": False,
                 "type": "integer",
@@ -145,10 +137,7 @@ SETTINGS_YAML_SCHEMA = {
         "schema": {
             "protocol": {
                 "required": False,
-                "allowed": [
-                    "http",
-                    "https",
-                ],
+                "allowed": ["http", "https"],
             },
             "ip": {
                 "required": False,
@@ -169,10 +158,7 @@ class JobFunnelSettingsValidator(Validator):
     https://codingnetworker.com/2016/03/validate-json-data-using-cerberus/
     """
 
-    def _validate_type_ipv4address(
-        self,
-        value,
-    ):
+    def _validate_type_ipv4address(self, value):
         """
         checks that the given value is a valid IPv4 address
         """
@@ -182,10 +168,7 @@ class JobFunnelSettingsValidator(Validator):
             ipaddress.IPv4Address(value)
             return True
         except:
-            self._error(
-                value,
-                "Not a valid IPv4 address",
-            )
+            self._error(value, "Not a valid IPv4 address")
 
 
 SettingsValidator = JobFunnelSettingsValidator(SETTINGS_YAML_SCHEMA)

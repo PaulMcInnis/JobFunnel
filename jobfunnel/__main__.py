@@ -3,14 +3,8 @@
 """
 import os
 import sys
-from .backend.jobfunnel import (
-    JobFunnel,
-)
-from .config import (
-    parse_cli,
-    build_config_dict,
-    get_config_manager,
-)
+from .backend.jobfunnel import JobFunnel
+from .config import parse_cli, build_config_dict, get_config_manager
 
 
 def main():

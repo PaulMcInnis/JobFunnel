@@ -2,22 +2,11 @@
 to csv / etc by Exporter
 """
 
-from copy import (
-    deepcopy,
-)
-from datetime import (
-    date,
-    datetime,
-)
-from typing import (
-    Dict,
-    List,
-    Optional,
-)
+from copy import deepcopy
+from datetime import date, datetime
+from typing import Dict, List, Optional
 
-from bs4 import (
-    BeautifulSoup,
-)
+from bs4 import BeautifulSoup
 
 from jobfunnel.resources import (
     CSV_HEADER,
@@ -125,16 +114,11 @@ class Job:
         self._raw_scrape_data = raw
 
     @property
-    def is_remove_status(
-        self,
-    ) -> bool:
+    def is_remove_status(self) -> bool:
         """Return True if the job's status is one of our removal statuses."""
         return self.status in JOB_REMOVE_STATUSES
 
-    def update_if_newer(
-        self,
-        job: "Job",
-    ) -> bool:
+    def update_if_newer(self, job: "Job") -> bool:
         """Update an existing job with new metadata but keep user's status,
         but only if the job.post_date > existing_job.post_date!
 
@@ -174,10 +158,7 @@ class Job:
         else:
             return False
 
-    def is_old(
-        self,
-        max_age: datetime,
-    ) -> bool:
+    def is_old(self, max_age: datetime) -> bool:
         """Identify if a job is older than a certain max_age
 
         Args:
@@ -190,12 +171,7 @@ class Job:
         return self.post_date < max_age
 
     @property
-    def as_row(
-        self,
-    ) -> Dict[
-        str,
-        str,
-    ]:
+    def as_row(self) -> Dict[str, str]:
         """Builds a CSV row dict for this job entry
 
         TODO: this is legacy, no support for short_description yet.
@@ -203,10 +179,7 @@ class Job:
         """
         return dict(
             [
-                (
-                    h,
-                    v,
-                )
+                (h, v)
                 for h, v in zip(
                     CSV_HEADER,
                     [
@@ -230,12 +203,7 @@ class Job:
         )
 
     @property
-    def as_json_entry(
-        self,
-    ) -> Dict[
-        str,
-        str,
-    ]:
+    def as_json_entry(self) -> Dict[str, str]:
         """This formats a job for the purpose of saving it to a block JSON
         i.e. duplicates list file or user's block list file
         NOTE: we truncate descriptions in block lists
@@ -252,9 +220,7 @@ class Job:
             "status": self.status.name,
         }
 
-    def clean_strings(
-        self,
-    ) -> None:
+    def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
         TODO: maybe we can use stopwords?
         """
@@ -269,16 +235,9 @@ class Job:
             self.query,
             self.wage,
         ]:
-            attr = "".join(
-                filter(
-                    lambda x: x in PRINTABLE_STRINGS,
-                    attr,
-                )
-            )
+            attr = "".join(filter(lambda x: x in PRINTABLE_STRINGS, attr))
 
-    def validate(
-        self,
-    ) -> None:
+    def validate(self) -> None:
         """Simple checks just to ensure that the metadata is good
         TODO: consider expanding to cover all attribs.
         """
@@ -289,9 +248,7 @@ class Job:
         if len(self.description) < MIN_DESCRIPTION_CHARS:
             raise ValueError("Description too short!")
 
-    def __repr__(
-        self,
-    ) -> str:
+    def __repr__(self) -> str:
         """Developer-friendly representation of the Job object."""
         return (
             f"Job("
@@ -303,9 +260,7 @@ class Job:
             f"url='{self.url}')"
         )
 
-    def __str__(
-        self,
-    ) -> str:
+    def __str__(self) -> str:
         """Human-readable string representation of the Job object."""
         return (
             f"Job Title: {self.title}\n"
