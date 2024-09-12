@@ -216,7 +216,6 @@ class BaseIndeedScraper(BaseScraper):
             return job_data.get("formattedLocation", None)
 
         elif parameter == JobField.TAGS:
-
             formatted_attributes = format_taxonomy_attributes(
                 job_data.get("taxonomyAttributes", [])
             )

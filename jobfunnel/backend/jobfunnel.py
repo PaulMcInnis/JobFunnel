@@ -103,7 +103,6 @@ class JobFunnel(Logger):
         # Scrape jobs or load them from a cache if one exists (--no-scrape)
         scraped_jobs_dict = {}  # type: Dict[str, Job]
         if self.config.no_scrape:
-
             # Load cache since --no-scrape is set
             self.logger.info("Skipping scraping, running with --no-scrape.")
             if os.path.exists(self.daily_cache_file):
@@ -113,7 +112,6 @@ class JobFunnel(Logger):
                     "No incoming jobs, missing cache: %s", self.daily_cache_file
                 )
         else:
-
             # Scrape new jobs from all our configured providers and cache them
             scraped_jobs_dict = self.scrape()
 
@@ -135,7 +133,6 @@ class JobFunnel(Logger):
         # FIXME: impl. TFIDF on inter-scrape duplicates
         duplicate_jobs = []  # type: List[DuplicatedJob]
         if self.master_jobs_dict and scraped_jobs_dict:
-
             # Remove jobs with duplicated key_ids from scrape + update master
             duplicate_jobs = self.job_filter.find_duplicates(
                 self.master_jobs_dict,
@@ -143,10 +140,8 @@ class JobFunnel(Logger):
             )
 
             for match in duplicate_jobs:
-
                 # Was it a key-id match?
                 if match.type in [DuplicateType.KEY_ID or DuplicateType.EXISTING_TFIDF]:
-
                     # NOTE: original and duplicate have same key id for these.
                     # When it's EXISTING_TFIDF, we can't set match.duplicate
                     # because it is only partially stored in the block list JSON
@@ -172,7 +167,6 @@ class JobFunnel(Logger):
 
                 # Was it a content-match?
                 elif match.type == DuplicateType.NEW_TFIDF:
-
                     # Got a content match, pop from scrape dict and maybe update
                     upd = self.master_jobs_dict[match.original.key_id].update_if_newer(
                         scraped_jobs_dict.pop(match.duplicate.key_id)
@@ -195,7 +189,6 @@ class JobFunnel(Logger):
 
         # Write-out to CSV or log messages
         if self.master_jobs_dict:
-
             # Write our updated jobs out (if none, dont make the file at all)
             self.write_master_csv(self.master_jobs_dict)
             self.logger.info(
@@ -357,7 +350,6 @@ class JobFunnel(Logger):
             self.config.master_csv_file, "r", encoding="utf8", errors="ignore"
         ) as csvfile:
             for row in csv.DictReader(csvfile):
-
                 # NOTE: we are doing legacy support here with 'blurb' etc.
                 # In the future we should have an actual short description
                 if "short_description" in row:
@@ -538,7 +530,6 @@ class JobFunnel(Logger):
         """
         if self.config.duplicates_list_file:
             if self.job_filter.duplicate_jobs_dict:
-
                 # Write out the changes NOTE: indent=4 is for human-readability
                 self.logger.debug("Extending existing duplicate jobs dict.")
                 with open(

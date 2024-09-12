@@ -308,7 +308,6 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     # Build a config that respects CLI, defaults and YAML
     # NOTE: we a passed settings YAML first so we can inject CLI after if needed
     if "settings_yaml_file" in args_dict:
-
         # Load YAML
         config = yaml.load(
             open(args_dict["settings_yaml_file"], "r"),
@@ -330,7 +329,6 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
             )
 
     else:
-
         # Handle CLI arguments for paths, possibly overwriting YAML
         sub_keys = ["search", "delay", "proxy"]
         config = {k: {} for k in sub_keys}  # type: Dict[str, Dict[str, Any]]
