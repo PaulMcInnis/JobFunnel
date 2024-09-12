@@ -1,5 +1,6 @@
 """Module for calculating random or non-random delay
 """
+
 from math import ceil, log, sqrt
 from random import uniform
 from typing import List, Union
@@ -12,11 +13,10 @@ from jobfunnel.resources import DelayAlgorithm
 
 
 def _c_delay(list_len: int, delay: Union[int, float]):
-    """Sets single delay value to whole list.
-    """
+    """Sets single delay value to whole list."""
     delays = [delay] * list_len
     # sets incrementing offsets to the first 8 elements
-    inc = .2  # Increment set to .2
+    inc = 0.2  # Increment set to .2
     offset = len(delays[0:8]) / 5  # offset
     # checks if delay is < 1.5
     if delay < 1.5:
@@ -29,8 +29,7 @@ def _c_delay(list_len: int, delay: Union[int, float]):
 
 
 def _lin_delay(list_len: int, delay: Union[int, float]):
-    """Calculates y=.2*x and sets y=delay at intersection of x between lines.
-    """
+    """Calculates y=.2*x and sets y=delay at intersection of x between lines."""
     # calculates x value where lines intersect
     its = 5 * delay  # its = intersection
     # any delay of .2 or less is hard delay
@@ -97,14 +96,12 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         if delay_config.converge:  # checks if converging delay is True
             # delay_vals = lower bound, delay = upper bound
             durations = [
-                round(uniform(x, delay_config.max_duration), 3)
-                for x in delay_vals
+                round(uniform(x, delay_config.max_duration), 3) for x in delay_vals
             ]
         else:
             # lb = lower bounds, delay_vals = upper bound
             durations = [
-                round(uniform(delay_config.min_duration, x), 3)
-                for x in delay_vals
+                round(uniform(delay_config.min_duration, x), 3) for x in delay_vals
             ]
 
     else:

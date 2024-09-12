@@ -1,43 +1,55 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
+
 from copy import deepcopy
 from datetime import date, datetime
 from typing import Dict, List, Optional
 
 from bs4 import BeautifulSoup
 
-from jobfunnel.resources import (CSV_HEADER, MAX_BLOCK_LIST_DESC_CHARS,
-                                 MIN_DESCRIPTION_CHARS, PRINTABLE_STRINGS,
-                                 JobStatus, Locale, Remoteness)
+from jobfunnel.resources import (
+    CSV_HEADER,
+    MAX_BLOCK_LIST_DESC_CHARS,
+    MIN_DESCRIPTION_CHARS,
+    PRINTABLE_STRINGS,
+    JobStatus,
+    Locale,
+    Remoteness,
+)
 
 # If job.status == one of these we filter it out of results
 JOB_REMOVE_STATUSES = [
-    JobStatus.DELETE, JobStatus.ARCHIVE, JobStatus.REJECTED, JobStatus.OLD
+    JobStatus.DELETE,
+    JobStatus.ARCHIVE,
+    JobStatus.REJECTED,
+    JobStatus.OLD,
 ]
 
 
-class Job():
-    """The base Job object which contains job information as attribs
-    """
-    def __init__(self,
-                 title: str,
-                 company: str,
-                 location: str,
-                 description: str,
-                 url: str,
-                 locale: Locale,
-                 query: str,
-                 provider: str,
-                 status: JobStatus,
-                 key_id: Optional[str] = '',
-                 scrape_date: Optional[date] = None,
-                 short_description: Optional[str] = None,
-                 post_date: Optional[date] = None,
-                 raw: Optional[BeautifulSoup] = None,
-                 wage: Optional[str] = None,
-                 tags: Optional[List[str]] = None,
-                 remoteness: Optional[Remoteness] = Remoteness.UNKNOWN) -> None:
+class Job:
+    """The base Job object which contains job information as attribs"""
+
+    def __init__(
+        self,
+        title: str,
+        company: str,
+        location: str,
+        description: str,
+        url: str,
+        locale: Locale,
+        query: str,
+        provider: str,
+        status: JobStatus,
+        key_id: Optional[str] = "",
+        scrape_date: Optional[date] = None,
+        short_description: Optional[str] = None,
+        post_date: Optional[date] = None,
+        raw: Optional[BeautifulSoup] = None,
+        wage: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        remoteness: Optional[Remoteness] = Remoteness.UNKNOWN,
+    ) -> None:
         """Object to represent a single job that we have scraped
 
         TODO integrate init with JobField somehow, ideally with validation.
@@ -96,18 +108,17 @@ class Job():
         if short_description:
             self.short_description = short_description
         else:
-            self.short_description = ''
+            self.short_description = ""
 
         # Semi-private attrib for debugging
         self._raw_scrape_data = raw
 
     @property
     def is_remove_status(self) -> bool:
-        """Return True if the job's status is one of our removal statuses.
-        """
+        """Return True if the job's status is one of our removal statuses."""
         return self.status in JOB_REMOVE_STATUSES
 
-    def update_if_newer(self, job: 'Job') -> bool:
+    def update_if_newer(self, job: "Job") -> bool:
         """Update an existing job with new metadata but keep user's status,
         but only if the job.post_date > existing_job.post_date!
 
@@ -122,12 +133,12 @@ class Job():
         Returns:
             True if we updated self with job, False if we didn't
         """
-        if (job.post_date > self.post_date):
+        if job.post_date > self.post_date:
             # Update all attrs other than status (which user can set).
             self.company = deepcopy(job.company)
             self.location = deepcopy(job.location)
             self.description = deepcopy(job.description)
-            self.key_id = deepcopy(job.key_id) # NOTE: be careful doing this!
+            self.key_id = deepcopy(job.key_id)  # NOTE: be careful doing this!
             self.url = deepcopy(job.url)
             self.locale = deepcopy(job.locale)
             self.query = deepcopy(job.query)
@@ -165,27 +176,30 @@ class Job():
         TODO: this is legacy, no support for short_description yet.
         NOTE: RAW cannot be put into CSV.
         """
-        return dict([
-            (h, v) for h,v in zip(
-                CSV_HEADER,
-                [
-                    self.status.name,
-                    self.title,
-                    self.company,
-                    self.location,
-                    self.post_date.strftime('%Y-%m-%d'),
-                    self.description,
-                    ', '.join(self.tags),
-                    self.url,
-                    self.key_id,
-                    self.provider,
-                    self.query,
-                    self.locale.name,
-                    self.wage,
-                    self.remoteness.name,
-                ]
-            )
-        ])
+        return dict(
+            [
+                (h, v)
+                for h, v in zip(
+                    CSV_HEADER,
+                    [
+                        self.status.name,
+                        self.title,
+                        self.company,
+                        self.location,
+                        self.post_date.strftime("%Y-%m-%d"),
+                        self.description,
+                        ", ".join(self.tags),
+                        self.url,
+                        self.key_id,
+                        self.provider,
+                        self.query,
+                        self.locale.name,
+                        self.wage,
+                        self.remoteness.name,
+                    ],
+                )
+            ]
+        )
 
     @property
     def as_json_entry(self) -> Dict[str, str]:
@@ -194,27 +208,33 @@ class Job():
         NOTE: we truncate descriptions in block lists
         """
         return {
-            'title': self.title,
-            'company': self.company,
-            'post_date': self.post_date.strftime('%Y-%m-%d'),
-            'description': (
-                self.description[:MAX_BLOCK_LIST_DESC_CHARS] + '..'
-            ) if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS else (
-                self.description
+            "title": self.title,
+            "company": self.company,
+            "post_date": self.post_date.strftime("%Y-%m-%d"),
+            "description": (
+                (self.description[:MAX_BLOCK_LIST_DESC_CHARS] + "..")
+                if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS
+                else (self.description)
             ),
-            'status': self.status.name,
+            "status": self.status.name,
         }
 
     def clean_strings(self) -> None:
         """Ensure that all string fields have only printable chars
         TODO: maybe we can use stopwords?
         """
-        for attr in [self.title, self.company, self.description, self.tags,
-                     self.url, self.key_id, self.provider, self.query,
-                     self.wage]:
-            attr = ''.join(
-                filter(lambda x: x in PRINTABLE_STRINGS, attr)
-            )
+        for attr in [
+            self.title,
+            self.company,
+            self.description,
+            self.tags,
+            self.url,
+            self.key_id,
+            self.provider,
+            self.query,
+            self.wage,
+        ]:
+            attr = "".join(filter(lambda x: x in PRINTABLE_STRINGS, attr))
 
     def validate(self) -> None:
         """Simple checks just to ensure that the metadata is good
