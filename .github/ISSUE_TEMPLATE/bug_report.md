@@ -4,11 +4,13 @@ about: Create a report to help us improve
 title: ''
 labels: bug
 assignees: ''
+
 ---
 
 ## Description
 
-Please include a summary of the issue. Please include the steps to reproduce.
+Please include a summary of the issue.
+Please include the steps to reproduce.
 List any additional libraries that are affected.
 
 ## Steps to Reproduce
@@ -27,6 +29,6 @@ A description of what happens instead.
 
 ## Environment
 
-- Build: [e.g. 3180 - type "About" in the Command Palette]
-- Operating system and version: [e.g. macOS 10.14, Windows 10, Ubuntu 18.04]
-- [Linux] Desktop Environment and/or Window Manager: [e.g. Gnome, LXDE, i3]
+* Build: [e.g. 3180 - type "About" in the Command Palette]
+* Operating system and version: [e.g. macOS 10.14, Windows 10, Ubuntu 18.04]
+* [Linux] Desktop Environment and/or Window Manager: [e.g. Gnome, LXDE, i3]
