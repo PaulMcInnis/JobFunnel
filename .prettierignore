@@ -1,0 +1,14 @@
+# Ignore everything by default
+*
+
+# Allow Prettier to format specific file types
+!*.js
+!*.ts
+!*.css
+!*.html
+!*.json
+!*.yaml
+!*.yml
+
+# Allow subdirectories too
+!*/

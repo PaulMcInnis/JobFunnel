@@ -5,21 +5,23 @@ This document is a guide to setting up JobFunnel with Crontab.
 ### Installing Crontab
 
 Use `apt-get` to install on Debian.
+
 ```bash
 sudo apt-get install cron
 ```
 
 ### Setting up Jobs
 
-To get JobFunnel working in crontab find a location where you want to store jobs. <br />
-Somewhere like:
+To get JobFunnel working in crontab find a location where you want to store
+jobs. <br /> Somewhere like:
 
 ```
 ~/Documents/jobfunnel
 ```
 
-Copy the shell script `cronjob.sh` from this directory to `~/Documents/jobfunnel`. <br />
-Make the shell script executable by running `chmod +x ~/Documents/jobfunnel/cronjob.sh`.
+Copy the shell script `cronjob.sh` from this directory to
+`~/Documents/jobfunnel`. <br /> Make the shell script executable by running
+`chmod +x ~/Documents/jobfunnel/cronjob.sh`.
 
 Make a folder for each geographical location you want to scrape:
 
@@ -42,6 +44,7 @@ total 4
 ```
 
 Do a test run by executing:
+
 ```bash
 ./cronjob.sh
 ```
@@ -49,11 +52,13 @@ Do a test run by executing:
 ## Setting up Crontab
 
 To set up crontab for a specific user run:
+
 ```bash
 crontab -u username -e
 ```
 
 To run once each day, append to the bottom:
+
 ```
 * 0 * * * cd ~/Documents/jobfunnel && ./cronjob.sh > cronjob.log 2>&1
 ```
