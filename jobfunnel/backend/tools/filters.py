@@ -179,7 +179,6 @@ class JobFilter(Logger):
 
         # Look for matches by key id only
         for key_id, incoming_job in incoming_jobs_dict.items():
-
             # The key-ids are a direct match between existing and new
             if key_id in existing_jobs_dict:
                 self.logger.debug(
@@ -358,7 +357,6 @@ class JobFilter(Logger):
         # original jobs but not multiple matching queries for our original job.
         new_duplicate_jobs_list = []  # type: List[DuplicatedJob]
         for query_similarities, query_id in zip(similarities_per_query, query_ids):
-
             # Identify the jobs in existing_jobs_dict that our query is a
             # duplicate of
             # TODO: handle if everything is highly similar!

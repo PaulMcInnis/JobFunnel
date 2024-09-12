@@ -114,7 +114,6 @@ class BaseGlassDoorScraper(BaseScraper):
         ).json()[0]["locationId"]
 
         if method == "get":
-
             # Form job search url
             search = (
                 "https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn"
@@ -128,7 +127,6 @@ class BaseGlassDoorScraper(BaseScraper):
             return search
 
         elif method == "post":
-
             # Form the job search url
             search = (
                 f"https://www.glassdoor.{self.config.search_config.domain}"
@@ -147,7 +145,6 @@ class BaseGlassDoorScraper(BaseScraper):
 
             return search, data
         else:
-
             raise ValueError(f"No html method {method} exists")
 
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:

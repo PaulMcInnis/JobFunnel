@@ -331,7 +331,6 @@ class BaseScraper(ABC, Logger):
                     self.set(field, job, job_soup)
 
             except Exception as err:
-
                 # TODO: we should really dump the soup object to an XML file
                 # so that users encountering bugs can submit it and we can
                 # quickly fix any failing scraping.

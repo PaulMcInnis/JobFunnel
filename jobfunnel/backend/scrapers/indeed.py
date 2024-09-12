@@ -593,8 +593,6 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
             "div", class_="jobsearch-JobCountAndSortPane-jobCount"
         )
 
-        self.logger.debug(num_res)
-
         if not num_res:
             raise ValueError(
                 "Unable to identify number of pages of results for query: {}"
