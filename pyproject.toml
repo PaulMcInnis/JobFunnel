@@ -1,0 +1,3 @@
+[tool.black]
+line-length = 88  # This is the default
+include = '\.pyi?$'  # This will include all .py and .pyi files
