@@ -44,7 +44,6 @@ GLASSDOOR_RADIUS_MAP = {
 
 
 class BaseGlassDoorScraper(BaseScraper):
-
     def __init__(
         self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
     ) -> None:

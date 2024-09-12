@@ -319,9 +319,11 @@ class JobFilter(Logger):
         corpus = []  # type: List[str]
         if existing_jobs_dict:
             self.logger.debug("Running TFIDF on incoming vs existing data.")
-            reference_ids, reference_words, filt_existing_jobs_dict = (
-                __dict_to_ids_and_words(existing_jobs_dict, is_incoming=False)
-            )
+            (
+                reference_ids,
+                reference_words,
+                filt_existing_jobs_dict,
+            ) = __dict_to_ids_and_words(existing_jobs_dict, is_incoming=False)
             corpus = query_words + reference_words
         else:
             self.logger.debug("Running TFIDF on incoming data only.")

@@ -9,7 +9,6 @@
 !*.json
 !*.yaml
 !*.yml
-!*.md
 
 # Allow subdirectories too
 !*/
