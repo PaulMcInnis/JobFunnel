@@ -2,7 +2,11 @@
 """
 
 import argparse
-from typing import Dict, Any, List
+from typing import (
+    Dict,
+    Any,
+    List,
+)
 import yaml
 
 from jobfunnel.config import (
@@ -22,12 +26,21 @@ from jobfunnel.resources import (
 from jobfunnel.resources.defaults import *
 
 
-def parse_cli(args: List[str]) -> Dict[str, Any]:
+def parse_cli(
+    args: List[
+        str
+    ],
+) -> Dict[
+    str,
+    Any,
+]:
     """Parse the command line arguments into an Dict[arg_name, arg_value]
 
     TODO: need to ensure users can try out JobFunnel as easily as possible.
     """
-    base_parser = argparse.ArgumentParser()
+    base_parser = (
+        argparse.ArgumentParser()
+    )
 
     # Independant arguments
     base_parser.add_argument(
@@ -97,7 +110,9 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     # Paths
-    search_group = cli_parser.add_argument_group("paths")
+    search_group = cli_parser.add_argument_group(
+        "paths"
+    )
     search_group.add_argument(
         "-csv",
         dest="master_csv_file",
@@ -139,7 +154,9 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     # SearchConfig via CLI args subparser
-    search_group = cli_parser.add_argument_group("search")
+    search_group = cli_parser.add_argument_group(
+        "search"
+    )
     search_group.add_argument(
         "-kw",
         dest="search.keywords",
@@ -153,7 +170,10 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-l",
         dest="search.locale",
         type=str,
-        choices=[l.name for l in Locale],
+        choices=[
+            l.name
+            for l in Locale
+        ],
         help="Global location and language to use to scrape the job provider"
         " website (i.e. -l CANADA_ENGLISH -p indeed --> indeed.ca).",
         required=True,
@@ -192,7 +212,10 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         dest="search.providers",
         type=str,
         nargs="+",
-        choices=[p.name for p in Provider],
+        choices=[
+            p.name
+            for p in Provider
+        ],
         default=DEFAULT_PROVIDER_NAMES,
         help="List of job-search providers (i.e. Indeed, Monster, GlassDoor).",
         required=False,
@@ -212,7 +235,10 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-remoteness",
         dest="search.remoteness",
         type=str,
-        choices=[p.name for p in Remoteness],
+        choices=[
+            p.name
+            for p in Remoteness
+        ],
         default=DEFAULT_REMOTENESS.name,
         help="The level of remoteness of the job, (i.e. FULLY_REMOTE) "
         "Defaults to ANY.",
@@ -238,7 +264,9 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     # Proxy stuff. TODO: way to tell argparse if proxy is seen all are req'd?
-    proxy_group = cli_parser.add_argument_group("proxy")
+    proxy_group = cli_parser.add_argument_group(
+        "proxy"
+    )
     proxy_group.add_argument(
         "-protocol",
         dest="proxy.protocol",
@@ -259,7 +287,9 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     )
 
     # Delay stuff
-    delay_group = cli_parser.add_argument_group("delay")
+    delay_group = cli_parser.add_argument_group(
+        "delay"
+    )
     delay_group.add_argument(
         "--random",
         dest="delay.random",
@@ -294,37 +324,74 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     delay_group.add_argument(
         "-algorithm",
         dest="delay.algorithm",
-        choices=[a.name for a in DelayAlgorithm],
+        choices=[
+            a.name
+            for a in DelayAlgorithm
+        ],
         default=DEFAULT_DELAY_ALGORITHM.name,
         help="Select a function to calculate delay times with.",
     )
-    return vars(base_parser.parse_args(args))
+    return vars(
+        base_parser.parse_args(
+            args
+        )
+    )
 
 
-def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
+def build_config_dict(
+    args_dict: Dict[
+        str,
+        Any,
+    ]
+) -> Dict[
+    str,
+    Any,
+]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
     """
     # Build a config that respects CLI, defaults and YAML
     # NOTE: we a passed settings YAML first so we can inject CLI after if needed
-    if "settings_yaml_file" in args_dict:
+    if (
+        "settings_yaml_file"
+        in args_dict
+    ):
 
         # Load YAML
         config = yaml.load(
-            open(args_dict["settings_yaml_file"], "r"),
+            open(
+                args_dict[
+                    "settings_yaml_file"
+                ],
+                "r",
+            ),
             Loader=yaml.FullLoader,
         )
 
         # Inject any base level args (--no-scrape, -log-level)
-        config["no_scrape"] = args_dict["no_scrape"]
-        if args_dict.get("log_level"):
-            config["log_level"] = args_dict["log_level"]
+        config[
+            "no_scrape"
+        ] = args_dict[
+            "no_scrape"
+        ]
+        if args_dict.get(
+            "log_level"
+        ):
+            config[
+                "log_level"
+            ] = args_dict[
+                "log_level"
+            ]
 
         # Set defaults for our YAML
-        config = SettingsValidator.normalized(config)
+        config = SettingsValidator.normalized(
+            config
+        )
 
         # Validate the config passed via YAML
-        if not SettingsValidator.validate(config):
+        if not SettingsValidator.validate(
+            config
+        ):
             raise ValueError(
                 f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
             )
@@ -332,70 +399,224 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     else:
 
         # Handle CLI arguments for paths, possibly overwriting YAML
-        sub_keys = ["search", "delay", "proxy"]
-        config = {k: {} for k in sub_keys}  # type: Dict[str, Dict[str, Any]]
+        sub_keys = [
+            "search",
+            "delay",
+            "proxy",
+        ]
+        config = {
+            k: {}
+            for k in sub_keys
+        }  # type: Dict[str, Dict[str, Any]]
 
         # Handle all the sub-configs, and non-path, non-default CLI args
-        for key, value in args_dict.items():
-            if key == "do_recovery_mode":
+        for (
+            key,
+            value,
+        ) in (
+            args_dict.items()
+        ):
+            if (
+                key
+                == "do_recovery_mode"
+            ):
                 # This is not present in the schema, it is CLI only.
                 continue
-            elif value is not None:
-                if any([sub_key in key for sub_key in sub_keys]):
+            elif (
+                value
+                is not None
+            ):
+                if any(
+                    [
+                        sub_key
+                        in key
+                        for sub_key in sub_keys
+                    ]
+                ):
                     # Set sub-config value
-                    key_sub_strings = key.split(".")
-                    assert len(key_sub_strings) == 2, "Bad dest name: " + key
-                    config[key_sub_strings[0]][key_sub_strings[1]] = value
+                    key_sub_strings = key.split(
+                        "."
+                    )
+                    assert (
+                        len(
+                            key_sub_strings
+                        )
+                        == 2
+                    ), (
+                        "Bad dest name: "
+                        + key
+                    )
+                    config[
+                        key_sub_strings[
+                            0
+                        ]
+                    ][
+                        key_sub_strings[
+                            1
+                        ]
+                    ] = value
                 else:
                     # Set base-config value
-                    assert "." not in key, "Bad base-key: " + key
-                    config[key] = value
+                    assert (
+                        "."
+                        not in key
+                    ), (
+                        "Bad base-key: "
+                        + key
+                    )
+                    config[
+                        key
+                    ] = value
 
     return config
 
 
-def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
+def get_config_manager(
+    config: Dict[
+        str,
+        Any,
+    ]
+) -> JobFunnelConfigManager:
     """Method to build JobFunnelConfigManager from a config dictionary"""
 
     # Build JobFunnelConfigManager
     search_cfg = SearchConfig(
-        keywords=config["search"]["keywords"],
-        province_or_state=config["search"]["province_or_state"],
-        city=config["search"]["city"],
-        distance_radius=config["search"]["radius"],
-        return_similar_results=config["search"]["similar_results"],
-        max_listing_days=config["search"]["max_listing_days"],
-        blocked_company_names=config["search"]["company_block_list"],
-        locale=Locale[config["search"]["locale"]],
-        providers=[Provider[p] for p in config["search"]["providers"]],
-        remoteness=Remoteness[config["search"]["remoteness"]],
+        keywords=config[
+            "search"
+        ][
+            "keywords"
+        ],
+        province_or_state=config[
+            "search"
+        ][
+            "province_or_state"
+        ],
+        city=config[
+            "search"
+        ][
+            "city"
+        ],
+        distance_radius=config[
+            "search"
+        ][
+            "radius"
+        ],
+        return_similar_results=config[
+            "search"
+        ][
+            "similar_results"
+        ],
+        max_listing_days=config[
+            "search"
+        ][
+            "max_listing_days"
+        ],
+        blocked_company_names=config[
+            "search"
+        ][
+            "company_block_list"
+        ],
+        locale=Locale[
+            config[
+                "search"
+            ][
+                "locale"
+            ]
+        ],
+        providers=[
+            Provider[
+                p
+            ]
+            for p in config[
+                "search"
+            ][
+                "providers"
+            ]
+        ],
+        remoteness=Remoteness[
+            config[
+                "search"
+            ][
+                "remoteness"
+            ]
+        ],
     )
 
     delay_cfg = DelayConfig(
-        max_duration=config["delay"]["max_duration"],
-        min_duration=config["delay"]["min_duration"],
-        algorithm=DelayAlgorithm[config["delay"]["algorithm"]],
-        random=config["delay"]["random"],
-        converge=config["delay"]["converging"],
+        max_duration=config[
+            "delay"
+        ][
+            "max_duration"
+        ],
+        min_duration=config[
+            "delay"
+        ][
+            "min_duration"
+        ],
+        algorithm=DelayAlgorithm[
+            config[
+                "delay"
+            ][
+                "algorithm"
+            ]
+        ],
+        random=config[
+            "delay"
+        ][
+            "random"
+        ],
+        converge=config[
+            "delay"
+        ][
+            "converging"
+        ],
     )
 
-    if config.get("proxy"):
+    if config.get(
+        "proxy"
+    ):
         proxy_cfg = ProxyConfig(
-            protocol=config["proxy"]["protocol"],
-            ip_address=config["proxy"]["ip"],
-            port=config["proxy"]["port"],
+            protocol=config[
+                "proxy"
+            ][
+                "protocol"
+            ],
+            ip_address=config[
+                "proxy"
+            ][
+                "ip"
+            ],
+            port=config[
+                "proxy"
+            ][
+                "port"
+            ],
         )
     else:
         proxy_cfg = None
 
     funnel_cfg_mgr = JobFunnelConfigManager(
-        master_csv_file=config["master_csv_file"],
-        user_block_list_file=config["block_list_file"],
-        duplicates_list_file=config["duplicates_list_file"],
-        cache_folder=config["cache_folder"],
-        log_file=config["log_file"],
-        log_level=config["log_level"],
-        no_scrape=config["no_scrape"],
+        master_csv_file=config[
+            "master_csv_file"
+        ],
+        user_block_list_file=config[
+            "block_list_file"
+        ],
+        duplicates_list_file=config[
+            "duplicates_list_file"
+        ],
+        cache_folder=config[
+            "cache_folder"
+        ],
+        log_file=config[
+            "log_file"
+        ],
+        log_level=config[
+            "log_level"
+        ],
+        no_scrape=config[
+            "no_scrape"
+        ],
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,

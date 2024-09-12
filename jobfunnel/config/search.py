@@ -1,9 +1,18 @@
 """Object to contain job query metadata
 """
 
-from typing import List, Optional
-from jobfunnel.config import BaseConfig
-from jobfunnel.resources import Locale, Provider, Remoteness
+from typing import (
+    List,
+    Optional,
+)
+from jobfunnel.config import (
+    BaseConfig,
+)
+from jobfunnel.resources import (
+    Locale,
+    Provider,
+    Remoteness,
+)
 from jobfunnel.resources.defaults import (
     DEFAULT_SEARCH_RADIUS,
     DEFAULT_MAX_LISTING_DAYS,
@@ -11,7 +20,9 @@ from jobfunnel.resources.defaults import (
 )
 
 
-class SearchConfig(BaseConfig):
+class SearchConfig(
+    BaseConfig
+):
     """Config object containing our desired job search information including
     the Locale of the searcher, the region to search and what job providers to
     search with.
@@ -19,17 +30,37 @@ class SearchConfig(BaseConfig):
 
     def __init__(
         self,
-        keywords: List[str],
-        province_or_state: Optional[str],
+        keywords: List[
+            str
+        ],
+        province_or_state: Optional[
+            str
+        ],
         locale: Locale,
-        providers: List[Provider],
-        city: Optional[str] = None,
-        distance_radius: Optional[int] = None,
+        providers: List[
+            Provider
+        ],
+        city: Optional[
+            str
+        ] = None,
+        distance_radius: Optional[
+            int
+        ] = None,
         return_similar_results: bool = False,
-        max_listing_days: Optional[int] = None,
-        blocked_company_names: Optional[List[str]] = None,
-        domain: Optional[str] = None,
-        remoteness: Optional[Remoteness] = Remoteness.ANY,
+        max_listing_days: Optional[
+            int
+        ] = None,
+        blocked_company_names: Optional[
+            List[
+                str
+            ]
+        ] = None,
+        domain: Optional[
+            str
+        ] = None,
+        remoteness: Optional[
+            Remoteness
+        ] = Remoteness.ANY,
     ):
         """Search config for all job sources
 
@@ -53,36 +84,88 @@ class SearchConfig(BaseConfig):
         """
         super().__init__()
         self.province_or_state = province_or_state
-        self.city = city.lower() if city else None
-        self.radius = distance_radius or DEFAULT_SEARCH_RADIUS
+        self.city = (
+            city.lower()
+            if city
+            else None
+        )
+        self.radius = (
+            distance_radius
+            or DEFAULT_SEARCH_RADIUS
+        )
         self.locale = locale
         self.providers = providers
         self.keywords = keywords
         self.return_similar_results = return_similar_results  # Indeed.X thing
-        self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
+        self.max_listing_days = (
+            max_listing_days
+            or DEFAULT_MAX_LISTING_DAYS
+        )
         self.blocked_company_names = blocked_company_names
         self.remoteness = remoteness
 
         # Try to infer the domain string based on the locale.
-        if not domain:
-            if not self.locale in DEFAULT_DOMAIN_FROM_LOCALE:
-                raise ValueError(f"Unknown domain for locale: {self.locale}")
-            self.domain = DEFAULT_DOMAIN_FROM_LOCALE[self.locale]
+        if (
+            not domain
+        ):
+            if (
+                not self.locale
+                in DEFAULT_DOMAIN_FROM_LOCALE
+            ):
+                raise ValueError(
+                    f"Unknown domain for locale: {self.locale}"
+                )
+            self.domain = DEFAULT_DOMAIN_FROM_LOCALE[
+                self.locale
+            ]
         else:
             self.domain = domain
 
     @property
-    def query_string(self) -> str:
+    def query_string(
+        self,
+    ) -> str:
         """User-readable version of the keywords we are searching with for CSV"""
-        return " ".join(self.keywords)
+        return " ".join(
+            self.keywords
+        )
 
-    def validate(self):
+    def validate(
+        self,
+    ):
         """We need to have the right information set, not mixing stuff"""
-        assert self.province_or_state is not None, "Province/State not set"
-        assert self.city, "City not set"
-        assert self.locale, "Locale not set"
-        assert self.providers and len(self.providers) >= 1, "Providers not set"
-        assert self.keywords and len(self.keywords) >= 1, "Keywords not set"
-        assert self.max_listing_days >= 1, "Cannot set max posting days < 1"
-        assert self.domain, "Domain not set"
-        assert self.remoteness != Remoteness.UNKNOWN, "Remoteness is UNKNOWN!"
+        assert (
+            self.province_or_state
+            is not None
+        ), "Province/State not set"
+        assert (
+            self.city
+        ), "City not set"
+        assert (
+            self.locale
+        ), "Locale not set"
+        assert (
+            self.providers
+            and len(
+                self.providers
+            )
+            >= 1
+        ), "Providers not set"
+        assert (
+            self.keywords
+            and len(
+                self.keywords
+            )
+            >= 1
+        ), "Keywords not set"
+        assert (
+            self.max_listing_days
+            >= 1
+        ), "Cannot set max posting days < 1"
+        assert (
+            self.domain
+        ), "Domain not set"
+        assert (
+            self.remoteness
+            != Remoteness.UNKNOWN
+        ), "Remoteness is UNKNOWN!"
