@@ -3,22 +3,57 @@ Paul McInnis 2020
 """
 
 import random
-from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from multiprocessing import Lock, Manager
-from time import sleep
-from typing import Any, Dict, List, Optional
+from abc import (
+    ABC,
+    abstractmethod,
+)
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+)
+from multiprocessing import (
+    Lock,
+    Manager,
+)
+from time import (
+    sleep,
+)
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
-from bs4 import BeautifulSoup
-from requests import Session
-from requests.adapters import HTTPAdapter
-from tqdm import tqdm
-from urllib3.util import Retry
+from bs4 import (
+    BeautifulSoup,
+)
+from requests import (
+    Session,
+)
+from requests.adapters import (
+    HTTPAdapter,
+)
+from tqdm import (
+    tqdm,
+)
+from urllib3.util import (
+    Retry,
+)
 
-from jobfunnel.backend import Job, JobStatus
-from jobfunnel.backend.tools import Logger
-from jobfunnel.backend.tools.delay import calculate_delays
-from jobfunnel.backend.tools.filters import JobFilter
+from jobfunnel.backend import (
+    Job,
+    JobStatus,
+)
+from jobfunnel.backend.tools import (
+    Logger,
+)
+from jobfunnel.backend.tools.delay import (
+    calculate_delays,
+)
+from jobfunnel.backend.tools.filters import (
+    JobFilter,
+)
 from jobfunnel.resources import (
     MAX_CPU_WORKERS,
     USER_AGENT_LIST,
@@ -29,15 +64,23 @@ from jobfunnel.resources import (
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfigManager
+    from jobfunnel.config import (
+        JobFunnelConfigManager,
+    )
 # pylint: enable=using-constant-test,unused-import
 
 
-class BaseScraper(ABC, Logger):
+class BaseScraper(
+    ABC,
+    Logger,
+):
     """Base scraper object, for scraping and filtering Jobs from a provider"""
 
     def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
+        self,
+        session: Session,
+        config: "JobFunnelConfigManager",
+        job_filter: JobFilter,
     ) -> None:
         """Init
 
@@ -54,7 +97,10 @@ class BaseScraper(ABC, Logger):
             ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
         # Inits
-        super().__init__(level=config.log_level, file_path=config.log_file)
+        super().__init__(
+            level=config.log_level,
+            file_path=config.log_file,
+        )
         self.job_filter = job_filter
         self.session = session
         self.config = config
@@ -62,10 +108,19 @@ class BaseScraper(ABC, Logger):
             self.session.headers.update(self.headers)
 
         # Elongate the retries TODO: make configurable
-        retry = Retry(connect=3, backoff_factor=0.5)
+        retry = Retry(
+            connect=3,
+            backoff_factor=0.5,
+        )
         adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+        self.session.mount(
+            "http://",
+            adapter,
+        )
+        self.session.mount(
+            "https://",
+            adapter,
+        )
 
         # Ensure that the locale we want to use matches the locale that the
         # scraper was written to scrape in:
@@ -81,25 +136,44 @@ class BaseScraper(ABC, Logger):
         self.thread_manager = Manager()
 
         # Construct actions list which respects priority for scraping Jobs
-        self._actions_list = [(True, f) for f in self.job_get_fields]
+        self._actions_list = [
+            (
+                True,
+                f,
+            )
+            for f in self.job_get_fields
+        ]
         self._actions_list += [
-            (False, f)
+            (
+                False,
+                f,
+            )
             for f in self.job_set_fields
             if f in self.high_priority_get_set_fields
         ]
         self._actions_list += [
-            (False, f)
+            (
+                False,
+                f,
+            )
             for f in self.job_set_fields
             if f not in self.high_priority_get_set_fields
         ]
 
     @property
-    def user_agent(self) -> str:
+    def user_agent(
+        self,
+    ) -> str:
         """Get a randomized user agent for this scraper"""
         return random.choice(USER_AGENT_LIST)
 
     @property
-    def job_init_kwargs(self) -> Dict[JobField, Any]:
+    def job_init_kwargs(
+        self,
+    ) -> Dict[
+        JobField,
+        Any,
+    ]:
         """This is a helper property that stores a Dict of JobField : value that
         we set defaults for when scraping. If the scraper fails to get/set these
         we can fail back to the empty value from here.
@@ -121,7 +195,9 @@ class BaseScraper(ABC, Logger):
         }
 
     @property
-    def min_required_job_fields(self) -> List[JobField]:
+    def min_required_job_fields(
+        self,
+    ) -> List[JobField]:
         """If we dont get() or set() any of these fields, we will raise an
         exception instead of continuing without that information.
 
@@ -139,7 +215,9 @@ class BaseScraper(ABC, Logger):
         ]
 
     @property
-    def high_priority_get_set_fields(self) -> List[JobField]:
+    def high_priority_get_set_fields(
+        self,
+    ) -> List[JobField]:
         """These get() and/or set() fields will be populated first.
 
         i.e we need the RAW populated before DESCRIPTION, so RAW should be high.
@@ -151,7 +229,9 @@ class BaseScraper(ABC, Logger):
 
     @property
     @abstractmethod
-    def job_get_fields(self) -> List[JobField]:
+    def job_get_fields(
+        self,
+    ) -> List[JobField]:
         """Call self.get(...) for the JobFields in this list when scraping a Job.
 
         NOTE: these will be passed job listing soups, if you have data you need
@@ -161,7 +241,9 @@ class BaseScraper(ABC, Logger):
 
     @property
     @abstractmethod
-    def job_set_fields(self) -> List[JobField]:
+    def job_set_fields(
+        self,
+    ) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job
 
         NOTE: You should generally set the job's own page as soup to RAW first
@@ -170,7 +252,9 @@ class BaseScraper(ABC, Logger):
 
     @property
     @abstractmethod
-    def delayed_get_set_fields(self) -> List[JobField]:
+    def delayed_get_set_fields(
+        self,
+    ) -> List[JobField]:
         """Delay execution when getting /setting any of these attributes of a
         job.
 
@@ -179,7 +263,9 @@ class BaseScraper(ABC, Logger):
 
     @property
     @abstractmethod
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         """The localization that this scraper was built for.
 
         i.e. I am looking for jobs on the Canadian version of Indeed, and I
@@ -192,12 +278,22 @@ class BaseScraper(ABC, Logger):
 
     @property
     @abstractmethod
-    def headers(self) -> Dict[str, str]:
+    def headers(
+        self,
+    ) -> Dict[
+        str,
+        str,
+    ]:
         """The Session headers for this scraper to be used with
         requests.Session.headers.update()
         """
 
-    def scrape(self) -> Dict[str, Job]:
+    def scrape(
+        self,
+    ) -> Dict[
+        str,
+        Job,
+    ]:
         """Scrape job source into a dict of unique jobs keyed by ID
 
         Returns:
@@ -214,7 +310,10 @@ class BaseScraper(ABC, Logger):
                 f"{str(err)}"
             )
         n_soups = len(job_soups)
-        self.logger.info("Scraped %s job listings from search results pages", n_soups)
+        self.logger.info(
+            "Scraped %s job listings from search results pages",
+            n_soups,
+        )
 
         # Init a Manager so we can control delaying
         # this is assuming every job will incur one delayed session.get()
@@ -229,9 +328,18 @@ class BaseScraper(ABC, Logger):
             # Calculate delays for get/set calls per-job NOTE: only get/set
             # calls in self.delayed_get_set_fields will be delayed.
             # and it busy-waits.
-            delays = calculate_delays(n_soups, self.config.delay_config)
+            delays = calculate_delays(
+                n_soups,
+                self.config.delay_config,
+            )
             futures = []
-            for job_soup, delay in zip(job_soups, delays):
+            for (
+                job_soup,
+                delay,
+            ) in zip(
+                job_soups,
+                delays,
+            ):
                 futures.append(
                     threads.submit(
                         self.scrape_job,
@@ -242,7 +350,11 @@ class BaseScraper(ABC, Logger):
                 )
 
             # For each job-soup object, scrape the soup into a Job (w/o desc.)
-            for future in tqdm(as_completed(futures), total=n_soups, ascii=True):
+            for future in tqdm(
+                as_completed(futures),
+                total=n_soups,
+                ascii=True,
+            ):
                 job = future.result()
                 if job:
                     # Handle inter-scraped data duplicates by key.
@@ -265,7 +377,10 @@ class BaseScraper(ABC, Logger):
 
     # pylint: disable=no-member
     def scrape_job(
-        self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Lock] = None
+        self,
+        job_soup: BeautifulSoup,
+        delay: float,
+        delay_lock: Optional[Lock] = None,
     ) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
@@ -289,7 +404,10 @@ class BaseScraper(ABC, Logger):
         job = None  # type: Optional[Job]
         invalid_job = False  # type: bool
         job_init_kwargs = self.job_init_kwargs  # NOTE: faster?
-        for is_get, field in self._actions_list:
+        for (
+            is_get,
+            field,
+        ) in self._actions_list:
             # Break out immediately because we have failed a filterable
             # condition with something we initialized while scraping.
             if job and self.job_filter.filterable(job):
@@ -305,7 +423,8 @@ class BaseScraper(ABC, Logger):
                     )
                 else:
                     self.logger.debug(
-                        "Cancelled scraping of %s, failed JobFilter", job.key_id
+                        "Cancelled scraping of %s, failed JobFilter",
+                        job.key_id,
                     )
                     invalid_job = True
                     break
@@ -313,7 +432,10 @@ class BaseScraper(ABC, Logger):
             # Respectfully delay if it's configured to do so.
             if field in self.delayed_get_set_fields:
                 if delay_lock:
-                    self.logger.debug("Delaying for %.4f", delay)
+                    self.logger.debug(
+                        "Delaying for %.4f",
+                        delay,
+                    )
                     with delay_lock:
                         sleep(delay)
                 else:
@@ -321,14 +443,21 @@ class BaseScraper(ABC, Logger):
 
             try:
                 if is_get:
-                    job_init_kwargs[field] = self.get(field, job_soup)
+                    job_init_kwargs[field] = self.get(
+                        field,
+                        job_soup,
+                    )
                 else:
                     if not job:
                         # Build initial job object + populate all the job
                         job = Job(
                             **{k.name.lower(): v for k, v in job_init_kwargs.items()}
                         )
-                    self.set(field, job, job_soup)
+                    self.set(
+                        field,
+                        job,
+                        job_soup,
+                    )
 
             except Exception as err:
 
@@ -360,7 +489,10 @@ class BaseScraper(ABC, Logger):
                 # Bad job scrapes can't take down execution!
                 # NOTE: desc too short etc, usually indicates that the job
                 # is an empty page. Not sure why this comes up once in awhile...
-                self.logger.error("Job failed validation: %s", err)
+                self.logger.error(
+                    "Job failed validation: %s",
+                    err,
+                )
                 return None
 
         # Prefix the id with the scraper name to avoid key conflicts
@@ -372,7 +504,9 @@ class BaseScraper(ABC, Logger):
     # pylint: enable=no-member
 
     @abstractmethod
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+    def get_job_soups_from_search_result_listings(
+        self,
+    ) -> List[BeautifulSoup]:
         """Scrapes a job provider's response to a search query where we are
         shown many job listings at once.
 
@@ -384,7 +518,11 @@ class BaseScraper(ABC, Logger):
         """
 
     @abstractmethod
-    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+    def get(
+        self,
+        parameter: JobField,
+        soup: BeautifulSoup,
+    ) -> Any:
         """Get a single job attribute from a soup object by JobField
 
         i.e. if param is JobField.COMPANY --> scrape from soup --> return str
@@ -392,7 +530,12 @@ class BaseScraper(ABC, Logger):
         """
 
     @abstractmethod
-    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
+    def set(
+        self,
+        parameter: JobField,
+        job: Job,
+        soup: BeautifulSoup,
+    ) -> None:
         """Set a single job attribute from a soup object by JobField
 
         Use this to set Job attribs that rely on Job existing already
@@ -402,7 +545,9 @@ class BaseScraper(ABC, Logger):
         page (Job.URL), then I can set() my Job.DESCRIPTION from the Job.RAW
         """
 
-    def _validate_get_set(self) -> None:
+    def _validate_get_set(
+        self,
+    ) -> None:
         """Ensure the get/set actions cover all need attribs and dont intersect"""
         set_job_get_fields = set(self.job_get_fields)
         set_job_set_fields = set(self.job_set_fields)
@@ -457,7 +602,9 @@ class BaseUSAEngScraper(BaseScraper):
     """Localized scraper for USA English"""
 
     @property
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         return Locale.USA_ENGLISH
 
 
@@ -465,7 +612,9 @@ class BaseCANEngScraper(BaseScraper):
     """Localized scraper for Canada English"""
 
     @property
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         return Locale.CANADA_ENGLISH
 
 
@@ -473,7 +622,9 @@ class BaseUKEngScraper(BaseScraper):
     """Localized scraper for UK English"""
 
     @property
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         return Locale.UK_ENGLISH
 
 
@@ -481,7 +632,9 @@ class BaseFRFreScraper(BaseScraper):
     """Localized scraper for France French"""
 
     @property
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         return Locale.FRANCE_FRENCH
 
 
@@ -489,5 +642,7 @@ class BaseDEGerScraper(BaseScraper):
     """Localized scraper for Germany German"""
 
     @property
-    def locale(self) -> Locale:
+    def locale(
+        self,
+    ) -> Locale:
         return Locale.GERMANY_GERMAN

@@ -2,7 +2,11 @@
 """
 
 import argparse
-from typing import Dict, Any, List
+from typing import (
+    Dict,
+    Any,
+    List,
+)
 import yaml
 
 from jobfunnel.config import (
@@ -22,7 +26,12 @@ from jobfunnel.resources import (
 from jobfunnel.resources.defaults import *
 
 
-def parse_cli(args: List[str]) -> Dict[str, Any]:
+def parse_cli(
+    args: List[str],
+) -> Dict[
+    str,
+    Any,
+]:
     """Parse the command line arguments into an Dict[arg_name, arg_value]
 
     TODO: need to ensure users can try out JobFunnel as easily as possible.
@@ -301,7 +310,15 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     return vars(base_parser.parse_args(args))
 
 
-def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
+def build_config_dict(
+    args_dict: Dict[
+        str,
+        Any,
+    ]
+) -> Dict[
+    str,
+    Any,
+]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
     """
@@ -311,7 +328,10 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
 
         # Load YAML
         config = yaml.load(
-            open(args_dict["settings_yaml_file"], "r"),
+            open(
+                args_dict["settings_yaml_file"],
+                "r",
+            ),
             Loader=yaml.FullLoader,
         )
 
@@ -332,11 +352,18 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     else:
 
         # Handle CLI arguments for paths, possibly overwriting YAML
-        sub_keys = ["search", "delay", "proxy"]
+        sub_keys = [
+            "search",
+            "delay",
+            "proxy",
+        ]
         config = {k: {} for k in sub_keys}  # type: Dict[str, Dict[str, Any]]
 
         # Handle all the sub-configs, and non-path, non-default CLI args
-        for key, value in args_dict.items():
+        for (
+            key,
+            value,
+        ) in args_dict.items():
             if key == "do_recovery_mode":
                 # This is not present in the schema, it is CLI only.
                 continue
@@ -354,7 +381,12 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     return config
 
 
-def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
+def get_config_manager(
+    config: Dict[
+        str,
+        Any,
+    ]
+) -> JobFunnelConfigManager:
     """Method to build JobFunnelConfigManager from a config dictionary"""
 
     # Build JobFunnelConfigManager

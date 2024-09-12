@@ -1,7 +1,14 @@
-from pathlib import Path
-from setuptools import setup, find_packages
+from pathlib import (
+    Path,
+)
+from setuptools import (
+    setup,
+    find_packages,
+)
 
-from jobfunnel import __version__ as version
+from jobfunnel import (
+    __version__ as version,
+)
 
 
 description = "Automated tool for scraping job postings."
@@ -41,7 +48,13 @@ setup(
     license="MIT License",
     python_requires=">=3.11",
     install_requires=requires,
-    packages=find_packages(exclude=("tests", "docs", "images")),
+    packages=find_packages(
+        exclude=(
+            "tests",
+            "docs",
+            "images",
+        )
+    ),
     include_package_data=True,
     entry_points={"console_scripts": ["funnel = jobfunnel.__main__:main"]},
     classifiers=[
