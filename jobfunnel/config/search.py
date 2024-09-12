@@ -4,9 +4,11 @@ from typing import List, Optional
 from jobfunnel.config import BaseConfig
 from jobfunnel.resources import Locale, Provider, Remoteness
 from jobfunnel.resources.defaults import (
-    DEFAULT_SEARCH_RADIUS, DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_SEARCH_RADIUS,
+    DEFAULT_MAX_LISTING_DAYS,
     DEFAULT_DOMAIN_FROM_LOCALE,
 )
+
 
 class SearchConfig(BaseConfig):
     """Config object containing our desired job search information including
@@ -14,18 +16,20 @@ class SearchConfig(BaseConfig):
     search with.
     """
 
-    def __init__(self,
-                 keywords: List[str],
-                 province_or_state: Optional[str],
-                 locale: Locale,
-                 providers: List[Provider],
-                 city: Optional[str] = None,
-                 distance_radius: Optional[int] = None,
-                 return_similar_results: bool = False,
-                 max_listing_days: Optional[int] = None,
-                 blocked_company_names: Optional[List[str]] = None,
-                 domain: Optional[str] = None,
-                 remoteness: Optional[Remoteness] = Remoteness.ANY):
+    def __init__(
+        self,
+        keywords: List[str],
+        province_or_state: Optional[str],
+        locale: Locale,
+        providers: List[Provider],
+        city: Optional[str] = None,
+        distance_radius: Optional[int] = None,
+        return_similar_results: bool = False,
+        max_listing_days: Optional[int] = None,
+        blocked_company_names: Optional[List[str]] = None,
+        domain: Optional[str] = None,
+        remoteness: Optional[Remoteness] = Remoteness.ANY,
+    ):
         """Search config for all job sources
 
         Args:
@@ -68,13 +72,11 @@ class SearchConfig(BaseConfig):
 
     @property
     def query_string(self) -> str:
-        """User-readable version of the keywords we are searching with for CSV
-        """
-        return ' '.join(self.keywords)
+        """User-readable version of the keywords we are searching with for CSV"""
+        return " ".join(self.keywords)
 
     def validate(self):
-        """We need to have the right information set, not mixing stuff
-        """
+        """We need to have the right information set, not mixing stuff"""
         assert self.province_or_state is not None, "Province/State not set"
         assert self.city, "City not set"
         assert self.locale, "Locale not set"

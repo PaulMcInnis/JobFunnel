@@ -11,8 +11,12 @@ from bs4 import BeautifulSoup
 from requests import Session
 
 from jobfunnel.backend import Job
-from jobfunnel.backend.scrapers.base import (BaseCANEngScraper, BaseScraper,
-                                             BaseUSAEngScraper, BaseUKEngScraper)
+from jobfunnel.backend.scrapers.base import (
+    BaseCANEngScraper,
+    BaseScraper,
+    BaseUSAEngScraper,
+    BaseUKEngScraper,
+)
 from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
@@ -25,7 +29,7 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 
 
 MAX_GLASSDOOR_LOCATIONS_TO_RETURN = 10
-LOCATION_BASE_URL = 'https://www.glassdoor.co.in/findPopularLocationAjax.htm?'
+LOCATION_BASE_URL = "https://www.glassdoor.co.in/findPopularLocationAjax.htm?"
 MAX_RESULTS_PER_GLASSDOOR_PAGE = 30
 GLASSDOOR_RADIUS_MAP = {
     0: 0,
@@ -39,34 +43,35 @@ GLASSDOOR_RADIUS_MAP = {
 
 
 class BaseGlassDoorScraper(BaseScraper):
-
-    def __init__(self, session: Session, config: 'JobFunnelConfigManager',
-                 job_filter: JobFilter) -> None:
-        """Init that contains glassdoor specific stuff
-        """
+    def __init__(
+        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
+    ) -> None:
+        """Init that contains glassdoor specific stuff"""
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
-        self.query = '-'.join(self.config.search_config.keywords)
+        self.query = "-".join(self.config.search_config.keywords)
         # self.driver = get_webdriver() TODO: we can use this if-needed
 
     @abstractmethod
     def quantize_radius(self, radius: int) -> int:
-        """Get the glassdoor-quantized radius
-        """
+        """Get the glassdoor-quantized radius"""
 
     @property
     def job_get_fields(self) -> str:
-        """Call self.get(...) for the JobFields in this list when scraping a Job
-        """
+        """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
-            JobField.TITLE, JobField.COMPANY, JobField.LOCATION,
-            JobField.POST_DATE, JobField.URL, JobField.KEY_ID, JobField.WAGE,
+            JobField.TITLE,
+            JobField.COMPANY,
+            JobField.LOCATION,
+            JobField.POST_DATE,
+            JobField.URL,
+            JobField.KEY_ID,
+            JobField.WAGE,
         ]
 
     @property
     def job_set_fields(self) -> str:
-        """Call self.set(...) for the JobFields in this list when scraping a Job
-        """
+        """Call self.set(...) for the JobFields in this list when scraping a Job"""
         return [JobField.RAW, JobField.DESCRIPTION]
 
     @property
@@ -80,41 +85,38 @@ class BaseGlassDoorScraper(BaseScraper):
 
     @property
     def headers(self) -> Dict[str, str]:
-        return{
-            'accept': 'text/html,application/xhtml+xml,application/xml;'
-            'q=0.9,image/webp,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, sdch, br',
-            'accept-language': 'en-GB,en-US;q=0.8,en;q=0.6',
-            'referer':
-                f'https://www.glassdoor.{self.config.search_config.domain}/',
-            'upgrade-insecure-requests': '1',
-            'user-agent': self.user_agent,
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
+        return {
+            "accept": "text/html,application/xhtml+xml,application/xml;"
+            "q=0.9,image/webp,*/*;q=0.8",
+            "accept-encoding": "gzip, deflate, sdch, br",
+            "accept-language": "en-GB,en-US;q=0.8,en;q=0.6",
+            "referer": f"https://www.glassdoor.{self.config.search_config.domain}/",
+            "upgrade-insecure-requests": "1",
+            "user-agent": self.user_agent,
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
         }
 
-    def get_search_url(self,
-                       method='get') -> Union[str, Tuple[str, Dict[str,str]]]:
+    def get_search_url(self, method="get") -> Union[str, Tuple[str, Dict[str, str]]]:
         """Gets the glassdoor search url
         NOTE: we this relies on your city, not the state / province!
         """
         # Form the location lookup request data
         data = {
-            'term': self.config.search_config.city,
-            'maxLocationsToReturn': MAX_GLASSDOOR_LOCATIONS_TO_RETURN,
+            "term": self.config.search_config.city,
+            "maxLocationsToReturn": MAX_GLASSDOOR_LOCATIONS_TO_RETURN,
         }
 
         # Get the location id for search location
         location_id = self.session.post(
             LOCATION_BASE_URL, headers=self.headers, data=data
-        ).json()[0]['locationId']
+        ).json()[0]["locationId"]
 
-        if method == 'get':
-
+        if method == "get":
             # Form job search url
             search = (
-                'https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn'
-                '&sc.keyword={}&locT=C&locId={}&jobType=&radius={}'.format(
+                "https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn"
+                "&sc.keyword={}&locT=C&locId={}&jobType=&radius={}".format(
                     self.config.search_config.domain,
                     self.query,
                     location_id,
@@ -123,8 +125,7 @@ class BaseGlassDoorScraper(BaseScraper):
             )
             return search
 
-        elif method == 'post':
-
+        elif method == "post":
             # Form the job search url
             search = (
                 f"https://www.glassdoor.{self.config.search_config.domain}"
@@ -133,19 +134,17 @@ class BaseGlassDoorScraper(BaseScraper):
 
             # Form the job search data
             data = {
-                'clickSource': 'searchBtn',
-                'sc.keyword': self.query,
-                'locT': 'C',
-                'locId': location_id,
-                'jobType': '',
-                'radius':
-                    self.quantize_radius(self.config.search_config.radius),
+                "clickSource": "searchBtn",
+                "sc.keyword": self.query,
+                "locT": "C",
+                "locId": location_id,
+                "jobType": "",
+                "radius": self.quantize_radius(self.config.search_config.radius),
             }
 
             return search, data
         else:
-
-            raise ValueError(f'No html method {method} exists')
+            raise ValueError(f"No html method {method} exists")
 
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
@@ -154,7 +153,7 @@ class BaseGlassDoorScraper(BaseScraper):
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
         # Get the search url
-        search_url, data = self.get_search_url(method='post')
+        search_url, data = self.get_search_url(method="post")
 
         # Get the search page result.
         request_html = self.session.post(search_url, data=data)
@@ -199,13 +198,13 @@ class BaseGlassDoorScraper(BaseScraper):
         """
         if parameter == JobField.TITLE:
             # TODO: we should instead get what user sees in the <span>
-            return soup.get('data-normalize-job-title')
+            return soup.get("data-normalize-job-title")
         elif parameter == JobField.COMPANY:
             return soup.find(
-                'div', attrs={'class', 'jobInfoItem jobEmpolyerName'}
+                "div", attrs={"class", "jobInfoItem jobEmpolyerName"}
             ).text.strip()
         elif parameter == JobField.LOCATION:
-            return soup.get('data-job-loc')
+            return soup.get("data-job-loc")
         # FIXME: impl.
         # elif parameter == JobField.TAGS:
         #     labels = soup.find_all('div', attrs={'class', 'jobLabel'})
@@ -219,28 +218,26 @@ class BaseGlassDoorScraper(BaseScraper):
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(
                 soup.find(
-                    'div', attrs={
-                        'class': 'd-flex align-items-end pl-std css-mi55ob'
-                    }
+                    "div", attrs={"class": "d-flex align-items-end pl-std css-mi55ob"}
                 ).text.strip()
             )
         elif parameter == JobField.WAGE:
             # NOTE: most jobs don't have this so we wont raise a warning here
             # and will fail silently instead
-            wage = soup.find('span', attrs={'class': 'gray salary'})
+            wage = soup.find("span", attrs={"class": "gray salary"})
             if wage is not None:
                 return wage.text.strip()
             else:
-                return ''
+                return ""
         elif parameter == JobField.KEY_ID:
-            return soup.get('data-id')
+            return soup.get("data-id")
         elif parameter == JobField.URL:
-            part_url = soup.find(
-                'div', attrs={'class', 'logoWrap'}
-            ).find('a').get('href')
+            part_url = (
+                soup.find("div", attrs={"class", "logoWrap"}).find("a").get("href")
+            )
             return (
-                f'https://www.glassdoor.{self.config.search_config.domain}'
-                f'{part_url}'
+                f"https://www.glassdoor.{self.config.search_config.domain}"
+                f"{part_url}"
             )
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
@@ -256,13 +253,14 @@ class BaseGlassDoorScraper(BaseScraper):
         elif parameter == JobField.DESCRIPTION:
             assert job._raw_scrape_data
             job.description = job._raw_scrape_data.find(
-                id='JobDescriptionContainer'
+                id="JobDescriptionContainer"
             ).text.strip()
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def _search_page_for_job_soups(self, listings_page_url: str,
-                                   job_soup_list: List[BeautifulSoup]) -> None:
+    def _search_page_for_job_soups(
+        self, listings_page_url: str, job_soup_list: List[BeautifulSoup]
+    ) -> None:
         """Get a list of job soups from a glassdoor page, by loading the page.
         NOTE: this makes GET requests and should be respectfully delayed.
         """
@@ -276,46 +274,43 @@ class BaseGlassDoorScraper(BaseScraper):
             )
         )
 
-    def _parse_job_listings_to_bs4(self, page_soup: BeautifulSoup
-                                   ) -> List[BeautifulSoup]:
-        """Parse a page of job listings HTML text into job soups
-        """
-        return page_soup.find_all('li', attrs={'class', 'jl'})
+    def _parse_job_listings_to_bs4(
+        self, page_soup: BeautifulSoup
+    ) -> List[BeautifulSoup]:
+        """Parse a page of job listings HTML text into job soups"""
+        return page_soup.find_all("li", attrs={"class", "jl"})
 
     def _get_num_search_result_pages(self, soup_base: BeautifulSoup) -> int:
         # scrape total number of results, and calculate the # pages needed
-        num_res = soup_base.find('p', attrs={'class', 'jobsCount'}).text.strip()
-        num_res = int(re.findall(r'(\d+)', num_res.replace(',', ''))[0])
+        num_res = soup_base.find("p", attrs={"class", "jobsCount"}).text.strip()
+        num_res = int(re.findall(r"(\d+)", num_res.replace(",", ""))[0])
         return int(ceil(num_res / self.max_results_per_page))
 
-    def _get_next_page_url(self, soup_base: BeautifulSoup,
-                           results_page_number: int) -> str:
+    def _get_next_page_url(
+        self, soup_base: BeautifulSoup, results_page_number: int
+    ) -> str:
         """Construct the next page of search results from the initial search
         results page BeautifulSoup.
         """
-        part_url = soup_base.find(
-            'li', attrs={'class', 'next'}
-        ).find('a').get('href')
+        part_url = soup_base.find("li", attrs={"class", "next"}).find("a").get("href")
 
         assert part_url is not None, "Unable to find next page in listing soup!"
 
         # Uses partial url to construct next page url
         return re.sub(
-            r'_IP\d+\.',
-            f'_IP{results_page_number}.',
-            f'https://www.glassdoor.{self.config.search_config.domain}'
-            f'{part_url}',
+            r"_IP\d+\.",
+            f"_IP{results_page_number}.",
+            f"https://www.glassdoor.{self.config.search_config.domain}" f"{part_url}",
         )
 
 
 class GlassDoorMetricRadius:
     """Metric units shared by GlassDoorScraperCANEng
-        and GlassDoorScraperUKEng
+    and GlassDoorScraperUKEng
     """
 
     def quantize_radius(self, radius: int) -> int:
-        """convert radius to km FIXME: use numpy.digitize instead
-        """
+        """convert radius to km FIXME: use numpy.digitize instead"""
         if radius < 10:
             radius = 0
         elif 10 <= radius < 20:
@@ -333,15 +328,14 @@ class GlassDoorMetricRadius:
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
-class GlassDoorScraperCANEng(GlassDoorMetricRadius, BaseGlassDoorScraper,
-                             BaseCANEngScraper):
-    """Scrapes jobs from www.glassdoor.ca
-    """
+class GlassDoorScraperCANEng(
+    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseCANEngScraper
+):
+    """Scrapes jobs from www.glassdoor.ca"""
 
 
 class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
-    """Scrapes jobs from www.glassdoor.com
-    """
+    """Scrapes jobs from www.glassdoor.com"""
 
     def quantize_radius(self, radius: int) -> int:
         """Get a USA radius (miles)
@@ -364,7 +358,7 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
-class GlassDoorScraperUKEng(GlassDoorMetricRadius, BaseGlassDoorScraper,
-                            BaseUKEngScraper):
-    """Scrapes jobs from www.glassdoor.co.uk
-    """
+class GlassDoorScraperUKEng(
+    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseUKEngScraper
+):
+    """Scrapes jobs from www.glassdoor.co.uk"""
