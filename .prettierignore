@@ -10,3 +10,6 @@
 !*.yaml
 !*.yml
 !*.md
+
+# Allow subdirectories too
+!*/
