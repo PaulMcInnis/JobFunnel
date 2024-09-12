@@ -10,7 +10,7 @@ search:
     - MONSTER
   province_or_state: TESTPS
   city: TestCity
-  radius: 'forty-two'
+  radius: "forty-two"
   keywords:
     - I
     - Am
@@ -21,8 +21,8 @@ search:
     - "Blocked Company 2"
 log_level: INFO
 delay:
-    algorithm: LINEAR
-    max_duration: 8
-    min_duration: 2
-    random: True
-    converging: True
+  algorithm: LINEAR
+  max_duration: 8
+  min_duration: 2
+  random: True
+  converging: True
