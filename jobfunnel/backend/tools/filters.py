@@ -4,18 +4,37 @@ Paul McInnis 2020
 """
 
 import logging
-from collections import namedtuple
-from copy import deepcopy
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from collections import (
+    namedtuple,
+)
+from copy import (
+    deepcopy,
+)
+from datetime import (
+    datetime,
+)
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 
 import nltk
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import (
+    TfidfVectorizer,
+)
+from sklearn.metrics.pairwise import (
+    cosine_similarity,
+)
 
-from jobfunnel.backend import Job
-from jobfunnel.backend.tools import Logger
+from jobfunnel.backend import (
+    Job,
+)
+from jobfunnel.backend.tools import (
+    Logger,
+)
 from jobfunnel.resources import (
     DEFAULT_MAX_TFIDF_SIMILARITY,
     MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
@@ -25,7 +44,11 @@ from jobfunnel.resources import (
 
 DuplicatedJob = namedtuple(
     "DuplicatedJob",
-    ["original", "duplicate", "type"],
+    [
+        "original",
+        "duplicate",
+        "type",
+    ],
 )
 
 
@@ -37,8 +60,18 @@ class JobFilter(Logger):
 
     def __init__(
         self,
-        user_block_jobs_dict: Optional[Dict[str, str]] = None,
-        duplicate_jobs_dict: Optional[Dict[str, str]] = None,
+        user_block_jobs_dict: Optional[
+            Dict[
+                str,
+                str,
+            ]
+        ] = None,
+        duplicate_jobs_dict: Optional[
+            Dict[
+                str,
+                str,
+            ]
+        ] = None,
         blocked_company_names_list: Optional[List[str]] = None,
         max_job_date: Optional[datetime] = None,
         max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
@@ -81,7 +114,10 @@ class JobFilter(Logger):
         try:
             stopwords = nltk.corpus.stopwords.words("english")
         except LookupError:
-            nltk.download("stopwords", quiet=True)
+            nltk.download(
+                "stopwords",
+                quiet=True,
+            )
             stopwords = nltk.corpus.stopwords.words("english")
 
         # Init vectorizer
@@ -93,8 +129,16 @@ class JobFilter(Logger):
         )
 
     def filter(
-        self, jobs_dict: Dict[str, Job], remove_existing_duplicate_keys: bool = True
-    ) -> Dict[str, Job]:
+        self,
+        jobs_dict: Dict[
+            str,
+            Job,
+        ],
+        remove_existing_duplicate_keys: bool = True,
+    ) -> Dict[
+        str,
+        Job,
+    ]:
         """Filter jobs that fail numerous tests, possibly including duplication
 
         Arguments:
@@ -112,11 +156,16 @@ class JobFilter(Logger):
             key_id: job
             for key_id, job in jobs_dict.items()
             if not self.filterable(
-                job, check_existing_duplicates=remove_existing_duplicate_keys
+                job,
+                check_existing_duplicates=remove_existing_duplicate_keys,
             )
         }
 
-    def filterable(self, job: Job, check_existing_duplicates: bool = True) -> bool:
+    def filterable(
+        self,
+        job: Job,
+        check_existing_duplicates: bool = True,
+    ) -> bool:
         """Filter jobs out using all our available filters
 
         NOTE: this allows job to be partially initialized
@@ -148,7 +197,10 @@ class JobFilter(Logger):
             )
         )
 
-    def is_duplicate(self, job: Job) -> bool:
+    def is_duplicate(
+        self,
+        job: Job,
+    ) -> bool:
         """Return true if passed Job has key_id and it is in our duplicates list"""
         return bool(
             job.key_id
@@ -158,8 +210,14 @@ class JobFilter(Logger):
 
     def find_duplicates(
         self,
-        existing_jobs_dict: Dict[str, Job],
-        incoming_jobs_dict: Dict[str, Job],
+        existing_jobs_dict: Dict[
+            str,
+            Job,
+        ],
+        incoming_jobs_dict: Dict[
+            str,
+            Job,
+        ],
     ) -> List[DuplicatedJob]:
         """Remove all known duplicates from jobs_dict and update original data
 
@@ -178,7 +236,10 @@ class JobFilter(Logger):
         filt_incoming_jobs_dict = {}  # type: Dict[str, Job]
 
         # Look for matches by key id only
-        for key_id, incoming_job in incoming_jobs_dict.items():
+        for (
+            key_id,
+            incoming_job,
+        ) in incoming_jobs_dict.items():
 
             # The key-ids are a direct match between existing and new
             if key_id in existing_jobs_dict:
@@ -245,8 +306,14 @@ class JobFilter(Logger):
 
     def tfidf_filter(
         self,
-        incoming_jobs_dict: Dict[str, dict],
-        existing_jobs_dict: Dict[str, dict],
+        incoming_jobs_dict: Dict[
+            str,
+            dict,
+        ],
+        existing_jobs_dict: Dict[
+            str,
+            dict,
+        ],
     ) -> List[DuplicatedJob]:
         """Fit a tfidf vectorizer to a corpus of Job.DESCRIPTIONs and identify
         duplicate jobs by cosine-similarity.
@@ -274,9 +341,15 @@ class JobFilter(Logger):
         """
 
         def __dict_to_ids_and_words(
-            jobs_dict: Dict[str, Job],
+            jobs_dict: Dict[
+                str,
+                Job,
+            ],
             is_incoming: bool = False,
-        ) -> Tuple[List[str], List[str]]:
+        ) -> Tuple[
+            List[str],
+            List[str],
+        ]:
             """Get query words and ids as lists + prefilter
             NOTE: this is just a convenience method since we do this 2x
             TODO: consider moving this once/if we change iteration
@@ -309,18 +382,32 @@ class JobFilter(Logger):
             # TODO: assert on length of contents of the lists as well
             if not words:
                 raise ValueError("No data to fit, are your job descriptions all empty?")
-            return ids, words, filt_job_dict
+            return (
+                ids,
+                words,
+                filt_job_dict,
+            )
 
-        query_ids, query_words, filt_incoming_jobs_dict = __dict_to_ids_and_words(
-            incoming_jobs_dict, is_incoming=True
+        (
+            query_ids,
+            query_words,
+            filt_incoming_jobs_dict,
+        ) = __dict_to_ids_and_words(
+            incoming_jobs_dict,
+            is_incoming=True,
         )
 
         # Calculate corpus and format query data for TFIDF calculation
         corpus = []  # type: List[str]
         if existing_jobs_dict:
             self.logger.debug("Running TFIDF on incoming vs existing data.")
-            reference_ids, reference_words, filt_existing_jobs_dict = (
-                __dict_to_ids_and_words(existing_jobs_dict, is_incoming=False)
+            (
+                reference_ids,
+                reference_words,
+                filt_existing_jobs_dict,
+            ) = __dict_to_ids_and_words(
+                existing_jobs_dict,
+                is_incoming=False,
             )
             corpus = query_words + reference_words
         else:
@@ -346,7 +433,11 @@ class JobFilter(Logger):
         # TODO: impl. in a more efficient way since fit() does the transform too
         similarities_per_query = cosine_similarity(
             self.vectorizer.transform(query_words),
-            self.vectorizer.transform(reference_words) if existing_jobs_dict else None,
+            (
+                self.vectorizer.transform(reference_words)
+                if existing_jobs_dict
+                else None
+            ),
         )
 
         # Find Duplicate jobs by similarity score
@@ -355,7 +446,13 @@ class JobFilter(Logger):
         # currently it's the other way around so we can look at multi-matching
         # original jobs but not multiple matching queries for our original job.
         new_duplicate_jobs_list = []  # type: List[DuplicatedJob]
-        for query_similarities, query_id in zip(similarities_per_query, query_ids):
+        for (
+            query_similarities,
+            query_id,
+        ) in zip(
+            similarities_per_query,
+            query_ids,
+        ):
 
             # Identify the jobs in existing_jobs_dict that our query is a
             # duplicate of

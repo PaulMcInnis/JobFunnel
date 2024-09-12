@@ -2,14 +2,29 @@
 """
 
 import re
-from abc import abstractmethod
-from math import ceil
-from typing import Any, Dict, List, Optional
+from abc import (
+    abstractmethod,
+)
+from math import (
+    ceil,
+)
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
-from bs4 import BeautifulSoup
-from requests import Session
+from bs4 import (
+    BeautifulSoup,
+)
+from requests import (
+    Session,
+)
 
-from jobfunnel.backend import Job
+from jobfunnel.backend import (
+    Job,
+)
 from jobfunnel.backend.scrapers.base import (
     BaseCANEngScraper,
     BaseScraper,
@@ -17,18 +32,30 @@ from jobfunnel.backend.scrapers.base import (
     BaseUKEngScraper,
     BaseFRFreScraper,
 )
-from jobfunnel.backend.tools.filters import JobFilter
-from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import JobField, Remoteness
+from jobfunnel.backend.tools.filters import (
+    JobFilter,
+)
+from jobfunnel.backend.tools.tools import (
+    calc_post_date_from_relative_str,
+)
+from jobfunnel.resources import (
+    JobField,
+    Remoteness,
+)
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfigManager
+    from jobfunnel.config import (
+        JobFunnelConfigManager,
+    )
 # pylint: enable=using-constant-test,unused-import
 
 
 MAX_RESULTS_PER_MONSTER_PAGE = 25
-MONSTER_SIDEPANEL_TAG_ENTRIES = ["industries", "job type"]  # these --> Job.tags
+MONSTER_SIDEPANEL_TAG_ENTRIES = [
+    "industries",
+    "job type",
+]  # these --> Job.tags
 ID_REGEX = re.compile(
     r"/((?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]"
     r"{12})|\d+)"
@@ -43,18 +70,30 @@ class BaseMonsterScraper(BaseScraper):
     """
 
     def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
+        self,
+        session: Session,
+        config: "JobFunnelConfigManager",
+        job_filter: JobFilter,
     ) -> None:
         """Init that contains monster specific stuff"""
-        super().__init__(session, config, job_filter)
-        self.query = "-".join(self.config.search_config.keywords).replace(" ", "-")
+        super().__init__(
+            session,
+            config,
+            job_filter,
+        )
+        self.query = "-".join(self.config.search_config.keywords).replace(
+            " ",
+            "-",
+        )
 
         # This is currently not scrapable through Monster site (contents maybe)
         if self.config.search_config.remoteness != Remoteness.ANY:
             self.logger.warning("Monster does not support remoteness in query.")
 
     @property
-    def job_get_fields(self) -> str:
+    def job_get_fields(
+        self,
+    ) -> str:
         """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.KEY_ID,
@@ -66,7 +105,9 @@ class BaseMonsterScraper(BaseScraper):
         ]
 
     @property
-    def job_set_fields(self) -> str:
+    def job_set_fields(
+        self,
+    ) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.RAW,
@@ -76,12 +117,19 @@ class BaseMonsterScraper(BaseScraper):
         ]
 
     @property
-    def high_priority_get_set_fields(self) -> List[JobField]:
+    def high_priority_get_set_fields(
+        self,
+    ) -> List[JobField]:
         """We need to populate these fields first"""
-        return [JobField.RAW, JobField.KEY_ID]
+        return [
+            JobField.RAW,
+            JobField.KEY_ID,
+        ]
 
     @property
-    def delayed_get_set_fields(self) -> str:
+    def delayed_get_set_fields(
+        self,
+    ) -> str:
         """Delay execution when getting /setting any of these attributes of a
         job.
 
@@ -90,7 +138,12 @@ class BaseMonsterScraper(BaseScraper):
         return [JobField.RAW]
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(
+        self,
+    ) -> Dict[
+        str,
+        str,
+    ]:
         """Session header for monster.X"""
         return {
             "accept": "text/html,application/xhtml+xml,application/xml;"
@@ -104,7 +157,11 @@ class BaseMonsterScraper(BaseScraper):
             "Connection": "keep-alive",
         }
 
-    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+    def get(
+        self,
+        parameter: JobField,
+        soup: BeautifulSoup,
+    ) -> Any:
         """Get a single job attribute from a soup object by JobField
         NOTE: priority is all the same.
         """
@@ -112,35 +169,59 @@ class BaseMonsterScraper(BaseScraper):
             # TODO: is there a way to combine these calls?
             # NOTE: do not use 'data-m_impr_j_jobid' as this is duplicated
             return (
-                soup.find("h2", attrs={"class": "title"})
+                soup.find(
+                    "h2",
+                    attrs={"class": "title"},
+                )
                 .find("a")
                 .get("data-m_impr_j_postingid")
             )
         elif parameter == JobField.TITLE:
-            return soup.find("h2", attrs={"class": "title"}).text.strip()
+            return soup.find(
+                "h2",
+                attrs={"class": "title"},
+            ).text.strip()
         elif parameter == JobField.COMPANY:
-            return soup.find("div", attrs={"class": "company"}).text.strip()
+            return soup.find(
+                "div",
+                attrs={"class": "company"},
+            ).text.strip()
         elif parameter == JobField.LOCATION:
-            return soup.find("div", attrs={"class": "location"}).text.strip()
+            return soup.find(
+                "div",
+                attrs={"class": "location"},
+            ).text.strip()
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(soup.find("time").text.strip())
         elif parameter == JobField.URL:
             # NOTE: seems that it is a bit hard to view these links? getting 503
-            return str(soup.find("a", attrs={"data-bypass": "true"}).get("href"))
+            return str(
+                soup.find(
+                    "a",
+                    attrs={"data-bypass": "true"},
+                ).get("href")
+            )
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
-    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
+    def set(
+        self,
+        parameter: JobField,
+        job: Job,
+        soup: BeautifulSoup,
+    ) -> None:
         """Set a single job attribute from a soup object by JobField
         NOTE: priority is: HIGH: RAW, LOW: DESCRIPTION / TAGS
         """
         if parameter == JobField.RAW:
             job._raw_scrape_data = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
+                self.session.get(job.url).text,
+                self.config.bs4_parser,
             )
         elif parameter == JobField.WAGE:
             pot_wage_cell = job._raw_scrape_data.find(
-                "div", attrs={"class": "col-xs-12 cell"}
+                "div",
+                attrs={"class": "col-xs-12 cell"},
             )
             if pot_wage_cell:
                 pot_wage_value = pot_wage_cell.find("div")
@@ -156,7 +237,8 @@ class BaseMonsterScraper(BaseScraper):
             assert job._raw_scrape_data
             tags = []  # type: List[str]
             for li in job._raw_scrape_data.find_all(
-                "section", attrs={"class": "summary-section"}
+                "section",
+                attrs={"class": "summary-section"},
             ):
                 table_key = li.find("dt")
                 if (
@@ -169,7 +251,9 @@ class BaseMonsterScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+    def get_job_soups_from_search_result_listings(
+        self,
+    ) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
         TODO: use threading here too
@@ -183,7 +267,8 @@ class BaseMonsterScraper(BaseScraper):
         # Load our initial search results listings page
         initial_search_results_html = self.session.get(search_url)
         initial_search_results_soup = BeautifulSoup(
-            initial_search_results_html.text, self.config.bs4_parser
+            initial_search_results_html.text,
+            self.config.bs4_parser,
         )
 
         # Parse total results, and calculate the # of pages needed
@@ -199,7 +284,9 @@ class BaseMonsterScraper(BaseScraper):
             )
 
         self.logger.info(
-            "Found %d pages of search results for query=%s", n_pages, self.query
+            "Found %d pages of search results for query=%s",
+            n_pages,
+            self.query,
         )
 
         # Get first page of listing soups from our search results listings page
@@ -209,9 +296,15 @@ class BaseMonsterScraper(BaseScraper):
         # TODO: maybe we can move this into get set / BaseScraper somehow?
         def __get_job_soups_by_key_id(
             result_listings: BeautifulSoup,
-        ) -> Dict[str, BeautifulSoup]:
+        ) -> Dict[
+            str,
+            BeautifulSoup,
+        ]:
             return {
-                self.get(JobField.KEY_ID, job_soup): job_soup
+                self.get(
+                    JobField.KEY_ID,
+                    job_soup,
+                ): job_soup
                 for job_soup in self._get_job_soups_from_search_page(result_listings)
             }
 
@@ -219,7 +312,10 @@ class BaseMonsterScraper(BaseScraper):
 
         # Get all the other pages
         if n_pages > 1:
-            for page in range(2, n_pages):
+            for page in range(
+                2,
+                n_pages,
+            ):
                 next_listings_page_soup = BeautifulSoup(
                     self.session.get(self._get_search_url(page=page)).text,
                     self.config.bs4_parser,
@@ -237,7 +333,10 @@ class BaseMonsterScraper(BaseScraper):
         initial_results_soup: BeautifulSoup,
     ) -> List[BeautifulSoup]:
         """Get individual job listing soups from a results page of many jobs"""
-        return initial_results_soup.find_all("div", attrs={"class": "flex-row"})
+        return initial_results_soup.find_all(
+            "div",
+            attrs={"class": "flex-row"},
+        )
 
     def _get_num_search_result_pages(
         self,
@@ -253,12 +352,24 @@ class BaseMonsterScraper(BaseScraper):
             The number of pages of job listings to be scraped.
         """
         # scrape total number of results, and calculate the # pages needed
-        partial = initial_results_soup.find("h2", "figure").text.strip()
+        partial = initial_results_soup.find(
+            "h2",
+            "figure",
+        ).text.strip()
         assert partial, "Unable to identify number of search results"
-        num_res = int(re.findall(r"(\d+)", partial)[0])
+        num_res = int(
+            re.findall(
+                r"(\d+)",
+                partial,
+            )[0]
+        )
         return int(ceil(num_res / MAX_RESULTS_PER_MONSTER_PAGE))
 
-    def _get_search_url(self, method: Optional[str] = "get", page: int = 1) -> str:
+    def _get_search_url(
+        self,
+        method: Optional[str] = "get",
+        page: int = 1,
+    ) -> str:
         """Get the monster search url from SearchTerms
         TODO: implement fulltime/part-time portion + company search?
         TODO: implement POST
@@ -271,9 +382,12 @@ class BaseMonsterScraper(BaseScraper):
                 "https://www.monster.{}/jobs/search/?{}q={}&where={}__2C-{}"
                 "&rad={}".format(
                     self.config.search_config.domain,
-                    f"page={page}&" if page > 1 else "",
+                    (f"page={page}&" if page > 1 else ""),
                     self.query,
-                    self.config.search_config.city.replace(" ", "-"),
+                    self.config.search_config.city.replace(
+                        " ",
+                        "-",
+                    ),
                     self.config.search_config.province_or_state,
                     self._convert_radius(self.config.search_config.radius),
                 )
@@ -284,7 +398,10 @@ class BaseMonsterScraper(BaseScraper):
             raise ValueError(f"No html method {method} exists")
 
     @abstractmethod
-    def _convert_radius(self, radius: int) -> int:
+    def _convert_radius(
+        self,
+        radius: int,
+    ) -> int:
         """NOTE: radius conversion is units/locale specific"""
 
 
@@ -293,7 +410,10 @@ class MonsterMetricRadius:
     and MonsterScraperUKEng
     """
 
-    def _convert_radius(self, radius: int) -> int:
+    def _convert_radius(
+        self,
+        radius: int,
+    ) -> int:
         """convert radius in miles TODO replace with numpy"""
         if radius < 5:
             radius = 0
@@ -310,14 +430,24 @@ class MonsterMetricRadius:
         return radius
 
 
-class MonsterScraperCANEng(MonsterMetricRadius, BaseMonsterScraper, BaseCANEngScraper):
+class MonsterScraperCANEng(
+    MonsterMetricRadius,
+    BaseMonsterScraper,
+    BaseCANEngScraper,
+):
     """Scrapes jobs from www.monster.ca"""
 
 
-class MonsterScraperUSAEng(BaseMonsterScraper, BaseUSAEngScraper):
+class MonsterScraperUSAEng(
+    BaseMonsterScraper,
+    BaseUSAEngScraper,
+):
     """Scrapes jobs from www.monster.com"""
 
-    def _convert_radius(self, radius: int) -> int:
+    def _convert_radius(
+        self,
+        radius: int,
+    ) -> int:
         """convert radius in miles TODO replace with numpy"""
         if radius < 5:
             radius = 0
@@ -346,10 +476,18 @@ class MonsterScraperUSAEng(BaseMonsterScraper, BaseUSAEngScraper):
         return radius
 
 
-class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper, BaseUKEngScraper):
+class MonsterScraperUKEng(
+    MonsterMetricRadius,
+    BaseMonsterScraper,
+    BaseUKEngScraper,
+):
     """Scrapes jobs from www.monster.co.uk"""
 
-    def _get_search_url(self, method: Optional[str] = "get", page: int = 1) -> str:
+    def _get_search_url(
+        self,
+        method: Optional[str] = "get",
+        page: int = 1,
+    ) -> str:
         """Get the monster search url from SearchTerms
         TODO: implement fulltime/part-time portion + company search?
         TODO: implement POST
@@ -362,9 +500,12 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper, BaseUKEngScra
                 "https://www.monster.{}/jobs/search/?{}q={}&where={}"
                 "&rad={}".format(
                     self.config.search_config.domain,
-                    f"page={page}&" if page > 1 else "",
+                    (f"page={page}&" if page > 1 else ""),
                     self.query,
-                    self.config.search_config.city.replace(" ", "-"),
+                    self.config.search_config.city.replace(
+                        " ",
+                        "-",
+                    ),
                     self._convert_radius(self.config.search_config.radius),
                 )
             )
@@ -374,10 +515,18 @@ class MonsterScraperUKEng(MonsterMetricRadius, BaseMonsterScraper, BaseUKEngScra
             raise ValueError(f"No html method {method} exists")
 
 
-class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper, BaseFRFreScraper):
+class MonsterScraperFRFre(
+    MonsterMetricRadius,
+    BaseMonsterScraper,
+    BaseFRFreScraper,
+):
     """Scrapes jobs from www.monster.fr"""
 
-    def _get_search_url(self, method: Optional[str] = "get", page: int = 1) -> str:
+    def _get_search_url(
+        self,
+        method: Optional[str] = "get",
+        page: int = 1,
+    ) -> str:
         """Get the monster search url from SearchTerms
         TODO: implement fulltime/part-time portion + company search?
         TODO: implement POST
@@ -390,9 +539,12 @@ class MonsterScraperFRFre(MonsterMetricRadius, BaseMonsterScraper, BaseFRFreScra
                 "https://www.monster.{}/emploi/recherche/?{}q={}&where={}__2C-{}"
                 "&rad={}".format(
                     self.config.search_config.domain,
-                    f"page={page}&" if page > 1 else "",
+                    (f"page={page}&" if page > 1 else ""),
                     self.query,
-                    self.config.search_config.city.replace(" ", "-"),
+                    self.config.search_config.city.replace(
+                        " ",
+                        "-",
+                    ),
                     self.config.search_config.province_or_state,
                     self._convert_radius(self.config.search_config.radius),
                 )

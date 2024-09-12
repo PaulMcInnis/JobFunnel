@@ -4,17 +4,38 @@
 import logging
 import re
 import sys
-from datetime import date, datetime, timedelta
-from typing import Optional
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
+from typing import (
+    Optional,
+)
 
-from dateutil.relativedelta import relativedelta
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager, IEDriverManager
-from webdriver_manager.opera import OperaDriverManager
+from dateutil.relativedelta import (
+    relativedelta,
+)
+from selenium import (
+    webdriver,
+)
+from webdriver_manager.chrome import (
+    ChromeDriverManager,
+)
+from webdriver_manager.firefox import (
+    GeckoDriverManager,
+)
+from webdriver_manager.microsoft import (
+    EdgeChromiumDriverManager,
+    IEDriverManager,
+)
+from webdriver_manager.opera import (
+    OperaDriverManager,
+)
 
-from jobfunnel.backend import Job
+from jobfunnel.backend import (
+    Job,
+)
 
 # Initialize list and store regex objects of date quantifiers
 HOUR_REGEX = re.compile(r"(\d+)(?:[ +]{1,3})?(?:hour|hr|heure)")
@@ -26,7 +47,10 @@ RECENT_REGEX_B = re.compile(r"[yY]esterday")
 
 
 def get_logger(
-    logger_name: str, level: int, file_path: str, message_format: str
+    logger_name: str,
+    level: int,
+    file_path: str,
+    message_format: str,
 ) -> logging.Logger:
     """Initialize and return a logger
     NOTE: you can use this as a method to add logging to any function, but if
@@ -79,7 +103,9 @@ class Logger:
         )
 
 
-def calc_post_date_from_relative_str(date_str: str) -> date:
+def calc_post_date_from_relative_str(
+    date_str: str,
+) -> date:
     """Identifies a job's post date via post age, updates in-place
     NOTE: we round to nearest day only so that comparisons dont capture
         portions of days.
@@ -117,7 +143,12 @@ def calc_post_date_from_relative_str(date_str: str) -> date:
                         # We have failed to correctly evaluate date.
                         raise ValueError(f"Unable to calculate date from:\n{date_str}")
 
-    return post_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    return post_date.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
 
 
 def get_webdriver():

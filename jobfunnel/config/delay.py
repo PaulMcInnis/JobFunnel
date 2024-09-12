@@ -1,8 +1,12 @@
 """Simple config object to contain the delay configuration
 """
 
-from jobfunnel.config.base import BaseConfig
-from jobfunnel.resources import DelayAlgorithm
+from jobfunnel.config.base import (
+    BaseConfig,
+)
+from jobfunnel.resources import (
+    DelayAlgorithm,
+)
 from jobfunnel.resources.defaults import (
     DEFAULT_DELAY_ALGORITHM,
     DEFAULT_DELAY_MAX_DURATION,
@@ -44,7 +48,9 @@ class DelayConfig(BaseConfig):
         self.random = random
         self.converge = converge
 
-    def validate(self) -> None:
+    def validate(
+        self,
+    ) -> None:
         if self.max_duration <= 0:
             raise ValueError("Your max delay is set to 0 or less.")
         if self.min_duration <= 0 or self.min_duration >= self.max_duration:

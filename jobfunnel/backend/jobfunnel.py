@@ -6,17 +6,39 @@ import csv
 import json
 import os
 import pickle
-from datetime import date, datetime, timedelta
-from time import time
-from typing import Dict, List
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
+from time import (
+    time,
+)
+from typing import (
+    Dict,
+    List,
+)
 
-from requests import Session
+from requests import (
+    Session,
+)
 
-from jobfunnel import __version__
-from jobfunnel.backend import Job
-from jobfunnel.backend.tools import Logger
-from jobfunnel.backend.tools.filters import DuplicatedJob, JobFilter
-from jobfunnel.config import JobFunnelConfigManager
+from jobfunnel import (
+    __version__,
+)
+from jobfunnel.backend import (
+    Job,
+)
+from jobfunnel.backend.tools import (
+    Logger,
+)
+from jobfunnel.backend.tools.filters import (
+    DuplicatedJob,
+    JobFilter,
+)
+from jobfunnel.config import (
+    JobFunnelConfigManager,
+)
 from jobfunnel.resources import (
     CSV_HEADER,
     T_NOW,
@@ -30,14 +52,20 @@ from jobfunnel.resources import (
 class JobFunnel(Logger):
     """Class that initializes a Scraper and scrapes a website to get jobs"""
 
-    def __init__(self, config: JobFunnelConfigManager) -> None:
+    def __init__(
+        self,
+        config: JobFunnelConfigManager,
+    ) -> None:
         """Initialize a JobFunnel object, with a JobFunnel Config
 
         Args:
             config (JobFunnelConfigManager): config object containing paths etc.
         """
         config.validate()  # NOTE: this ensures log file path exists
-        super().__init__(level=config.log_level, file_path=config.log_file)
+        super().__init__(
+            level=config.log_level,
+            file_path=config.log_file,
+        )
         self.config = config
         self.__date_string = date.today().strftime("%Y-%m-%d")
         self.master_jobs_dict = {}  # type: Dict[str, Job]
@@ -53,13 +81,21 @@ class JobFunnel(Logger):
         user_block_jobs_dict = {}  # type: Dict[str, str]
         if os.path.isfile(self.config.user_block_list_file):
             user_block_jobs_dict = json.load(
-                open(self.config.user_block_list_file, "r")
+                open(
+                    self.config.user_block_list_file,
+                    "r",
+                )
             )
 
         # Read the user's duplicate jobs list (from TFIDF)
         duplicate_jobs_dict = {}  # type: Dict[str, str]
         if os.path.isfile(self.config.duplicates_list_file):
-            duplicate_jobs_dict = json.load(open(self.config.duplicates_list_file, "r"))
+            duplicate_jobs_dict = json.load(
+                open(
+                    self.config.duplicates_list_file,
+                    "r",
+                )
+            )
 
         # Initialize our job filter
         self.job_filter = JobFilter(
@@ -73,7 +109,9 @@ class JobFunnel(Logger):
         )
 
     @property
-    def daily_cache_file(self) -> str:
+    def daily_cache_file(
+        self,
+    ) -> str:
         """The name for for pickle file containing the scraped data ran today'
         TODO: instead of using a 'daily' cache file, we should be tying this
         into the search that was made to prevent cross-caching results.
@@ -83,7 +121,9 @@ class JobFunnel(Logger):
             f"jobs_{self.__date_string}.pkl",
         )
 
-    def run(self) -> None:
+    def run(
+        self,
+    ) -> None:
         """Scrape, update lists and save to CSV."""
         # Read the master CSV file
         if os.path.isfile(self.config.master_csv_file):
@@ -110,7 +150,8 @@ class JobFunnel(Logger):
                 scraped_jobs_dict = self.load_cache(self.daily_cache_file)
             else:
                 self.logger.warning(
-                    "No incoming jobs, missing cache: %s", self.daily_cache_file
+                    "No incoming jobs, missing cache: %s",
+                    self.daily_cache_file,
                 )
         else:
 
@@ -122,7 +163,8 @@ class JobFunnel(Logger):
         if scraped_jobs_dict:
             self.write_cache(scraped_jobs_dict)
             scraped_jobs_dict = self.job_filter.filter(
-                scraped_jobs_dict, remove_existing_duplicate_keys=False
+                scraped_jobs_dict,
+                remove_existing_duplicate_keys=False,
             )
         if self.master_jobs_dict:
             self.master_jobs_dict = self.job_filter.filter(
@@ -167,7 +209,7 @@ class JobFunnel(Logger):
                         "Identified duplicate %s by key-id and %s original job "
                         "with its data.",
                         match.duplicate.key_id,
-                        "updated older" if upd else "did not update",
+                        ("updated older" if upd else "did not update"),
                     )
 
                 # Was it a content-match?
@@ -181,7 +223,7 @@ class JobFunnel(Logger):
                         "Identified %s as a duplicate by description and %s "
                         "original job %s with its data.",
                         match.duplicate.key_id,
-                        "updated older" if upd else "did not update",
+                        ("updated older" if upd else "did not update"),
                         match.original.key_id,
                     )
 
@@ -199,7 +241,8 @@ class JobFunnel(Logger):
             # Write our updated jobs out (if none, dont make the file at all)
             self.write_master_csv(self.master_jobs_dict)
             self.logger.info(
-                "Done. View your current jobs in %s", self.config.master_csv_file
+                "Done. View your current jobs in %s",
+                self.config.master_csv_file,
             )
 
         else:
@@ -213,8 +256,14 @@ class JobFunnel(Logger):
 
     def _check_for_inter_scraper_validity(
         self,
-        existing_jobs: Dict[str, Job],
-        incoming_jobs: Dict[str, Job],
+        existing_jobs: Dict[
+            str,
+            Job,
+        ],
+        incoming_jobs: Dict[
+            str,
+            Job,
+        ],
     ) -> None:
         """Verify that we aren't overwriting jobs by key-id between scrapers
         NOTE: this is a slow check, would be cool to improve the O(n) on this
@@ -225,16 +274,28 @@ class JobFunnel(Logger):
                 if inc_key_id == exist_key_id:
                     raise ValueError(f"Inter-scraper key-id duplicate! {exist_key_id}")
 
-    def scrape(self) -> Dict[str, Job]:
+    def scrape(
+        self,
+    ) -> Dict[
+        str,
+        Job,
+    ]:
         """Run each of the desired Scraper.scrape() with threading and delaying"""
-        self.logger.info("Scraping local providers with: %s", self.config.scraper_names)
+        self.logger.info(
+            "Scraping local providers with: %s",
+            self.config.scraper_names,
+        )
 
         # Iterate thru scrapers and run their scrape.
         jobs = {}  # type: Dict[str, Job]
         for scraper_cls in self.config.scrapers:
             incoming_jobs_dict = {}
             start = time()
-            scraper = scraper_cls(self.session, self.config, self.job_filter)
+            scraper = scraper_cls(
+                self.session,
+                self.config,
+                self.job_filter,
+            )
             try:
                 incoming_jobs_dict = scraper.scrape()
             except Exception as e:
@@ -258,10 +319,15 @@ class JobFunnel(Logger):
                 (end - start),
             )
 
-        self.logger.info("Completed all scraping, found %d new jobs.", len(jobs))
+        self.logger.info(
+            "Completed all scraping, found %d new jobs.",
+            len(jobs),
+        )
         return jobs
 
-    def recover(self) -> None:
+    def recover(
+        self,
+    ) -> None:
         """Build a new master CSV from all the available pickles in our cache"""
         self.logger.info("Recovering jobs from all cache files in cache folder")
         if os.path.exists(self.config.user_block_list_file):
@@ -275,11 +341,22 @@ class JobFunnel(Logger):
         for file in os.listdir(self.config.cache_folder):
             if ".pkl" in file:
                 all_jobs_dict.update(
-                    self.load_cache(os.path.join(self.config.cache_folder, file))
+                    self.load_cache(
+                        os.path.join(
+                            self.config.cache_folder,
+                            file,
+                        )
+                    )
                 )
         self.write_master_csv(self.job_filter.filter(all_jobs_dict))
 
-    def load_cache(self, cache_file: str) -> Dict[str, Job]:
+    def load_cache(
+        self,
+        cache_file: str,
+    ) -> Dict[
+        str,
+        Job,
+    ]:
         """Load today's scrape data from pickle via date string
 
         TODO: search the cache for pickles that match search config.
@@ -300,7 +377,12 @@ class JobFunnel(Logger):
                 f"{cache_file} not found! Have you scraped any jobs today?"
             )
         else:
-            cache_dict = pickle.load(open(cache_file, "rb"))
+            cache_dict = pickle.load(
+                open(
+                    cache_file,
+                    "rb",
+                )
+            )
             jobs_dict = cache_dict["jobs_dict"]
             version = cache_dict["version"]
             if version != __version__:
@@ -322,7 +404,14 @@ class JobFunnel(Logger):
             )
             return jobs_dict
 
-    def write_cache(self, jobs_dict: Dict[str, Job], cache_file: str = None) -> None:
+    def write_cache(
+        self,
+        jobs_dict: Dict[
+            str,
+            Job,
+        ],
+        cache_file: str = None,
+    ) -> None:
         """Dump a jobs_dict into a pickle
 
         TODO: write search_config into the cache file and jobfunnel version
@@ -340,11 +429,23 @@ class JobFunnel(Logger):
                 "version": __version__,
                 "jobs_dict": jobs_dict,
             },
-            open(cache_file, "wb"),
+            open(
+                cache_file,
+                "wb",
+            ),
         )
-        self.logger.debug("Dumped %d jobs to %s", len(jobs_dict.keys()), cache_file)
+        self.logger.debug(
+            "Dumped %d jobs to %s",
+            len(jobs_dict.keys()),
+            cache_file,
+        )
 
-    def read_master_csv(self) -> Dict[str, Job]:
+    def read_master_csv(
+        self,
+    ) -> Dict[
+        str,
+        Job,
+    ]:
         """Read in the master-list CSV to a dict of unique Jobs
 
         TODO: make blurb --> description and add short_description
@@ -354,7 +455,10 @@ class JobFunnel(Logger):
         """
         jobs_dict = {}  # type: Dict[str, Job]
         with open(
-            self.config.master_csv_file, "r", encoding="utf8", errors="ignore"
+            self.config.master_csv_file,
+            "r",
+            encoding="utf8",
+            errors="ignore",
         ) as csvfile:
             for row in csv.DictReader(csvfile):
 
@@ -364,10 +468,16 @@ class JobFunnel(Logger):
                     short_description = row["short_description"]
                 else:
                     short_description = ""
-                post_date = datetime.strptime(row["date"], "%Y-%m-%d")
+                post_date = datetime.strptime(
+                    row["date"],
+                    "%Y-%m-%d",
+                )
 
                 if "scrape_date" in row:
-                    scrape_date = datetime.strptime(row["scrape_date"], "%Y-%m-%d")
+                    scrape_date = datetime.strptime(
+                        row["scrape_date"],
+                        "%Y-%m-%d",
+                    )
                 else:
                     scrape_date = post_date
 
@@ -388,7 +498,8 @@ class JobFunnel(Logger):
                             break
                 if not status:
                     self.logger.warning(
-                        "Unknown status %s, setting to UNKNOWN", status_str
+                        "Unknown status %s, setting to UNKNOWN",
+                        status_str,
                     )
                     status = JobStatus.UNKNOWN
 
@@ -402,7 +513,8 @@ class JobFunnel(Logger):
                             break
                 if not locale:
                     self.logger.warning(
-                        "Unknown locale %s, setting to UNKNOWN", locale_str
+                        "Unknown locale %s, setting to UNKNOWN",
+                        locale_str,
                     )
                     locale = locale.UNKNOWN
 
@@ -413,7 +525,8 @@ class JobFunnel(Logger):
                     remoteness = Remoteness[remote_str]
                 if not locale:
                     self.logger.warning(
-                        "Unknown locale %s, setting to UNKNOWN", locale_str
+                        "Unknown locale %s, setting to UNKNOWN",
+                        locale_str,
                     )
                     locale = locale.UNKNOWN
 
@@ -451,14 +564,27 @@ class JobFunnel(Logger):
         )
         return jobs_dict
 
-    def write_master_csv(self, jobs: Dict[str, Job]) -> None:
+    def write_master_csv(
+        self,
+        jobs: Dict[
+            str,
+            Job,
+        ],
+    ) -> None:
         """Write out our dict of unique Jobs to a CSV
 
         Args:
             jobs (Dict[str, Job]): Dict of unique Jobs, keyd by unique id's
         """
-        with open(self.config.master_csv_file, "w", encoding="utf8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=CSV_HEADER)
+        with open(
+            self.config.master_csv_file,
+            "w",
+            encoding="utf8",
+        ) as csvfile:
+            writer = csv.DictWriter(
+                csvfile,
+                fieldnames=CSV_HEADER,
+            )
             writer.writeheader()
             for job in jobs.values():
                 job.validate()
@@ -469,7 +595,9 @@ class JobFunnel(Logger):
             self.config.master_csv_file,
         )
 
-    def update_user_block_list(self) -> None:
+    def update_user_block_list(
+        self,
+    ) -> None:
         """From data in master CSV file, add jobs with removeable statuses to
         our configured user block list file and save (if any)
 
@@ -499,7 +627,9 @@ class JobFunnel(Logger):
                     n_jobs_added += 1
                     self.job_filter.user_block_jobs_dict[job.key_id] = job.as_json_entry
                     self.logger.debug(
-                        "Added %s to %s", job.key_id, self.config.user_block_list_file
+                        "Added %s to %s",
+                        job.key_id,
+                        self.config.user_block_list_file,
                     )
                 else:
                     # This could happen if we are somehow mishandling block list
@@ -513,14 +643,19 @@ class JobFunnel(Logger):
             # Write out complete list with any additions from the masterlist
             # NOTE: we use indent=4 so that it stays human-readable.
             with open(
-                self.config.user_block_list_file, "w", encoding="utf8"
+                self.config.user_block_list_file,
+                "w",
+                encoding="utf8",
             ) as outfile:
                 outfile.write(
                     json.dumps(
                         self.job_filter.user_block_jobs_dict,
                         indent=4,
                         sort_keys=True,
-                        separators=(",", ": "),
+                        separators=(
+                            ",",
+                            ": ",
+                        ),
                         ensure_ascii=False,
                     )
                 )
@@ -531,7 +666,9 @@ class JobFunnel(Logger):
                 self.config.user_block_list_file,
             )
 
-    def update_duplicates_file(self) -> None:
+    def update_duplicates_file(
+        self,
+    ) -> None:
         """Update duplicates filter file if we have a path and contents
         TODO: this should be writing out DuplicatedJob objects and a version
         so that we retain links to original jobs.
@@ -542,14 +679,19 @@ class JobFunnel(Logger):
                 # Write out the changes NOTE: indent=4 is for human-readability
                 self.logger.debug("Extending existing duplicate jobs dict.")
                 with open(
-                    self.config.duplicates_list_file, "w", encoding="utf8"
+                    self.config.duplicates_list_file,
+                    "w",
+                    encoding="utf8",
                 ) as outfile:
                     outfile.write(
                         json.dumps(
                             self.job_filter.duplicate_jobs_dict,
                             indent=4,
                             sort_keys=True,
-                            separators=(",", ": "),
+                            separators=(
+                                ",",
+                                ": ",
+                            ),
                             ensure_ascii=False,
                         )
                     )

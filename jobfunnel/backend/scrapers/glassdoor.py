@@ -3,29 +3,59 @@ FIXME: this is currently unable to get past page 1 of job results.
 """
 
 import re
-from abc import abstractmethod
-from concurrent.futures import ThreadPoolExecutor, wait
-from math import ceil
-from typing import Any, Dict, List, Tuple, Union
+from abc import (
+    abstractmethod,
+)
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    wait,
+)
+from math import (
+    ceil,
+)
+from typing import (
+    Any,
+    Dict,
+    List,
+    Tuple,
+    Union,
+)
 
-from bs4 import BeautifulSoup
-from requests import Session
+from bs4 import (
+    BeautifulSoup,
+)
+from requests import (
+    Session,
+)
 
-from jobfunnel.backend import Job
+from jobfunnel.backend import (
+    Job,
+)
 from jobfunnel.backend.scrapers.base import (
     BaseCANEngScraper,
     BaseScraper,
     BaseUSAEngScraper,
     BaseUKEngScraper,
 )
-from jobfunnel.backend.tools import get_webdriver
-from jobfunnel.backend.tools.filters import JobFilter
-from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField
+from jobfunnel.backend.tools import (
+    get_webdriver,
+)
+from jobfunnel.backend.tools.filters import (
+    JobFilter,
+)
+from jobfunnel.backend.tools.tools import (
+    calc_post_date_from_relative_str,
+)
+from jobfunnel.resources import (
+    MAX_CPU_WORKERS,
+    JobField,
+)
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
-    from jobfunnel.config import JobFunnelConfigManager
+    from jobfunnel.config import (
+        JobFunnelConfigManager,
+    )
 # pylint: enable=using-constant-test,unused-import
 
 
@@ -46,20 +76,32 @@ GLASSDOOR_RADIUS_MAP = {
 class BaseGlassDoorScraper(BaseScraper):
 
     def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
+        self,
+        session: Session,
+        config: "JobFunnelConfigManager",
+        job_filter: JobFilter,
     ) -> None:
         """Init that contains glassdoor specific stuff"""
-        super().__init__(session, config, job_filter)
+        super().__init__(
+            session,
+            config,
+            job_filter,
+        )
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
         self.query = "-".join(self.config.search_config.keywords)
         # self.driver = get_webdriver() TODO: we can use this if-needed
 
     @abstractmethod
-    def quantize_radius(self, radius: int) -> int:
+    def quantize_radius(
+        self,
+        radius: int,
+    ) -> int:
         """Get the glassdoor-quantized radius"""
 
     @property
-    def job_get_fields(self) -> str:
+    def job_get_fields(
+        self,
+    ) -> str:
         """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.TITLE,
@@ -72,12 +114,19 @@ class BaseGlassDoorScraper(BaseScraper):
         ]
 
     @property
-    def job_set_fields(self) -> str:
+    def job_set_fields(
+        self,
+    ) -> str:
         """Call self.set(...) for the JobFields in this list when scraping a Job"""
-        return [JobField.RAW, JobField.DESCRIPTION]
+        return [
+            JobField.RAW,
+            JobField.DESCRIPTION,
+        ]
 
     @property
-    def delayed_get_set_fields(self) -> str:
+    def delayed_get_set_fields(
+        self,
+    ) -> str:
         """Delay execution when getting /setting any of these attributes of a
         job.
 
@@ -86,7 +135,12 @@ class BaseGlassDoorScraper(BaseScraper):
         return [JobField.RAW]
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(
+        self,
+    ) -> Dict[
+        str,
+        str,
+    ]:
         return {
             "accept": "text/html,application/xhtml+xml,application/xml;"
             "q=0.9,image/webp,*/*;q=0.8",
@@ -99,7 +153,19 @@ class BaseGlassDoorScraper(BaseScraper):
             "Connection": "keep-alive",
         }
 
-    def get_search_url(self, method="get") -> Union[str, Tuple[str, Dict[str, str]]]:
+    def get_search_url(
+        self,
+        method="get",
+    ) -> Union[
+        str,
+        Tuple[
+            str,
+            Dict[
+                str,
+                str,
+            ],
+        ],
+    ]:
         """Gets the glassdoor search url
         NOTE: we this relies on your city, not the state / province!
         """
@@ -111,7 +177,9 @@ class BaseGlassDoorScraper(BaseScraper):
 
         # Get the location id for search location
         location_id = self.session.post(
-            LOCATION_BASE_URL, headers=self.headers, data=data
+            LOCATION_BASE_URL,
+            headers=self.headers,
+            data=data,
         ).json()[0]["locationId"]
 
         if method == "get":
@@ -146,23 +214,37 @@ class BaseGlassDoorScraper(BaseScraper):
                 "radius": self.quantize_radius(self.config.search_config.radius),
             }
 
-            return search, data
+            return (
+                search,
+                data,
+            )
         else:
 
             raise ValueError(f"No html method {method} exists")
 
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+    def get_job_soups_from_search_result_listings(
+        self,
+    ) -> List[BeautifulSoup]:
         """Scrapes raw data from a job source into a list of job-soups
 
         Returns:
             List[BeautifulSoup]: list of jobs soups we can use to make Job init
         """
         # Get the search url
-        search_url, data = self.get_search_url(method="post")
+        (
+            search_url,
+            data,
+        ) = self.get_search_url(method="post")
 
         # Get the search page result.
-        request_html = self.session.post(search_url, data=data)
-        soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        request_html = self.session.post(
+            search_url,
+            data=data,
+        )
+        soup_base = BeautifulSoup(
+            request_html.text,
+            self.config.bs4_parser,
+        )
 
         # Parse total results, and calculate the # of pages needed
         n_pages = self._get_num_search_result_pages(soup_base)
@@ -182,11 +264,17 @@ class BaseGlassDoorScraper(BaseScraper):
             # I click it myself, must be an event listener?
             futures = []
             if n_pages > 1:
-                for page in range(2, n_pages + 1):
+                for page in range(
+                    2,
+                    n_pages + 1,
+                ):
                     futures.append(
                         threads.submit(
                             self._search_page_for_job_soups,
-                            self._get_next_page_url(soup_base, page),
+                            self._get_next_page_url(
+                                soup_base,
+                                page,
+                            ),
                             job_soup_list,
                         )
                     )
@@ -197,7 +285,11 @@ class BaseGlassDoorScraper(BaseScraper):
 
         return job_soup_list
 
-    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+    def get(
+        self,
+        parameter: JobField,
+        soup: BeautifulSoup,
+    ) -> Any:
         """Get a single job attribute from a soup object by JobField
         TODO: impl div class=compactStars value somewhere.
         """
@@ -206,7 +298,11 @@ class BaseGlassDoorScraper(BaseScraper):
             return soup.get("data-normalize-job-title")
         elif parameter == JobField.COMPANY:
             return soup.find(
-                "div", attrs={"class", "jobInfoItem jobEmpolyerName"}
+                "div",
+                attrs={
+                    "class",
+                    "jobInfoItem jobEmpolyerName",
+                },
             ).text.strip()
         elif parameter == JobField.LOCATION:
             return soup.get("data-job-loc")
@@ -223,13 +319,17 @@ class BaseGlassDoorScraper(BaseScraper):
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(
                 soup.find(
-                    "div", attrs={"class": "d-flex align-items-end pl-std css-mi55ob"}
+                    "div",
+                    attrs={"class": "d-flex align-items-end pl-std css-mi55ob"},
                 ).text.strip()
             )
         elif parameter == JobField.WAGE:
             # NOTE: most jobs don't have this so we wont raise a warning here
             # and will fail silently instead
-            wage = soup.find("span", attrs={"class": "gray salary"})
+            wage = soup.find(
+                "span",
+                attrs={"class": "gray salary"},
+            )
             if wage is not None:
                 return wage.text.strip()
             else:
@@ -238,7 +338,15 @@ class BaseGlassDoorScraper(BaseScraper):
             return soup.get("data-id")
         elif parameter == JobField.URL:
             part_url = (
-                soup.find("div", attrs={"class", "logoWrap"}).find("a").get("href")
+                soup.find(
+                    "div",
+                    attrs={
+                        "class",
+                        "logoWrap",
+                    },
+                )
+                .find("a")
+                .get("href")
             )
             return (
                 f"https://www.glassdoor.{self.config.search_config.domain}"
@@ -247,13 +355,19 @@ class BaseGlassDoorScraper(BaseScraper):
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
-    def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
+    def set(
+        self,
+        parameter: JobField,
+        job: Job,
+        soup: BeautifulSoup,
+    ) -> None:
         """Set a single job attribute from a soup object by JobField
         NOTE: Description has to get and should be respectfully delayed
         """
         if parameter == JobField.RAW:
             job._raw_scrape_data = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
+                self.session.get(job.url).text,
+                self.config.bs4_parser,
             )
         elif parameter == JobField.DESCRIPTION:
             assert job._raw_scrape_data
@@ -264,7 +378,9 @@ class BaseGlassDoorScraper(BaseScraper):
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
     def _search_page_for_job_soups(
-        self, listings_page_url: str, job_soup_list: List[BeautifulSoup]
+        self,
+        listings_page_url: str,
+        job_soup_list: List[BeautifulSoup],
     ) -> None:
         """Get a list of job soups from a glassdoor page, by loading the page.
         NOTE: this makes GET requests and should be respectfully delayed.
@@ -280,24 +396,60 @@ class BaseGlassDoorScraper(BaseScraper):
         )
 
     def _parse_job_listings_to_bs4(
-        self, page_soup: BeautifulSoup
+        self,
+        page_soup: BeautifulSoup,
     ) -> List[BeautifulSoup]:
         """Parse a page of job listings HTML text into job soups"""
-        return page_soup.find_all("li", attrs={"class", "jl"})
+        return page_soup.find_all(
+            "li",
+            attrs={
+                "class",
+                "jl",
+            },
+        )
 
-    def _get_num_search_result_pages(self, soup_base: BeautifulSoup) -> int:
+    def _get_num_search_result_pages(
+        self,
+        soup_base: BeautifulSoup,
+    ) -> int:
         # scrape total number of results, and calculate the # pages needed
-        num_res = soup_base.find("p", attrs={"class", "jobsCount"}).text.strip()
-        num_res = int(re.findall(r"(\d+)", num_res.replace(",", ""))[0])
+        num_res = soup_base.find(
+            "p",
+            attrs={
+                "class",
+                "jobsCount",
+            },
+        ).text.strip()
+        num_res = int(
+            re.findall(
+                r"(\d+)",
+                num_res.replace(
+                    ",",
+                    "",
+                ),
+            )[0]
+        )
         return int(ceil(num_res / self.max_results_per_page))
 
     def _get_next_page_url(
-        self, soup_base: BeautifulSoup, results_page_number: int
+        self,
+        soup_base: BeautifulSoup,
+        results_page_number: int,
     ) -> str:
         """Construct the next page of search results from the initial search
         results page BeautifulSoup.
         """
-        part_url = soup_base.find("li", attrs={"class", "next"}).find("a").get("href")
+        part_url = (
+            soup_base.find(
+                "li",
+                attrs={
+                    "class",
+                    "next",
+                },
+            )
+            .find("a")
+            .get("href")
+        )
 
         assert part_url is not None, "Unable to find next page in listing soup!"
 
@@ -314,7 +466,10 @@ class GlassDoorMetricRadius:
     and GlassDoorScraperUKEng
     """
 
-    def quantize_radius(self, radius: int) -> int:
+    def quantize_radius(
+        self,
+        radius: int,
+    ) -> int:
         """convert radius to km FIXME: use numpy.digitize instead"""
         if radius < 10:
             radius = 0
@@ -334,15 +489,23 @@ class GlassDoorMetricRadius:
 
 
 class GlassDoorScraperCANEng(
-    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseCANEngScraper
+    GlassDoorMetricRadius,
+    BaseGlassDoorScraper,
+    BaseCANEngScraper,
 ):
     """Scrapes jobs from www.glassdoor.ca"""
 
 
-class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
+class GlassDoorScraperUSAEng(
+    BaseGlassDoorScraper,
+    BaseUSAEngScraper,
+):
     """Scrapes jobs from www.glassdoor.com"""
 
-    def quantize_radius(self, radius: int) -> int:
+    def quantize_radius(
+        self,
+        radius: int,
+    ) -> int:
         """Get a USA radius (miles)
         FIXME: use numpy.digitize instead
         """
@@ -364,6 +527,8 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
 
 
 class GlassDoorScraperUKEng(
-    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseUKEngScraper
+    GlassDoorMetricRadius,
+    BaseGlassDoorScraper,
+    BaseUKEngScraper,
 ):
     """Scrapes jobs from www.glassdoor.co.uk"""
