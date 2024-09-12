@@ -24,13 +24,8 @@ search:
     - INDEED
 
   # Region that we are searching for jobs within:
-<<<<<<< HEAD
   province_or_state: "CA" # NOTE: this is generally 2 characters long.
   city: "San Fransisco" # NOTE: this is the full city / town name.
-=======
-  province_or_state: "Texas" # NOTE: this is generally 2 characters long.
-  city: "Richardson" # NOTE: this is the full city / town name.
->>>>>>> master
   radius: 25 # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
