@@ -4,9 +4,7 @@
 import datetime
 import os
 import string
-from pathlib import (
-    Path,
-)
+from pathlib import Path
 
 # CSV header for output CSV. do not remove anything or you'll break usr's CSV's
 # TODO: need to add short and long descriptions (breaking change)
@@ -27,15 +25,7 @@ CSV_HEADER = [
     "remoteness",
 ]
 
-LOG_LEVEL_NAMES = [
-    "CRITICAL",
-    "FATAL",
-    "ERROR",
-    "WARNING",
-    "INFO",
-    "DEBUG",
-    "NOTSET",
-]
+LOG_LEVEL_NAMES = ["CRITICAL", "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"]
 
 MIN_DESCRIPTION_CHARS = 5  # If Job.description is less than this we fail valid.
 MAX_CPU_WORKERS = 8  # Maximum num threads we use when scraping
@@ -48,38 +38,11 @@ T_NOW = datetime.datetime.today()  # NOTE: use today so we only compare days
 
 PRINTABLE_STRINGS = set(string.printable)
 
-# # Load the user agent list once only.
-# USER_AGENT_LIST_FILE = os.path.normpath(
-#     os.path.join(os.path.dirname(__file__), "user_agent_list.txt")
-# )
-# USER_AGENT_LIST = []
-# with open(USER_AGENT_LIST_FILE) as file:
-#     for line in file:
-#         li = line.strip()
-#         if li and not li.startswith("#"):
-#             USER_AGENT_LIST.append(line.rstrip("\n"))
 
-# # User agent list for mobile devices
-# USER_AGENT_LIST_MOBILE_FILE = os.path.normpath(
-#     os.path.join(os.path.dirname(__file__), "user_agent_list_mobile.txt")
-# )
-# USER_AGENT_LIST_MOBILE = []
-# with open(USER_AGENT_LIST_MOBILE_FILE) as file:
-#     for line in file:
-#         li = line.strip()
-#         if li and not li.startswith("#"):
-#             USER_AGENT_LIST_MOBILE_FILE.append(line.rstrip("\n"))
-
-
-def load_user_agents(
-    file_path,
-):
+def load_user_agents(file_path):
     """Loads user agent strings from a file, skipping comments and blank lines."""
     try:
-        with open(
-            file_path,
-            "r",
-        ) as file:
+        with open(file_path, "r") as file:
             return [
                 line.strip()
                 for line in file

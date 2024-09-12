@@ -3,15 +3,8 @@ NOTE: Not all defaults here are used, as we rely on YAML for demo and not kwargs
 """
 
 import os
-from pathlib import (
-    Path,
-)
-from jobfunnel.resources.enums import (
-    Locale,
-    DelayAlgorithm,
-    Provider,
-    Remoteness,
-)
+from pathlib import Path
+from jobfunnel.resources.enums import Locale, DelayAlgorithm, Provider, Remoteness
 
 
 DEFAULT_LOG_LEVEL_NAME = "INFO"
@@ -26,10 +19,7 @@ DEFAULT_DELAY_MAX_DURATION = 5.0
 DEFAULT_DELAY_MIN_DURATION = 1.0
 DEFAULT_DELAY_ALGORITHM = DelayAlgorithm.LINEAR
 # FIXME: re-enable glassdoor once we fix issue with it. (#87)
-DEFAULT_PROVIDERS = [
-    Provider.MONSTER,
-    Provider.INDEED,
-]  # , Provider.GLASSDOOR]
+DEFAULT_PROVIDERS = [Provider.MONSTER, Provider.INDEED]  # , Provider.GLASSDOOR]
 DEFAULT_PROVIDER_NAMES = [p.name for p in DEFAULT_PROVIDERS]
 DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_RANDOM_DELAY = False

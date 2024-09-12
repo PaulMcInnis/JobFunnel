@@ -1,18 +1,9 @@
 """Object to contain job query metadata
 """
 
-from typing import (
-    List,
-    Optional,
-)
-from jobfunnel.config import (
-    BaseConfig,
-)
-from jobfunnel.resources import (
-    Locale,
-    Provider,
-    Remoteness,
-)
+from typing import List, Optional
+from jobfunnel.config import BaseConfig
+from jobfunnel.resources import Locale, Provider, Remoteness
 from jobfunnel.resources.defaults import (
     DEFAULT_SEARCH_RADIUS,
     DEFAULT_MAX_LISTING_DAYS,
@@ -81,15 +72,11 @@ class SearchConfig(BaseConfig):
             self.domain = domain
 
     @property
-    def query_string(
-        self,
-    ) -> str:
+    def query_string(self) -> str:
         """User-readable version of the keywords we are searching with for CSV"""
         return " ".join(self.keywords)
 
-    def validate(
-        self,
-    ):
+    def validate(self):
         """We need to have the right information set, not mixing stuff"""
         assert self.province_or_state is not None, "Province/State not set"
         assert self.city, "City not set"
