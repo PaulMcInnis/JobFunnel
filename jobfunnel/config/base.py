@@ -1,11 +1,11 @@
 """Base config object with a validator
 """
+
 from abc import ABC, abstractmethod
 
 
 class BaseConfig(ABC):
-    """Base config object
-    """
+    """Base config object"""
 
     @abstractmethod
     def __init__(self) -> None:

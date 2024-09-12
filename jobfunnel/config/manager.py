@@ -1,5 +1,6 @@
 """Config object to run JobFunnel
 """
+
 import logging
 import os
 from typing import List, Optional
@@ -15,22 +16,23 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 
 
 class JobFunnelConfigManager(BaseConfig):
-    """Master config containing all the information we need to run jobfunnel
-    """
+    """Master config containing all the information we need to run jobfunnel"""
 
-    def __init__(self,
-                 master_csv_file: str,
-                 user_block_list_file: str,
-                 duplicates_list_file: str,
-                 cache_folder: str,
-                 search_config: SearchConfig,
-                 log_file: str,
-                 log_level: Optional[int] = logging.INFO,
-                 no_scrape: Optional[bool] = False,
-                 bs4_parser: Optional[str] = BS4_PARSER,
-                 return_similar_results: Optional[bool] = False,
-                 delay_config: Optional[DelayConfig] = None,
-                 proxy_config: Optional[ProxyConfig] = None) -> None:
+    def __init__(
+        self,
+        master_csv_file: str,
+        user_block_list_file: str,
+        duplicates_list_file: str,
+        cache_folder: str,
+        search_config: SearchConfig,
+        log_file: str,
+        log_level: Optional[int] = logging.INFO,
+        no_scrape: Optional[bool] = False,
+        bs4_parser: Optional[str] = BS4_PARSER,
+        return_similar_results: Optional[bool] = False,
+        delay_config: Optional[DelayConfig] = None,
+        proxy_config: Optional[ProxyConfig] = None,
+    ) -> None:
         """Init a config that determines how we will scrape jobs from Scrapers
         and how we will update CSV and filtering lists
 
@@ -78,33 +80,31 @@ class JobFunnelConfigManager(BaseConfig):
         self.proxy_config = proxy_config
 
     @property
-    def scrapers(self) -> List['BaseScraper']:
-        """All the compatible scrapers for the provider_name
-        """
+    def scrapers(self) -> List["BaseScraper"]:
+        """All the compatible scrapers for the provider_name"""
         scrapers = []  # type: List[BaseScraper]
         for pr in self.search_config.providers:
             if pr in SCRAPER_FROM_LOCALE:
-                scrapers.append(
-                    SCRAPER_FROM_LOCALE[pr][self.search_config.locale]
-                )
+                scrapers.append(SCRAPER_FROM_LOCALE[pr][self.search_config.locale])
             else:
-                raise ValueError(
-                    f"No scraper available for unknown provider {pr}"
-                )
+                raise ValueError(f"No scraper available for unknown provider {pr}")
         return scrapers
 
     @property
     def scraper_names(self) -> List[str]:
-        """User-readable names of the scrapers we will be running
-        """
+        """User-readable names of the scrapers we will be running"""
         return [s.__name__ for s in self.scrapers]
 
     def create_dirs(self) -> None:
         """Create the directories for attributes which refer to files / folders
         NOTE: should be called before we validate()
         """
-        for file_path in [self.master_csv_file, self.user_block_list_file,
-                          self.duplicates_list_file, self.log_file]:
+        for file_path in [
+            self.master_csv_file,
+            self.user_block_list_file,
+            self.duplicates_list_file,
+            self.log_file,
+        ]:
             output_dir = os.path.dirname(os.path.abspath(file_path))
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)

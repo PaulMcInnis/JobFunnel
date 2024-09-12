@@ -1,22 +1,28 @@
 """Simple config object to contain the delay configuration
 """
+
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.resources import DelayAlgorithm
-from jobfunnel.resources.defaults import (DEFAULT_DELAY_ALGORITHM,
-                                          DEFAULT_DELAY_MAX_DURATION,
-                                          DEFAULT_DELAY_MIN_DURATION,
-                                          DEFAULT_RANDOM_CONVERGING_DELAY,
-                                          DEFAULT_RANDOM_DELAY)
+from jobfunnel.resources.defaults import (
+    DEFAULT_DELAY_ALGORITHM,
+    DEFAULT_DELAY_MAX_DURATION,
+    DEFAULT_DELAY_MIN_DURATION,
+    DEFAULT_RANDOM_CONVERGING_DELAY,
+    DEFAULT_RANDOM_DELAY,
+)
 
 
 class DelayConfig(BaseConfig):
-    """Simple config object to contain the delay configuration
-    """
-    def __init__(self, max_duration: float = DEFAULT_DELAY_MAX_DURATION,
-                 min_duration: float = DEFAULT_DELAY_MIN_DURATION,
-                 algorithm: DelayAlgorithm = DEFAULT_DELAY_ALGORITHM,
-                 random: bool = DEFAULT_RANDOM_DELAY,
-                 converge: bool = DEFAULT_RANDOM_CONVERGING_DELAY):
+    """Simple config object to contain the delay configuration"""
+
+    def __init__(
+        self,
+        max_duration: float = DEFAULT_DELAY_MAX_DURATION,
+        min_duration: float = DEFAULT_DELAY_MIN_DURATION,
+        algorithm: DelayAlgorithm = DEFAULT_DELAY_ALGORITHM,
+        random: bool = DEFAULT_RANDOM_DELAY,
+        converge: bool = DEFAULT_RANDOM_CONVERGING_DELAY,
+    ):
         """Delaying Configuration for GET requests
 
         Args:
@@ -46,9 +52,7 @@ class DelayConfig(BaseConfig):
                 "Minimum delay is below 0, or more than or equal to delay."
             )
         if type(self.algorithm) != DelayAlgorithm:
-            raise ValueError(
-                f"Invalid Value for delaying algorithm: {self.algorithm}"
-            )
+            raise ValueError(f"Invalid Value for delaying algorithm: {self.algorithm}")
         if self.converge and not self.random:
             raise ValueError(
                 "You cannot configure convering random delay without also "
