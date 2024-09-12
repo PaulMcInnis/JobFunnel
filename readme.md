@@ -1,5 +1,4 @@
 <img src="logo/jobfunnel_banner.svg" alt="JobFunnel Banner" width=400/><br/>
-[![Build Status](https://travis-ci.com/PaulMcInnis/JobFunnel.svg?branch=master)](https://travis-ci.com/PaulMcInnis/JobFunnel)
 [![Code Coverage](https://codecov.io/gh/PaulMcInnis/JobFunnel/branch/master/graph/badge.svg)](https://codecov.io/gh/PaulMcInnis/JobFunnel)
 
 Automated tool for scraping job postings into a `.csv` file.
