@@ -1,5 +1,6 @@
 """Proxy configuration for Session()
 """
+
 import ipaddress
 
 from jobfunnel.config import BaseConfig

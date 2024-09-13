@@ -1,5 +1,6 @@
 """Configuration parsing module for CLI --> JobFunnelConfigManager
 """
+
 import argparse
 from typing import Dict, Any, List
 import yaml

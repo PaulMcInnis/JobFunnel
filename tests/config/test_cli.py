@@ -1,5 +1,6 @@
 """Test CLI parsing --> config dict
 """
+
 import os
 import pytest
 from jobfunnel.config import parse_cli, build_config_dict

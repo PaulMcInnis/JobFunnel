@@ -1,10 +1,13 @@
 """Scraper designed to get jobs from www.indeed.X
 """
+
 import re
 from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
 from typing import Any, Dict, List, Optional
 from unicodedata import normalize
+import json
+import random
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -20,7 +23,12 @@ from jobfunnel.backend.scrapers.base import (
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField, Remoteness
+from jobfunnel.resources import (
+    MAX_CPU_WORKERS,
+    JobField,
+    Remoteness,
+    USER_AGENT_LIST_MOBILE,
+)
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -28,7 +36,7 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 # pylint: enable=using-constant-test,unused-import
 
 ID_REGEX = re.compile(r"id=\"sj_([a-zA-Z0-9]*)\"")
-MAX_RESULTS_PER_INDEED_PAGE = 50
+MAX_RESULTS_PER_INDEED_PAGE = 20  # 20 results for mobile, 50 for desktop
 # NOTE: these magic strings stick for both the US and CAN indeed websites...
 FULLY_REMOTE_MAGIC_STRING = "&remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11"
 COVID_REMOTE_MAGIC_STRING = "&remotejob=7e3167e4-ccb4-49cb-b761-9bae564a0a63"
@@ -41,8 +49,32 @@ REMOTENESS_TO_QUERY = {
 }
 REMOTENESS_STR_MAP = {
     "remote": Remoteness.FULLY_REMOTE,
-    "temporarily remote": Remoteness.TEMPORARILY_REMOTE,
+    "hybrid work": Remoteness.TEMPORARILY_REMOTE,
 }
+
+
+def format_taxonomy_attributes(taxonomy_attributes):
+    result = []
+
+    # Loop through the taxonomyAttributes list
+    for category in taxonomy_attributes:
+        label = category[
+            "label"
+        ]  # Get the category label (e.g., "job-types", "benefits")
+        attributes = category["attributes"]
+
+        # Only process if the attributes list is not empty
+        if attributes:
+            # Get all attribute labels within the category
+            attribute_labels = [attr["label"] for attr in attributes]
+            # Create a readable string combining the category label and its attributes
+            formatted_str = (
+                f"{label.replace('-', ' ').capitalize()}: {', '.join(attribute_labels)}"
+            )
+            result.append(formatted_str)
+
+    # Join all the formatted strings with a line break or any separator
+    return result
 
 
 class BaseIndeedScraper(BaseScraper):
@@ -61,6 +93,11 @@ class BaseIndeedScraper(BaseScraper):
             self.logger.warning("Indeed does not support PARTIALLY_REMOTE jobs")
 
     @property
+    def user_agent(self) -> str:
+        """Get a randomized user agent for this scraper"""
+        return random.choice(USER_AGENT_LIST_MOBILE)
+
+    @property
     def job_get_fields(self) -> str:
         """Call self.get(...) for the JobFields in this list when scraping a Job
 
@@ -69,11 +106,12 @@ class BaseIndeedScraper(BaseScraper):
         return [
             JobField.TITLE,
             JobField.COMPANY,
+            JobField.DESCRIPTION,
             JobField.LOCATION,
             JobField.KEY_ID,
             JobField.TAGS,
             JobField.POST_DATE,
-            JobField.REMOTENESS,
+            # JobField.REMOTENESS,
             JobField.WAGE,
         ]
 
@@ -86,7 +124,8 @@ class BaseIndeedScraper(BaseScraper):
 
         Override this as needed.
         """
-        return [JobField.RAW, JobField.URL, JobField.DESCRIPTION]
+        # return [JobField.RAW, JobField.URL, JobField.DESCRIPTION]
+        return [JobField.URL, JobField.REMOTENESS]
 
     @property
     def delayed_get_set_fields(self) -> str:
@@ -159,47 +198,59 @@ class BaseIndeedScraper(BaseScraper):
         return job_soup_list
 
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
-        """Get a single job attribute from a soup object by JobField"""
+        """Get a single job attribute from a soup object that was derived from a JSON string."""
+
+        # Convert BeautifulSoup object back to a dictionary
+        job_data = json.loads(soup.text)
+
         if parameter == JobField.TITLE:
-            return soup.find("a", attrs={"data-tn-element": "jobTitle"}).text.strip()
+            return job_data.get("displayTitle", None)
+
+        elif parameter == JobField.DESCRIPTION:
+            return job_data.get("snippet", None)
+
         elif parameter == JobField.COMPANY:
-            return soup.find("span", attrs={"class": "company"}).text.strip()
+            return job_data.get("company", None)
+
         elif parameter == JobField.LOCATION:
-            return soup.find("span", attrs={"class": "location"}).text.strip()
+            return job_data.get("formattedLocation", None)
+
         elif parameter == JobField.TAGS:
-            # tags may not be on page and that's ok.
-            table_soup = soup.find("table", attrs={"class": "jobCardShelfContainer"})
-            if table_soup:
-                return [
-                    td.text.strip()
-                    for td in table_soup.find_all(
-                        "td", attrs={"class": "jobCardShelfItem"}
-                    )
-                ]
-            else:
-                return []
+
+            formatted_attributes = format_taxonomy_attributes(
+                job_data.get("taxonomyAttributes", [])
+            )
+
+            return formatted_attributes
+
         elif parameter == JobField.REMOTENESS:
-            remote_field = soup.find("span", attrs={"class": "remote"})
-            if remote_field:
-                remoteness_str = remote_field.text.strip().lower()
-                if remoteness_str in REMOTENESS_STR_MAP:
-                    return REMOTENESS_STR_MAP[remoteness_str]
-            return Remoteness.UNKNOWN
+            return (
+                Remoteness.FULLY_REMOTE
+                if job_data.get("remoteLocation", False)
+                else Remoteness.UNKNOWN
+            )
+
         elif parameter == JobField.WAGE:
-            # We may not be able to obtain a wage
-            potential = soup.find("span", attrs={"class": "salaryText"})
-            if potential:
-                return potential.text.strip()
-            else:
-                return ""
+            salary_info = job_data.get("extractedSalary", None)
+            if salary_info:
+                min_salary = salary_info.get("min")
+                max_salary = salary_info.get("max")
+                if min_salary and max_salary:
+                    return (
+                        f"${min_salary} - ${max_salary} {salary_info.get('type', '')}"
+                    )
+                else:
+                    return ""
+            return ""
+
         elif parameter == JobField.POST_DATE:
             return calc_post_date_from_relative_str(
-                soup.find("span", attrs={"class": "date"}).text.strip()
+                job_data.get("formattedRelativeTime", None)
             )
+
         elif parameter == JobField.KEY_ID:
-            return ID_REGEX.findall(
-                str(soup.find("a", attrs={"class": "sl resultLink save-job-link"}))
-            )[0]
+            return job_data.get("jobkey", None)
+
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
@@ -211,6 +262,19 @@ class BaseIndeedScraper(BaseScraper):
             job._raw_scrape_data = BeautifulSoup(
                 self.session.get(job.url).text, self.config.bs4_parser
             )
+
+        elif parameter == JobField.REMOTENESS:
+            remoteness = [
+                tag.split(":")[-1].strip().lower()
+                for tag in job.tags
+                if "remote" in tag.lower()
+            ]
+
+            if len(remoteness):
+                job.remoteness = REMOTENESS_STR_MAP.get(
+                    remoteness[0], Remoteness.UNKNOWN
+                )
+
         elif parameter == JobField.DESCRIPTION:
             assert job._raw_scrape_data
             job.description = job._raw_scrape_data.find(
@@ -219,7 +283,7 @@ class BaseIndeedScraper(BaseScraper):
         elif parameter == JobField.URL:
             assert job.key_id
             job.url = (
-                f"http://www.indeed.{self.config.search_config.domain}/"
+                f"https://www.indeed.{self.config.search_config.domain}/m/"
                 f"viewjob?jk={job.key_id}"
             )
         else:
@@ -231,7 +295,7 @@ class BaseIndeedScraper(BaseScraper):
         """
         if method == "get":
             return (
-                "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}&"
+                "https://www.indeed.{}/m/jobs?q={}&l={}%2C+{}&radius={}&"
                 "limit={}&filter={}{}".format(
                     self.config.search_config.domain,
                     self.query,
@@ -280,17 +344,61 @@ class BaseIndeedScraper(BaseScraper):
         NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
             ... need to add some kind of filtering for this!
         """
-        url = f"{search}&start={int(page * self.max_results_per_page)}"
-        job_soup_list.extend(
-            BeautifulSoup(self.session.get(url).text, self.config.bs4_parser).find_all(
-                "div", attrs={"data-tn-component": "organicJob"}
+        url = f"{search}&start={page * self.max_results_per_page}"
+
+        try:
+            response = self.session.get(url).text
+            soup = BeautifulSoup(response, self.config.bs4_parser)
+
+            script_tag = soup.find("script", id="mosaic-data")
+            if not script_tag:
+                self.logger.warn("No 'mosaic-data' script tag found on the page.")
+                return
+
+            script_content = script_tag.string
+            json_regex = re.search(
+                r'\["mosaic-provider-jobcards"\]\s*=\s*(\{.*?\});',
+                script_content,
+                re.DOTALL,
             )
-        )
+
+            if json_regex:
+                json_data_str = json_regex.group(1)
+
+                try:
+                    json_data = json.loads(json_data_str)
+                    job_data = (
+                        json_data.get("metaData", {})
+                        .get("mosaicProviderJobCardsModel", {})
+                        .get("results", [])
+                    )
+
+                    if job_data:
+                        job_data_json = [json.dumps(job) for job in job_data]
+                        job_soup_list.extend(
+                            [
+                                BeautifulSoup(job_json, "lxml")
+                                for job_json in job_data_json
+                            ]
+                        )
+                    else:
+                        self.logger.error("No job data found in the JSON structure.")
+                except json.JSONDecodeError as e:
+                    self.logger.error(f"Error decoding JSON: {e}")
+            else:
+                self.logger.error(
+                    "No matching job data found in the script tag content."
+                )
+
+        except Exception as e:
+            self.logger.error(
+                f"An error occurred while fetching or parsing the page: {e}"
+            )
 
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+        i.e. your search yields 230 results at 20 res/page -> 12 pages of jobs
 
         Args:
                         max_pages: the maximum number of pages to be scraped.
@@ -300,8 +408,13 @@ class BaseIndeedScraper(BaseScraper):
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
         self.logger.debug("Got Base search results page: %s", search_url)
+
         query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id="searchCountPages")
+
+        num_res = query_resp.find(
+            "div", class_="jobsearch-JobCountAndSortPane-jobCount"
+        )
+
         # TODO: we should consider expanding the error cases (scrape error page)
         if not num_res:
             raise ValueError(
@@ -311,8 +424,15 @@ class BaseIndeedScraper(BaseScraper):
                 " province or state.".format(search_url)
             )
 
-        num_res = num_res.contents[0].strip()
-        num_res = int(re.findall(r"f (\d+) ", num_res.replace(",", ""))[0])
+        num_res_text = num_res.get_text().replace(",", "")
+
+        num_res_match = re.search(r"(\d+)\+?\s+jobs", num_res_text)
+
+        if num_res_match:
+            num_res = int(num_res_match.group(1))
+        else:
+            num_res = 0
+
         number_of_pages = int(ceil(num_res / self.max_results_per_page))
         if max_pages == 0:
             return number_of_pages
@@ -391,7 +511,7 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
     def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
         """Calculates the number of pages of job listings to be scraped.
 
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
+        i.e. your search yields 230 results at 20 res/page -> 12 pages of jobs
 
         Args:
                         max_pages: the maximum number of pages to be scraped.
@@ -467,9 +587,12 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
         """
         # Get the html data, initialize bs4 with lxml
         request_html = self.session.get(search_url)
-        self.logger.debug("Got Base search results page: %s", search_url)
+
         query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id="searchCountPages")
+        num_res = query_resp.find(
+            "div", class_="jobsearch-JobCountAndSortPane-jobCount"
+        )
+
         if not num_res:
             raise ValueError(
                 "Unable to identify number of pages of results for query: {}"

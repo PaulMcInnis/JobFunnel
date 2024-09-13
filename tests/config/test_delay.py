@@ -1,5 +1,6 @@
 """Test the DelayConfig
 """
+
 import pytest
 
 from jobfunnel.config import DelayConfig

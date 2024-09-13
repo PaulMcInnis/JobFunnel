@@ -1,5 +1,6 @@
 """Object to contain job query metadata
 """
+
 from typing import List, Optional
 from jobfunnel.config import BaseConfig
 from jobfunnel.resources import Locale, Provider, Remoteness

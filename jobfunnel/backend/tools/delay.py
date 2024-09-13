@@ -1,5 +1,6 @@
 """Module for calculating random or non-random delay
 """
+
 from math import ceil, log, sqrt
 from random import uniform
 from typing import List, Union

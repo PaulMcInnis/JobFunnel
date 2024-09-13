@@ -1,6 +1,7 @@
 """Base Job class to be populated by Scrapers, manipulated by Filters and saved
 to csv / etc by Exporter
 """
+
 from copy import deepcopy
 from datetime import date, datetime
 from typing import Dict, List, Optional
@@ -132,7 +133,7 @@ class Job:
         Returns:
             True if we updated self with job, False if we didn't
         """
-        if job.post_date > self.post_date:
+        if job.post_date >= self.post_date:
             # Update all attrs other than status (which user can set).
             self.company = deepcopy(job.company)
             self.location = deepcopy(job.location)
@@ -152,6 +153,7 @@ class Job:
             # pylint: disable=protected-access
             self._raw_scrape_data = deepcopy(job._raw_scrape_data)
             # pylint: enable=protected-access
+
             return True
         else:
             return False
@@ -187,7 +189,7 @@ class Job:
                         self.location,
                         self.post_date.strftime("%Y-%m-%d"),
                         self.description,
-                        ", ".join(self.tags),
+                        "\n".join(self.tags),
                         self.url,
                         self.key_id,
                         self.provider,
@@ -210,9 +212,11 @@ class Job:
             "title": self.title,
             "company": self.company,
             "post_date": self.post_date.strftime("%Y-%m-%d"),
-            "description": (self.description[:MAX_BLOCK_LIST_DESC_CHARS] + "..")
-            if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS
-            else (self.description),
+            "description": (
+                (self.description[:MAX_BLOCK_LIST_DESC_CHARS] + "..")
+                if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS
+                else (self.description)
+            ),
             "status": self.status.name,
         }
 
@@ -243,3 +247,29 @@ class Job:
         assert self.url, "URL is unset!"
         if len(self.description) < MIN_DESCRIPTION_CHARS:
             raise ValueError("Description too short!")
+
+    def __repr__(self) -> str:
+        """Developer-friendly representation of the Job object."""
+        return (
+            f"Job("
+            f"title='{self.title}', "
+            f"company='{self.company}', "
+            f"location='{self.location}', "
+            f"status={self.status.name}, "
+            f"post_date={self.post_date}, "
+            f"url='{self.url}')"
+        )
+
+    def __str__(self) -> str:
+        """Human-readable string representation of the Job object."""
+        return (
+            f"Job Title: {self.title}\n"
+            f"Company: {self.company}\n"
+            f"Location: {self.location}\n"
+            f"Post Date: {self.post_date.strftime('%Y-%m-%d') if self.post_date else 'N/A'}\n"
+            f"Status: {self.status.name}\n"
+            f"Wage: {self.wage if self.wage else 'N/A'}\n"
+            f"Remoteness: {self.remoteness if self.remoteness else 'N/A'}\n"
+            f"Description (truncated): {self.description[:100]}{'...' if len(self.description) > 100 else ''}\n"
+            f"URL: {self.url}\n"
+        )

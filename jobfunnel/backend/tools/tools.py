@@ -1,5 +1,6 @@
 """Assorted tools for all aspects of funnelin' that don't fit elsewhere
 """
+
 import logging
 import re
 import sys

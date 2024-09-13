@@ -1,6 +1,7 @@
 """The base scraper class to be used for all web-scraping emitting Job objects
 Paul McInnis 2020
 """
+
 import random
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed

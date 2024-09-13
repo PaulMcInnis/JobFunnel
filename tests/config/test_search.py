@@ -1,5 +1,6 @@
 """Test the search config
 """
+
 import pytest
 
 from jobfunnel.config import SearchConfig
