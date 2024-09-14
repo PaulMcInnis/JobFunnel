@@ -24,15 +24,15 @@ search:
     - INDEED
 
   # Region that we are searching for jobs within:
-  province_or_state: "CA" # NOTE: this is generally 2 characters long.
-  city: "San Fransisco" # NOTE: this is the full city / town name.
+  province_or_state: "Texas" # NOTE: this is generally 2 characters long.
+  city: "Richardson" # NOTE: this is the full city / town name.
   radius: 25 # km (NOTE: if we were in locale: USA_ENGLISH it's in miles)
 
   # These are the terms you would be typing into the website's search field:
   keywords:
-    - Data Science
-    - Machine Learning
-    - Software Engineer
+    - Python
+    - Senior
+    - AI
 
   # Don't return any listings older than this:
   max_listing_days: 35
@@ -46,7 +46,7 @@ search:
   remoteness: ANY
 
 # Logging level options are: critical, error, warning, info, debug, notset
-log_level: DEBUG
+log_level: INFO
 
 # Delaying algorithm configuration
 delay:

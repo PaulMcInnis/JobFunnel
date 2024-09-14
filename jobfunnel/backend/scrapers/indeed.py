@@ -124,7 +124,6 @@ class BaseIndeedScraper(BaseScraper):
 
         Override this as needed.
         """
-        # return [JobField.RAW, JobField.URL, JobField.DESCRIPTION]
         return [JobField.URL, JobField.REMOTENESS]
 
     @property
