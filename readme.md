@@ -3,8 +3,6 @@
 
 Automated tool for scraping job postings into a `.csv` file.
 
-_[Since this project was developed, CAPTCHA has clamped down hard, help us re-build the backend and make this tool useful again!](https://github.com/PaulMcInnis/JobFunnel/discussions/148)_
-
 ### Benefits over job search sites:
 
 * Never see the same job twice!
@@ -16,7 +14,7 @@ _[Since this project was developed, CAPTCHA has clamped down hard, help us re-bu
 
 # Installation
 
-_JobFunnel requires [Python][python] 3.8 or later._
+_JobFunnel requires [Python][python] 3.11 or later._
 
 ```
 pip install git+https://github.com/PaulMcInnis/JobFunnel.git
@@ -113,5 +111,5 @@ Open the master CSV file and update the per-job `status`:
 [cron]:https://en.wikipedia.org/wiki/Cron
 [cron_doc]:docs/crontab/readme.md
 [conc_fut]:https://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
-[thread]: https://docs.python.org/3.8/library/threading.html
+[thread]: https://docs.python.org/3.11/library/threading.html
 [delay_jp]:https://github.com/bunsenmurder/Notebooks/blob/master/jobFunnel/delay_algorithm.ipynb

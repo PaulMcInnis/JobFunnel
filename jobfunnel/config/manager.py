@@ -1,5 +1,6 @@
 """Config object to run JobFunnel
 """
+
 import logging
 import os
 from typing import List, Optional

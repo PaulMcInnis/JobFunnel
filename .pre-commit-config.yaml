@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0 # Replace this with the version of Black you want to use
+    hooks:
+      - id: black
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v3.1.0" # Specify Prettier version
+    hooks:
+      - id: prettier

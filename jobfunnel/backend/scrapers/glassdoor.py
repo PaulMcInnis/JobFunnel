@@ -1,6 +1,7 @@
 """Scraper for www.glassdoor.X
 FIXME: this is currently unable to get past page 1 of job results.
 """
+
 import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait

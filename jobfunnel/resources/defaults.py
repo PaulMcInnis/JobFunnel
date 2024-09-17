@@ -1,6 +1,7 @@
 """Default arguments for both JobFunnelConfigManager and CLI arguments.
 NOTE: Not all defaults here are used, as we rely on YAML for demo and not kwargs
 """
+
 import os
 from pathlib import Path
 from jobfunnel.resources.enums import Locale, DelayAlgorithm, Provider, Remoteness

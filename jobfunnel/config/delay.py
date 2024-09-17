@@ -1,5 +1,6 @@
 """Simple config object to contain the delay configuration
 """
+
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.resources import DelayAlgorithm
 from jobfunnel.resources.defaults import (

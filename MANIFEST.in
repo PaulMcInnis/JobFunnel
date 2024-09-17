@@ -1,5 +1,6 @@
 include jobfunnel/demo/settings.yaml
 include jobfunnel/demo/demo.png
 include jobfunnel/resources/user_agent_list.txt
+include jobfunnel/resources/user_agent_list_mobile.txt
 include readme.md
 include LICENSE

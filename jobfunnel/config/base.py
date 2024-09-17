@@ -1,5 +1,6 @@
 """Base config object with a validator
 """
+
 from abc import ABC, abstractmethod
 
 

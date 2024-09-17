@@ -1,6 +1,7 @@
 """Scrapes jobs, applies search filters and writes pickles to master list
 Paul McInnis 2020
 """
+
 import csv
 import json
 import os
@@ -230,7 +231,9 @@ class JobFunnel(Logger):
             try:
                 incoming_jobs_dict = scraper.scrape()
             except Exception as e:
-                self.logger.error(f"Failed to scrape jobs for {scraper_cls.__name__}")
+                self.logger.error(
+                    f"Failed to scrape jobs for {scraper_cls.__name__}: {e}"
+                )
 
             # Ensure we have no duplicates between our scrapers by key-id
             # (since we are updating the jobs dict with results)
@@ -425,6 +428,7 @@ class JobFunnel(Logger):
                     short_description=short_description,
                     post_date=post_date,
                     scrape_date=scrape_date,
+                    wage=wage,
                     raw=raw,
                     tags=row["tags"].split(","),
                     remoteness=remoteness,

@@ -1,5 +1,6 @@
 """Scrapers for www.monster.X
 """
+
 import re
 from abc import abstractmethod
 from math import ceil

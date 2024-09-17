@@ -1,8 +1,10 @@
 """String-like resouces and other constants are initialized here.
 """
+
 import datetime
 import os
 import string
+from pathlib import Path
 
 # CSV header for output CSV. do not remove anything or you'll break usr's CSV's
 # TODO: need to add short and long descriptions (breaking change)
@@ -36,13 +38,25 @@ T_NOW = datetime.datetime.today()  # NOTE: use today so we only compare days
 
 PRINTABLE_STRINGS = set(string.printable)
 
-# Load the user agent list once only.
-USER_AGENT_LIST_FILE = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "user_agent_list.txt")
-)
-USER_AGENT_LIST = []
-with open(USER_AGENT_LIST_FILE) as file:
-    for line in file:
-        li = line.strip()
-        if li and not li.startswith("#"):
-            USER_AGENT_LIST.append(line.rstrip("\n"))
+
+def load_user_agents(file_path):
+    """Loads user agent strings from a file, skipping comments and blank lines."""
+    try:
+        with open(file_path, "r") as file:
+            return [
+                line.strip()
+                for line in file
+                if line.strip() and not line.startswith("#")
+            ]
+    except FileNotFoundError:
+        print(f"File {file_path} not found.")
+        return []
+
+
+# Define the paths
+USER_AGENT_LIST_FILE = Path(__file__).parent / "user_agent_list.txt"
+USER_AGENT_LIST_MOBILE_FILE = Path(__file__).parent / "user_agent_list_mobile.txt"
+
+# Load the lists
+USER_AGENT_LIST = load_user_agents(USER_AGENT_LIST_FILE)
+USER_AGENT_LIST_MOBILE = load_user_agents(USER_AGENT_LIST_MOBILE_FILE)

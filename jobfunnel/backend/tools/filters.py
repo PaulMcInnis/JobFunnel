@@ -2,6 +2,7 @@
 filters to reduce un-necessesary scraping
 Paul McInnis 2020
 """
+
 import logging
 from collections import namedtuple
 from copy import deepcopy

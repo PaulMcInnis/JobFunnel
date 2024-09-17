@@ -39,7 +39,7 @@ setup(
     author_email="paulmcinnis99@gmail.com",
     url=url,
     license="MIT License",
-    python_requires=">=3.8.0",
+    python_requires=">=3.11",
     install_requires=requires,
     packages=find_packages(exclude=("tests", "docs", "images")),
     include_package_data=True,
@@ -47,6 +47,6 @@ setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.11",
     ],
 )

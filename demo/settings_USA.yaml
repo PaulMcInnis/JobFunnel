@@ -22,7 +22,6 @@ search:
   # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:
     - INDEED
-    - MONSTER
 
   # Region that we are searching for jobs within:
   province_or_state: "Texas" # NOTE: this is generally 2 characters long.
