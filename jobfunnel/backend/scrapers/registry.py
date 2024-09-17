@@ -4,26 +4,25 @@ NOTE: if you implement a scraper you must add it here
 TODO: there must be a better way to do this by using class attrib of Provider
 """
 
-from jobfunnel.resources import Locale, Provider
-
+from jobfunnel.backend.scrapers.glassdoor import (
+    GlassDoorScraperCANEng,
+    GlassDoorScraperUKEng,
+    GlassDoorScraperUSAEng,
+)
 from jobfunnel.backend.scrapers.indeed import (
     IndeedScraperCANEng,
-    IndeedScraperUSAEng,
-    IndeedScraperUKEng,
-    IndeedScraperFRFre,
     IndeedScraperDEGer,
+    IndeedScraperFRFre,
+    IndeedScraperUKEng,
+    IndeedScraperUSAEng,
 )
 from jobfunnel.backend.scrapers.monster import (
     MonsterScraperCANEng,
-    MonsterScraperUSAEng,
-    MonsterScraperUKEng,
     MonsterScraperFRFre,
+    MonsterScraperUKEng,
+    MonsterScraperUSAEng,
 )
-from jobfunnel.backend.scrapers.glassdoor import (
-    GlassDoorScraperCANEng,
-    GlassDoorScraperUSAEng,
-    GlassDoorScraperUKEng,
-)
+from jobfunnel.resources import Locale, Provider
 
 SCRAPER_FROM_LOCALE = {
     # search terms which one to use

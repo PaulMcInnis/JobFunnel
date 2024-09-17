@@ -2,8 +2,10 @@
 """
 
 import os
+
 import pytest
-from jobfunnel.config import parse_cli, build_config_dict
+
+from jobfunnel.config import build_config_dict, parse_cli
 from tests.conftest import get_data_path
 
 TEST_YAML = os.path.join(get_data_path(), "test_config.yml")
@@ -181,6 +183,7 @@ def test_parse_cli_load(argv):
 def test_parse_cli_invalid_args(argv, exception):
     with pytest.raises(exception) as e:
         args = parse_cli(argv)
+        assert args is not None  # TODO: Remove after test is fixed
     assert str(e.value) == "2"
 
 
@@ -189,6 +192,7 @@ def test_build_config_dict_invalid_settings(argv, exception):
     args = parse_cli(argv)
     with pytest.raises(exception) as e:
         cfg_dict = build_config_dict(args)
+        assert cfg_dict is not None  # TODO: Remove after test is fixed
     assert (
         str(e.value) == "Invalid Config settings yaml:\n"
         "{'search': [{'radius': ['must be of integer type']}]}"

@@ -3,10 +3,10 @@ filters to reduce un-necessesary scraping
 Paul McInnis 2020
 """
 
-import logging
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import nltk

@@ -6,7 +6,10 @@ import os
 from typing import List, Optional
 
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
-from jobfunnel.config import BaseConfig, DelayConfig, ProxyConfig, SearchConfig
+from jobfunnel.config.base import BaseConfig
+from jobfunnel.config.delay import DelayConfig
+from jobfunnel.config.proxy import ProxyConfig
+from jobfunnel.config.search import SearchConfig
 from jobfunnel.resources import BS4_PARSER
 
 # pylint: disable=using-constant-test,unused-import

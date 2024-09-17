@@ -2,10 +2,7 @@
 NOTE: Not all defaults here are used, as we rely on YAML for demo and not kwargs
 """
 
-import os
-from pathlib import Path
-from jobfunnel.resources.enums import Locale, DelayAlgorithm, Provider, Remoteness
-
+from jobfunnel.resources.enums import DelayAlgorithm, Locale, Provider, Remoteness
 
 DEFAULT_LOG_LEVEL_NAME = "INFO"
 DEFAULT_LOCALE = Locale.CANADA_ENGLISH

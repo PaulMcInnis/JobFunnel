@@ -2,12 +2,13 @@
 """
 
 from typing import List, Optional
+
 from jobfunnel.config import BaseConfig
 from jobfunnel.resources import Locale, Provider, Remoteness
 from jobfunnel.resources.defaults import (
-    DEFAULT_SEARCH_RADIUS,
-    DEFAULT_MAX_LISTING_DAYS,
     DEFAULT_DOMAIN_FROM_LOCALE,
+    DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_SEARCH_RADIUS,
 )
 
 
@@ -65,7 +66,7 @@ class SearchConfig(BaseConfig):
 
         # Try to infer the domain string based on the locale.
         if not domain:
-            if not self.locale in DEFAULT_DOMAIN_FROM_LOCALE:
+            if self.locale not in DEFAULT_DOMAIN_FROM_LOCALE:
                 raise ValueError(f"Unknown domain for locale: {self.locale}")
             self.domain = DEFAULT_DOMAIN_FROM_LOCALE[self.locale]
         else:
