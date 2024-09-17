@@ -11,10 +11,10 @@ requires-python = ">=3.11"
 license = {text = "MIT License"}
 authors = [
     { name = "Paul McInnis", email = "paulmcinnis99@gmail.com" },
-    { name = "Bradley Kohler", email = "bradley.kohler@example.com" },
-    { name = "Jose Alarcon", email = "jose.alarcon@example.com" },
-    { name = "Erich Mengore", email = "erich.mengore@example.com" },
-    { name = "Mark van der Broek", email = "mark.vanderbroek@example.com" },
+    { name = "Bradley Kohler" },
+    { name = "Jose Alarcon" },
+    { name = "Erich Mengore" },
+    { name = "Mark van der Broek" },
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
