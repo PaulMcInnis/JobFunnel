@@ -25,7 +25,7 @@ class ProxyConfig(BaseConfig):
         try:
             # try to create an IPv4 address
             ipaddress.IPv4Address(self.ip_address)
-        except:
+        except Exception:
             raise ValueError(f"{self.ip_address} is not a valid IPv4 address")
         assert isinstance(self.port, int), "Port must be an integer"
         assert self.protocol, "Protocol is not set"

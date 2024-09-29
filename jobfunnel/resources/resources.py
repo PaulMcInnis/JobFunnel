@@ -2,9 +2,8 @@
 """
 
 import datetime
-import os
-import string
 from pathlib import Path
+import string
 
 # CSV header for output CSV. do not remove anything or you'll break usr's CSV's
 # TODO: need to add short and long descriptions (breaking change)

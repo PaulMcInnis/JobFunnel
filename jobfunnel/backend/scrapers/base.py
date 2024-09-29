@@ -2,10 +2,10 @@
 Paul McInnis 2020
 """
 
-import random
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Lock, Manager
+import random
 from time import sleep
 from typing import Any, Dict, List, Optional
 

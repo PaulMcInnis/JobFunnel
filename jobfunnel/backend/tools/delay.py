@@ -8,7 +8,7 @@ from typing import List, Union
 from numpy import arange
 from scipy.special import expit  # pylint: disable=no-name-in-module
 
-from jobfunnel.config import DelayConfig
+from jobfunnel.config.delay import DelayConfig
 from jobfunnel.resources import DelayAlgorithm
 
 

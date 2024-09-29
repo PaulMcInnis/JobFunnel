@@ -2,16 +2,15 @@
 """
 
 import argparse
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 import yaml
 
-from jobfunnel.config import (
-    DelayConfig,
-    JobFunnelConfigManager,
-    ProxyConfig,
-    SearchConfig,
-    SettingsValidator,
-)
+from jobfunnel.config.delay import DelayConfig
+from jobfunnel.config.manager import JobFunnelConfigManager
+from jobfunnel.config.proxy import ProxyConfig
+from jobfunnel.config.search import SearchConfig
+from jobfunnel.config.settings import SettingsValidator
 from jobfunnel.resources import (
     LOG_LEVEL_NAMES,
     DelayAlgorithm,
@@ -19,7 +18,17 @@ from jobfunnel.resources import (
     Provider,
     Remoteness,
 )
-from jobfunnel.resources.defaults import *
+from jobfunnel.resources.defaults import (
+    DEFAULT_COMPANY_BLOCK_LIST,
+    DEFAULT_DELAY_ALGORITHM,
+    DEFAULT_DELAY_MAX_DURATION,
+    DEFAULT_DELAY_MIN_DURATION,
+    DEFAULT_LOG_LEVEL_NAME,
+    DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_PROVIDER_NAMES,
+    DEFAULT_REMOTENESS,
+    DEFAULT_SEARCH_RADIUS,
+)
 
 
 def parse_cli(args: List[str]) -> Dict[str, Any]:
@@ -153,7 +162,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-l",
         dest="search.locale",
         type=str,
-        choices=[l.name for l in Locale],
+        choices=[locale.name for locale in Locale],
         help="Global location and language to use to scrape the job provider"
         " website (i.e. -l CANADA_ENGLISH -p indeed --> indeed.ca).",
         required=True,
@@ -305,6 +314,7 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Parse the JobFunnel configuration settings and combine CLI, YAML and
     defaults to build a valid config dictionary for initializing config objects.
     """
+
     # Build a config that respects CLI, defaults and YAML
     # NOTE: we a passed settings YAML first so we can inject CLI after if needed
     if "settings_yaml_file" in args_dict:

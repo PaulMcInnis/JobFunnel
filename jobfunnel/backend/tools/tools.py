@@ -1,10 +1,10 @@
 """Assorted tools for all aspects of funnelin' that don't fit elsewhere
 """
 
+from datetime import date, datetime, timedelta
 import logging
 import re
 import sys
-from datetime import date, datetime, timedelta
 from typing import Optional
 
 from dateutil.relativedelta import relativedelta
@@ -13,8 +13,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager, IEDriverManager
 from webdriver_manager.opera import OperaDriverManager
-
-from jobfunnel.backend import Job
 
 # Initialize list and store regex objects of date quantifiers
 HOUR_REGEX = re.compile(r"(\d+)(?:[ +]{1,3})?(?:hour|hr|heure)")

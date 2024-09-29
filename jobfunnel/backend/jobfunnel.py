@@ -3,27 +3,27 @@ Paul McInnis 2020
 """
 
 import csv
+from datetime import date, datetime, timedelta
 import json
 import os
 import pickle
-from datetime import date, datetime, timedelta
 from time import time
-from typing import Dict, List
+from typing import Dict
 
 from requests import Session
 
 from jobfunnel import __version__
 from jobfunnel.backend import Job
 from jobfunnel.backend.tools import Logger
-from jobfunnel.backend.tools.filters import DuplicatedJob, JobFilter
+from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.config import JobFunnelConfigManager
 from jobfunnel.resources import (
     CSV_HEADER,
     T_NOW,
-    Remoteness,
     DuplicateType,
     JobStatus,
     Locale,
+    Remoteness,
 )
 
 

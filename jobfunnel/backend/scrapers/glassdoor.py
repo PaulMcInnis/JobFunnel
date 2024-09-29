@@ -2,10 +2,10 @@
 FIXME: this is currently unable to get past page 1 of job results.
 """
 
-import re
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor, wait
 from math import ceil
+import re
 from typing import Any, Dict, List, Tuple, Union
 
 from bs4 import BeautifulSoup
@@ -15,10 +15,9 @@ from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (
     BaseCANEngScraper,
     BaseScraper,
-    BaseUSAEngScraper,
     BaseUKEngScraper,
+    BaseUSAEngScraper,
 )
-from jobfunnel.backend.tools import get_webdriver
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import MAX_CPU_WORKERS, JobField

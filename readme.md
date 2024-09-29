@@ -102,6 +102,71 @@ Open the master CSV file and update the per-job `status`:
   `Unable to extract jobs from initial search result page:\` error. 
   Then open that url on your browser and solve the CAPTCHA manually.
 
+# Developer Guide
+
+For contributors and developers who want to work on JobFunnel, this section will guide you through setting up the development environment and the tools we use to maintain code quality and consistency.
+
+## Developer Mode Installation
+
+To get started, install JobFunnel in **developer mode**. This will install all necessary dependencies, including development tools such as testing, linting, and formatting utilities.
+
+To install JobFunnel in developer mode, use the following command:
+
+```bash
+pip install -e '.[dev]'
+```
+
+This command not only installs the package in an editable state but also sets up pre-commit hooks for automatic code quality checks.
+
+## Pre-Commit Hooks
+
+The following pre-commit hooks are configured to run automatically when you commit changes to ensure the code follows consistent style and quality guidelines:
+
+- `Black`: Automatically formats Python code to ensure consistency.
+- `isort`: Sorts and organizes imports according to the Black style.
+- `Prettier`: Formats non-Python files such as YAML and JSON.
+- `Flake8`: Checks Python code for style guide violations.
+
+While the pre-commit package is installed when you run `pip install -e '.[dev]'`, you still need to initialize the hooks by running the following command once:
+
+```bash
+pre-commit install
+```
+
+### How Pre-Commit Hooks Work
+
+The pre-commit hooks will automatically run when you attempt to make a commit. If any formatting issues are found, the hooks will fix them (for Black and isort), or warn you about style violations (for Flake8). This ensures that all committed code meets the project’s quality standards.
+
+You can also manually run the pre-commit hooks at any time with:
+
+```bash
+pre-commit run --all-files
+```
+
+This is useful to check the entire codebase before committing or as part of a larger code review. Please fix all style guide violations (or provide a reason to ignore) before committing to the repository.
+
+## Running Tests
+
+We use `pytest` to run tests and ensure that the code behaves as expected. Code coverage is automatically generated every time you run the tests.
+
+To run all tests, use the following command:
+
+```bash
+pytest
+```
+
+This will execute the test suite and automatically generate a code coverage report.
+
+If you want to see a detailed code coverage report, you can run:
+
+```bash
+pytest --cov-report=term-missing
+```
+
+This will display which lines of code were missed in the test coverage directly in your terminal output.
+
+
+
 <!-- links -->
 [requirements]:requirements.txt
 [masterlist]:demo/demo.png "masterlist.csv"

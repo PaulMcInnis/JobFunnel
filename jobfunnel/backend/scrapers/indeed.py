@@ -1,13 +1,13 @@
 """Scraper designed to get jobs from www.indeed.X
 """
 
-import re
 from concurrent.futures import ThreadPoolExecutor, wait
+import json
 from math import ceil
+import random
+import re
 from typing import Any, Dict, List, Optional
 from unicodedata import normalize
-import json
-import random
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -15,19 +15,19 @@ from requests import Session
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (
     BaseCANEngScraper,
-    BaseScraper,
-    BaseUSAEngScraper,
-    BaseUKEngScraper,
-    BaseFRFreScraper,
     BaseDEGerScraper,
+    BaseFRFreScraper,
+    BaseScraper,
+    BaseUKEngScraper,
+    BaseUSAEngScraper,
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import (
     MAX_CPU_WORKERS,
+    USER_AGENT_LIST_MOBILE,
     JobField,
     Remoteness,
-    USER_AGENT_LIST_MOBILE,
 )
 
 # pylint: disable=using-constant-test,unused-import

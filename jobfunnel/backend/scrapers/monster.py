@@ -1,9 +1,9 @@
 """Scrapers for www.monster.X
 """
 
-import re
 from abc import abstractmethod
 from math import ceil
+import re
 from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
@@ -12,10 +12,10 @@ from requests import Session
 from jobfunnel.backend import Job
 from jobfunnel.backend.scrapers.base import (
     BaseCANEngScraper,
-    BaseScraper,
-    BaseUSAEngScraper,
-    BaseUKEngScraper,
     BaseFRFreScraper,
+    BaseScraper,
+    BaseUKEngScraper,
+    BaseUSAEngScraper,
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str

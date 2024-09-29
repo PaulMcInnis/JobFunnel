@@ -12,8 +12,20 @@ from jobfunnel.resources import (
     Provider,
     Remoteness,
 )
-from jobfunnel.resources.defaults import *
-
+from jobfunnel.resources.defaults import (
+    DEFAULT_COMPANY_BLOCK_LIST,
+    DEFAULT_DELAY_ALGORITHM,
+    DEFAULT_DELAY_MAX_DURATION,
+    DEFAULT_DELAY_MIN_DURATION,
+    DEFAULT_LOG_LEVEL_NAME,
+    DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_PROVIDERS,
+    DEFAULT_RANDOM_CONVERGING_DELAY,
+    DEFAULT_RANDOM_DELAY,
+    DEFAULT_REMOTENESS,
+    DEFAULT_RETURN_SIMILAR_RESULTS,
+    DEFAULT_SEARCH_RADIUS,
+)
 
 SETTINGS_YAML_SCHEMA = {
     "master_csv_file": {
@@ -57,7 +69,7 @@ SETTINGS_YAML_SCHEMA = {
             },
             "locale": {
                 "required": True,
-                "allowed": [l.name for l in Locale],
+                "allowed": [locale.name for locale in Locale],
             },
             "province_or_state": {"required": True, "type": "string"},
             "city": {"required": True, "type": "string"},
@@ -167,7 +179,7 @@ class JobFunnelSettingsValidator(Validator):
             # module
             ipaddress.IPv4Address(value)
             return True
-        except:
+        except Exception:
             self._error(value, "Not a valid IPv4 address")
 
 
