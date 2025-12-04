@@ -19,6 +19,7 @@ from jobfunnel.resources.defaults import (
     DEFAULT_DELAY_MIN_DURATION,
     DEFAULT_LOG_LEVEL_NAME,
     DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_MAX_SCROLL_ITERATIONS,
     DEFAULT_PROVIDER_NAMES,
     DEFAULT_RANDOM_CONVERGING_DELAY,
     DEFAULT_RANDOM_DELAY,
@@ -84,6 +85,7 @@ class SearchSettings(BaseModel):
     max_listing_days: int = Field(default=DEFAULT_MAX_LISTING_DAYS, ge=0)
     company_block_list: List[str] = Field(default_factory=lambda: list(DEFAULT_COMPANY_BLOCK_LIST))
     remoteness: str = DEFAULT_REMOTENESS.name
+    max_scroll_iterations: int = Field(default=DEFAULT_MAX_SCROLL_ITERATIONS, ge=1)
 
     @field_validator("providers")
     @classmethod
@@ -164,6 +166,7 @@ class JobFunnelSettingsValidator:
             set_default(search, "max_listing_days", DEFAULT_MAX_LISTING_DAYS)
             set_default(search, "company_block_list", list(DEFAULT_COMPANY_BLOCK_LIST))
             set_default(search, "remoteness", DEFAULT_REMOTENESS.name)
+            set_default(search, "max_scroll_iterations", DEFAULT_MAX_SCROLL_ITERATIONS)
 
         # Apply delay defaults
         if "delay" not in result or result["delay"] is None:

@@ -46,6 +46,10 @@ search:
   # TEMPORARILY_REMOTE, PARTIALLY_REMOTE)
   remoteness: ANY
 
+  # Max scroll iterations for infinite-scroll sites (LinkedIn, Glassdoor).
+  # Higher values = more jobs but slower. Default is 8.
+  max_scroll_iterations: 8
+
 # Logging level options are: critical, error, warning, info, debug, notset
 log_level: INFO
 

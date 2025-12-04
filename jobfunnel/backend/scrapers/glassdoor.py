@@ -7,7 +7,6 @@ JobFunnel never stores or transmits user credentials - only session cookies.
 
 import re
 import shutil
-from math import ceil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -40,6 +39,14 @@ GLASSDOOR_LOCATION_IDS = {
     "CANADA": "3",
     # UK
     "UK": "2",
+}
+
+# Glassdoor remoteWorkType URL parameter values
+# Based on: https://www.glassdoor.ca/Job/jobs.htm?remoteWorkType=1
+GLASSDOOR_REMOTENESS_MAP = {
+    Remoteness.FULLY_REMOTE: "1",
+    Remoteness.PARTIALLY_REMOTE: "2",  # Hybrid
+    # Note: IN_PERSON and ANY don't use remoteWorkType filter
 }
 
 
@@ -114,6 +121,11 @@ class BaseGlassdoorScraper(BaseScraper):
         radius = self.config.search_config.radius
         if radius:
             params.append(f"radius={radius}")
+
+        # Add remote work filter if specified
+        remoteness = self.config.search_config.remoteness
+        if remoteness in GLASSDOOR_REMOTENESS_MAP:
+            params.append(f"remoteWorkType={GLASSDOOR_REMOTENESS_MAP[remoteness]}")
 
         return f"{base_url}?{'&'.join(params)}"
 
@@ -239,70 +251,51 @@ class BaseGlassdoorScraper(BaseScraper):
                 except Exception:
                     self.logger.warning("Could not find job listings, page may have changed")
 
-                num_pages = self._get_num_search_result_pages_from_page(page)
-                self.logger.info(
-                    "Found %d pages of search results for query=%s",
-                    num_pages,
-                    self.query,
-                )
+                # Glassdoor page 1 shows limited results with "See more jobs" link
+                # that navigates to the full job list page
+                try:
+                    see_more_link = page.query_selector('[data-test="see-more-related-jobs"] a')
+                    if see_more_link:
+                        href = see_more_link.get_attribute("href")
+                        if href:
+                            self.logger.info("Found 'See more jobs' link, navigating...")
+                            # Navigate to the full job list URL (don't open new tab)
+                            if href.startswith("/"):
+                                href = f"https://www.glassdoor.{self.config.search_config.domain}{href}"
+                            page.goto(href, timeout=60000)
+                            page.wait_for_timeout(3000)
+                except Exception as e:
+                    self.logger.debug("'See more jobs' link not found or navigation failed: %s", e)
 
-                # Scrape first page
-                self._extract_jobs_from_page(page, job_soup_list)
+                # On the full job list page, click "Show more jobs" button repeatedly
+                max_clicks = self.config.search_config.max_scroll_iterations
+                for click_num in range(max_clicks):
+                    try:
+                        # Close any auth modal that appears (blocks interaction)
+                        close_btn = page.query_selector('.authModalContent .CloseButton, .authModalContent button.CloseButton')
+                        if close_btn:
+                            self.logger.debug("Closing auth modal popup...")
+                            close_btn.click()
+                            page.wait_for_timeout(500)
 
-                # Scrape remaining pages
-                for page_num in range(1, num_pages):
-                    # Glassdoor uses pagination with page numbers
-                    next_btn = page.query_selector('button[data-test="pagination-next"]')
-                    if not next_btn:
-                        next_btn = page.query_selector('button[aria-label*="Next"]')
-                    if not next_btn:
-                        next_btn = page.query_selector('a[data-test="pagination-link-next"]')
-
-                    if next_btn:
-                        self.logger.info("Clicking to go to page %d", page_num + 1)
-                        next_btn.click()
-                        page.wait_for_timeout(3000)
-                        self._extract_jobs_from_page(page, job_soup_list)
-                    else:
-                        # Try scrolling to load more jobs
-                        self.logger.info("Scrolling to load more jobs...")
-                        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                        page.wait_for_timeout(2000)
-                        new_jobs_before = len(job_soup_list)
-                        self._extract_jobs_from_page(page, job_soup_list)
-                        if len(job_soup_list) == new_jobs_before:
-                            self.logger.info("No more jobs to load")
+                        show_more_btn = page.query_selector('[data-test="load-more"]')
+                        if not show_more_btn:
+                            self.logger.debug("No 'Show more jobs' button found")
                             break
+                        self.logger.info("Clicking 'Show more jobs' button (%d/%d)...", click_num + 1, max_clicks)
+                        show_more_btn.click()
+                        page.wait_for_timeout(2500)
+                    except Exception as e:
+                        self.logger.debug("'Show more jobs' button click failed: %s", e)
+                        break
+
+                # Extract all jobs from the page after clicking through
+                self._extract_jobs_from_page(page, job_soup_list)
 
             finally:
                 context.close()
 
         return job_soup_list
-
-    def _get_num_search_result_pages_from_page(self, page: Page) -> int:
-        """Extract the number of result pages from a loaded page."""
-        try:
-            page_content = page.content()
-
-            # Look for job count text like "X jobs"
-            match = re.search(r"([\d,]+)\s*jobs?", page_content, re.IGNORECASE)
-            if match:
-                total_jobs = int(match.group(1).replace(",", ""))
-                return min(ceil(total_jobs / MAX_RESULTS_PER_GLASSDOOR_PAGE), 5)
-
-            # Look for pagination info
-            pagination = page.query_selector('[data-test="pagination"]')
-            if pagination:
-                page_buttons = pagination.query_selector_all("button, a")
-                if page_buttons:
-                    return min(len(page_buttons), 5)
-
-            self.logger.warning("Could not determine page count, defaulting to 1")
-            return 1
-
-        except Exception as e:
-            self.logger.warning("Error getting page count: %s", e)
-            return 1
 
     def _extract_jobs_from_page(self, page: Page, job_soup_list: List[BeautifulSoup]) -> None:
         """Extract job data from a loaded Glassdoor search results page."""
@@ -507,6 +500,11 @@ class GlassdoorScraperCANEng(BaseGlassdoorScraper, BaseCANEngScraper):
         if radius:
             params.append(f"radius={radius}")
 
+        # Add remote work filter if specified
+        remoteness = self.config.search_config.remoteness
+        if remoteness in GLASSDOOR_REMOTENESS_MAP:
+            params.append(f"remoteWorkType={GLASSDOOR_REMOTENESS_MAP[remoteness]}")
+
         return f"{base_url}?{'&'.join(params)}"
 
 
@@ -530,5 +528,10 @@ class GlassdoorScraperUKEng(BaseGlassdoorScraper, BaseUKEngScraper):
         radius = self.config.search_config.radius
         if radius:
             params.append(f"radius={radius}")
+
+        # Add remote work filter if specified
+        remoteness = self.config.search_config.remoteness
+        if remoteness in GLASSDOOR_REMOTENESS_MAP:
+            params.append(f"remoteWorkType={GLASSDOOR_REMOTENESS_MAP[remoteness]}")
 
         return f"{base_url}?{'&'.join(params)}"

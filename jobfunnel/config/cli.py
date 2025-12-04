@@ -379,6 +379,7 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         locale=Locale[config["search"]["locale"]],
         providers=[Provider[p] for p in config["search"]["providers"]],
         remoteness=Remoteness[config["search"]["remoteness"]],
+        max_scroll_iterations=config["search"].get("max_scroll_iterations"),
     )
 
     delay_cfg = DelayConfig(

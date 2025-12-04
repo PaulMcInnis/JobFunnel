@@ -7,6 +7,7 @@ from jobfunnel.resources import Locale, Provider, Remoteness
 from jobfunnel.resources.defaults import (
     DEFAULT_DOMAIN_FROM_LOCALE,
     DEFAULT_MAX_LISTING_DAYS,
+    DEFAULT_MAX_SCROLL_ITERATIONS,
     DEFAULT_SEARCH_RADIUS,
 )
 
@@ -30,6 +31,7 @@ class SearchConfig(BaseConfig):
         blocked_company_names: Optional[List[str]] = None,
         domain: Optional[str] = None,
         remoteness: Optional[Remoteness] = Remoteness.ANY,
+        max_scroll_iterations: Optional[int] = None,
     ):
         """Search config for all job sources
 
@@ -50,6 +52,8 @@ class SearchConfig(BaseConfig):
             domain (Optional[str], optional): domain string to use for search
                 querying. If not passed, will set based on locale. (i.e. 'ca')
             remoteness: The level of work-remoteness desired. Defaults to any.
+            max_scroll_iterations (Optional[int], optional): Maximum number of
+                scroll iterations for infinite-scroll sites. Defaults to 8.
         """
         super().__init__()
         self.province_or_state = province_or_state
@@ -62,6 +66,7 @@ class SearchConfig(BaseConfig):
         self.max_listing_days = max_listing_days or DEFAULT_MAX_LISTING_DAYS
         self.blocked_company_names = blocked_company_names
         self.remoteness = remoteness
+        self.max_scroll_iterations = max_scroll_iterations or DEFAULT_MAX_SCROLL_ITERATIONS
 
         # Try to infer the domain string based on the locale.
         if not domain:

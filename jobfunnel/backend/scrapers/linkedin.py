@@ -7,7 +7,6 @@ JobFunnel never stores or transmits user credentials - only session cookies.
 
 import re
 import shutil
-from math import ceil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -246,32 +245,30 @@ class BaseLinkedInScraper(BaseScraper):
                 # Scrape first page
                 self._extract_jobs_from_page(page, job_soup_list)
 
-                # Scrape remaining pages
-                for page_num in range(1, num_pages):
-                    # LinkedIn uses pagination with page numbers
-                    next_btn = page.query_selector(f'button[aria-label="Page {page_num + 1}"]')
-                    if not next_btn:
-                        # Try aria-label pattern for Next
-                        next_btn = page.query_selector('button[aria-label*="next" i]')
-                    if not next_btn:
-                        # Try looking for next page link
-                        next_btn = page.query_selector("li[data-test-pagination-page-btn] + li button")
+                # Scrape remaining pages by scrolling (LinkedIn uses infinite scroll)
+                for scroll_num in range(1, num_pages):
+                    self.logger.info("Scrolling to load more jobs (scroll %d)...", scroll_num)
 
-                    if next_btn:
-                        self.logger.info("Clicking to go to page %d", page_num + 1)
-                        next_btn.click()
-                        page.wait_for_timeout(3000)
-                        self._extract_jobs_from_page(page, job_soup_list)
-                    else:
-                        # Try scrolling to load more jobs (LinkedIn infinite scroll)
-                        self.logger.info("Scrolling to load more jobs...")
-                        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                        page.wait_for_timeout(2000)
-                        new_jobs_before = len(job_soup_list)
-                        self._extract_jobs_from_page(page, job_soup_list)
-                        if len(job_soup_list) == new_jobs_before:
-                            self.logger.info("No more jobs to load")
-                            break
+                    # Scroll within the jobs list container and also the main window
+                    page.evaluate("""
+                        // Try to scroll the jobs list container
+                        const jobsList = document.querySelector('.jobs-search-results-list') ||
+                                        document.querySelector('[class*="jobs-search-results"]') ||
+                                        document.querySelector('[class*="scaffold-layout__list"]');
+                        if (jobsList) {
+                            jobsList.scrollTop = jobsList.scrollHeight;
+                        }
+                        // Also scroll the main window
+                        window.scrollTo(0, document.body.scrollHeight);
+                    """)
+                    page.wait_for_timeout(2500)
+
+                    new_jobs_before = len(job_soup_list)
+                    self._extract_jobs_from_page(page, job_soup_list)
+
+                    if len(job_soup_list) == new_jobs_before:
+                        self.logger.info("No more jobs to load after scroll")
+                        break
 
             finally:
                 context.close()
@@ -279,29 +276,13 @@ class BaseLinkedInScraper(BaseScraper):
         return job_soup_list
 
     def _get_num_search_result_pages_from_page(self, page: Page) -> int:
-        """Extract the number of result pages from a loaded page."""
-        try:
-            page_content = page.content()
+        """Get number of scroll iterations to perform.
 
-            # Look for job count text like "X results" or "X jobs"
-            match = re.search(r"([\d,]+)\s*(results?|jobs?)", page_content, re.IGNORECASE)
-            if match:
-                total_jobs = int(match.group(1).replace(",", ""))
-                return min(ceil(total_jobs / MAX_RESULTS_PER_LINKEDIN_PAGE), 5)
-
-            # Look for pagination info
-            pagination = page.query_selector('div[class*="pagination"]')
-            if pagination:
-                page_buttons = pagination.query_selector_all("button")
-                if page_buttons:
-                    return min(len(page_buttons), 5)
-
-            self.logger.warning("Could not determine page count, defaulting to 1")
-            return 1
-
-        except Exception as e:
-            self.logger.warning("Error getting page count: %s", e)
-            return 1
+        LinkedIn uses infinite scroll, so this returns the configured
+        max_scroll_iterations. The scroll loop will exit early if no new
+        jobs are found.
+        """
+        return self.config.search_config.max_scroll_iterations
 
     def _extract_jobs_from_page(self, page: Page, job_soup_list: List[BeautifulSoup]) -> None:
         """Extract job data from a loaded LinkedIn search results page."""

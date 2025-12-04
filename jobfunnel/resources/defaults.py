@@ -21,6 +21,7 @@ DEFAULT_RETURN_SIMILAR_RESULTS = False
 DEFAULT_RANDOM_DELAY = False
 DEFAULT_RANDOM_CONVERGING_DELAY = False
 DEFAULT_REMOTENESS = Remoteness.ANY
+DEFAULT_MAX_SCROLL_ITERATIONS = 8
 
 # Defaults we use from localization, the scraper can always override it.
 DEFAULT_DOMAIN_FROM_LOCALE = {
