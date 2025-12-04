@@ -3,10 +3,10 @@ filters to reduce un-necessesary scraping
 Paul McInnis 2020
 """
 
+import logging
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
-import logging
 from typing import Dict, List, Optional, Tuple
 
 import nltk
@@ -92,9 +92,7 @@ class JobFilter(Logger):
             stop_words=stopwords,
         )
 
-    def filter(
-        self, jobs_dict: Dict[str, Job], remove_existing_duplicate_keys: bool = True
-    ) -> Dict[str, Job]:
+    def filter(self, jobs_dict: Dict[str, Job], remove_existing_duplicate_keys: bool = True) -> Dict[str, Job]:
         """Filter jobs that fail numerous tests, possibly including duplication
 
         Arguments:
@@ -111,9 +109,7 @@ class JobFilter(Logger):
         return {
             key_id: job
             for key_id, job in jobs_dict.items()
-            if not self.filterable(
-                job, check_existing_duplicates=remove_existing_duplicate_keys
-            )
+            if not self.filterable(job, check_existing_duplicates=remove_existing_duplicate_keys)
         }
 
     def filterable(self, job: Job, check_existing_duplicates: bool = True) -> bool:
@@ -135,11 +131,7 @@ class JobFilter(Logger):
             and job.is_remove_status
             or (job.company in self.blocked_company_names_list)
             or (job.post_date and self.max_job_date and job.is_old(self.max_job_date))
-            or (
-                job.key_id
-                and self.user_block_jobs_dict
-                and job.key_id in self.user_block_jobs_dict
-            )
+            or (job.key_id and self.user_block_jobs_dict and job.key_id in self.user_block_jobs_dict)
             or (check_existing_duplicates and self.is_duplicate(job))
             or (
                 job.remoteness != Remoteness.UNKNOWN
@@ -150,11 +142,7 @@ class JobFilter(Logger):
 
     def is_duplicate(self, job: Job) -> bool:
         """Return true if passed Job has key_id and it is in our duplicates list"""
-        return bool(
-            job.key_id
-            and self.duplicate_jobs_dict
-            and job.key_id in self.duplicate_jobs_dict
-        )
+        return bool(job.key_id and self.duplicate_jobs_dict and job.key_id in self.duplicate_jobs_dict)
 
     def find_duplicates(
         self,
@@ -181,10 +169,7 @@ class JobFilter(Logger):
         for key_id, incoming_job in incoming_jobs_dict.items():
             # The key-ids are a direct match between existing and new
             if key_id in existing_jobs_dict:
-                self.logger.debug(
-                    f"Identified duplicate {key_id} between incoming data "
-                    "and existing data."
-                )
+                self.logger.debug(f"Identified duplicate {key_id} between incoming data and existing data.")
                 duplicate_jobs_list.append(
                     DuplicatedJob(
                         original=existing_jobs_dict[key_id],
@@ -196,10 +181,7 @@ class JobFilter(Logger):
             # The key id is a known-duplicate we detected via content match
             # NOTE: original and duplicate have the same key id.
             elif key_id in self.duplicate_jobs_dict:
-                self.logger.debug(
-                    f"Identified existing content-matched duplicate {key_id} "
-                    "in incoming data."
-                )
+                self.logger.debug(f"Identified existing content-matched duplicate {key_id} in incoming data.")
                 duplicate_jobs_list.append(
                     DuplicatedJob(
                         original=None,  # TODO: load ref from duplicates dict
@@ -213,13 +195,9 @@ class JobFilter(Logger):
 
         # Run the tfidf vectorizer if we have enough jobs left after removing
         # key duplicates
-        if (
-            len(filt_incoming_jobs_dict.keys()) + len(filt_existing_jobs_dict.keys())
-            < self.min_tfidf_corpus_size
-        ):
+        if len(filt_incoming_jobs_dict.keys()) + len(filt_existing_jobs_dict.keys()) < self.min_tfidf_corpus_size:
             self.logger.warning(
-                "Skipping content-similarity filter because there are fewer than "
-                f"{self.min_tfidf_corpus_size} jobs."
+                f"Skipping content-similarity filter because there are fewer than {self.min_tfidf_corpus_size} jobs."
             )
         elif filt_incoming_jobs_dict:
             duplicate_jobs_list.extend(
@@ -229,16 +207,11 @@ class JobFilter(Logger):
                 )
             )
         else:
-            self.logger.warning(
-                "Skipping content-similarity filter because there are no "
-                "incoming jobs"
-            )
+            self.logger.warning("Skipping content-similarity filter because there are no incoming jobs")
 
         # Update duplicates list with more JSON-friendly entries
         # TODO: we should retain a reference to the original job's contents
-        self.duplicate_jobs_dict.update(
-            {j.duplicate.key_id: j.duplicate.as_json_entry for j in duplicate_jobs_list}
-        )
+        self.duplicate_jobs_dict.update({j.duplicate.key_id: j.duplicate.as_json_entry for j in duplicate_jobs_list})
 
         return duplicate_jobs_list
 
@@ -288,15 +261,9 @@ class JobFilter(Logger):
                     # NOTE: we should never see this for incoming jobs.
                     # we will see it for existing jobs since duplicates can
                     # share a key_id.
-                    raise ValueError(
-                        "Attempting to run TFIDF with existing duplicate "
-                        f"{job.key_id}"
-                    )
+                    raise ValueError(f"Attempting to run TFIDF with existing duplicate {job.key_id}")
                 elif not len(job.description):
-                    self.logger.debug(
-                        f"Removing {job.key_id} from scrape result, empty "
-                        "description."
-                    )
+                    self.logger.debug(f"Removing {job.key_id} from scrape result, empty description.")
                 else:
                     ids.append(job.key_id)
                     words.append(job.description)
@@ -310,9 +277,7 @@ class JobFilter(Logger):
                 raise ValueError("No data to fit, are your job descriptions all empty?")
             return ids, words, filt_job_dict
 
-        query_ids, query_words, filt_incoming_jobs_dict = __dict_to_ids_and_words(
-            incoming_jobs_dict, is_incoming=True
-        )
+        query_ids, query_words, filt_incoming_jobs_dict = __dict_to_ids_and_words(incoming_jobs_dict, is_incoming=True)
 
         # Calculate corpus and format query data for TFIDF calculation
         corpus = []  # type: List[str]
@@ -335,8 +300,7 @@ class JobFilter(Logger):
         # TODO: warning should reflect actual corpus size
         if len(corpus) < self.min_tfidf_corpus_size:
             self.logger.warning(
-                "It is not recommended to use this filter with less than "
-                f"{self.min_tfidf_corpus_size} jobs"
+                f"It is not recommended to use this filter with less than {self.min_tfidf_corpus_size} jobs"
             )
 
         # Fit vectorizer to entire corpus
@@ -371,9 +335,7 @@ class JobFilter(Logger):
                 )
                 new_duplicate_jobs_list.append(
                     DuplicatedJob(
-                        original=filt_existing_jobs_dict[
-                            reference_ids[top_similar_job]
-                        ],
+                        original=filt_existing_jobs_dict[reference_ids[top_similar_job]],
                         duplicate=filt_incoming_jobs_dict[query_id],
                         type=DuplicateType.NEW_TFIDF,
                     )

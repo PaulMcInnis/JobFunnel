@@ -47,13 +47,8 @@ class DelayConfig(BaseConfig):
         if self.max_duration <= 0:
             raise ValueError("Your max delay is set to 0 or less.")
         if self.min_duration <= 0 or self.min_duration >= self.max_duration:
-            raise ValueError(
-                "Minimum delay is below 0, or more than or equal to delay."
-            )
+            raise ValueError("Minimum delay is below 0, or more than or equal to delay.")
         if not isinstance(self.algorithm, DelayAlgorithm):
             raise ValueError(f"Invalid Value for delaying algorithm: {self.algorithm}")
         if self.converge and not self.random:
-            raise ValueError(
-                "You cannot configure convering random delay without also "
-                "enabling random delaying"
-            )
+            raise ValueError("You cannot configure convering random delay without also enabling random delaying")

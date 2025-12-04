@@ -79,8 +79,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-log-level",
         type=str,
         choices=LOG_LEVEL_NAMES,
-        help="Type of logging information shown on the terminal. NOTE: "
-        "if passed, overrides the setting in YAML.",
+        help="Type of logging information shown on the terminal. NOTE: if passed, overrides the setting in YAML.",
         required=False,
     )
 
@@ -100,8 +99,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
     cli_parser.add_argument(
         "--no-scrape",
         action="store_true",
-        help="Do not make any get requests, instead, load jobs from cache "
-        "and update filters + CSV file.",
+        help="Do not make any get requests, instead, load jobs from cache and update filters + CSV file.",
     )
 
     # Paths
@@ -134,8 +132,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-dl",
         dest="duplicates_list_file",
         type=str,
-        help="JSON file of jobs which have been detected to be duplicates of "
-        "existing jobs.",
+        help="JSON file of jobs which have been detected to be duplicates of existing jobs.",
         required=True,
     )
 
@@ -171,8 +168,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-ps",
         dest="search.province_or_state",
         type=str,
-        help="Province/state value for your job-search area of interest. "
-        "(i.e. Ontario).",
+        help="Province/state value for your job-search area of interest. (i.e. Ontario).",
         required=True,
     )
 
@@ -190,8 +186,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         dest="search.company_block_list",
         nargs="+",
         default=DEFAULT_COMPANY_BLOCK_LIST,
-        help="List of company names to omit from all search results "
-        "(i.e. SpamCompany, Cash5Gold).",
+        help="List of company names to omit from all search results (i.e. SpamCompany, Cash5Gold).",
         required=False,
     )
 
@@ -222,8 +217,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         type=str,
         choices=[p.name for p in Remoteness],
         default=DEFAULT_REMOTENESS.name,
-        help="The level of remoteness of the job, (i.e. FULLY_REMOTE) "
-        "Defaults to ANY.",
+        help="The level of remoteness of the job, (i.e. FULLY_REMOTE) Defaults to ANY.",
         required=False,
     )
 
@@ -232,8 +226,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         dest="search.max_listing_days",
         type=int,
         default=DEFAULT_MAX_LISTING_DAYS,
-        help="The maximum number of days-old a job can be. (i.e pass 30 to "
-        "filter out jobs older than a month).",
+        help="The maximum number of days-old a job can be. (i.e pass 30 to filter out jobs older than a month).",
         required=False,
     )
 
@@ -241,8 +234,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "--similar-results",
         dest="search.similar_results",
         action="store_true",
-        help="Return more general results from search query "
-        "(NOTE: this is only available for Indeed provider).",
+        help="Return more general results from search query (NOTE: this is only available for Indeed provider).",
     )
 
     # Proxy stuff. TODO: way to tell argparse if proxy is seen all are req'd?
@@ -279,8 +271,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "--converging",
         dest="delay.converging",
         action="store_true",
-        help="Use converging random delay. NOTE: this is intended to be used "
-        "with --random",
+        help="Use converging random delay. NOTE: this is intended to be used with --random",
     )
 
     delay_group.add_argument(
@@ -333,9 +324,7 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
 
         # Validate the config passed via YAML
         if not SettingsValidator.validate(config):
-            raise ValueError(
-                f"Invalid Config settings yaml:\n{SettingsValidator.errors}"
-            )
+            raise ValueError(f"Invalid Config settings yaml:\n{SettingsValidator.errors}")
 
     else:
         # Handle CLI arguments for paths, possibly overwriting YAML

@@ -1,8 +1,8 @@
 """String-like resouces and other constants are initialized here."""
 
 import datetime
-from pathlib import Path
 import string
+from pathlib import Path
 
 # CSV header for output CSV. do not remove anything or you'll break usr's CSV's
 # TODO: need to add short and long descriptions (breaking change)
@@ -41,11 +41,7 @@ def load_user_agents(file_path):
     """Loads user agent strings from a file, skipping comments and blank lines."""
     try:
         with open(file_path, "r") as file:
-            return [
-                line.strip()
-                for line in file
-                if line.strip() and not line.startswith("#")
-            ]
+            return [line.strip() for line in file if line.strip() and not line.startswith("#")]
     except FileNotFoundError:
         print(f"File {file_path} not found.")
         return []

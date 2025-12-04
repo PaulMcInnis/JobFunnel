@@ -192,10 +192,7 @@ def test_build_config_dict_invalid_settings(argv, exception):
     with pytest.raises(exception) as e:
         cfg_dict = build_config_dict(args)
         assert cfg_dict is not None  # TODO: Remove after test is fixed
-    assert (
-        str(e.value) == "Invalid Config settings yaml:\n"
-        "{'search': [{'radius': ['must be of integer type']}]}"
-    )
+    assert str(e.value) == "Invalid Config settings yaml:\n{'search': [{'radius': ['must be of integer type']}]}"
 
 
 @pytest.mark.parametrize("argv", load_args)

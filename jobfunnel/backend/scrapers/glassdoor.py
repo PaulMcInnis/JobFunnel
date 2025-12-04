@@ -1,8 +1,8 @@
 """Scraper for www.glassdoor.X using Playwright browser automation"""
 
 import json
-from math import ceil
 import re
+from math import ceil
 from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
@@ -41,9 +41,7 @@ GLASSDOOR_RADIUS_MAP = {
 class BaseGlassDoorScraper(BaseScraper):
     """Scrapes jobs from www.glassdoor.X using Playwright for browser automation"""
 
-    def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
-    ) -> None:
+    def __init__(self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter) -> None:
         """Init that contains glassdoor specific stuff"""
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
@@ -109,9 +107,7 @@ class BaseGlassDoorScraper(BaseScraper):
             return False
 
         # Find and fill the keyword search box
-        keyword_input = page.query_selector(
-            'input[id*="keyword"], input[name*="keyword"], input[placeholder*="Job"]'
-        )
+        keyword_input = page.query_selector('input[id*="keyword"], input[name*="keyword"], input[placeholder*="Job"]')
         if keyword_input:
             keyword_input.click()
             page.wait_for_timeout(300)
@@ -134,9 +130,7 @@ class BaseGlassDoorScraper(BaseScraper):
         page.wait_for_timeout(500)
 
         # Click the search button
-        search_btn = page.query_selector(
-            'button[type="submit"], button[data-test="search-bar-submit"]'
-        )
+        search_btn = page.query_selector('button[type="submit"], button[data-test="search-bar-submit"]')
         if search_btn:
             search_btn.click()
             self.logger.info("Clicked search button")
@@ -193,9 +187,7 @@ class BaseGlassDoorScraper(BaseScraper):
 
                 # Scrape remaining pages by clicking Next button
                 for page_num in range(1, num_pages):
-                    next_btn = page.query_selector(
-                        'button[data-test="pagination-next"]'
-                    )
+                    next_btn = page.query_selector('button[data-test="pagination-next"]')
                     if not next_btn:
                         next_btn = page.query_selector('a[data-test="pagination-next"]')
                     if not next_btn:
@@ -244,9 +236,7 @@ class BaseGlassDoorScraper(BaseScraper):
             self.logger.warning("Error getting page count: %s", e)
             return 1
 
-    def _extract_jobs_from_page(
-        self, page: Page, job_soup_list: List[BeautifulSoup]
-    ) -> None:
+    def _extract_jobs_from_page(self, page: Page, job_soup_list: List[BeautifulSoup]) -> None:
         """Extract job data from a loaded Glassdoor search results page."""
         page_content = page.content()
         soup = BeautifulSoup(page_content, self.config.bs4_parser)
@@ -262,9 +252,7 @@ class BaseGlassDoorScraper(BaseScraper):
                     if job_listings:
                         for job in job_listings:
                             job_soup_list.append(BeautifulSoup(json.dumps(job), "lxml"))
-                        self.logger.info(
-                            "Extracted %d jobs from page", len(job_listings)
-                        )
+                        self.logger.info("Extracted %d jobs from page", len(job_listings))
                         return
             except (json.JSONDecodeError, TypeError):
                 continue
@@ -334,9 +322,7 @@ class BaseGlassDoorScraper(BaseScraper):
             return job.get("locationName", "")
 
         elif parameter == JobField.KEY_ID:
-            return str(
-                job.get("listingId") or job.get("jobListingId") or job.get("id", "")
-            )
+            return str(job.get("listingId") or job.get("jobListingId") or job.get("id", ""))
 
         elif parameter == JobField.URL:
             job_url = job.get("jobViewUrl") or job.get("seoJobLink") or job.get("url")
@@ -474,9 +460,7 @@ class GlassDoorMetricRadius:
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
-class GlassDoorScraperCANEng(
-    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseCANEngScraper
-):
+class GlassDoorScraperCANEng(GlassDoorMetricRadius, BaseGlassDoorScraper, BaseCANEngScraper):
     """Scrapes jobs from www.glassdoor.ca"""
 
 
@@ -502,7 +486,5 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
         return GLASSDOOR_RADIUS_MAP[radius]
 
 
-class GlassDoorScraperUKEng(
-    GlassDoorMetricRadius, BaseGlassDoorScraper, BaseUKEngScraper
-):
+class GlassDoorScraperUKEng(GlassDoorMetricRadius, BaseGlassDoorScraper, BaseUKEngScraper):
     """Scrapes jobs from www.glassdoor.co.uk"""

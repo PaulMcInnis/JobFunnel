@@ -1,7 +1,5 @@
 import os
 
-import pytest  # noqa=F401 - TODO: Remove this once we have tests
-
 
 # TODO: This should be a fixture. For now it is not because fixtures cannot be easily called as regular functions.
 def get_data_path():

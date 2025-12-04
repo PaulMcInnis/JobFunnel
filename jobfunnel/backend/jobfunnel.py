@@ -3,10 +3,10 @@ Paul McInnis 2020
 """
 
 import csv
-from datetime import date, datetime, timedelta
 import json
 import os
 import pickle
+from datetime import date, datetime, timedelta
 from time import time
 from typing import Dict
 
@@ -45,16 +45,12 @@ class JobFunnel(Logger):
         # Open a session with/out a proxy configured
         self.session = Session()
         if self.config.proxy_config:
-            self.session.proxies = {
-                self.config.proxy_config.protocol: self.config.proxy_config.url
-            }
+            self.session.proxies = {self.config.proxy_config.protocol: self.config.proxy_config.url}
 
         # Read the user's block list
         user_block_jobs_dict = {}  # type: Dict[str, str]
         if os.path.isfile(self.config.user_block_list_file):
-            user_block_jobs_dict = json.load(
-                open(self.config.user_block_list_file, "r")
-            )
+            user_block_jobs_dict = json.load(open(self.config.user_block_list_file, "r"))
 
         # Read the user's duplicate jobs list (from TFIDF)
         duplicate_jobs_dict = {}  # type: Dict[str, str]
@@ -110,9 +106,7 @@ class JobFunnel(Logger):
             if os.path.exists(self.daily_cache_file):
                 scraped_jobs_dict = self.load_cache(self.daily_cache_file)
             else:
-                self.logger.warning(
-                    "No incoming jobs, missing cache: %s", self.daily_cache_file
-                )
+                self.logger.warning("No incoming jobs, missing cache: %s", self.daily_cache_file)
         else:
             # Scrape new jobs from all our configured providers and cache them
             scraped_jobs_dict = self.scrape()
@@ -121,9 +115,7 @@ class JobFunnel(Logger):
         # NOTE: we do not remove duplicates here as these may trigger updates
         if scraped_jobs_dict:
             self.write_cache(scraped_jobs_dict)
-            scraped_jobs_dict = self.job_filter.filter(
-                scraped_jobs_dict, remove_existing_duplicate_keys=False
-            )
+            scraped_jobs_dict = self.job_filter.filter(scraped_jobs_dict, remove_existing_duplicate_keys=False)
         if self.master_jobs_dict:
             self.master_jobs_dict = self.job_filter.filter(
                 self.master_jobs_dict,
@@ -147,9 +139,7 @@ class JobFunnel(Logger):
                     # NOTE: original and duplicate have same key id for these.
                     # When it's EXISTING_TFIDF, we can't set match.duplicate
                     # because it is only partially stored in the block list JSON
-                    if match.original.key_id and (
-                        match.original.key_id != match.duplicate.key_id
-                    ):
+                    if match.original.key_id and (match.original.key_id != match.duplicate.key_id):
                         raise ValueError(
                             "Found duplicate by key-id, but keys dont match! "
                             f"{match.original.key_id}, {match.duplicate.key_id}"
@@ -161,8 +151,7 @@ class JobFunnel(Logger):
                     )
 
                     self.logger.debug(
-                        "Identified duplicate %s by key-id and %s original job "
-                        "with its data.",
+                        "Identified duplicate %s by key-id and %s original job with its data.",
                         match.duplicate.key_id,
                         "updated older" if upd else "did not update",
                     )
@@ -174,8 +163,7 @@ class JobFunnel(Logger):
                         scraped_jobs_dict.pop(match.duplicate.key_id)
                     )
                     self.logger.debug(
-                        "Identified %s as a duplicate by description and %s "
-                        "original job %s with its data.",
+                        "Identified %s as a duplicate by description and %s original job %s with its data.",
                         match.duplicate.key_id,
                         "updated older" if upd else "did not update",
                         match.original.key_id,
@@ -193,9 +181,7 @@ class JobFunnel(Logger):
         if self.master_jobs_dict:
             # Write our updated jobs out (if none, dont make the file at all)
             self.write_master_csv(self.master_jobs_dict)
-            self.logger.info(
-                "Done. View your current jobs in %s", self.config.master_csv_file
-            )
+            self.logger.info("Done. View your current jobs in %s", self.config.master_csv_file)
 
         else:
             # We got no new, unique jobs. This is normal if loading scrape
@@ -233,9 +219,7 @@ class JobFunnel(Logger):
             try:
                 incoming_jobs_dict = scraper.scrape()
             except Exception as e:
-                self.logger.error(
-                    f"Failed to scrape jobs for {scraper_cls.__name__}: {e}"
-                )
+                self.logger.error(f"Failed to scrape jobs for {scraper_cls.__name__}: {e}")
 
             # Ensure we have no duplicates between our scrapers by key-id
             # (since we are updating the jobs dict with results)
@@ -269,9 +253,7 @@ class JobFunnel(Logger):
         all_jobs_dict = {}  # type: Dict[str, Job]
         for file in os.listdir(self.config.cache_folder):
             if ".pkl" in file:
-                all_jobs_dict.update(
-                    self.load_cache(os.path.join(self.config.cache_folder, file))
-                )
+                all_jobs_dict.update(self.load_cache(os.path.join(self.config.cache_folder, file)))
         self.write_master_csv(self.job_filter.filter(all_jobs_dict))
 
     def load_cache(self, cache_file: str) -> Dict[str, Job]:
@@ -291,9 +273,7 @@ class JobFunnel(Logger):
             Dict[str, Job]: [description]
         """
         if not os.path.exists(cache_file):
-            raise FileNotFoundError(
-                f"{cache_file} not found! Have you scraped any jobs today?"
-            )
+            raise FileNotFoundError(f"{cache_file} not found! Have you scraped any jobs today?")
         else:
             cache_dict = pickle.load(open(cache_file, "rb"))
             jobs_dict = cache_dict["jobs_dict"]
@@ -301,8 +281,7 @@ class JobFunnel(Logger):
             if version != __version__:
                 # NOTE: this may be an error in the future
                 self.logger.warning(
-                    "Loaded jobs cache has version mismatch! "
-                    "cache version: %s, current version: %s",
+                    "Loaded jobs cache has version mismatch! cache version: %s, current version: %s",
                     version,
                     __version__,
                 )
@@ -312,8 +291,7 @@ class JobFunnel(Logger):
                 cache_file,
             )
             self.logger.debug(
-                "NOTE: you may see many duplicate IDs detected if these jobs "
-                "exist in your master CSV already."
+                "NOTE: you may see many duplicate IDs detected if these jobs exist in your master CSV already."
             )
             return jobs_dict
 
@@ -348,9 +326,7 @@ class JobFunnel(Logger):
             Dict[str, Job]: unique Job objects in the CSV
         """
         jobs_dict = {}  # type: Dict[str, Job]
-        with open(
-            self.config.master_csv_file, "r", encoding="utf8", errors="ignore"
-        ) as csvfile:
+        with open(self.config.master_csv_file, "r", encoding="utf8", errors="ignore") as csvfile:
             for row in csv.DictReader(csvfile):
                 # NOTE: we are doing legacy support here with 'blurb' etc.
                 # In the future we should have an actual short description
@@ -381,9 +357,7 @@ class JobFunnel(Logger):
                             status = p_status
                             break
                 if not status:
-                    self.logger.warning(
-                        "Unknown status %s, setting to UNKNOWN", status_str
-                    )
+                    self.logger.warning("Unknown status %s, setting to UNKNOWN", status_str)
                     status = JobStatus.UNKNOWN
 
                 # NOTE: this is for legacy support:
@@ -395,9 +369,7 @@ class JobFunnel(Logger):
                             locale = p_locale
                             break
                 if not locale:
-                    self.logger.warning(
-                        "Unknown locale %s, setting to UNKNOWN", locale_str
-                    )
+                    self.logger.warning("Unknown locale %s, setting to UNKNOWN", locale_str)
                     locale = locale.UNKNOWN
 
                 # Check for remoteness (handle if not present for legacy)
@@ -406,9 +378,7 @@ class JobFunnel(Logger):
                     remote_str = row["remoteness"].strip()
                     remoteness = Remoteness[remote_str]
                 if not locale:
-                    self.logger.warning(
-                        "Unknown locale %s, setting to UNKNOWN", locale_str
-                    )
+                    self.logger.warning("Unknown locale %s, setting to UNKNOWN", locale_str)
                     locale = locale.UNKNOWN
 
                 # Check for wage (handle if not present for legacy
@@ -481,8 +451,7 @@ class JobFunnel(Logger):
                 self.master_jobs_dict = self.read_master_csv()
             else:
                 raise FileNotFoundError(
-                    f"Cannot update {self.config.user_block_list_file} without "
-                    f"{self.config.master_csv_file}"
+                    f"Cannot update {self.config.user_block_list_file} without {self.config.master_csv_file}"
                 )
 
         # Add jobs from csv that need to be filtered away, if any + update self
@@ -492,23 +461,18 @@ class JobFunnel(Logger):
                 if job.key_id not in self.job_filter.user_block_jobs_dict:
                     n_jobs_added += 1
                     self.job_filter.user_block_jobs_dict[job.key_id] = job.as_json_entry
-                    self.logger.debug(
-                        "Added %s to %s", job.key_id, self.config.user_block_list_file
-                    )
+                    self.logger.debug("Added %s to %s", job.key_id, self.config.user_block_list_file)
                 else:
                     # This could happen if we are somehow mishandling block list
                     self.logger.warning(
-                        "Job %s has been set to a removable status and removed "
-                        "from master CSV multiple times.",
+                        "Job %s has been set to a removable status and removed from master CSV multiple times.",
                         job.key_id,
                     )
 
         if n_jobs_added:
             # Write out complete list with any additions from the masterlist
             # NOTE: we use indent=4 so that it stays human-readable.
-            with open(
-                self.config.user_block_list_file, "w", encoding="utf8"
-            ) as outfile:
+            with open(self.config.user_block_list_file, "w", encoding="utf8") as outfile:
                 outfile.write(
                     json.dumps(
                         self.job_filter.user_block_jobs_dict,
@@ -534,9 +498,7 @@ class JobFunnel(Logger):
             if self.job_filter.duplicate_jobs_dict:
                 # Write out the changes NOTE: indent=4 is for human-readability
                 self.logger.debug("Extending existing duplicate jobs dict.")
-                with open(
-                    self.config.duplicates_list_file, "w", encoding="utf8"
-                ) as outfile:
+                with open(self.config.duplicates_list_file, "w", encoding="utf8") as outfile:
                     outfile.write(
                         json.dumps(
                             self.job_filter.duplicate_jobs_dict,
@@ -547,9 +509,7 @@ class JobFunnel(Logger):
                         )
                     )
             else:
-                self.logger.debug(
-                    "Current duplicate jobs dict is empty, no updates written."
-                )
+                self.logger.debug("Current duplicate jobs dict is empty, no updates written.")
         else:
             self.logger.warning(
                 "Duplicates will not be saved, no duplicates list "

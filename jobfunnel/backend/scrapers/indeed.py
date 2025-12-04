@@ -1,8 +1,8 @@
 """Scraper designed to get jobs from www.indeed.X using Playwright browser automation"""
 
 import json
-from math import ceil
 import re
+from math import ceil
 from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
@@ -50,9 +50,7 @@ def format_taxonomy_attributes(taxonomy_attributes):
         attributes = category.get("attributes", [])
         if attributes:
             attribute_labels = [attr["label"] for attr in attributes]
-            formatted_str = (
-                f"{label.replace('-', ' ').capitalize()}: {', '.join(attribute_labels)}"
-            )
+            formatted_str = f"{label.replace('-', ' ').capitalize()}: {', '.join(attribute_labels)}"
             result.append(formatted_str)
     return result
 
@@ -60,9 +58,7 @@ def format_taxonomy_attributes(taxonomy_attributes):
 class BaseIndeedScraper(BaseScraper):
     """Scrapes jobs from www.indeed.X using Playwright for browser automation"""
 
-    def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
-    ) -> None:
+    def __init__(self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter) -> None:
         """Init that contains indeed specific stuff"""
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
@@ -142,9 +138,7 @@ class BaseIndeedScraper(BaseScraper):
 
         # Check if we got redirected away from search (CAPTCHA or homepage)
         if "/jobs?" not in current_url or "verification" in page_content.lower():
-            self.logger.info(
-                "Not on search results (redirected). Re-navigating to search..."
-            )
+            self.logger.info("Not on search results (redirected). Re-navigating to search...")
             page.goto(search_url, timeout=60000)
             page.wait_for_timeout(3000)
 
@@ -204,9 +198,7 @@ class BaseIndeedScraper(BaseScraper):
         page.wait_for_timeout(500)
 
         # Click the search button
-        search_btn = page.query_selector(
-            'button[type="submit"], button:has-text("Find jobs")'
-        )
+        search_btn = page.query_selector('button[type="submit"], button:has-text("Find jobs")')
         if search_btn:
             search_btn.click()
             self.logger.info("Clicked search button")
@@ -264,9 +256,7 @@ class BaseIndeedScraper(BaseScraper):
 
                 # Scrape remaining pages by clicking Next button
                 for page_num in range(1, num_pages):
-                    next_btn = page.query_selector(
-                        'a[data-testid="pagination-page-next"]'
-                    )
+                    next_btn = page.query_selector('a[data-testid="pagination-page-next"]')
                     if not next_btn:
                         next_btn = page.query_selector('a[aria-label="Next Page"]')
                     if not next_btn:
@@ -314,9 +304,7 @@ class BaseIndeedScraper(BaseScraper):
             self.logger.warning("Error getting page count: %s", e)
             return 1
 
-    def _extract_jobs_from_page(
-        self, page: Page, job_soup_list: List[BeautifulSoup]
-    ) -> None:
+    def _extract_jobs_from_page(self, page: Page, job_soup_list: List[BeautifulSoup]) -> None:
         """Extract job data from a loaded Indeed search results page."""
         page_content = page.content()
         soup = BeautifulSoup(page_content, self.config.bs4_parser)
@@ -335,18 +323,12 @@ class BaseIndeedScraper(BaseScraper):
                     try:
                         json_data = json.loads(json_regex.group(1))
                         job_data = (
-                            json_data.get("metaData", {})
-                            .get("mosaicProviderJobCardsModel", {})
-                            .get("results", [])
+                            json_data.get("metaData", {}).get("mosaicProviderJobCardsModel", {}).get("results", [])
                         )
                         if job_data:
                             for job in job_data:
-                                job_soup_list.append(
-                                    BeautifulSoup(json.dumps(job), "lxml")
-                                )
-                            self.logger.info(
-                                "Extracted %d jobs from page", len(job_data)
-                            )
+                                job_soup_list.append(BeautifulSoup(json.dumps(job), "lxml"))
+                            self.logger.info("Extracted %d jobs from page", len(job_data))
                             return
                     except json.JSONDecodeError as e:
                         self.logger.warning("Error decoding mosaic JSON: %s", e)
@@ -397,21 +379,12 @@ class BaseIndeedScraper(BaseScraper):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField."""
         if parameter == JobField.URL:
-            job.url = (
-                f"https://www.indeed.{self.config.search_config.domain}/"
-                f"viewjob?jk={job.key_id}"
-            )
+            job.url = f"https://www.indeed.{self.config.search_config.domain}/viewjob?jk={job.key_id}"
 
         elif parameter == JobField.REMOTENESS:
-            remoteness = [
-                tag.split(":")[-1].strip().lower()
-                for tag in job.tags
-                if "remote" in tag.lower()
-            ]
+            remoteness = [tag.split(":")[-1].strip().lower() for tag in job.tags if "remote" in tag.lower()]
             if remoteness:
-                job.remoteness = REMOTENESS_STR_MAP.get(
-                    remoteness[0], Remoteness.UNKNOWN
-                )
+                job.remoteness = REMOTENESS_STR_MAP.get(remoteness[0], Remoteness.UNKNOWN)
 
         elif parameter == JobField.RAW:
             # Skip fetching raw page to avoid extra requests

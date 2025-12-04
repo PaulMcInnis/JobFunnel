@@ -79,9 +79,7 @@ def test_search_config_init(mocker, locale, domain, exp_domain):
         )
     ],
 )
-def test_search_config_validate_invalid_province(
-    keywords, province_or_state, locale, providers, in_city
-):
+def test_search_config_validate_invalid_province(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     with pytest.raises(AssertionError, match="Province/State not set"):
@@ -92,9 +90,7 @@ def test_search_config_validate_invalid_province(
     "keywords, province_or_state, locale, providers, in_city",
     [(["Python", "Space"], "Texas", Locale.USA_ENGLISH, [enums.Provider.INDEED], None)],
 )
-def test_search_config_validate_invalid_city(
-    keywords, province_or_state, locale, providers, in_city
-):
+def test_search_config_validate_invalid_city(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     with pytest.raises(AssertionError, match="City not set"):
@@ -105,12 +101,8 @@ def test_search_config_validate_invalid_city(
     "keywords, province_or_state,  locale, providers, in_city,  in_domain",
     [(["Python", "Space"], "Texas", None, [enums.Provider.INDEED], "Austin", "com")],
 )
-def test_search_config_validate_invalid_locale(
-    keywords, province_or_state, locale, providers, in_city, in_domain
-):
-    cfg = SearchConfig(
-        keywords, province_or_state, locale, providers, city=in_city, domain=in_domain
-    )
+def test_search_config_validate_invalid_locale(keywords, province_or_state, locale, providers, in_city, in_domain):
+    cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city, domain=in_domain)
 
     with pytest.raises(AssertionError, match="Locale not set"):
         cfg.validate()
@@ -120,9 +112,7 @@ def test_search_config_validate_invalid_locale(
     "keywords, province_or_state, locale, providers, in_city",
     [(["Ice Cream", "Spiderman"], "Texas", Locale.USA_ENGLISH, [], "Austin")],
 )
-def test_search_config_validate_invalid_providers(
-    keywords, province_or_state, locale, providers, in_city
-):
+def test_search_config_validate_invalid_providers(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     with pytest.raises(AssertionError, match="Providers not set"):
@@ -133,9 +123,7 @@ def test_search_config_validate_invalid_providers(
     "keywords, province_or_state, locale, providers, in_city",
     [([], "Texas", Locale.USA_ENGLISH, [enums.Provider.INDEED], "Austin")],
 )
-def test_search_config_validate_invalid_keywords(
-    keywords, province_or_state, locale, providers, in_city
-):
+def test_search_config_validate_invalid_keywords(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     with pytest.raises(AssertionError, match="Keywords not set"):
@@ -183,9 +171,7 @@ def test_search_config_validate_invalid_max_posting_days(
         )
     ],
 )
-def test_search_config_validate_domain(
-    keywords, province_or_state, locale, providers, in_city
-):
+def test_search_config_validate_domain(keywords, province_or_state, locale, providers, in_city):
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     # We have to force an invalid domain because the constructor ensures that it is valid.
@@ -208,9 +194,7 @@ def test_search_config_validate_domain(
         )
     ],
 )
-def test_search_config_validate_remoteness(
-    keywords, province_or_state, locale, providers, in_city, in_remoteness
-):
+def test_search_config_validate_remoteness(keywords, province_or_state, locale, providers, in_city, in_remoteness):
     cfg = SearchConfig(
         keywords,
         province_or_state,

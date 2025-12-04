@@ -2,10 +2,10 @@
 Paul McInnis 2020
 """
 
+import random
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Lock, Manager
-import random
 from time import sleep
 from typing import Any, Dict, List, Optional
 
@@ -36,9 +36,7 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 class BaseScraper(ABC, Logger):
     """Base scraper object, for scraping and filtering Jobs from a provider"""
 
-    def __init__(
-        self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
-    ) -> None:
+    def __init__(self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter) -> None:
         """Init
 
         Args:
@@ -82,16 +80,8 @@ class BaseScraper(ABC, Logger):
 
         # Construct actions list which respects priority for scraping Jobs
         self._actions_list = [(True, f) for f in self.job_get_fields]
-        self._actions_list += [
-            (False, f)
-            for f in self.job_set_fields
-            if f in self.high_priority_get_set_fields
-        ]
-        self._actions_list += [
-            (False, f)
-            for f in self.job_set_fields
-            if f not in self.high_priority_get_set_fields
-        ]
+        self._actions_list += [(False, f) for f in self.job_set_fields if f in self.high_priority_get_set_fields]
+        self._actions_list += [(False, f) for f in self.job_set_fields if f not in self.high_priority_get_set_fields]
 
     @property
     def user_agent(self) -> str:
@@ -209,10 +199,7 @@ class BaseScraper(ABC, Logger):
         try:
             job_soups = self.get_job_soups_from_search_result_listings()
         except Exception as err:
-            raise ValueError(
-                "Unable to extract jobs from initial search result page:\n\t"
-                f"{str(err)}"
-            )
+            raise ValueError(f"Unable to extract jobs from initial search result page:\n\t{str(err)}")
         n_soups = len(job_soups)
         self.logger.info("Scraped %s job listings from search results pages", n_soups)
 
@@ -264,9 +251,7 @@ class BaseScraper(ABC, Logger):
         return jobs_dict
 
     # pylint: disable=no-member
-    def scrape_job(
-        self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Lock] = None
-    ) -> Optional[Job]:
+    def scrape_job(self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Lock] = None) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
             job_soup (BeautifulSoup): This is a soup object that your get/set
@@ -304,9 +289,7 @@ class BaseScraper(ABC, Logger):
                         job.key_id,
                     )
                 else:
-                    self.logger.debug(
-                        "Cancelled scraping of %s, failed JobFilter", job.key_id
-                    )
+                    self.logger.debug("Cancelled scraping of %s, failed JobFilter", job.key_id)
                     invalid_job = True
                     break
 
@@ -325,9 +308,7 @@ class BaseScraper(ABC, Logger):
                 else:
                     if not job:
                         # Build initial job object + populate all the job
-                        job = Job(
-                            **{k.name.lower(): v for k, v in job_init_kwargs.items()}
-                        )
+                        job = Job(**{k.name.lower(): v for k, v in job_init_kwargs.items()})
                     self.set(field, job, job_soup)
 
             except Exception as err:
@@ -338,8 +319,7 @@ class BaseScraper(ABC, Logger):
                 url_str = job.url if job else ""
                 if field in self.min_required_job_fields:
                     raise ValueError(
-                        "Unable to scrape minimum-required job field: "
-                        f"{field.name} Got error:{err}. {url_str}"
+                        f"Unable to scrape minimum-required job field: {field.name} Got error:{err}. {url_str}"
                     )
                 else:
                     # Crash out gracefully so we can continue scraping.

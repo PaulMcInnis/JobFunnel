@@ -2,13 +2,10 @@
 *
 
 # Allow Prettier to format specific file types
-!*.js
-!*.ts
-!*.css
-!*.html
 !*.json
 !*.yaml
 !*.yml
+!*.md
 
 # Allow subdirectories too
 !*/

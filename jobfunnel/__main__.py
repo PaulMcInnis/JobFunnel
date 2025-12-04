@@ -1,5 +1,6 @@
 #!python
 """Builds a config from CLI, runs desired scrapers and updates JSON + CSV"""
+
 import os
 import sys
 
@@ -27,9 +28,7 @@ def main():
         job_funnel.run()
 
     # Return value for Travis CI
-    if len(job_funnel.master_jobs_dict.keys()) > 1 and os.path.exists(
-        funnel_cfg.master_csv_file
-    ):
+    if len(job_funnel.master_jobs_dict.keys()) > 1 and os.path.exists(funnel_cfg.master_csv_file):
         return 0
     else:
         return 1

@@ -3,13 +3,10 @@
 
 set -e
 
-echo "Running isort..."
-uv run isort jobfunnel/ tests/
+echo "Running ruff check..."
+uv run ruff check --fix jobfunnel/ tests/
 
-echo "Running black..."
-uv run black jobfunnel/ tests/
-
-echo "Running flake8..."
-uv run flake8 jobfunnel/ tests/ || true
+echo "Running ruff format..."
+uv run ruff format jobfunnel/ tests/
 
 echo "Done!"

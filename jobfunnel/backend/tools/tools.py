@@ -1,10 +1,10 @@
 """Assorted tools for all aspects of funnelin' that don't fit elsewhere"""
 
-from datetime import date, datetime, timedelta
 import logging
 import re
 import subprocess
 import sys
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from dateutil.relativedelta import relativedelta
@@ -34,9 +34,7 @@ RECENT_REGEX_A = re.compile(r"[tT]oday|[jJ]ust [pP]osted")
 RECENT_REGEX_B = re.compile(r"[yY]esterday")
 
 
-def get_logger(
-    logger_name: str, level: int, file_path: str, message_format: str
-) -> logging.Logger:
+def get_logger(logger_name: str, level: int, file_path: str, message_format: str) -> logging.Logger:
     """Initialize and return a logger
     NOTE: you can use this as a method to add logging to any function, but if
         you want to use this within a class, just inherit Logger class.
@@ -77,9 +75,7 @@ class Logger:
                 message to log. Defaults to a complete message with all info.
         """
         logger_name = logger_name or self.__class__.__name__
-        message_format = message_format or (
-            f"[%(asctime)s] [%(levelname)s] {logger_name}: %(message)s"
-        )
+        message_format = message_format or (f"[%(asctime)s] [%(levelname)s] {logger_name}: %(message)s")
         self.logger = get_logger(
             logger_name=logger_name,
             level=level,

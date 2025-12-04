@@ -94,14 +94,10 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         # random.uniform(a, b) a = lower bound, b = upper bound
         if delay_config.converge:  # checks if converging delay is True
             # delay_vals = lower bound, delay = upper bound
-            durations = [
-                round(uniform(x, delay_config.max_duration), 3) for x in delay_vals
-            ]
+            durations = [round(uniform(x, delay_config.max_duration), 3) for x in delay_vals]
         else:
             # lb = lower bounds, delay_vals = upper bound
-            durations = [
-                round(uniform(delay_config.min_duration, x), 3) for x in delay_vals
-            ]
+            durations = [round(uniform(delay_config.min_duration, x), 3) for x in delay_vals]
 
     else:
         durations = [round(i, 3) for i in delay_vals]
