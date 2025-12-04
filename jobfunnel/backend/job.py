@@ -133,7 +133,7 @@ class Job:
         Returns:
             True if we updated self with job, False if we didn't
         """
-        if job.post_date >= self.post_date:
+        if job.post_date is not None and self.post_date is not None and job.post_date >= self.post_date:
             # Update all attrs other than status (which user can set).
             self.company = deepcopy(job.company)
             self.location = deepcopy(job.location)
@@ -168,6 +168,8 @@ class Job:
             True if it's older than number of days
             False if it's fresh enough to keep
         """
+        if self.post_date is None:
+            return False
         return self.post_date < max_age
 
     @property
@@ -187,16 +189,16 @@ class Job:
                         self.title,
                         self.company,
                         self.location,
-                        self.post_date.strftime("%Y-%m-%d"),
+                        self.post_date.strftime("%Y-%m-%d") if self.post_date else "",
                         self.description,
                         "\n".join(self.tags),
                         self.url,
-                        self.key_id,
+                        self.key_id or "",
                         self.provider,
                         self.query,
-                        self.locale.name,
-                        self.wage,
-                        self.remoteness.name,
+                        self.locale.name if self.locale else "",
+                        self.wage or "",
+                        self.remoteness.name if self.remoteness else "",
                     ],
                 )
             ]
@@ -211,7 +213,7 @@ class Job:
         return {
             "title": self.title,
             "company": self.company,
-            "post_date": self.post_date.strftime("%Y-%m-%d"),
+            "post_date": self.post_date.strftime("%Y-%m-%d") if self.post_date else "",
             "description": (
                 (self.description[:MAX_BLOCK_LIST_DESC_CHARS] + "..")
                 if len(self.description) > MAX_BLOCK_LIST_DESC_CHARS

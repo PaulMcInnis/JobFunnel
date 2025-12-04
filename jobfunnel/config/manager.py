@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional, Type
 
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
 from jobfunnel.config.base import BaseConfig
@@ -11,10 +11,8 @@ from jobfunnel.config.proxy import ProxyConfig
 from jobfunnel.config.search import SearchConfig
 from jobfunnel.resources import BS4_PARSER
 
-# pylint: disable=using-constant-test,unused-import
-if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+if TYPE_CHECKING:
     from jobfunnel.backend.scrapers.base import BaseScraper
-# pylint: enable=using-constant-test,unused-import
 
 
 class JobFunnelConfigManager(BaseConfig):
@@ -82,9 +80,9 @@ class JobFunnelConfigManager(BaseConfig):
         self.proxy_config = proxy_config
 
     @property
-    def scrapers(self) -> List["BaseScraper"]:
+    def scrapers(self) -> List[Type["BaseScraper"]]:
         """All the compatible scrapers for the provider_name"""
-        scrapers = []  # type: List[BaseScraper]
+        scrapers: List[Type["BaseScraper"]] = []
         for pr in self.search_config.providers:
             if pr in SCRAPER_FROM_LOCALE:
                 scrapers.append(SCRAPER_FROM_LOCALE[pr][self.search_config.locale])

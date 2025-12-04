@@ -39,9 +39,9 @@ def _lin_delay(list_len: int, delay: Union[int, float]):
         if isinstance(its, float):
             its = int(ceil(its))
         # create list of x values based on scrape list size
-        delays = [*range(list_len)]
+        delays: List[float] = [float(x) for x in range(list_len)]
         delays[0:its] = [x / 5 for x in delays[0:its]]
-        delays[its:] = [delay] * (len(delays) - its)
+        delays[its:] = [float(delay)] * (len(delays) - its)
         return delays
 
 
@@ -87,7 +87,7 @@ def calculate_delays(list_len: int, delay_config: DelayConfig) -> List[float]:
         for i, n in enumerate(delay_vals):
             if n > delay_config.min_duration:
                 break
-            delay_vals[i] = delay_config.min_duration
+            delay_vals[i] = float(delay_config.min_duration)
 
     # Outputs final list of delays rounded up to 3 decimal places
     if delay_config.random:  # check if random delay was specified

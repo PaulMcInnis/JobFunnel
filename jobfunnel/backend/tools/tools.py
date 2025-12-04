@@ -34,7 +34,7 @@ RECENT_REGEX_A = re.compile(r"[tT]oday|[jJ]ust [pP]osted")
 RECENT_REGEX_B = re.compile(r"[yY]esterday")
 
 
-def get_logger(logger_name: str, level: int, file_path: str, message_format: str) -> logging.Logger:
+def get_logger(logger_name: str, level: int, file_path: Optional[str], message_format: str) -> logging.Logger:
     """Initialize and return a logger
     NOTE: you can use this as a method to add logging to any function, but if
         you want to use this within a class, just inherit Logger class.
@@ -47,9 +47,10 @@ def get_logger(logger_name: str, level: int, file_path: str, message_format: str
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
-    file_handler = logging.FileHandler(file_path)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    if file_path:
+        file_handler = logging.FileHandler(file_path)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
     return logger
 
 

@@ -27,12 +27,13 @@ if TYPE_CHECKING:
 
 MAX_RESULTS_PER_INDEED_PAGE = 15  # Desktop shows ~15 per page
 FULLY_REMOTE_MAGIC_STRING = "&sc=0kf%3Aattr%28DSQF7%29%3B"
-REMOTENESS_TO_QUERY = {
+REMOTENESS_TO_QUERY: Dict[Remoteness, str] = {
     Remoteness.IN_PERSON: "",
     Remoteness.TEMPORARILY_REMOTE: "",
     Remoteness.PARTIALLY_REMOTE: "",
     Remoteness.FULLY_REMOTE: FULLY_REMOTE_MAGIC_STRING,
     Remoteness.ANY: "",
+    Remoteness.UNKNOWN: "",
 }
 REMOTENESS_STR_MAP = {
     "remote": Remoteness.FULLY_REMOTE,
@@ -103,13 +104,16 @@ class BaseIndeedScraper(BaseScraper):
 
     def _get_search_url(self) -> str:
         """Get the indeed search url from SearchTerms"""
+        remoteness = self.config.search_config.remoteness or Remoteness.UNKNOWN
+        city = self.config.search_config.city or ""
+        province_or_state = self.config.search_config.province_or_state or ""
         return "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}{}".format(
             self.config.search_config.domain,
             self.query,
-            self.config.search_config.city.replace(" ", "+"),
-            self.config.search_config.province_or_state.upper(),
+            city.replace(" ", "+"),
+            province_or_state.upper(),
             self._quantize_radius(self.config.search_config.radius),
-            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+            REMOTENESS_TO_QUERY[remoteness],
         )
 
     def _quantize_radius(self, radius: int) -> int:
@@ -379,12 +383,12 @@ class BaseIndeedScraper(BaseScraper):
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
         """Set a single job attribute from a soup object by JobField."""
         if parameter == JobField.URL:
-            job.url = f"https://www.indeed.{self.config.search_config.domain}/viewjob?jk={job.key_id}"
+            job.url = f"https://www.indeed.{self.config.search_config.domain}/viewjob?jk={job.key_id or ''}"
 
         elif parameter == JobField.REMOTENESS:
-            remoteness = [tag.split(":")[-1].strip().lower() for tag in job.tags if "remote" in tag.lower()]
-            if remoteness:
-                job.remoteness = REMOTENESS_STR_MAP.get(remoteness[0], Remoteness.UNKNOWN)
+            remoteness_list = [tag.split(":")[-1].strip().lower() for tag in job.tags if "remote" in tag.lower()]
+            if remoteness_list:
+                job.remoteness = REMOTENESS_STR_MAP.get(remoteness_list[0], Remoteness.UNKNOWN)
 
         elif parameter == JobField.RAW:
             # Skip fetching raw page to avoid extra requests
@@ -407,12 +411,14 @@ class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
 
     def _get_search_url(self) -> str:
         """Get the indeed.co.uk search url."""
+        remoteness = self.config.search_config.remoteness or Remoteness.UNKNOWN
+        city = self.config.search_config.city or ""
         return "https://www.indeed.{}/jobs?q={}&l={}&radius={}{}".format(
             self.config.search_config.domain,
             self.query,
-            self.config.search_config.city.replace(" ", "+"),
+            city.replace(" ", "+"),
             self._quantize_radius(self.config.search_config.radius),
-            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+            REMOTENESS_TO_QUERY[remoteness],
         )
 
 
@@ -421,13 +427,16 @@ class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
 
     def _get_search_url(self) -> str:
         """Get the indeed.fr search url."""
+        remoteness = self.config.search_config.remoteness or Remoteness.UNKNOWN
+        city = self.config.search_config.city or ""
+        province_or_state = self.config.search_config.province_or_state or ""
         return "https://www.indeed.{}/jobs?q={}&l={}+%28{}%29&radius={}{}".format(
             self.config.search_config.domain,
             self.query,
-            self.config.search_config.city.replace(" ", "+"),
-            self.config.search_config.province_or_state.upper(),
+            city.replace(" ", "+"),
+            province_or_state.upper(),
             self._quantize_radius(self.config.search_config.radius),
-            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+            REMOTENESS_TO_QUERY[remoteness],
         )
 
 
@@ -436,10 +445,12 @@ class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
 
     def _get_search_url(self) -> str:
         """Get the de.indeed.com search url."""
+        remoteness = self.config.search_config.remoteness or Remoteness.UNKNOWN
+        city = self.config.search_config.city or ""
         return "https://{}.indeed.com/jobs?q={}&l={}&radius={}{}".format(
             self.config.search_config.domain,
             self.query,
-            self.config.search_config.city.replace(" ", "+"),
+            city.replace(" ", "+"),
             self._quantize_radius(self.config.search_config.radius),
-            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+            REMOTENESS_TO_QUERY[remoteness],
         )

@@ -8,7 +8,10 @@ import os
 import pickle
 from datetime import date, datetime, timedelta
 from time import time
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
+
+if TYPE_CHECKING:
+    pass
 
 from requests import Session
 
@@ -37,7 +40,7 @@ class JobFunnel(Logger):
             config (JobFunnelConfigManager): config object containing paths etc.
         """
         config.validate()  # NOTE: this ensures log file path exists
-        super().__init__(level=config.log_level, file_path=config.log_file)
+        super().__init__(level=config.log_level or 0, file_path=config.log_file)
         self.config = config
         self.__date_string = date.today().strftime("%Y-%m-%d")
         self.master_jobs_dict = {}  # type: Dict[str, Job]
@@ -48,12 +51,12 @@ class JobFunnel(Logger):
             self.session.proxies = {self.config.proxy_config.protocol: self.config.proxy_config.url}
 
         # Read the user's block list
-        user_block_jobs_dict = {}  # type: Dict[str, str]
+        user_block_jobs_dict: Dict[str, Dict[str, str]] = {}
         if os.path.isfile(self.config.user_block_list_file):
             user_block_jobs_dict = json.load(open(self.config.user_block_list_file, "r"))
 
         # Read the user's duplicate jobs list (from TFIDF)
-        duplicate_jobs_dict = {}  # type: Dict[str, str]
+        duplicate_jobs_dict: Dict[str, Dict[str, str]] = {}
         if os.path.isfile(self.config.duplicates_list_file):
             duplicate_jobs_dict = json.load(open(self.config.duplicates_list_file, "r"))
 
@@ -63,8 +66,8 @@ class JobFunnel(Logger):
             duplicate_jobs_dict,
             self.config.search_config.blocked_company_names,
             T_NOW - timedelta(days=self.config.search_config.max_listing_days),
-            desired_remoteness=self.config.search_config.remoteness,
-            log_level=self.config.log_level,
+            desired_remoteness=self.config.search_config.remoteness or Remoteness.UNKNOWN,
+            log_level=self.config.log_level or 0,
             log_file=self.config.log_file,
         )
 
@@ -125,7 +128,7 @@ class JobFunnel(Logger):
         # Parse duplicate jobs into updates for master jobs dict
         # NOTE: we prevent inter-scrape duplicates by key-id within BaseScraper
         # FIXME: impl. TFIDF on inter-scrape duplicates
-        duplicate_jobs = []  # type: List[DuplicatedJob]
+        duplicate_jobs: list = []
         if self.master_jobs_dict and scraped_jobs_dict:
             # Remove jobs with duplicated key_ids from scrape + update master
             duplicate_jobs = self.job_filter.find_duplicates(
@@ -295,7 +298,7 @@ class JobFunnel(Logger):
             )
             return jobs_dict
 
-    def write_cache(self, jobs_dict: Dict[str, Job], cache_file: str = None) -> None:
+    def write_cache(self, jobs_dict: Dict[str, Job], cache_file: str | None = None) -> None:
         """Dump a jobs_dict into a pickle
 
         TODO: write search_config into the cache file and jobfunnel version
@@ -341,11 +344,8 @@ class JobFunnel(Logger):
                 else:
                     scrape_date = post_date
 
-                if "raw" in row:
-                    # NOTE: we should never see this because raw cant be in CSV
-                    raw = row["raw"]
-                else:
-                    raw = None
+                # NOTE: raw can't be in CSV, always set to None when loading
+                raw = None
 
                 # FIXME: this is the wrong way to compare row val to Enum.name!
                 # We need to convert from user statuses
@@ -370,17 +370,13 @@ class JobFunnel(Logger):
                             break
                 if not locale:
                     self.logger.warning("Unknown locale %s, setting to UNKNOWN", locale_str)
-                    locale = locale.UNKNOWN
+                    locale = Locale.UNKNOWN
 
                 # Check for remoteness (handle if not present for legacy)
                 remoteness = Remoteness.UNKNOWN
                 if "remoteness" in row:
                     remote_str = row["remoteness"].strip()
                     remoteness = Remoteness[remote_str]
-                if not locale:
-                    self.logger.warning("Unknown locale %s, setting to UNKNOWN", locale_str)
-                    locale = locale.UNKNOWN
-
                 # Check for wage (handle if not present for legacy
                 wage = ""
                 if "wage" in row:
@@ -406,6 +402,7 @@ class JobFunnel(Logger):
                     remoteness=remoteness,
                 )
                 job.validate()
+                assert job.key_id is not None  # validate() checks this
                 jobs_dict[job.key_id] = job
 
         self.logger.debug(
@@ -457,7 +454,7 @@ class JobFunnel(Logger):
         # Add jobs from csv that need to be filtered away, if any + update self
         n_jobs_added = 0
         for job in self.master_jobs_dict.values():
-            if job.is_remove_status:
+            if job.is_remove_status and job.key_id:
                 if job.key_id not in self.job_filter.user_block_jobs_dict:
                     n_jobs_added += 1
                     self.job_filter.user_block_jobs_dict[job.key_id] = job.as_json_entry

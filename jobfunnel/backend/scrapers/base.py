@@ -2,12 +2,13 @@
 Paul McInnis 2020
 """
 
+import logging
 import random
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from multiprocessing import Lock, Manager
+from multiprocessing import Manager
 from time import sleep
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
 from requests import Session
@@ -27,10 +28,8 @@ from jobfunnel.resources import (
     Remoteness,
 )
 
-# pylint: disable=using-constant-test,unused-import
-if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+if TYPE_CHECKING:
     from jobfunnel.config import JobFunnelConfigManager
-# pylint: enable=using-constant-test,unused-import
 
 
 class BaseScraper(ABC, Logger):
@@ -52,7 +51,7 @@ class BaseScraper(ABC, Logger):
             ValueError: if no Locale is configured in the JobFunnelConfigManager
         """
         # Inits
-        super().__init__(level=config.log_level, file_path=config.log_file)
+        super().__init__(level=config.log_level or logging.INFO, file_path=config.log_file)
         self.job_filter = job_filter
         self.session = session
         self.config = config
@@ -251,7 +250,7 @@ class BaseScraper(ABC, Logger):
         return jobs_dict
 
     # pylint: disable=no-member
-    def scrape_job(self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Lock] = None) -> Optional[Job]:
+    def scrape_job(self, job_soup: BeautifulSoup, delay: float, delay_lock: Optional[Any] = None) -> Optional[Job]:
         """Scrapes a search page and get a list of soups that will yield jobs
         Arguments:
             job_soup (BeautifulSoup): This is a soup object that your get/set
@@ -343,8 +342,9 @@ class BaseScraper(ABC, Logger):
                 return None
 
         # Prefix the id with the scraper name to avoid key conflicts
-        new_key_id = job.provider + "_" + job.key_id
-        job.key_id = new_key_id
+        if job:
+            new_key_id = job.provider + "_" + (job.key_id or "")
+            job.key_id = new_key_id
 
         return job
 

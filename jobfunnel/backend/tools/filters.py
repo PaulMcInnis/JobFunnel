@@ -37,25 +37,25 @@ class JobFilter(Logger):
 
     def __init__(
         self,
-        user_block_jobs_dict: Optional[Dict[str, str]] = None,
-        duplicate_jobs_dict: Optional[Dict[str, str]] = None,
+        user_block_jobs_dict: Optional[Dict[str, Dict[str, str]]] = None,
+        duplicate_jobs_dict: Optional[Dict[str, Dict[str, str]]] = None,
         blocked_company_names_list: Optional[List[str]] = None,
         max_job_date: Optional[datetime] = None,
         max_similarity: float = DEFAULT_MAX_TFIDF_SIMILARITY,
         desired_remoteness: Remoteness = Remoteness.ANY,
         min_tfidf_corpus_size: int = MIN_JOBS_TO_PERFORM_SIMILARITY_SEARCH,
         log_level: int = logging.INFO,
-        log_file: str = None,
+        log_file: Optional[str] = None,
     ) -> None:
         """Init
 
         TODO: need a config for this
 
         Args:
-            user_block_jobs_dict (Optional[Dict[str, str]], optional): dict
-                containing user's blocked jobs. Defaults to None.
-            duplicate_jobs_dict (Optional[Dict[str, str]], optional): dict
-                containing duplicate jobs, detected by content. Defaults to None
+            user_block_jobs_dict (Optional[Dict[str, Dict[str, str]]], optional):
+                dict containing user's blocked jobs. Defaults to None.
+            duplicate_jobs_dict (Optional[Dict[str, Dict[str, str]]], optional):
+                dict containing duplicate jobs, detected by content. Defaults to None
             blocked_company_names_list (Optional[List[str]], optional): list of
                 company names disallowed from results. Defaults to None.
             max_job_date (Optional[datetime], optional): maximium date that a
@@ -217,8 +217,8 @@ class JobFilter(Logger):
 
     def tfidf_filter(
         self,
-        incoming_jobs_dict: Dict[str, dict],
-        existing_jobs_dict: Dict[str, dict],
+        incoming_jobs_dict: Dict[str, Job],
+        existing_jobs_dict: Dict[str, Job],
     ) -> List[DuplicatedJob]:
         """Fit a tfidf vectorizer to a corpus of Job.DESCRIPTIONs and identify
         duplicate jobs by cosine-similarity.
@@ -248,14 +248,14 @@ class JobFilter(Logger):
         def __dict_to_ids_and_words(
             jobs_dict: Dict[str, Job],
             is_incoming: bool = False,
-        ) -> Tuple[List[str], List[str]]:
+        ) -> Tuple[List[str], List[str], Dict[str, Job]]:
             """Get query words and ids as lists + prefilter
             NOTE: this is just a convenience method since we do this 2x
             TODO: consider moving this once/if we change iteration
             """
-            ids = []  # type: List[str]
-            words = []  # type: List[str]
-            filt_job_dict = {}  # type: Dict[str, Job]
+            ids: List[str] = []
+            words: List[str] = []
+            filt_job_dict: Dict[str, Job] = {}
             for job in jobs_dict.values():
                 if is_incoming and job.key_id in self.duplicate_jobs_dict:
                     # NOTE: we should never see this for incoming jobs.
@@ -264,7 +264,7 @@ class JobFilter(Logger):
                     raise ValueError(f"Attempting to run TFIDF with existing duplicate {job.key_id}")
                 elif not len(job.description):
                     self.logger.debug(f"Removing {job.key_id} from scrape result, empty description.")
-                else:
+                elif job.key_id:
                     ids.append(job.key_id)
                     words.append(job.description)
                     # NOTE: We want to leave changing incoming_jobs_dict in
@@ -291,7 +291,7 @@ class JobFilter(Logger):
             corpus = query_words + reference_words
         else:
             self.logger.debug("Running TFIDF on incoming data only.")
-            reference_ids = (query_ids,)
+            reference_ids = query_ids
             reference_words = query_words
             filt_existing_jobs_dict = filt_incoming_jobs_dict
             corpus = query_words

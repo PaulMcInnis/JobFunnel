@@ -9,6 +9,7 @@ class Locale(Enum):
     the correct GET requests, to allow us to interact with a job-source.
     """
 
+    UNKNOWN = 0
     CANADA_ENGLISH = 1
     CANADA_FRENCH = 2
     USA_ENGLISH = 3
@@ -83,6 +84,7 @@ class Provider(Enum):
     """Job source providers"""
 
     INDEED = 1
+    SIMPLYHIRED = 2
 
 
 class DelayAlgorithm(Enum):
