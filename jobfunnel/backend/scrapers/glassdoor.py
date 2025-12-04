@@ -113,7 +113,7 @@ class BaseGlassdoorScraper(BaseScraper):
         base_url = "https://www.glassdoor.com/Job/jobs.htm"
         params = [
             f"sc.keyword={self.query.replace(' ', '%20')}",
-            f"locT=C",  # Location type: City
+            "locT=C",  # Location type: City
             f"locKeyword={location.replace(' ', '%20').replace(',', '%2C')}",
         ]
 
@@ -272,7 +272,9 @@ class BaseGlassdoorScraper(BaseScraper):
                 for click_num in range(max_clicks):
                     try:
                         # Close any auth modal that appears (blocks interaction)
-                        close_btn = page.query_selector('.authModalContent .CloseButton, .authModalContent button.CloseButton')
+                        close_btn = page.query_selector(
+                            ".authModalContent .CloseButton, .authModalContent button.CloseButton"
+                        )
                         if close_btn:
                             self.logger.debug("Closing auth modal popup...")
                             close_btn.click()
@@ -492,7 +494,7 @@ class GlassdoorScraperCANEng(BaseGlassdoorScraper, BaseCANEngScraper):
         base_url = "https://www.glassdoor.ca/Job/jobs.htm"
         params = [
             f"sc.keyword={self.query.replace(' ', '%20')}",
-            f"locT=C",
+            "locT=C",
             f"locKeyword={location.replace(' ', '%20').replace(',', '%2C')}",
         ]
 
@@ -521,7 +523,7 @@ class GlassdoorScraperUKEng(BaseGlassdoorScraper, BaseUKEngScraper):
         base_url = "https://www.glassdoor.co.uk/Job/jobs.htm"
         params = [
             f"sc.keyword={self.query.replace(' ', '%20')}",
-            f"locT=C",
+            "locT=C",
             f"locKeyword={location.replace(' ', '%20').replace(',', '%2C')}",
         ]
 
