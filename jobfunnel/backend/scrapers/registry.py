@@ -4,11 +4,6 @@ NOTE: if you implement a scraper you must add it here
 TODO: there must be a better way to do this by using class attrib of Provider
 """
 
-from jobfunnel.backend.scrapers.glassdoor import (
-    GlassDoorScraperCANEng,
-    GlassDoorScraperUKEng,
-    GlassDoorScraperUSAEng,
-)
 from jobfunnel.backend.scrapers.indeed import (
     IndeedScraperCANEng,
     IndeedScraperDEGer,
@@ -26,10 +21,5 @@ SCRAPER_FROM_LOCALE = {
         Locale.UK_ENGLISH: IndeedScraperUKEng,
         Locale.FRANCE_FRENCH: IndeedScraperFRFre,
         Locale.GERMANY_GERMAN: IndeedScraperDEGer,
-    },
-    Provider.GLASSDOOR: {
-        Locale.CANADA_ENGLISH: GlassDoorScraperCANEng,
-        Locale.USA_ENGLISH: GlassDoorScraperUSAEng,
-        Locale.UK_ENGLISH: GlassDoorScraperUKEng,
     },
 }

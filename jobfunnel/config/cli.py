@@ -168,7 +168,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-ps",
         dest="search.province_or_state",
         type=str,
-        help="Province/state value for your job-search area of interest. (i.e. Ontario).",
+        help="Province/state value for your job-search area of interest. (e.g. Ontario).",
         required=True,
     )
 
@@ -176,7 +176,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "-c",
         dest="search.city",
         type=str,
-        help="City/town value for job-search region (i.e. Waterloo).",
+        help="City/town value for job-search region (e.g. Waterloo).",
         required=True,
     )
 
@@ -186,7 +186,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         dest="search.company_block_list",
         nargs="+",
         default=DEFAULT_COMPANY_BLOCK_LIST,
-        help="List of company names to omit from all search results (i.e. SpamCompany, Cash5Gold).",
+        help="List of company names to omit from all search results (e.g. SpamCompany, Cash5Gold).",
         required=False,
     )
 
@@ -197,7 +197,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         nargs="+",
         choices=[p.name for p in Provider],
         default=DEFAULT_PROVIDER_NAMES,
-        help="List of job-search providers (i.e. Indeed, Monster, GlassDoor).",
+        help="List of job-search providers (e.g. Indeed).",
         required=False,
     )
 
@@ -217,7 +217,7 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         type=str,
         choices=[p.name for p in Remoteness],
         default=DEFAULT_REMOTENESS.name,
-        help="The level of remoteness of the job, (i.e. FULLY_REMOTE) Defaults to ANY.",
+        help="The level of remoteness of the job, (e.g. FULLY_REMOTE) Defaults to ANY.",
         required=False,
     )
 

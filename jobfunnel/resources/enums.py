@@ -83,8 +83,6 @@ class Provider(Enum):
     """Job source providers"""
 
     INDEED = 1
-    GLASSDOOR = 2
-    MONSTER = 3
 
 
 class DelayAlgorithm(Enum):

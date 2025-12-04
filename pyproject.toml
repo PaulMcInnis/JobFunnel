@@ -64,12 +64,15 @@ include-package-data = true
 [tool.pytest.ini_options]
 addopts = "--cov=jobfunnel"
 
+[tool.pylint.format]
+max-line-length = 120
+
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
-ignore = ["E203", "E501"]
+ignore = ["E203"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["jobfunnel"]
