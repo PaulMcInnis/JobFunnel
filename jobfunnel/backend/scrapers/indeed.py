@@ -3,7 +3,7 @@
 import json
 import re
 from math import ceil
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
 from playwright.sync_api import Browser, Page, sync_playwright
@@ -22,10 +22,8 @@ from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
 from jobfunnel.resources import JobField, Remoteness
 
-# pylint: disable=using-constant-test,unused-import
-if False:  # or typing.TYPE_CHECKING  if python3.5.3+
+if TYPE_CHECKING:
     from jobfunnel.config import JobFunnelConfigManager
-# pylint: enable=using-constant-test,unused-import
 
 MAX_RESULTS_PER_INDEED_PAGE = 15  # Desktop shows ~15 per page
 FULLY_REMOTE_MAGIC_STRING = "&sc=0kf%3Aattr%28DSQF7%29%3B"
@@ -70,7 +68,7 @@ class BaseIndeedScraper(BaseScraper):
             self.logger.warning("Indeed does not support PARTIALLY_REMOTE jobs")
 
     @property
-    def job_get_fields(self) -> str:
+    def job_get_fields(self) -> List[JobField]:
         """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.TITLE,
@@ -84,12 +82,12 @@ class BaseIndeedScraper(BaseScraper):
         ]
 
     @property
-    def job_set_fields(self) -> str:
+    def job_set_fields(self) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job"""
         return [JobField.URL, JobField.REMOTENESS]
 
     @property
-    def delayed_get_set_fields(self) -> str:
+    def delayed_get_set_fields(self) -> List[JobField]:
         """Delay execution when getting/setting any of these attributes."""
         return []
 
@@ -292,6 +290,8 @@ class BaseIndeedScraper(BaseScraper):
             job_count_el = page.query_selector('[class*="jobCount"]')
             if job_count_el:
                 text = job_count_el.text_content()
+                if not text:
+                    return 1
                 match = re.search(r"(\d+)", text.replace(",", ""))
                 if match:
                     total_jobs = int(match.group(1))
