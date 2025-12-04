@@ -13,6 +13,11 @@ from jobfunnel.backend.scrapers.indeed import (
     IndeedScraperUKEng,
     IndeedScraperUSAEng,
 )
+from jobfunnel.backend.scrapers.linkedin import (
+    LinkedInScraperCANEng,
+    LinkedInScraperUKEng,
+    LinkedInScraperUSAEng,
+)
 from jobfunnel.backend.scrapers.simplyhired import (
     SimplyHiredScraperCANEng,
     SimplyHiredScraperUSAEng,
@@ -33,5 +38,10 @@ SCRAPER_FROM_LOCALE: Dict[Provider, Dict[Locale, Type["BaseScraper"]]] = {
     Provider.SIMPLYHIRED: {
         Locale.CANADA_ENGLISH: SimplyHiredScraperCANEng,
         Locale.USA_ENGLISH: SimplyHiredScraperUSAEng,
+    },
+    Provider.LINKEDIN: {
+        Locale.CANADA_ENGLISH: LinkedInScraperCANEng,
+        Locale.USA_ENGLISH: LinkedInScraperUSAEng,
+        Locale.UK_ENGLISH: LinkedInScraperUKEng,
     },
 }

@@ -1,3 +1,4 @@
+from jobfunnel.config.auth import AuthConfig
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.config.cli import build_config_dict, get_config_manager, parse_cli
 from jobfunnel.config.delay import DelayConfig
@@ -9,6 +10,7 @@ from jobfunnel.config.settings import SETTINGS_YAML_SCHEMA, SettingsValidator
 __all__ = [
     "SettingsValidator",
     "SETTINGS_YAML_SCHEMA",
+    "AuthConfig",
     "BaseConfig",
     "DelayConfig",
     "ProxyConfig",

@@ -71,6 +71,13 @@ class DelaySettings(BaseModel):
         return v
 
 
+class AuthSettings(BaseModel):
+    """Authentication settings for providers requiring login (LinkedIn, Glassdoor)"""
+
+    linkedin_storage_state: Optional[str] = None
+    glassdoor_storage_state: Optional[str] = None
+
+
 class SearchSettings(BaseModel):
     """Search configuration settings"""
 
@@ -124,6 +131,7 @@ class JobFunnelSettings(BaseModel):
     search: SearchSettings
     delay: DelaySettings = Field(default_factory=DelaySettings)
     proxy: Optional[ProxySettings] = None
+    auth: Optional[AuthSettings] = None
 
     @field_validator("log_level")
     @classmethod

@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING, List, Optional, Type
 
 from jobfunnel.backend.scrapers.registry import SCRAPER_FROM_LOCALE
+from jobfunnel.config.auth import AuthConfig
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.config.delay import DelayConfig
 from jobfunnel.config.proxy import ProxyConfig
@@ -33,6 +34,8 @@ class JobFunnelConfigManager(BaseConfig):
         return_similar_results: Optional[bool] = False,
         delay_config: Optional[DelayConfig] = None,
         proxy_config: Optional[ProxyConfig] = None,
+        auth_config: Optional[AuthConfig] = None,
+        force_login: Optional[bool] = False,
     ) -> None:
         """Init a config that determines how we will scrape jobs from Scrapers
         and how we will update CSV and filtering lists
@@ -63,6 +66,10 @@ class JobFunnelConfigManager(BaseConfig):
                 Defaults to a default delay config object.
             proxy_config (Optional[ProxyConfig], optional): proxy config object.
                  Defaults to None, which will result in no proxy being used
+            auth_config (Optional[AuthConfig], optional): auth config object for
+                providers requiring login (LinkedIn, Glassdoor). Defaults to None.
+            force_login (Optional[bool], optional): If True, force re-login for
+                providers requiring authentication. Defaults to False.
         """
         super().__init__()
         self.master_csv_file = master_csv_file
@@ -76,12 +83,14 @@ class JobFunnelConfigManager(BaseConfig):
         self.debug_scrape = debug_scrape
         self.bs4_parser = bs4_parser  # NOTE: this is not currently configurable
         self.return_similar_results = return_similar_results
+        self.force_login = force_login
         if not delay_config:
             # We will always use a delay config to be respectful
             self.delay_config = DelayConfig()
         else:
             self.delay_config = delay_config
         self.proxy_config = proxy_config
+        self.auth_config = auth_config
 
     @property
     def scrapers(self) -> List[Type["BaseScraper"]]:
@@ -125,3 +134,5 @@ class JobFunnelConfigManager(BaseConfig):
         if self.proxy_config:
             self.proxy_config.validate()
         self.delay_config.validate()
+        if self.auth_config:
+            self.auth_config.validate()

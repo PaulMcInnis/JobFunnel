@@ -11,17 +11,17 @@ log_file: demo_job_search_results/log.log
 
 # Job search configuration
 search:
-  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH:
+  # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
+  # UK_ENGLISH, FRANCE_FRENCH, GERMANY_GERMAN:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
   locale: FRANCE_FRENCH
 
-  # Job providers which we will search, one of INDEED, GLASSDOOR:
-  # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
-  # FIXME: we need to add back GLASSDOOR when that's working again.
+  # Job providers which we will search
   providers:
     - INDEED
-    - MONSTER
+    - SIMPLYHIRED
+    - LINKEDIN
 
   # Region that we are searching for jobs within:
   province_or_state: "75" # NOTE: this is generally 2 characters long.

@@ -7,6 +7,7 @@ import random
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Manager
+from pathlib import Path
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -15,8 +16,6 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 from urllib3.util import Retry
-
-from pathlib import Path
 
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools import Logger

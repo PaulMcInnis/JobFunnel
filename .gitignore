@@ -2,7 +2,14 @@
 *.csv
 demo_job_search_results
 my_settings.yaml
-/scrape/ 
+/scrape/
+
+# Authentication files (Playwright storageState) - NEVER commit these
+*.auth.json
+*.cookies.json
+auth-storage.json
+linkedin.auth.json
+glassdoor.auth.json 
 
 # IntelliJ/Pycharm configs
 .idea/

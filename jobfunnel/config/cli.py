@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 import yaml
 
+from jobfunnel.config.auth import AuthConfig
 from jobfunnel.config.delay import DelayConfig
 from jobfunnel.config.manager import JobFunnelConfigManager
 from jobfunnel.config.proxy import ProxyConfig
@@ -87,6 +88,12 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         "--debug-scrape",
         action="store_true",
         help="Dump all scraped HTML pages to /scrape folder for debugging scrapers.",
+    )
+
+    yaml_parser.add_argument(
+        "--login",
+        action="store_true",
+        help="Force re-login for providers requiring authentication (LinkedIn).",
     )
 
     # We are using CLI for all arguments.
@@ -320,9 +327,10 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
             Loader=yaml.FullLoader,
         )
 
-        # Inject any base level args (--no-scrape, -log-level, --debug-scrape)
+        # Inject any base level args (--no-scrape, -log-level, --debug-scrape, --login)
         config["no_scrape"] = args_dict["no_scrape"]
         config["debug_scrape"] = args_dict.get("debug_scrape", False)
+        config["force_login"] = args_dict.get("login", False)
         if args_dict.get("log_level"):
             config["log_level"] = args_dict["log_level"]
 
@@ -391,6 +399,14 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
     else:
         proxy_cfg = None
 
+    if config.get("auth"):
+        auth_cfg = AuthConfig(
+            linkedin_storage_state=config["auth"].get("linkedin_storage_state"),
+            glassdoor_storage_state=config["auth"].get("glassdoor_storage_state"),
+        )
+    else:
+        auth_cfg = None
+
     funnel_cfg_mgr = JobFunnelConfigManager(
         master_csv_file=config["master_csv_file"],
         user_block_list_file=config["block_list_file"],
@@ -400,9 +416,11 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         log_level=config["log_level"],
         no_scrape=config["no_scrape"],
         debug_scrape=config.get("debug_scrape", False),
+        force_login=config.get("force_login", False),
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,
+        auth_config=auth_cfg,
     )
 
     return funnel_cfg_mgr

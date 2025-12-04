@@ -12,17 +12,16 @@ log_file: demo_job_search_results/log.log
 # Job search configuration
 search:
   # Locale settings, one of USA_ENGLISH, CANADA_ENGLISH, CANADA_FRENCH,
-  # UK_ENGLISH, FRANCE_FRENCH:
+  # UK_ENGLISH, FRANCE_FRENCH, GERMANY_GERMAN:
   # This tells JobFunnel where the website we are scraping is located, and
   # what language the contents are in.
   locale: CANADA_ENGLISH
 
-  # Job providers which we will search, one of INDEED, GLASSDOOR:
-  # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
-  # FIXME: we need to add back GLASSDOOR when that's working again.
+  # Job providers which we will search:
   providers:
     - INDEED
-    - MONSTER
+    - SIMPLYHIRED
+    - LINKEDIN
 
   # Region that we are searching for jobs within:
   province_or_state: "ON" # NOTE: this is generally 2 characters long.
@@ -64,3 +63,12 @@ delay:
 #   protocol: https  # NOTE: you can also set to 'http'
 #   ip: "1.1.1.1"
 #   port: 200
+
+# # Authentication for providers requiring login (LinkedIn)
+# # To set up authentication:
+# # 1. Run: python -m jobfunnel.auth_helper linkedin
+# # 2. Log in to LinkedIn in the browser window that opens
+# # 3. Press Enter after logging in to save the session
+# # 4. Uncomment the auth section below and update the path
+# auth:
+#   linkedin_storage_state: "/path/to/linkedin.auth.json"
