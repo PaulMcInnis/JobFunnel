@@ -18,10 +18,13 @@ search:
   locale: CANADA_ENGLISH
 
   # Job providers which we will search:
+  # NOTE: LINKEDIN and GLASSDOOR require login - a browser window will open
+  # for you to log in manually on first use. Your session is saved locally.
   providers:
     - INDEED
     - SIMPLYHIRED
     - LINKEDIN
+    - GLASSDOOR
 
   # Region that we are searching for jobs within:
   province_or_state: "ON" # NOTE: this is generally 2 characters long.
@@ -63,12 +66,3 @@ delay:
 #   protocol: https  # NOTE: you can also set to 'http'
 #   ip: "1.1.1.1"
 #   port: 200
-
-# # Authentication for providers requiring login (LinkedIn)
-# # To set up authentication:
-# # 1. Run: python -m jobfunnel.auth_helper linkedin
-# # 2. Log in to LinkedIn in the browser window that opens
-# # 3. Press Enter after logging in to save the session
-# # 4. Uncomment the auth section below and update the path
-# auth:
-#   linkedin_storage_state: "/path/to/linkedin.auth.json"

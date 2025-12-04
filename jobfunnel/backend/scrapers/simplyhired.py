@@ -154,7 +154,6 @@ class BaseSimplyHiredScraper(BaseScraper):
                 locale="en-CA",
                 args=[
                     "--disable-blink-features=AutomationControlled",
-                    "--enable-sandbox",
                 ],
                 ignore_default_args=["--enable-automation"],
             )

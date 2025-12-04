@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 
 import yaml
 
-from jobfunnel.config.auth import AuthConfig
 from jobfunnel.config.delay import DelayConfig
 from jobfunnel.config.manager import JobFunnelConfigManager
 from jobfunnel.config.proxy import ProxyConfig
@@ -399,14 +398,6 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
     else:
         proxy_cfg = None
 
-    if config.get("auth"):
-        auth_cfg = AuthConfig(
-            linkedin_storage_state=config["auth"].get("linkedin_storage_state"),
-            glassdoor_storage_state=config["auth"].get("glassdoor_storage_state"),
-        )
-    else:
-        auth_cfg = None
-
     funnel_cfg_mgr = JobFunnelConfigManager(
         master_csv_file=config["master_csv_file"],
         user_block_list_file=config["block_list_file"],
@@ -420,7 +411,6 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,
-        auth_config=auth_cfg,
     )
 
     return funnel_cfg_mgr
