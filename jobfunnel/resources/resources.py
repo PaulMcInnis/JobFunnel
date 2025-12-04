@@ -1,5 +1,4 @@
-"""String-like resouces and other constants are initialized here.
-"""
+"""String-like resouces and other constants are initialized here."""
 
 import datetime
 from pathlib import Path

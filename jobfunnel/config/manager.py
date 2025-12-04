@@ -1,5 +1,4 @@
-"""Config object to run JobFunnel
-"""
+"""Config object to run JobFunnel"""
 
 import logging
 import os

@@ -1,5 +1,4 @@
-"""Proxy configuration for Session()
-"""
+"""Proxy configuration for Session()"""
 
 import ipaddress
 

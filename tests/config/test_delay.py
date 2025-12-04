@@ -1,5 +1,4 @@
-"""Test the DelayConfig
-"""
+"""Test the DelayConfig"""
 
 import pytest
 

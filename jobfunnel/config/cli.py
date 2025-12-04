@@ -1,5 +1,4 @@
-"""Configuration parsing module for CLI --> JobFunnelConfigManager
-"""
+"""Configuration parsing module for CLI --> JobFunnelConfigManager"""
 
 import argparse
 from typing import Any, Dict, List

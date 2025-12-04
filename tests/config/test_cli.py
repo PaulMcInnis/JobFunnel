@@ -1,5 +1,4 @@
-"""Test CLI parsing --> config dict
-"""
+"""Test CLI parsing --> config dict"""
 
 import os
 

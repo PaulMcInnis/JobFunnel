@@ -14,7 +14,7 @@ from requests import Session
 
 from jobfunnel import __version__
 from jobfunnel.backend import Job
-from jobfunnel.backend.tools import Logger
+from jobfunnel.backend.tools import Logger, ensure_playwright_browsers
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.config import JobFunnelConfigManager
 from jobfunnel.resources import (
@@ -85,6 +85,8 @@ class JobFunnel(Logger):
 
     def run(self) -> None:
         """Scrape, update lists and save to CSV."""
+        ensure_playwright_browsers()
+
         # Read the master CSV file
         if os.path.isfile(self.config.master_csv_file):
             self.master_jobs_dict = self.read_master_csv()

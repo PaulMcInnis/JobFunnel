@@ -1,5 +1,4 @@
-"""Test the search config
-"""
+"""Test the search config"""
 
 import pytest
 
@@ -52,7 +51,7 @@ def test_search_config_init(mocker, locale, domain, exp_domain):
             cfg = SearchConfig(
                 keywords=mocker.Mock(),
                 province_or_state=mocker.Mock(),
-                locale=-1,  # AKA an unknown Enum entry to Locale
+                locale=-1,  # type: ignore
                 providers=mocker.Mock(),
             )
     else:
@@ -190,7 +189,7 @@ def test_search_config_validate_domain(
     cfg = SearchConfig(keywords, province_or_state, locale, providers, city=in_city)
 
     # We have to force an invalid domain because the constructor ensures that it is valid.
-    cfg.domain = None
+    cfg.domain = None  # type: ignore
 
     with pytest.raises(AssertionError, match="Domain not set"):
         cfg.validate()

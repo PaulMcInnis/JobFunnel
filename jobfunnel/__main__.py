@@ -1,6 +1,5 @@
 #!python
-"""Builds a config from CLI, runs desired scrapers and updates JSON + CSV
-"""
+"""Builds a config from CLI, runs desired scrapers and updates JSON + CSV"""
 import os
 import sys
 

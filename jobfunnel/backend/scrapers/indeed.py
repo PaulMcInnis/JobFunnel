@@ -1,15 +1,12 @@
-"""Scraper designed to get jobs from www.indeed.X
-"""
+"""Scraper designed to get jobs from www.indeed.X using Playwright browser automation"""
 
-from concurrent.futures import ThreadPoolExecutor, wait
 import json
 from math import ceil
-import random
 import re
 from typing import Any, Dict, List, Optional
-from unicodedata import normalize
 
 from bs4 import BeautifulSoup
+from playwright.sync_api import Browser, Page, sync_playwright
 from requests import Session
 
 from jobfunnel.backend import Job
@@ -23,62 +20,45 @@ from jobfunnel.backend.scrapers.base import (
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import (
-    MAX_CPU_WORKERS,
-    USER_AGENT_LIST_MOBILE,
-    JobField,
-    Remoteness,
-)
+from jobfunnel.resources import JobField, Remoteness
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
     from jobfunnel.config import JobFunnelConfigManager
 # pylint: enable=using-constant-test,unused-import
 
-ID_REGEX = re.compile(r"id=\"sj_([a-zA-Z0-9]*)\"")
-MAX_RESULTS_PER_INDEED_PAGE = 20  # 20 results for mobile, 50 for desktop
-# NOTE: these magic strings stick for both the US and CAN indeed websites...
-FULLY_REMOTE_MAGIC_STRING = "&remotejob=032b3046-06a3-4876-8dfd-474eb5e7ed11"
-COVID_REMOTE_MAGIC_STRING = "&remotejob=7e3167e4-ccb4-49cb-b761-9bae564a0a63"
+MAX_RESULTS_PER_INDEED_PAGE = 15  # Desktop shows ~15 per page
+FULLY_REMOTE_MAGIC_STRING = "&sc=0kf%3Aattr%28DSQF7%29%3B"
 REMOTENESS_TO_QUERY = {
     Remoteness.IN_PERSON: "",
-    Remoteness.TEMPORARILY_REMOTE: COVID_REMOTE_MAGIC_STRING,
+    Remoteness.TEMPORARILY_REMOTE: "",
     Remoteness.PARTIALLY_REMOTE: "",
     Remoteness.FULLY_REMOTE: FULLY_REMOTE_MAGIC_STRING,
     Remoteness.ANY: "",
 }
 REMOTENESS_STR_MAP = {
     "remote": Remoteness.FULLY_REMOTE,
-    "hybrid work": Remoteness.TEMPORARILY_REMOTE,
+    "hybrid": Remoteness.PARTIALLY_REMOTE,
 }
 
 
 def format_taxonomy_attributes(taxonomy_attributes):
+    """Format taxonomy attributes from Indeed job data into readable tags."""
     result = []
-
-    # Loop through the taxonomyAttributes list
     for category in taxonomy_attributes:
-        label = category[
-            "label"
-        ]  # Get the category label (e.g., "job-types", "benefits")
-        attributes = category["attributes"]
-
-        # Only process if the attributes list is not empty
+        label = category.get("label", "")
+        attributes = category.get("attributes", [])
         if attributes:
-            # Get all attribute labels within the category
             attribute_labels = [attr["label"] for attr in attributes]
-            # Create a readable string combining the category label and its attributes
             formatted_str = (
                 f"{label.replace('-', ' ').capitalize()}: {', '.join(attribute_labels)}"
             )
             result.append(formatted_str)
-
-    # Join all the formatted strings with a line break or any separator
     return result
 
 
 class BaseIndeedScraper(BaseScraper):
-    """Scrapes jobs from www.indeed.X"""
+    """Scrapes jobs from www.indeed.X using Playwright for browser automation"""
 
     def __init__(
         self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
@@ -87,22 +67,15 @@ class BaseIndeedScraper(BaseScraper):
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_INDEED_PAGE
         self.query = "+".join(self.config.search_config.keywords)
+        self._browser: Optional[Browser] = None
+        self._playwright = None
 
-        # Log if we can't do their remoteness query (Indeed only has 2 lvls.)
         if self.config.search_config.remoteness == Remoteness.PARTIALLY_REMOTE:
             self.logger.warning("Indeed does not support PARTIALLY_REMOTE jobs")
 
     @property
-    def user_agent(self) -> str:
-        """Get a randomized user agent for this scraper"""
-        return random.choice(USER_AGENT_LIST_MOBILE)
-
-    @property
     def job_get_fields(self) -> str:
-        """Call self.get(...) for the JobFields in this list when scraping a Job
-
-        Override this as needed.
-        """
+        """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.TITLE,
             JobField.COMPANY,
@@ -111,155 +84,322 @@ class BaseIndeedScraper(BaseScraper):
             JobField.KEY_ID,
             JobField.TAGS,
             JobField.POST_DATE,
-            # JobField.REMOTENESS,
             JobField.WAGE,
         ]
 
     @property
     def job_set_fields(self) -> str:
-        """Call self.set(...) for the JobFields in this list when scraping a Job
-
-        NOTE: Since this passes the Job we are updating, the order of this list
-        matters if set fields rely on each-other.
-
-        Override this as needed.
-        """
+        """Call self.set(...) for the JobFields in this list when scraping a Job"""
         return [JobField.URL, JobField.REMOTENESS]
 
     @property
     def delayed_get_set_fields(self) -> str:
-        """Delay execution when getting /setting any of these attributes of a
-        job.
-
-        Override this as needed.
-        """
-        return [JobField.RAW]
+        """Delay execution when getting/setting any of these attributes."""
+        return []
 
     @property
     def high_priority_get_set_fields(self) -> List[JobField]:
-        """These get() and/or set() fields will be populated first."""
+        """These get()/set() fields will be populated first."""
         return [JobField.URL]
 
     @property
     def headers(self) -> Dict[str, str]:
-        """Session header for indeed.X"""
-        return {
-            "accept": "text/html,application/xhtml+xml,application/xml;"
-            "q=0.9,image/webp,*/*;q=0.8",
-            "accept-encoding": "gzip, deflate, sdch",
-            "accept-language": "en-GB,en-US;q=0.8,en;q=0.6",
-            "referer": f"https://www.indeed.{self.config.search_config.domain}/",
-            "upgrade-insecure-requests": "1",
-            "user-agent": self.user_agent,
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-        }
+        """Session header - not used with Playwright but required by base class."""
+        return {}
 
-    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
-        """Scrapes raw data from a job source into a list of job-soups
-
-        Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job init
-        """
-        # Get the search url
-        search_url = self._get_search_url()
-
-        # Parse total results, and calculate the # of pages needed
-        pages = self._get_num_search_result_pages(search_url)
-        self.logger.info(
-            "Found %d pages of search results for query=%s", pages, self.query
+    def _get_search_url(self) -> str:
+        """Get the indeed search url from SearchTerms"""
+        return "https://www.indeed.{}/jobs?q={}&l={}%2C+{}&radius={}{}".format(
+            self.config.search_config.domain,
+            self.query,
+            self.config.search_config.city.replace(" ", "+"),
+            self.config.search_config.province_or_state.upper(),
+            self._quantize_radius(self.config.search_config.radius),
+            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
         )
 
-        # Init list of job soups
-        job_soup_list = []  # type: List[Any]
+    def _quantize_radius(self, radius: int) -> int:
+        """Quantizes the user input radius to a valid radius value."""
+        if radius < 5:
+            return 0
+        elif radius < 10:
+            return 5
+        elif radius < 15:
+            return 10
+        elif radius < 25:
+            return 15
+        elif radius < 50:
+            return 25
+        elif radius < 100:
+            return 50
+        else:
+            return 100
 
-        # Init threads & futures list FIXME: we should probably delay here too
-        threads = ThreadPoolExecutor(max_workers=MAX_CPU_WORKERS)
-        try:
-            # Scrape soups for all the result pages containing many job listings
-            futures = []
-            for page in range(0, pages):
-                futures.append(
-                    threads.submit(
-                        self._get_job_soups_from_search_page,
-                        search_url,
-                        page,
-                        job_soup_list,
+    def _ensure_on_search_results(self, page: Page, search_url: str) -> bool:
+        """Ensure we're on search results page, handle CAPTCHA redirect if needed."""
+        current_url = page.url
+        page_content = page.content()
+
+        # Check if we got redirected away from search (CAPTCHA or homepage)
+        if "/jobs?" not in current_url or "verification" in page_content.lower():
+            self.logger.info(
+                "Not on search results (redirected). Re-navigating to search..."
+            )
+            page.goto(search_url, timeout=60000)
+            page.wait_for_timeout(3000)
+
+            # Check again - if still not on search, CAPTCHA might need solving
+            if "verification" in page.content().lower():
+                self.logger.info("CAPTCHA detected. Please solve it in the browser...")
+                try:
+                    page.wait_for_function(
+                        "() => !document.body.innerHTML.toLowerCase().includes('verification')",
+                        timeout=120000,
                     )
+                    # After solving, re-navigate to search
+                    page.goto(search_url, timeout=60000)
+                    page.wait_for_timeout(2000)
+                except Exception:
+                    self.logger.warning("CAPTCHA not solved within 120 seconds.")
+                    return False
+        return True
+
+    def _perform_search_like_human(self, page: Page) -> bool:
+        """Navigate to Indeed and perform search like a human user."""
+        domain = self.config.search_config.domain
+        homepage = f"https://www.indeed.{domain}"
+
+        self.logger.info("Going to Indeed homepage...")
+        page.goto(homepage, timeout=60000)
+        page.wait_for_timeout(2000)
+
+        # Wait for search box to appear (indicates page loaded properly)
+        try:
+            page.wait_for_selector('input[id*="what"], input[name*="q"]', timeout=60000)
+            self.logger.info("Homepage loaded successfully")
+        except Exception:
+            self.logger.warning("Could not load homepage search box")
+            return False
+
+        # Find and fill the "what" search box
+        what_input = page.query_selector('input[id*="what"], input[name*="q"]')
+        if what_input:
+            what_input.click()
+            page.wait_for_timeout(300)
+            keywords = " ".join(self.config.search_config.keywords)
+            what_input.fill(keywords)
+            self.logger.info("Entered keywords: %s", keywords)
+
+        # Find and fill the "where" search box
+        where_input = page.query_selector('input[id*="where"], input[name*="l"]')
+        if where_input:
+            where_input.click()
+            page.wait_for_timeout(300)
+            # Clear existing location
+            where_input.fill("")
+            location = f"{self.config.search_config.city}, {self.config.search_config.province_or_state}"
+            where_input.fill(location)
+            self.logger.info("Entered location: %s", location)
+
+        page.wait_for_timeout(500)
+
+        # Click the search button
+        search_btn = page.query_selector(
+            'button[type="submit"], button:has-text("Find jobs")'
+        )
+        if search_btn:
+            search_btn.click()
+            self.logger.info("Clicked search button")
+        else:
+            # Try pressing Enter
+            page.keyboard.press("Enter")
+
+        # Wait for results to load
+        page.wait_for_timeout(3000)
+        return True
+
+    def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
+        """Scrapes raw data from Indeed using Playwright browser automation.
+
+        Returns:
+            List[BeautifulSoup]: list of job soups we can use to make Job objects
+        """
+        job_soup_list = []
+
+        # Use persistent context to save cookies/session between runs
+        from pathlib import Path
+
+        user_data_dir = Path(self.config.cache_folder) / "browser_data"
+        user_data_dir.mkdir(parents=True, exist_ok=True)
+
+        with sync_playwright() as p:
+            context = p.chromium.launch_persistent_context(
+                str(user_data_dir),
+                headless=False,
+                viewport={"width": 1280, "height": 900},
+                locale="en-CA",
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--enable-sandbox",
+                ],
+                ignore_default_args=["--enable-automation"],
+            )
+            page = context.pages[0] if context.pages else context.new_page()
+
+            try:
+                # Perform search like a human
+                if not self._perform_search_like_human(page):
+                    raise ValueError("Could not complete search")
+
+                # Get number of pages
+                num_pages = self._get_num_search_result_pages_from_page(page)
+                self.logger.info(
+                    "Found %d pages of search results for query=%s",
+                    num_pages,
+                    self.query,
                 )
 
-            # Wait for all scrape jobs to finish
-            wait(futures)
+                # Scrape first page
+                self._extract_jobs_from_page(page, job_soup_list)
 
-        finally:
-            threads.shutdown()
+                # Scrape remaining pages by clicking Next button
+                for page_num in range(1, num_pages):
+                    next_btn = page.query_selector(
+                        'a[data-testid="pagination-page-next"]'
+                    )
+                    if not next_btn:
+                        next_btn = page.query_selector('a[aria-label="Next Page"]')
+                    if not next_btn:
+                        next_btn = page.query_selector('nav a:has-text("Next")')
+
+                    if next_btn:
+                        self.logger.info("Clicking Next to go to page %d", page_num + 1)
+                        next_btn.click()
+                        page.wait_for_timeout(3000)
+                        self._extract_jobs_from_page(page, job_soup_list)
+                    else:
+                        self.logger.warning("No Next button found, stopping pagination")
+                        break
+
+            finally:
+                context.close()
 
         return job_soup_list
 
-    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
-        """Get a single job attribute from a soup object that was derived from a JSON string."""
+    def _get_num_search_result_pages_from_page(self, page: Page) -> int:
+        """Extract the number of result pages from a loaded page."""
+        try:
+            # Look for job count in the page
+            page_content = page.content()
 
-        # Convert BeautifulSoup object back to a dictionary
+            # Try to find job count from mosaic-data script
+            match = re.search(r'"totalResultCount"\s*:\s*(\d+)', page_content)
+            if match:
+                total_jobs = int(match.group(1))
+                return min(ceil(total_jobs / 15), 5)  # Cap at 5 pages
+
+            # Fallback: look for "X jobs" text
+            job_count_el = page.query_selector('[class*="jobCount"]')
+            if job_count_el:
+                text = job_count_el.text_content()
+                match = re.search(r"(\d+)", text.replace(",", ""))
+                if match:
+                    total_jobs = int(match.group(1))
+                    return min(ceil(total_jobs / 15), 5)
+
+            self.logger.warning("Could not determine page count, defaulting to 1")
+            return 1
+
+        except Exception as e:
+            self.logger.warning("Error getting page count: %s", e)
+            return 1
+
+    def _extract_jobs_from_page(
+        self, page: Page, job_soup_list: List[BeautifulSoup]
+    ) -> None:
+        """Extract job data from a loaded Indeed search results page."""
+        page_content = page.content()
+        soup = BeautifulSoup(page_content, self.config.bs4_parser)
+
+        # Try to find mosaic-data script tag with job JSON
+        script_tag = soup.find("script", id="mosaic-data")
+        if script_tag:
+            script_content = script_tag.string or script_tag.get_text()
+            if script_content:
+                json_regex = re.search(
+                    r'\["mosaic-provider-jobcards"\]\s*=\s*(\{.*?\});',
+                    script_content,
+                    re.DOTALL,
+                )
+                if json_regex:
+                    try:
+                        json_data = json.loads(json_regex.group(1))
+                        job_data = (
+                            json_data.get("metaData", {})
+                            .get("mosaicProviderJobCardsModel", {})
+                            .get("results", [])
+                        )
+                        if job_data:
+                            for job in job_data:
+                                job_soup_list.append(
+                                    BeautifulSoup(json.dumps(job), "lxml")
+                                )
+                            self.logger.info(
+                                "Extracted %d jobs from page", len(job_data)
+                            )
+                            return
+                    except json.JSONDecodeError as e:
+                        self.logger.warning("Error decoding mosaic JSON: %s", e)
+
+        self.logger.warning("Could not extract jobs from mosaic-data on this page")
+
+    def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+        """Get a single job attribute from a soup object (contains JSON data)."""
         job_data = json.loads(soup.text)
 
         if parameter == JobField.TITLE:
-            return job_data.get("displayTitle", None)
+            return job_data.get("displayTitle") or job_data.get("title")
 
         elif parameter == JobField.DESCRIPTION:
-            return job_data.get("snippet", None)
+            return job_data.get("snippet", "")
 
         elif parameter == JobField.COMPANY:
-            return job_data.get("company", None)
+            return job_data.get("company", "")
 
         elif parameter == JobField.LOCATION:
-            return job_data.get("formattedLocation", None)
+            return job_data.get("formattedLocation", "")
 
         elif parameter == JobField.TAGS:
-
-            formatted_attributes = format_taxonomy_attributes(
-                job_data.get("taxonomyAttributes", [])
-            )
-
-            return formatted_attributes
-
-        elif parameter == JobField.REMOTENESS:
-            return (
-                Remoteness.FULLY_REMOTE
-                if job_data.get("remoteLocation", False)
-                else Remoteness.UNKNOWN
-            )
+            return format_taxonomy_attributes(job_data.get("taxonomyAttributes", []))
 
         elif parameter == JobField.WAGE:
-            salary_info = job_data.get("extractedSalary", None)
+            salary_info = job_data.get("extractedSalary")
             if salary_info:
-                min_salary = salary_info.get("min")
-                max_salary = salary_info.get("max")
-                if min_salary and max_salary:
-                    return (
-                        f"${min_salary} - ${max_salary} {salary_info.get('type', '')}"
-                    )
-                else:
-                    return ""
+                min_sal = salary_info.get("min")
+                max_sal = salary_info.get("max")
+                sal_type = salary_info.get("type", "")
+                if min_sal and max_sal:
+                    return f"${min_sal} - ${max_sal} {sal_type}"
             return ""
 
         elif parameter == JobField.POST_DATE:
-            return calc_post_date_from_relative_str(
-                job_data.get("formattedRelativeTime", None)
-            )
+            rel_time = job_data.get("formattedRelativeTime", "")
+            if rel_time:
+                return calc_post_date_from_relative_str(rel_time)
+            return None
 
         elif parameter == JobField.KEY_ID:
-            return job_data.get("jobkey", None)
+            return job_data.get("jobkey", "")
 
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
-        """Set a single job attribute from a soup object by JobField
-        NOTE: URL is high-priority, since we need it to get RAW.
-        """
-        if parameter == JobField.RAW:
-            job._raw_scrape_data = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
+        """Set a single job attribute from a soup object by JobField."""
+        if parameter == JobField.URL:
+            job.url = (
+                f"https://www.indeed.{self.config.search_config.domain}/"
+                f"viewjob?jk={job.key_id}"
             )
 
         elif parameter == JobField.REMOTENESS:
@@ -268,177 +408,17 @@ class BaseIndeedScraper(BaseScraper):
                 for tag in job.tags
                 if "remote" in tag.lower()
             ]
-
-            if len(remoteness):
+            if remoteness:
                 job.remoteness = REMOTENESS_STR_MAP.get(
                     remoteness[0], Remoteness.UNKNOWN
                 )
 
-        elif parameter == JobField.DESCRIPTION:
-            assert job._raw_scrape_data
-            job.description = job._raw_scrape_data.find(
-                id="jobDescriptionText"
-            ).text.strip()
-        elif parameter == JobField.URL:
-            assert job.key_id
-            job.url = (
-                f"https://www.indeed.{self.config.search_config.domain}/m/"
-                f"viewjob?jk={job.key_id}"
-            )
+        elif parameter == JobField.RAW:
+            # Skip fetching raw page to avoid extra requests
+            pass
+
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
-
-    def _get_search_url(self, method: Optional[str] = "get") -> str:
-        """Get the indeed search url from SearchTerms
-        TODO: use Enum for method instead of str.
-        """
-        if method == "get":
-            return (
-                "https://www.indeed.{}/m/jobs?q={}&l={}%2C+{}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(
-                        " ",
-                        "+",
-                    ),
-                    self.config.search_config.province_or_state.upper(),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == "post":
-            raise NotImplementedError()
-        else:
-            raise ValueError(f"No html method {method} exists")
-
-    def _quantize_radius(self, radius: int) -> int:
-        """Quantizes the user input radius to a valid radius value into:
-        5, 10, 15, 25, 50, 100, and 200 kilometers or miles.
-        TODO: implement with numpy instead of if/else cases.
-        """
-        if radius < 5:
-            radius = 0
-        elif 5 <= radius < 10:
-            radius = 5
-        elif 10 <= radius < 15:
-            radius = 10
-        elif 15 <= radius < 25:
-            radius = 15
-        elif 25 <= radius < 50:
-            radius = 25
-        elif 50 <= radius < 100:
-            radius = 50
-        elif radius >= 100:
-            radius = 100
-        return radius
-
-    def _get_job_soups_from_search_page(
-        self, search: str, page: str, job_soup_list: List[BeautifulSoup]
-    ) -> None:
-        """Scrapes the indeed page for a list of job soups
-        NOTE: modifies the job_soup_list in-place
-        NOTE: Indeed's remoteness filter sucks, and we will always see a mix.
-            ... need to add some kind of filtering for this!
-        """
-        url = f"{search}&start={page * self.max_results_per_page}"
-
-        try:
-            response = self.session.get(url).text
-            soup = BeautifulSoup(response, self.config.bs4_parser)
-
-            script_tag = soup.find("script", id="mosaic-data")
-            if not script_tag:
-                self.logger.warn("No 'mosaic-data' script tag found on the page.")
-                return
-
-            script_content = script_tag.string
-            json_regex = re.search(
-                r'\["mosaic-provider-jobcards"\]\s*=\s*(\{.*?\});',
-                script_content,
-                re.DOTALL,
-            )
-
-            if json_regex:
-                json_data_str = json_regex.group(1)
-
-                try:
-                    json_data = json.loads(json_data_str)
-                    job_data = (
-                        json_data.get("metaData", {})
-                        .get("mosaicProviderJobCardsModel", {})
-                        .get("results", [])
-                    )
-
-                    if job_data:
-                        job_data_json = [json.dumps(job) for job in job_data]
-                        job_soup_list.extend(
-                            [
-                                BeautifulSoup(job_json, "lxml")
-                                for job_json in job_data_json
-                            ]
-                        )
-                    else:
-                        self.logger.error("No job data found in the JSON structure.")
-                except json.JSONDecodeError as e:
-                    self.logger.error(f"Error decoding JSON: {e}")
-            else:
-                self.logger.error(
-                    "No matching job data found in the script tag content."
-                )
-
-        except Exception as e:
-            self.logger.error(
-                f"An error occurred while fetching or parsing the page: {e}"
-            )
-
-    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 20 res/page -> 12 pages of jobs
-
-        Args:
-                        max_pages: the maximum number of pages to be scraped.
-        Returns:
-            The number of pages to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self.session.get(search_url)
-        self.logger.debug("Got Base search results page: %s", search_url)
-
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-
-        num_res = query_resp.find(
-            "div", class_="jobsearch-JobCountAndSortPane-jobCount"
-        )
-
-        # TODO: we should consider expanding the error cases (scrape error page)
-        if not num_res:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-            )
-
-        num_res_text = num_res.get_text().replace(",", "")
-
-        num_res_match = re.search(r"(\d+)\+?\s+jobs", num_res_text)
-
-        if num_res_match:
-            num_res = int(num_res_match.group(1))
-        else:
-            num_res = 0
-
-        number_of_pages = int(ceil(num_res / self.max_results_per_page))
-        if max_pages == 0:
-            return number_of_pages
-        elif number_of_pages < max_pages:
-            return number_of_pages
-        else:
-            return max_pages
 
 
 class IndeedScraperCANEng(BaseIndeedScraper, BaseCANEngScraper):
@@ -452,160 +432,41 @@ class IndeedScraperUSAEng(BaseIndeedScraper, BaseUSAEngScraper):
 class IndeedScraperUKEng(BaseIndeedScraper, BaseUKEngScraper):
     """Scrapes jobs from www.indeed.co.uk"""
 
-    def _get_search_url(self, method: Optional[str] = "get") -> str:
-        """Get the indeed search url from SearchTerms
-        TODO: use Enum for method instead of str.
-        """
-        if method == "get":
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(
-                        " ",
-                        "+",
-                    ),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == "post":
-            raise NotImplementedError()
-        else:
-            raise ValueError(f"No html method {method} exists")
+    def _get_search_url(self) -> str:
+        """Get the indeed.co.uk search url."""
+        return "https://www.indeed.{}/jobs?q={}&l={}&radius={}{}".format(
+            self.config.search_config.domain,
+            self.query,
+            self.config.search_config.city.replace(" ", "+"),
+            self._quantize_radius(self.config.search_config.radius),
+            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+        )
 
 
 class IndeedScraperFRFre(BaseIndeedScraper, BaseFRFreScraper):
     """Scrapes jobs from www.indeed.fr"""
 
-    def _get_search_url(self, method: Optional[str] = "get") -> str:
-        """Get the indeed search url from SearchTerms
-        TODO: use Enum for method instead of str.
-        """
-        if method == "get":
-            return (
-                "https://www.indeed.{}/jobs?q={}&l={}+%28{}%29&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(
-                        " ",
-                        "+",
-                    ),
-                    self.config.search_config.province_or_state.upper(),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == "post":
-            raise NotImplementedError()
-        else:
-            raise ValueError(f"No html method {method} exists")
-
-    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 20 res/page -> 12 pages of jobs
-
-        Args:
-                        max_pages: the maximum number of pages to be scraped.
-        Returns:
-            The number of pages to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self.session.get(search_url)
-        self.logger.debug("Got Base search results page: %s", search_url)
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(id="searchCountPages")
-        # TODO: we should consider expanding the error cases (scrape error page)
-        if not num_res:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-            )
-
-        num_res = normalize("NFKD", num_res.contents[0].strip())
-        num_res = int(re.findall(r"(\d+) ", num_res.replace(",", ""))[1])
-        number_of_pages = int(ceil(num_res / self.max_results_per_page))
-        if max_pages == 0:
-            return number_of_pages
-        elif number_of_pages < max_pages:
-            return number_of_pages
-        else:
-            return max_pages
+    def _get_search_url(self) -> str:
+        """Get the indeed.fr search url."""
+        return "https://www.indeed.{}/jobs?q={}&l={}+%28{}%29&radius={}{}".format(
+            self.config.search_config.domain,
+            self.query,
+            self.config.search_config.city.replace(" ", "+"),
+            self.config.search_config.province_or_state.upper(),
+            self._quantize_radius(self.config.search_config.radius),
+            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
+        )
 
 
 class IndeedScraperDEGer(BaseIndeedScraper, BaseDEGerScraper):
     """Scrapes jobs from de.indeed.com"""
 
-    # The german locale has a different number separators.
-    THOUSEP = "."
-
-    def _get_search_url(self, method: Optional[str] = "get") -> str:
-        """Get the indeed search url from SearchTerms"""
-        if method == "get":
-            return (
-                # The URL is different to the base scraper because indeed.de is
-                # redirecting to de.indeed.com. If the redirect is handled the
-                # same URLs can be used.
-                "https://{}.indeed.com/jobs?q={}&l={}&radius={}&"
-                "limit={}&filter={}{}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    self.config.search_config.city.replace(
-                        " ",
-                        "+",
-                    ),
-                    self._quantize_radius(self.config.search_config.radius),
-                    self.max_results_per_page,
-                    int(self.config.search_config.return_similar_results),
-                    REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
-                )
-            )
-        elif method == "post":
-            raise NotImplementedError()
-        else:
-            raise ValueError(f"No html method {method} exists")
-
-    def _get_num_search_result_pages(self, search_url: str, max_pages=0) -> int:
-        """Calculates the number of pages of job listings to be scraped.
-
-        i.e. your search yields 230 results at 50 res/page -> 5 pages of jobs
-
-        Args:
-            max_pages: the maximum number of pages to be scraped.
-        Returns:
-            The number of pages to be scraped.
-        """
-        # Get the html data, initialize bs4 with lxml
-        request_html = self.session.get(search_url)
-
-        query_resp = BeautifulSoup(request_html.text, self.config.bs4_parser)
-        num_res = query_resp.find(
-            "div", class_="jobsearch-JobCountAndSortPane-jobCount"
+    def _get_search_url(self) -> str:
+        """Get the de.indeed.com search url."""
+        return "https://{}.indeed.com/jobs?q={}&l={}&radius={}{}".format(
+            self.config.search_config.domain,
+            self.query,
+            self.config.search_config.city.replace(" ", "+"),
+            self._quantize_radius(self.config.search_config.radius),
+            REMOTENESS_TO_QUERY[self.config.search_config.remoteness],
         )
-
-        if not num_res:
-            raise ValueError(
-                "Unable to identify number of pages of results for query: {}"
-                " Please ensure linked page contains results, you may have"
-                " provided a city for which there are no results within this"
-                " province or state.".format(search_url)
-            )
-
-        num_res = num_res.contents[0].strip()
-        num_res = int(re.findall(r"(\d+)", num_res.replace(self.THOUSEP, ""))[1])
-        number_of_pages = int(ceil(num_res / self.max_results_per_page))
-        if max_pages == 0:
-            return number_of_pages
-        elif number_of_pages < max_pages:
-            return number_of_pages
-        else:
-            return max_pages

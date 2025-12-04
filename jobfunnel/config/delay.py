@@ -1,5 +1,4 @@
-"""Simple config object to contain the delay configuration
-"""
+"""Simple config object to contain the delay configuration"""
 
 from jobfunnel.config.base import BaseConfig
 from jobfunnel.resources import DelayAlgorithm
@@ -51,7 +50,7 @@ class DelayConfig(BaseConfig):
             raise ValueError(
                 "Minimum delay is below 0, or more than or equal to delay."
             )
-        if type(self.algorithm) != DelayAlgorithm:
+        if not isinstance(self.algorithm, DelayAlgorithm):
             raise ValueError(f"Invalid Value for delaying algorithm: {self.algorithm}")
         if self.converge and not self.random:
             raise ValueError(

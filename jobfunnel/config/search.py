@@ -1,5 +1,4 @@
-"""Object to contain job query metadata
-"""
+"""Object to contain job query metadata"""
 
 from typing import List, Optional
 

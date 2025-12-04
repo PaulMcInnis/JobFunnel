@@ -1,5 +1,4 @@
-"""Settings YAML Schema w/ validator
-"""
+"""Settings YAML Schema w/ validator"""
 
 import ipaddress
 

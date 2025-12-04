@@ -1,14 +1,12 @@
-"""Scraper for www.glassdoor.X
-FIXME: this is currently unable to get past page 1 of job results.
-"""
+"""Scraper for www.glassdoor.X using Playwright browser automation"""
 
-from abc import abstractmethod
-from concurrent.futures import ThreadPoolExecutor, wait
+import json
 from math import ceil
 import re
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
+from playwright.sync_api import Browser, Page, sync_playwright
 from requests import Session
 
 from jobfunnel.backend import Job
@@ -20,7 +18,7 @@ from jobfunnel.backend.scrapers.base import (
 )
 from jobfunnel.backend.tools.filters import JobFilter
 from jobfunnel.backend.tools.tools import calc_post_date_from_relative_str
-from jobfunnel.resources import MAX_CPU_WORKERS, JobField
+from jobfunnel.resources import JobField
 
 # pylint: disable=using-constant-test,unused-import
 if False:  # or typing.TYPE_CHECKING  if python3.5.3+
@@ -28,8 +26,6 @@ if False:  # or typing.TYPE_CHECKING  if python3.5.3+
 # pylint: enable=using-constant-test,unused-import
 
 
-MAX_GLASSDOOR_LOCATIONS_TO_RETURN = 10
-LOCATION_BASE_URL = "https://www.glassdoor.co.in/findPopularLocationAjax.htm?"
 MAX_RESULTS_PER_GLASSDOOR_PAGE = 30
 GLASSDOOR_RADIUS_MAP = {
     0: 0,
@@ -43,274 +39,424 @@ GLASSDOOR_RADIUS_MAP = {
 
 
 class BaseGlassDoorScraper(BaseScraper):
+    """Scrapes jobs from www.glassdoor.X using Playwright for browser automation"""
+
     def __init__(
         self, session: Session, config: "JobFunnelConfigManager", job_filter: JobFilter
     ) -> None:
         """Init that contains glassdoor specific stuff"""
         super().__init__(session, config, job_filter)
         self.max_results_per_page = MAX_RESULTS_PER_GLASSDOOR_PAGE
-        self.query = "-".join(self.config.search_config.keywords)
-        # self.driver = get_webdriver() TODO: we can use this if-needed
-
-    @abstractmethod
-    def quantize_radius(self, radius: int) -> int:
-        """Get the glassdoor-quantized radius"""
+        self.query = " ".join(self.config.search_config.keywords)
+        self._browser: Optional[Browser] = None
+        self._playwright = None
 
     @property
-    def job_get_fields(self) -> str:
+    def job_get_fields(self) -> List[JobField]:
         """Call self.get(...) for the JobFields in this list when scraping a Job"""
         return [
             JobField.TITLE,
             JobField.COMPANY,
             JobField.LOCATION,
-            JobField.POST_DATE,
-            JobField.URL,
             JobField.KEY_ID,
+            JobField.URL,
             JobField.WAGE,
+            JobField.POST_DATE,
         ]
 
     @property
-    def job_set_fields(self) -> str:
+    def job_set_fields(self) -> List[JobField]:
         """Call self.set(...) for the JobFields in this list when scraping a Job"""
-        return [JobField.RAW, JobField.DESCRIPTION]
+        return [JobField.DESCRIPTION]
 
     @property
-    def delayed_get_set_fields(self) -> str:
-        """Delay execution when getting /setting any of these attributes of a
-        job.
+    def delayed_get_set_fields(self) -> List[JobField]:
+        """Delay execution when getting/setting any of these attributes."""
+        return []
 
-        Override this as needed.
-        """
-        return [JobField.RAW]
+    @property
+    def high_priority_get_set_fields(self) -> List[JobField]:
+        """These get()/set() fields will be populated first."""
+        return [JobField.URL]
 
     @property
     def headers(self) -> Dict[str, str]:
-        return {
-            "accept": "text/html,application/xhtml+xml,application/xml;"
-            "q=0.9,image/webp,*/*;q=0.8",
-            "accept-encoding": "gzip, deflate, sdch, br",
-            "accept-language": "en-GB,en-US;q=0.8,en;q=0.6",
-            "referer": f"https://www.glassdoor.{self.config.search_config.domain}/",
-            "upgrade-insecure-requests": "1",
-            "user-agent": self.user_agent,
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-        }
+        """Session header - not used with Playwright but required by base class."""
+        return {}
 
-    def get_search_url(self, method="get") -> Union[str, Tuple[str, Dict[str, str]]]:
-        """Gets the glassdoor search url
-        NOTE: we this relies on your city, not the state / province!
-        """
-        # Form the location lookup request data
-        data = {
-            "term": self.config.search_config.city,
-            "maxLocationsToReturn": MAX_GLASSDOOR_LOCATIONS_TO_RETURN,
-        }
+    def quantize_radius(self, radius: int) -> int:
+        """Get the glassdoor-quantized radius. Override in subclasses."""
+        raise NotImplementedError("Subclasses must implement quantize_radius")
 
-        # Get the location id for search location
-        location_id = self.session.post(
-            LOCATION_BASE_URL, headers=self.headers, data=data
-        ).json()[0]["locationId"]
+    def _perform_search_like_human(self, page: Page) -> bool:
+        """Navigate to Glassdoor and perform search like a human user."""
+        domain = self.config.search_config.domain
+        homepage = f"https://www.glassdoor.{domain}"
 
-        if method == "get":
-            # Form job search url
-            search = (
-                "https://www.glassdoor.{}/Job/jobs.htm?clickSource=searchBtn"
-                "&sc.keyword={}&locT=C&locId={}&jobType=&radius={}".format(
-                    self.config.search_config.domain,
-                    self.query,
-                    location_id,
-                    self.quantize_radius(self.config.search_config.radius),
-                )
+        self.logger.info("Going to Glassdoor homepage...")
+        page.goto(homepage, timeout=60000)
+        page.wait_for_timeout(2000)
+
+        # Wait for search box to appear
+        try:
+            page.wait_for_selector(
+                'input[id*="keyword"], input[name*="keyword"], input[placeholder*="Job"]',
+                timeout=60000,
             )
-            return search
+            self.logger.info("Homepage loaded successfully")
+        except Exception:
+            self.logger.warning("Could not load homepage search box")
+            return False
 
-        elif method == "post":
-            # Form the job search url
-            search = (
-                f"https://www.glassdoor.{self.config.search_config.domain}"
-                "/Job/jobs.htm"
-            )
+        # Find and fill the keyword search box
+        keyword_input = page.query_selector(
+            'input[id*="keyword"], input[name*="keyword"], input[placeholder*="Job"]'
+        )
+        if keyword_input:
+            keyword_input.click()
+            page.wait_for_timeout(300)
+            keyword_input.fill(self.query)
+            self.logger.info("Entered keywords: %s", self.query)
 
-            # Form the job search data
-            data = {
-                "clickSource": "searchBtn",
-                "sc.keyword": self.query,
-                "locT": "C",
-                "locId": location_id,
-                "jobType": "",
-                "radius": self.quantize_radius(self.config.search_config.radius),
-            }
+        # Find and fill the location search box
+        location_input = page.query_selector(
+            'input[id*="location"], input[name*="location"], input[placeholder*="Location"]'
+        )
+        if location_input:
+            location_input.click()
+            page.wait_for_timeout(300)
+            # Clear existing location
+            location_input.fill("")
+            location = f"{self.config.search_config.city}, {self.config.search_config.province_or_state}"
+            location_input.fill(location)
+            self.logger.info("Entered location: %s", location)
 
-            return search, data
+        page.wait_for_timeout(500)
+
+        # Click the search button
+        search_btn = page.query_selector(
+            'button[type="submit"], button[data-test="search-bar-submit"]'
+        )
+        if search_btn:
+            search_btn.click()
+            self.logger.info("Clicked search button")
         else:
-            raise ValueError(f"No html method {method} exists")
+            # Try pressing Enter
+            page.keyboard.press("Enter")
+
+        # Wait for results to load
+        page.wait_for_timeout(3000)
+        return True
 
     def get_job_soups_from_search_result_listings(self) -> List[BeautifulSoup]:
-        """Scrapes raw data from a job source into a list of job-soups
+        """Scrapes raw data from Glassdoor using Playwright browser automation.
 
         Returns:
-            List[BeautifulSoup]: list of jobs soups we can use to make Job init
+            List[BeautifulSoup]: list of job soups we can use to make Job objects
         """
-        # Get the search url
-        search_url, data = self.get_search_url(method="post")
+        job_soup_list = []
 
-        # Get the search page result.
-        request_html = self.session.post(search_url, data=data)
-        soup_base = BeautifulSoup(request_html.text, self.config.bs4_parser)
+        # Use persistent context to save cookies/session between runs
+        from pathlib import Path
 
-        # Parse total results, and calculate the # of pages needed
-        n_pages = self._get_num_search_result_pages(soup_base)
-        self.logger.info(
-            f"Found {n_pages} pages of search results for query={self.query}"
-        )
+        user_data_dir = Path(self.config.cache_folder) / "browser_data_glassdoor"
+        user_data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Get the first page of job soups from the search results listings
-        job_soup_list = self._parse_job_listings_to_bs4(soup_base)
+        with sync_playwright() as p:
+            context = p.chromium.launch_persistent_context(
+                str(user_data_dir),
+                headless=False,
+                viewport={"width": 1280, "height": 900},
+                locale="en-US",
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                ],
+                ignore_default_args=["--enable-automation"],
+            )
+            page = context.pages[0] if context.pages else context.new_page()
 
-        # Init threads & futures list FIXME: we should probably delay here too
-        threads = ThreadPoolExecutor(MAX_CPU_WORKERS)
-        try:
-            # Search the remaining pages to extract the list of job soups
-            # FIXME: we can't load page 2, it redirects to page 1.
-            # There is toast that shows to get email notifs that shows up if
-            # I click it myself, must be an event listener?
-            futures = []
-            if n_pages > 1:
-                for page in range(2, n_pages + 1):
-                    futures.append(
-                        threads.submit(
-                            self._search_page_for_job_soups,
-                            self._get_next_page_url(soup_base, page),
-                            job_soup_list,
-                        )
+            try:
+                # Perform search like a human
+                if not self._perform_search_like_human(page):
+                    raise ValueError("Could not complete search")
+
+                # Get number of pages
+                num_pages = self._get_num_search_result_pages_from_page(page)
+                self.logger.info(
+                    "Found %d pages of search results for query=%s",
+                    num_pages,
+                    self.query,
+                )
+
+                # Scrape first page
+                self._extract_jobs_from_page(page, job_soup_list)
+
+                # Scrape remaining pages by clicking Next button
+                for page_num in range(1, num_pages):
+                    next_btn = page.query_selector(
+                        'button[data-test="pagination-next"]'
                     )
+                    if not next_btn:
+                        next_btn = page.query_selector('a[data-test="pagination-next"]')
+                    if not next_btn:
+                        next_btn = page.query_selector('button:has-text("Next")')
+                    if not next_btn:
+                        next_btn = page.query_selector('a:has-text("Next")')
 
-            wait(futures)  # wait for all scrape jobs to finish
-        finally:
-            threads.shutdown()
+                    if next_btn:
+                        self.logger.info("Clicking Next to go to page %d", page_num + 1)
+                        next_btn.click()
+                        page.wait_for_timeout(3000)
+                        self._extract_jobs_from_page(page, job_soup_list)
+                    else:
+                        self.logger.warning("No Next button found, stopping pagination")
+                        break
+
+            finally:
+                context.close()
 
         return job_soup_list
 
+    def _get_num_search_result_pages_from_page(self, page: Page) -> int:
+        """Extract the number of result pages from a loaded page."""
+        try:
+            page_content = page.content()
+
+            # Try to find job count from page content
+            match = re.search(r'"jobListingSearchTotalCount"\s*:\s*(\d+)', page_content)
+            if match:
+                total_jobs = int(match.group(1))
+                return min(ceil(total_jobs / self.max_results_per_page), 5)
+
+            # Fallback: look for "X jobs" text
+            job_count_el = page.query_selector('[data-test="jobCount"]')
+            if job_count_el:
+                text = job_count_el.text_content() or ""
+                match = re.search(r"(\d+)", text.replace(",", ""))
+                if match:
+                    total_jobs = int(match.group(1))
+                    return min(ceil(total_jobs / self.max_results_per_page), 5)
+
+            self.logger.warning("Could not determine page count, defaulting to 1")
+            return 1
+
+        except Exception as e:
+            self.logger.warning("Error getting page count: %s", e)
+            return 1
+
+    def _extract_jobs_from_page(
+        self, page: Page, job_soup_list: List[BeautifulSoup]
+    ) -> None:
+        """Extract job data from a loaded Glassdoor search results page."""
+        page_content = page.content()
+        soup = BeautifulSoup(page_content, self.config.bs4_parser)
+
+        # Try to find job data in JSON script tags
+        script_tags = soup.find_all("script", type="application/json")
+        for script_tag in script_tags:
+            try:
+                script_content = script_tag.string or script_tag.get_text()
+                if script_content and "jobListings" in script_content:
+                    json_data = json.loads(script_content)
+                    job_listings = self._find_job_listings_in_json(json_data)
+                    if job_listings:
+                        for job in job_listings:
+                            job_soup_list.append(BeautifulSoup(json.dumps(job), "lxml"))
+                        self.logger.info(
+                            "Extracted %d jobs from page", len(job_listings)
+                        )
+                        return
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+        # Fallback: Try to find job cards in HTML
+        job_cards = soup.find_all("li", attrs={"data-test": "jobListing"})
+        if not job_cards:
+            job_cards = soup.find_all("li", class_=re.compile(r"job.*listing", re.I))
+
+        if job_cards:
+            for card in job_cards:
+                job_soup_list.append(BeautifulSoup(str(card), self.config.bs4_parser))
+            self.logger.info("Extracted %d jobs from HTML", len(job_cards))
+        else:
+            self.logger.warning("Could not extract jobs from this page")
+
+    def _find_job_listings_in_json(self, data: Any) -> List[Dict]:
+        """Recursively search for job listings in JSON data."""
+        if isinstance(data, dict):
+            if "jobListings" in data:
+                listings = data["jobListings"]
+                if isinstance(listings, list):
+                    return listings
+                if isinstance(listings, dict) and "jobListings" in listings:
+                    return listings["jobListings"]
+            for value in data.values():
+                result = self._find_job_listings_in_json(value)
+                if result:
+                    return result
+        elif isinstance(data, list):
+            for item in data:
+                result = self._find_job_listings_in_json(item)
+                if result:
+                    return result
+        return []
+
     def get(self, parameter: JobField, soup: BeautifulSoup) -> Any:
-        """Get a single job attribute from a soup object by JobField
-        TODO: impl div class=compactStars value somewhere.
-        """
+        """Get a single job attribute from a soup object."""
+        # Try to parse as JSON first (from script tag extraction)
+        try:
+            job_data = json.loads(soup.text)
+            return self._get_from_json(parameter, job_data)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # Fallback to HTML parsing
+        return self._get_from_html(parameter, soup)
+
+    def _get_from_json(self, parameter: JobField, job_data: Dict) -> Any:
+        """Get job attribute from JSON data."""
+        # Handle nested job structure
+        job = job_data.get("jobview", job_data.get("job", job_data))
+
         if parameter == JobField.TITLE:
-            # TODO: we should instead get what user sees in the <span>
-            return soup.get("data-normalize-job-title")
+            return job.get("jobTitleText") or job.get("title") or job.get("jobTitle")
+
         elif parameter == JobField.COMPANY:
-            return soup.find(
-                "div", attrs={"class", "jobInfoItem jobEmpolyerName"}
-            ).text.strip()
+            employer = job.get("employer", {})
+            if isinstance(employer, dict):
+                return employer.get("name", "")
+            return job.get("employerName", "")
+
         elif parameter == JobField.LOCATION:
-            return soup.get("data-job-loc")
-        # FIXME: impl.
-        # elif parameter == JobField.TAGS:
-        #     labels = soup.find_all('div', attrs={'class', 'jobLabel'})
-        #     if labels:
-        #         return [
-        #             l.text.strip() for l in labels if l.text.strip() != 'New'
-        #         ]
-        #     else:
-        #         return []
-        # FIXME: impl JobField.REMOTE
-        elif parameter == JobField.POST_DATE:
-            return calc_post_date_from_relative_str(
-                soup.find(
-                    "div", attrs={"class": "d-flex align-items-end pl-std css-mi55ob"}
-                ).text.strip()
-            )
-        elif parameter == JobField.WAGE:
-            # NOTE: most jobs don't have this so we wont raise a warning here
-            # and will fail silently instead
-            wage = soup.find("span", attrs={"class": "gray salary"})
-            if wage is not None:
-                return wage.text.strip()
-            else:
-                return ""
+            location = job.get("location", {})
+            if isinstance(location, dict):
+                return location.get("locationName") or location.get("name", "")
+            return job.get("locationName", "")
+
         elif parameter == JobField.KEY_ID:
-            return soup.get("data-id")
+            return str(
+                job.get("listingId") or job.get("jobListingId") or job.get("id", "")
+            )
+
         elif parameter == JobField.URL:
-            part_url = (
-                soup.find("div", attrs={"class", "logoWrap"}).find("a").get("href")
-            )
-            return (
-                f"https://www.glassdoor.{self.config.search_config.domain}"
-                f"{part_url}"
-            )
+            job_url = job.get("jobViewUrl") or job.get("seoJobLink") or job.get("url")
+            if job_url:
+                if not job_url.startswith("http"):
+                    return f"https://www.glassdoor.{self.config.search_config.domain}{job_url}"
+                return job_url
+            # Construct URL from ID
+            key_id = self._get_from_json(JobField.KEY_ID, job_data)
+            if key_id:
+                return f"https://www.glassdoor.{self.config.search_config.domain}/job-listing/?jl={key_id}"
+            return ""
+
+        elif parameter == JobField.WAGE:
+            salary = job.get("salarySnippet") or job.get("salary", {})
+            if isinstance(salary, dict):
+                return salary.get("text") or salary.get("salaryText", "")
+            return str(salary) if salary else ""
+
+        elif parameter == JobField.POST_DATE:
+            age_str = job.get("ageInDays") or job.get("listingAge")
+            if age_str is not None:
+                return calc_post_date_from_relative_str(f"{age_str} days")
+            date_str = job.get("discoverDate") or job.get("postedDate")
+            if date_str:
+                return calc_post_date_from_relative_str(date_str)
+            return None
+
+        else:
+            raise NotImplementedError(f"Cannot get {parameter.name}")
+
+    def _get_from_html(self, parameter: JobField, soup: BeautifulSoup) -> Any:
+        """Get job attribute from HTML soup."""
+        if parameter == JobField.TITLE:
+            title_el = soup.find(attrs={"data-test": "job-title"})
+            if title_el:
+                return title_el.get_text(strip=True)
+            title_el = soup.find("a", class_=re.compile(r"job.*title", re.I))
+            return title_el.get_text(strip=True) if title_el else ""
+
+        elif parameter == JobField.COMPANY:
+            company_el = soup.find(attrs={"data-test": "employer-name"})
+            if company_el:
+                return company_el.get_text(strip=True)
+            company_el = soup.find(class_=re.compile(r"employer.*name", re.I))
+            return company_el.get_text(strip=True) if company_el else ""
+
+        elif parameter == JobField.LOCATION:
+            loc_el = soup.find(attrs={"data-test": "job-location"})
+            if loc_el:
+                return loc_el.get_text(strip=True)
+            loc_el = soup.find(class_=re.compile(r"location", re.I))
+            return loc_el.get_text(strip=True) if loc_el else ""
+
+        elif parameter == JobField.KEY_ID:
+            # Try data attributes
+            job_id = soup.get("data-id") or soup.get("data-job-id")
+            if job_id:
+                return str(job_id)
+            # Try finding from link
+            link = soup.find("a", href=re.compile(r"jl=(\d+)"))
+            if link:
+                href = link.get("href")
+                if href and isinstance(href, str):
+                    match = re.search(r"jl=(\d+)", href)
+                    if match:
+                        return match.group(1)
+            return ""
+
+        elif parameter == JobField.URL:
+            link = soup.find("a", attrs={"data-test": "job-link"})
+            if not link:
+                link = soup.find("a", href=re.compile(r"/job-listing/"))
+            if link:
+                href = link.get("href")
+                if href and isinstance(href, str):
+                    if not href.startswith("http"):
+                        return f"https://www.glassdoor.{self.config.search_config.domain}{href}"
+                    return href
+            return ""
+
+        elif parameter == JobField.WAGE:
+            salary_el = soup.find(attrs={"data-test": "detailSalary"})
+            if salary_el:
+                return salary_el.get_text(strip=True)
+            salary_el = soup.find(class_=re.compile(r"salary", re.I))
+            return salary_el.get_text(strip=True) if salary_el else ""
+
+        elif parameter == JobField.POST_DATE:
+            date_el = soup.find(attrs={"data-test": "job-age"})
+            if date_el:
+                return calc_post_date_from_relative_str(date_el.get_text(strip=True))
+            date_el = soup.find(class_=re.compile(r"posted|age|date", re.I))
+            if date_el:
+                return calc_post_date_from_relative_str(date_el.get_text(strip=True))
+            return None
+
         else:
             raise NotImplementedError(f"Cannot get {parameter.name}")
 
     def set(self, parameter: JobField, job: Job, soup: BeautifulSoup) -> None:
-        """Set a single job attribute from a soup object by JobField
-        NOTE: Description has to get and should be respectfully delayed
-        """
-        if parameter == JobField.RAW:
-            job._raw_scrape_data = BeautifulSoup(
-                self.session.get(job.url).text, self.config.bs4_parser
-            )
-        elif parameter == JobField.DESCRIPTION:
-            assert job._raw_scrape_data
-            job.description = job._raw_scrape_data.find(
-                id="JobDescriptionContainer"
-            ).text.strip()
+        """Set a single job attribute from a soup object by JobField."""
+        if parameter == JobField.DESCRIPTION:
+            # Description would require loading the job page
+            # Skip for now to avoid extra requests
+            job.description = ""
+
+        elif parameter == JobField.RAW:
+            # Skip fetching raw page
+            pass
+
         else:
             raise NotImplementedError(f"Cannot set {parameter.name}")
 
-    def _search_page_for_job_soups(
-        self, listings_page_url: str, job_soup_list: List[BeautifulSoup]
-    ) -> None:
-        """Get a list of job soups from a glassdoor page, by loading the page.
-        NOTE: this makes GET requests and should be respectfully delayed.
-        """
-        self.logger.debug(f"Scraping listings page {listings_page_url}")
-        job_soup_list.extend(
-            self._parse_job_listings_to_bs4(
-                BeautifulSoup(
-                    self.session.get(listings_page_url).text,
-                    self.config.bs4_parser,
-                )
-            )
-        )
-
-    def _parse_job_listings_to_bs4(
-        self, page_soup: BeautifulSoup
-    ) -> List[BeautifulSoup]:
-        """Parse a page of job listings HTML text into job soups"""
-        return page_soup.find_all("li", attrs={"class", "jl"})
-
-    def _get_num_search_result_pages(self, soup_base: BeautifulSoup) -> int:
-        # scrape total number of results, and calculate the # pages needed
-        num_res = soup_base.find("p", attrs={"class", "jobsCount"}).text.strip()
-        num_res = int(re.findall(r"(\d+)", num_res.replace(",", ""))[0])
-        return int(ceil(num_res / self.max_results_per_page))
-
-    def _get_next_page_url(
-        self, soup_base: BeautifulSoup, results_page_number: int
-    ) -> str:
-        """Construct the next page of search results from the initial search
-        results page BeautifulSoup.
-        """
-        part_url = soup_base.find("li", attrs={"class", "next"}).find("a").get("href")
-
-        assert part_url is not None, "Unable to find next page in listing soup!"
-
-        # Uses partial url to construct next page url
-        return re.sub(
-            r"_IP\d+\.",
-            f"_IP{results_page_number}.",
-            f"https://www.glassdoor.{self.config.search_config.domain}" f"{part_url}",
-        )
-
 
 class GlassDoorMetricRadius:
-    """Metric units shared by GlassDoorScraperCANEng
-    and GlassDoorScraperUKEng
-    """
+    """Metric units shared by GlassDoorScraperCANEng and GlassDoorScraperUKEng"""
 
     def quantize_radius(self, radius: int) -> int:
-        """convert radius to km FIXME: use numpy.digitize instead"""
+        """Convert radius to km."""
         if radius < 10:
             radius = 0
         elif 10 <= radius < 20:
@@ -338,9 +484,7 @@ class GlassDoorScraperUSAEng(BaseGlassDoorScraper, BaseUSAEngScraper):
     """Scrapes jobs from www.glassdoor.com"""
 
     def quantize_radius(self, radius: int) -> int:
-        """Get a USA radius (miles)
-        FIXME: use numpy.digitize instead
-        """
+        """Get a USA radius (miles)."""
         if radius < 5:
             radius = 0
         elif 5 <= radius < 10:

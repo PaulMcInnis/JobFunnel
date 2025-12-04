@@ -17,7 +17,7 @@ search:
   # what language the contents are in.
   locale: CANADA_ENGLISH
 
-  # Job providers which we will search, one of INDEED, MONSTER, GLASSDOOR:
+  # Job providers which we will search, one of INDEED, GLASSDOOR:
   # NOTE: we choose domain via locale (i.e. CANADA_ENGLISH -> www.indeed.ca)
   # FIXME: we need to add back GLASSDOOR when that's working again.
   providers:

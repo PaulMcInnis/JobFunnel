@@ -1,18 +1,29 @@
-"""Assorted tools for all aspects of funnelin' that don't fit elsewhere
-"""
+"""Assorted tools for all aspects of funnelin' that don't fit elsewhere"""
 
 from datetime import date, datetime, timedelta
 import logging
 import re
+import subprocess
 import sys
 from typing import Optional
 
 from dateutil.relativedelta import relativedelta
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager, IEDriverManager
-from webdriver_manager.opera import OperaDriverManager
+
+
+def ensure_playwright_browsers() -> None:
+    """Ensure Playwright browsers are installed, installing them if needed."""
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            # Try to launch browser to check if installed
+            browser = p.chromium.launch(headless=True)
+            browser.close()
+    except Exception:
+        print("Playwright browsers not found. Installing...")
+        subprocess.run([sys.executable, "-m", "playwright", "install"], check=True)
+        print("Playwright browsers installed successfully.")
+
 
 # Initialize list and store regex objects of date quantifiers
 HOUR_REGEX = re.compile(r"(\d+)(?:[ +]{1,3})?(?:hour|hr|heure)")
@@ -116,36 +127,3 @@ def calc_post_date_from_relative_str(date_str: str) -> date:
                         raise ValueError(f"Unable to calculate date from:\n{date_str}")
 
     return post_date.replace(hour=0, minute=0, second=0, microsecond=0)
-
-
-def get_webdriver():
-    """Get whatever webdriver is availiable in the system.
-    webdriver_manager and selenium are currently being used for this.
-    Supported: Firefox, Chrome, Opera, Microsoft Edge, Internet Explorer
-    Returns:
-            webdriver that can be used for scraping.
-            Returns None if we don't find a supported webdriver.
-    """
-    try:
-        driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
-    except Exception:
-        try:
-            driver = webdriver.Chrome(ChromeDriverManager().install())
-        except Exception:
-            try:
-                driver = webdriver.Ie(IEDriverManager().install())
-            except Exception:
-                try:
-                    driver = webdriver.Opera(
-                        executable_path=OperaDriverManager().install()
-                    )
-                except Exception:
-                    try:
-                        driver = webdriver.Edge(EdgeChromiumDriverManager().install())
-                    except Exception:
-                        raise RuntimeError(
-                            "Your browser is not supported. Must have one of "
-                            "the following installed to scrape: [Firefox, "
-                            "Chrome, Opera, Microsoft Edge, Internet Explorer]"
-                        )
-    return driver
