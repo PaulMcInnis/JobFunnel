@@ -83,6 +83,12 @@ def parse_cli(args: List[str]) -> Dict[str, Any]:
         required=False,
     )
 
+    yaml_parser.add_argument(
+        "--debug-scrape",
+        action="store_true",
+        help="Dump all scraped HTML pages to /scrape folder for debugging scrapers.",
+    )
+
     # We are using CLI for all arguments.
     cli_parser = base_subparsers.add_parser(
         "inline",
@@ -314,8 +320,9 @@ def build_config_dict(args_dict: Dict[str, Any]) -> Dict[str, Any]:
             Loader=yaml.FullLoader,
         )
 
-        # Inject any base level args (--no-scrape, -log-level)
+        # Inject any base level args (--no-scrape, -log-level, --debug-scrape)
         config["no_scrape"] = args_dict["no_scrape"]
+        config["debug_scrape"] = args_dict.get("debug_scrape", False)
         if args_dict.get("log_level"):
             config["log_level"] = args_dict["log_level"]
 
@@ -392,6 +399,7 @@ def get_config_manager(config: Dict[str, Any]) -> JobFunnelConfigManager:
         log_file=config["log_file"],
         log_level=config["log_level"],
         no_scrape=config["no_scrape"],
+        debug_scrape=config.get("debug_scrape", False),
         search_config=search_cfg,
         delay_config=delay_cfg,
         proxy_config=proxy_cfg,

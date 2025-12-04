@@ -28,6 +28,7 @@ class JobFunnelConfigManager(BaseConfig):
         log_file: str,
         log_level: Optional[int] = logging.INFO,
         no_scrape: Optional[bool] = False,
+        debug_scrape: Optional[bool] = False,
         bs4_parser: Optional[str] = BS4_PARSER,
         return_similar_results: Optional[bool] = False,
         delay_config: Optional[DelayConfig] = None,
@@ -52,6 +53,8 @@ class JobFunnelConfigManager(BaseConfig):
             no_scrape (Optional[bool], optional): If True, will not scrape data
                 at all, instead will only update filters and CSV. Defaults to
                 False.
+            debug_scrape (Optional[bool], optional): If True, dump all scraped
+                HTML pages to /scrape folder for debugging. Defaults to False.
             bs4_parser (Optional[str], optional): the parser to use for BS4.
             return_similar_resuts (Optional[bool], optional): If True, we will
                 ask the job provider to provide more loosely-similar results for
@@ -70,6 +73,7 @@ class JobFunnelConfigManager(BaseConfig):
         self.log_file = log_file
         self.log_level = log_level
         self.no_scrape = no_scrape
+        self.debug_scrape = debug_scrape
         self.bs4_parser = bs4_parser  # NOTE: this is not currently configurable
         self.return_similar_results = return_similar_results
         if not delay_config:

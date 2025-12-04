@@ -1,7 +1,8 @@
 # Outputs
 *.csv
 demo_job_search_results
-my_settings.yaml 
+my_settings.yaml
+/scrape/ 
 
 # IntelliJ/Pycharm configs
 .idea/

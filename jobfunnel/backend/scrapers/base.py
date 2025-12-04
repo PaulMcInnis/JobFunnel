@@ -16,6 +16,8 @@ from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 from urllib3.util import Retry
 
+from pathlib import Path
+
 from jobfunnel.backend import Job, JobStatus
 from jobfunnel.backend.tools import Logger
 from jobfunnel.backend.tools.delay import calculate_delays
@@ -86,6 +88,19 @@ class BaseScraper(ABC, Logger):
     def user_agent(self) -> str:
         """Get a randomized user agent for this scraper"""
         return random.choice(USER_AGENT_LIST)
+
+    def dump_debug_html(self, html_content: str, page_name: str) -> None:
+        """Dump HTML content to /scrape folder for debugging.
+
+        Args:
+            html_content: The HTML string to dump
+            page_name: A descriptive name for the page (e.g. "search_page_1")
+        """
+        scrape_dir = Path("scrape") / self.__class__.__name__
+        scrape_dir.mkdir(parents=True, exist_ok=True)
+        debug_file = scrape_dir / f"{page_name}.html"
+        debug_file.write_text(html_content)
+        self.logger.info("Dumped debug HTML to %s", debug_file)
 
     @property
     def job_init_kwargs(self) -> Dict[JobField, Any]:

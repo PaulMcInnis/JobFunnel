@@ -311,6 +311,8 @@ class BaseIndeedScraper(BaseScraper):
     def _extract_jobs_from_page(self, page: Page, job_soup_list: List[BeautifulSoup]) -> None:
         """Extract job data from a loaded Indeed search results page."""
         page_content = page.content()
+        if self.config.debug_scrape:
+            self.dump_debug_html(page_content, f"page_{len(job_soup_list)}")
         soup = BeautifulSoup(page_content, self.config.bs4_parser)
 
         # Try to find mosaic-data script tag with job JSON
